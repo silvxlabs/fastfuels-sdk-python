@@ -1,9 +1,10 @@
 """
-Dataset classes for the FastFuels SDK.
+Dataset class and endpoints for the FastFuels SDK.
 """
 
 # Internal imports
-from fastfuels_sdk import SESSION, API_URL
+from . import SESSION, API_URL
+from fastfuels_sdk.treelists import Treelist, create_treelist, list_treelists
 
 # Core imports
 import json
@@ -138,13 +139,34 @@ class Dataset:
         else:
             return updated_dataset
 
-    # TODO: Add a method to create a treelist from a dataset
-    def create_treelist(self):
-        pass
+    def create_treelist(self, name: str, description: str,
+                        method: str = "random") -> Treelist:
+        """
+        Create a treelist from the dataset.
 
-    # TODO: Add a method to list treelists associated with a dataset
-    def list_treelists(self):
-        pass
+        Returns
+        -------
+        Treelist
+            Treelist object.
+
+        """
+        return create_treelist(self.id, name, description, method)
+
+    def list_treelists(self) -> list[Treelist]:
+        """
+        Get a list of treelist IDs associated with the dataset.
+
+        Returns
+        -------
+        list[Treelist]
+            List of Treelist objects.
+
+        Raises
+        ------
+        HTTPError
+            If the API returns an error.
+        """
+        return list_treelists(self.id)
 
     # TODO: Add a method to list fuelgrids associated with a dataset
     def list_fuelgrids(self):
@@ -212,9 +234,8 @@ def create_dataset(name: str, description: str, spatial_data: str | dict,
 
     # Raise an error if the API returns an error
     if response.status_code != 201:
-        raise HTTPError(response.text)
+        raise HTTPError(response.json())
 
-    # Return the dataset object
     return Dataset(**response.json())
 
 
@@ -243,9 +264,8 @@ def get_dataset(dataset_id: str) -> Dataset:
 
     # Raise an error if the API returns an error
     if response.status_code != 200:
-        raise HTTPError(response.text)
+        raise HTTPError(response.json())
 
-    # Return the dataset object
     return Dataset(**response.json())
 
 
@@ -269,9 +289,8 @@ def list_datasets() -> list[Dataset]:
 
     # Raise an error if the API returns an error
     if response.status_code != 200:
-        raise HTTPError(response.text)
+        raise HTTPError(response.json())
 
-    # Return the list of datasets
     return [Dataset(**dataset) for dataset in response.json()["datasets"]]
 
 
@@ -301,7 +320,14 @@ def update_dataset(dataset_id: str, name: str = None, description: str = None,
     ------
     HTTPError
         If the API returns an error.
+    ValueError
+        If no attributes are provided to update.
     """
+    # At least one of the optional parameters must be provided
+    if name is None and description is None and tags is None:
+        raise ValueError("At least one of the optional parameters must be "
+                         "provided.")
+
     # Put together the request payload for the API call
     payload_dict = {}
     if name:
@@ -316,11 +342,9 @@ def update_dataset(dataset_id: str, name: str = None, description: str = None,
     endpoint_url = f"{API_URL}/datasets/{dataset_id}"
     response = SESSION.patch(endpoint_url, data=payload)
 
-    # Raise an error if the API returns an error
     if response.status_code != 200:
-        raise HTTPError(response.text)
+        raise HTTPError(response.json())
 
-    # Return the dataset object
     return Dataset(**response.json())
 
 
@@ -344,9 +368,8 @@ def delete_dataset(dataset_id: str) -> list[Dataset]:
 
     # Raise an error if the API returns an error
     if response.status_code != 200:
-        raise HTTPError(response.text)
+        raise HTTPError(response.json())
 
-    # Return the list of remaining datasets
     return [Dataset(**dataset) for dataset in response.json()["datasets"]]
 
 
@@ -365,7 +388,6 @@ def delete_all_datasets() -> None:
 
     # Raise an error if the API returns an error
     if response.status_code != 200:
-        raise HTTPError(response.text)
+        raise HTTPError(response.json())
 
-    # Return nothing
     return None
