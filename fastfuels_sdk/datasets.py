@@ -3,7 +3,7 @@ Dataset class and endpoints for the FastFuels SDK.
 """
 
 # Internal imports
-from . import SESSION, API_URL
+from fastfuels_sdk import SESSION, API_URL
 from fastfuels_sdk.treelists import Treelist, create_treelist, list_treelists
 
 # Core imports
