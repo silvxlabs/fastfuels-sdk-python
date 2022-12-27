@@ -1,5 +1,5 @@
 """
-Dataset class and endpoints for the FastFuels SDK.
+Treelist class and endpoints for the FastFuels SDK.
 """
 
 # Internal imports
@@ -7,6 +7,7 @@ from fastfuels_sdk import SESSION, API_URL
 
 # Core imports
 import json
+import tempfile
 from pathlib import Path
 from datetime import datetime
 
@@ -134,43 +135,7 @@ def list_treelists(dataset_id: str = None) -> list[Treelist]:
     return [Treelist(**treelist) for treelist in response.json()["treelists"]]
 
 
-def get_treelist_data(treelist_id: str, path: Path) -> Treelist:
-    """
-    Get a Treelist's data as a CSV file.
-
-    Parameters
-    ----------
-    treelist_id : str
-        The ID of the Treelist to retrieve data for.
-    path : Path
-        The path to save the CSV file to.
-
-    Returns
-    -------
-    Treelist
-        Treelist object associated with the passed ID at the current time.
-
-    Raises
-    ------
-    HTTPError
-        If the API returns an unsuccessful status code.
-    """
-    # Send the request to the API
-    endpoint_url = f"{API_URL}/treelists/{treelist_id}/data"
-    response = SESSION.get(endpoint_url)
-
-    # Raise an error if the API returns an unsuccessful status code
-    if response.status_code != 200:
-        raise HTTPError(response.json())
-
-    # Save the CSV file to the passed path
-    with open(path, "w") as file:
-        file.write(response.text)
-
-    return Treelist(**response.json())
-
-
-def get_treelist_dataframe(treelist_id: str) -> DataFrame:
+def get_treelist_data(treelist_id: str) -> DataFrame:
     """
     Get a Treelist's data as a Pandas DataFrame.
 
@@ -180,18 +145,23 @@ def get_treelist_dataframe(treelist_id: str) -> DataFrame:
 
     Returns
     -------
-
+    DataFrame
     """
     # Send the request to the API
-    endpoint_url = f"{API_URL}/treelists/{treelist_id}/data"
+    endpoint_url = f"{API_URL}/treelists/{treelist_id}/data?fmt=csv"
     response = SESSION.get(endpoint_url)
 
     # Raise an error if the API returns an unsuccessful status code
     if response.status_code != 200:
         raise HTTPError(response.json())
 
-    # Save the CSV file to the passed path
-    return pd.read_csv(response.text)
+    # Write the response to a temporary file
+    with tempfile.NamedTemporaryFile() as temp_file:
+        temp_file.write(response.content)
+        temp_file.seek(0)
+        df = pd.read_csv(temp_file.name)
+
+    return df
 
 
 def update_treelist(treelist_id: str, name: str = None,
@@ -243,8 +213,27 @@ def update_treelist(treelist_id: str, name: str = None,
     return Treelist(**response.json())
 
 
-def update_treelist_data(treelist_id: str) -> Treelist:
+def update_treelist_data(treelist_id: str, filename: str = None,
+                         data: DataFrame = None) -> Treelist:
     """
+    Allows a user to upload a custom .csv or .parquet file to update an existing
+    treelist resource. Trees outside the spatial bounding box of the dataset
+    will be removed.
+
+    The custom treelist data must contain the following columns:
+     - 'SPCD'
+     - 'DIA_cm'
+     - 'HT_m'
+     - 'STATUSCD'
+     - 'CBH_m'
+     - 'X_m',
+     - 'Y_m'
+
+    The following columns are optional, and will replace allometry during the
+    voxelization process:
+     - 'FOLIAGE_WEIGHT_kg'
+     - 'CROWN_VOLUME_m3'
+     - 'CROWN_RADIUS_m'
 
     Parameters
     ----------
@@ -255,6 +244,25 @@ def update_treelist_data(treelist_id: str) -> Treelist:
     Treelist
 
     """
+    # Must provide either a filename or a DataFrame
+    if filename is None and data is None:
+        raise ValueError("filename or data must be provided")
+
+    #
+
+    # Send the request to the API
+    endpoint_url = f"{API_URL}/treelists/{treelist_id}/data"
+
+    # Upload the data as a CSV file
+    with tempfile.NamedTemporaryFile(suffix=".csv") as file:
+        data.to_csv(file.name, index=False)
+        response = SESSION.put(endpoint_url, files={"file": file})
+
+    # Raise an error if the API returns an unsuccessful status code
+    if response.status_code != 200:
+        raise HTTPError(response.json())
+
+    return Treelist(**response.json())
 
 
 def delete_treelist(treelist_id: str, dataset_id: str = None) -> list[Treelist]:

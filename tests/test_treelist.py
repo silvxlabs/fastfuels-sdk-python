@@ -13,6 +13,7 @@ from datetime import datetime
 
 # External imports
 import pytest
+import numpy as np
 import pandas as pd
 from requests.exceptions import HTTPError
 
@@ -100,6 +101,38 @@ def test_list_treelists():
     assert len(treelists) > 0
     assert isinstance(treelists[0], Treelist)
     assert new_treelist.id in [treelist.id for treelist in treelists]
+
+
+def test_get_treelist_data():
+    """
+    Test the get Treelist Data endpoint.
+    """
+    # Create a new treelist
+    new_treelist = test_create_treelist()
+
+    # Let the treelist finish generating before downloading
+    while new_treelist.status != "Finished":
+        new_treelist = get_treelist(new_treelist.id)
+
+    # Download the treelist data
+    treelist_data = get_treelist_data(new_treelist.id)
+
+    # Check that the treelist data is a pandas dataframe
+    assert isinstance(treelist_data, pd.DataFrame)
+
+    # Check that the treelist data has the correct columns
+    # assert set(treelist_data.columns) == set(["id", "x", "y", "fuelgrid_id"])
+
+    # Check that the treelist data has the correct number of rows
+    num_df_trees = len(treelist_data)
+    num_api_trees = int(new_treelist.summary["area"] * new_treelist.summary["trees_per_area"])
+    assert num_df_trees == num_api_trees
+
+    # Compute basal area per hectare and compare to the summary
+    df_ba = (np.pi * np.square(treelist_data["DIA_cm"] / 2) / 10000).sum()
+    df_ba_per_ha = df_ba / new_treelist.summary["area"]
+    api_ba_per_ha = new_treelist.summary["basal_area_per_area"]
+    assert df_ba_per_ha == pytest.approx(api_ba_per_ha, rel=0.01)
 
 
 def test_update_treelist():
