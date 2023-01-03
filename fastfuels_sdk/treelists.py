@@ -213,8 +213,7 @@ def update_treelist(treelist_id: str, name: str = None,
     return Treelist(**response.json())
 
 
-def update_treelist_data(treelist_id: str, filename: str = None,
-                         data: DataFrame = None) -> Treelist:
+def update_treelist_data(treelist_id: str, data: DataFrame) -> Treelist:
     """
     Allows a user to upload a custom .csv or .parquet file to update an existing
     treelist resource. Trees outside the spatial bounding box of the dataset
@@ -244,19 +243,11 @@ def update_treelist_data(treelist_id: str, filename: str = None,
     Treelist
 
     """
-    # Must provide either a filename or a DataFrame
-    if filename is None and data is None:
-        raise ValueError("filename or data must be provided")
-
-    #
-
-    # Send the request to the API
-    endpoint_url = f"{API_URL}/treelists/{treelist_id}/data"
-
-    # Upload the data as a CSV file
+    # Upload the data as a CSV file and send the request to the API
     with tempfile.NamedTemporaryFile(suffix=".csv") as file:
         data.to_csv(file.name, index=False)
-        response = SESSION.put(endpoint_url, files={"file": file})
+        endpoint_url = f"{API_URL}/treelists/{treelist_id}/data"
+        response = SESSION.patch(endpoint_url, files={"file": file})
 
     # Raise an error if the API returns an unsuccessful status code
     if response.status_code != 200:
