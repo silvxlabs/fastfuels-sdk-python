@@ -3,6 +3,8 @@ Test treelist object and endpoints.
 """
 
 # Internal imports
+import sys
+sys.path.append("../")
 from fastfuels_sdk.datasets import *
 from fastfuels_sdk.treelists import *
 
@@ -22,6 +24,79 @@ DATASET = create_dataset(name="test_dataset", description="test dataset",
 
 TREELIST_STATUS_LIST = ["Queued", "Generating", "Computing Metrics",
                         "Uploading", "Finished"]
+
+
+class TestTreelistObject:
+    """
+    Test the Treelist object.
+    """
+    dataset = create_dataset(
+        name="test",
+        description="test dataset with sdk",
+        spatial_data="3b8e4cf24c8047de8e13aed745fd5bdb"
+    )
+    treelist = create_treelist(
+        dataset_id=dataset.id,
+        name="test",
+        description="test treelist with sdk",
+    )
+
+    def test_get_data(self):
+        """
+        Test the get data method.
+        """
+        # Wait for the treelist to finish generating
+        while self.treelist.status != "Finished":
+            self.treelist = get_treelist(self.treelist.id)
+            sleep(1)
+
+        # Get the treelist data
+        treelist_data = self.treelist.get_data()
+        assert isinstance(treelist_data, pd.DataFrame)
+        assert len(treelist_data) != 0
+        assert list(treelist_data.columns) == ['SPCD', 'DIA_cm', 'HT_m',
+                                               'STATUSCD', 'CBH_m',
+                                               'CROWN_RADIUS_m', 'X_m', 'Y_m']
+
+    def test_update(self):
+        """
+        Test the update method.
+        """
+        updated_treelist = self.treelist.update(name="new_name",
+                                                description="new_description")
+        assert updated_treelist.name == "new_name"
+        assert updated_treelist.description == "new_description"
+
+    def test_update_data(self):
+        """
+        Test the update data method.
+        """
+        # Load the test treelist data csv as a dataframe
+        upload_data = pd.read_csv(
+            "test-data/test_update_treelist_data.csv")
+
+        # Update the treelist data
+        updated_treelist = self.treelist.update_data(upload_data)
+        updated_df = updated_treelist.get_data()
+
+        # Check that the treelist data was updated
+        assert len(updated_df) == len(upload_data)
+
+    def test_delete(self):
+        """
+        Test the delete method.
+        """
+        # Delete the treelist
+        self.treelist.delete()
+
+        # Check that the treelist was deleted. Get request should return 404.
+        with pytest.raises(HTTPError):
+            get_treelist(self.treelist.id)
+
+        # Check that the treelist was deleted from the dataset treelist list
+        dataset = get_dataset(self.dataset.id)
+        assert self.treelist.id not in [treelist_id for treelist_id in
+                                        dataset.treelists]
 
 
 def test_create_treelist():
@@ -106,7 +181,7 @@ def test_list_treelists():
 
 def test_get_treelist_data():
     """
-    Test the get Treelist Data endpoint.
+    Test the get Treelist data endpoint.
     """
     # Create a new treelist
     new_treelist = test_create_treelist()
@@ -122,19 +197,37 @@ def test_get_treelist_data():
     # Check that the treelist data is a pandas dataframe
     assert isinstance(treelist_data, pd.DataFrame)
 
-    # # Check that the treelist data has the correct columns
-    # assert set(treelist_data.columns) == set(["id", "x", "y", "fuelgrid_id"])
+    # Check that the treelist data has the correct columns
+    assert list(treelist_data.columns) == ['SPCD', 'DIA_cm', 'HT_m', 'STATUSCD',
+                                           'CBH_m', 'CROWN_RADIUS_m', 'X_m',
+                                           'Y_m']
 
-    # # Check that the treelist data has the correct number of rows
-    # num_df_trees = len(treelist_data)
-    # num_api_trees = int(new_treelist.summary["area"] * new_treelist.summary["trees_per_area"])
-    # assert num_df_trees == num_api_trees
-    #
-    # # Compute basal area per hectare and compare to the summary
-    # df_ba = (np.pi * np.square(treelist_data["DIA_cm"] / 2) / 10000).sum()
-    # df_ba_per_ha = df_ba / new_treelist.summary["area"]
-    # api_ba_per_ha = new_treelist.summary["basal_area_per_area"]
-    # assert df_ba_per_ha == pytest.approx(api_ba_per_ha, rel=0.01)
+    # Check that the treelist data has the correct number of live trees
+    live_trees = treelist_data[treelist_data["STATUSCD"] == 1]
+    num_live_trees = len(live_trees)
+    num_api_trees = int(
+        new_treelist.summary["area"] * new_treelist.summary["trees_per_area"])
+    assert num_live_trees == num_api_trees
+
+
+def test_get_treelist_data_bad_treelist_id():
+    """
+    Test the get Treelist data endpoint with a bad treelist id.
+    """
+    with pytest.raises(HTTPError):
+        get_treelist_data(uuid4().hex)
+
+
+def test_get_treelist_data_treelist_not_finished():
+    """
+    Test the get Treelist data endpoint with a treelist that is not finished.
+    """
+    # Create a new treelist
+    new_treelist = test_create_treelist()
+
+    # Download the treelist data
+    with pytest.raises(HTTPError):
+        get_treelist_data(new_treelist.id)
 
 
 def test_update_treelist():
@@ -181,7 +274,7 @@ def test_update_treelist_data():
         sleep(1)
 
     # Load the test treelist data csv as a dataframe
-    upload_data = pd.read_csv("tests/test-data/test_update_treelist_data.csv")
+    upload_data = pd.read_csv("test-data/test_update_treelist_data.csv")
 
     # Update the treelist data
     updated_treelist = update_treelist_data(treelist.id, upload_data)
@@ -196,10 +289,23 @@ def test_update_treelist_data_bad_treelist_id():
     Test the update Treelist Data endpoint with a bad treelist id.
     """
     # Load the test treelist data csv as a dataframe
-    upload_data = pd.read_csv("tests/test-data/test_update_treelist_data.csv")
+    upload_data = pd.read_csv("test-data/test_update_treelist_data.csv")
 
     with pytest.raises(HTTPError):
         update_treelist_data(uuid4().hex, upload_data)
+
+
+def test_update_treelist_data_not_finished():
+    """
+    Tests the update data endpoint with a treelist that is not finished.
+    """
+    upload_data = pd.read_csv("test-data/test_update_treelist_data.csv")
+
+    # Create a new treelist
+    treelist = test_create_treelist()
+
+    with pytest.raises(HTTPError):
+        update_treelist_data(treelist.id, upload_data)
 
 
 def test_update_treelist_data_bad_data():
@@ -216,7 +322,7 @@ def test_update_treelist_data_bad_data():
 
     # Load the test treelist data csv as a dataframe
     upload_data = pd.read_csv(
-        "tests/test-data/test_update_bad_treelist_data.csv")
+        "test-data/test_update_bad_treelist_data.csv")
 
     with pytest.raises(HTTPError):
         update_treelist_data(treelist.id, upload_data)
