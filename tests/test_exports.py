@@ -3,6 +3,8 @@ Test Exports module
 """
 
 # Internal imports
+import sys
+sys.path.append("../")
 from fastfuels_sdk.exports import *
 
 

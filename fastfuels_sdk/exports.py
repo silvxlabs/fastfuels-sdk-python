@@ -12,7 +12,7 @@ from numpy import ndarray
 from scipy.io import FortranFile
 
 
-def write_zarr_file_to_quicfire(zroot: zarr.hierarchy.Group,
+def write_zarr_to_quicfire(zroot: zarr.hierarchy.Group,
                                 output_dir: Path | str) -> None:
     """
     Write a FastFuels zarr file to a QUIC-Fire .dat input file stack.
