@@ -3,8 +3,11 @@ Dataset class and endpoints for the FastFuels SDK.
 """
 
 # Internal imports
-from fastfuels_sdk import SESSION, API_URL
-from fastfuels_sdk.treelists import Treelist, create_treelist, list_treelists
+from fastfuels_sdk.api import SESSION, API_URL
+from fastfuels_sdk.treelists import (Treelist, create_treelist, list_treelists,
+                                     delete_all_treelists)
+from fastfuels_sdk.fuelgrids import (Fuelgrid, list_fuelgrids,
+                                     delete_all_fuelgrids)
 
 # Core imports
 import json
@@ -16,39 +19,38 @@ from requests.exceptions import HTTPError
 
 class Dataset:
     """
-    Dataset class for the FastFuels SDK.
+    Class representing the Dataset resource. The Dataset resource is the main
+    resource in the FastFuels API. It represents a collection of spatial data
+    and associated metadata. The spatial data is used to generate Treelists
+    and Fuelgrids. CRUD operations are supported both as methods on the
+    Dataset object and as standalone functions.
 
     Attributes
     ----------
     id : str
-        The unique identifier for the dataset.
+        The unique identifier for the Dataset.
     name : str
-        The name of the dataset.
+        The name of the Dataset.
     description : str
-        A description of the dataset.
+        A description of the Dataset.
     created_on : datetime
-        The date and time the dataset was created.
-    spatial_data : dict
-        The spatial data for the dataset.
+        The date and time the Dataset was created.
     tags : list[str]
-        A list of tags for the dataset.
+        A list of tags for the Dataset.
+    spatial_data : dict
+        The spatial data for the Dataset.
     fvs_variant : str
-        The FVS variant used to generate the dataset.
+        The FVS variant associated with the Dataset's spatial data.
     version : str
-        The version of FastFuels used to create the dataset.
+        The version of FastFuels used to create the Dataset.
     treelists : list[str]
-        A list of treelist IDs associated with the dataset.
+        A list of treelist IDs associated with the Dataset.
     fuelgrids : list[str]
-        A list of fuelgrid IDs associated with the dataset.
-
-    Methods
-    -------
-    get_dataset(dataset_id: str)
-        Get a dataset by its ID.
+        A list of fuelgrid IDs associated with the Dataset.
 
     """
 
-    def __init__(self, id: str, name: str, description: str,
+    def __init__(self, dataset_id: str, name: str, description: str,
                  created_on: str, spatial_data: dict, tags: list[str],
                  fvs_variant: str, version: str, treelists: list[str],
                  fuelgrids: list[str]):
@@ -57,7 +59,7 @@ class Dataset:
 
         Parameters
         ----------
-        id : str
+        dataset_id : str
             The unique identifier for the dataset.
         name : str
             The name of the dataset.
@@ -72,13 +74,14 @@ class Dataset:
         fvs_variant : str
             The FVS variant used to generate the dataset.
         version : str
-            The version of FastFuels used to create the dataset.
+            The version of FastFuels used to create the dataset. The data is
+            read in ISO 8601 format and converted to a datetime object.
         treelists : list[str]
             A list of treelist IDs associated with the dataset.
         fuelgrids : list[str]
             A list of fuelgrid IDs associated with the dataset.
         """
-        self.id: str = id
+        self.id: str = dataset_id
         self.name: str = name
         self.description: str = description
         self.created_on: datetime = datetime.fromisoformat(created_on)
@@ -89,27 +92,40 @@ class Dataset:
         self.treelists: list[str] = treelists
         self.fuelgrids: list[str] = fuelgrids
 
-    def get(self):
+    def refresh(self, inplace: bool = False):
         """
-        Returns an up-to-date snapshot of the dataset resource.
+        Returns an up-to-date snapshot of the dataset resource. This method
+        corresponds to the GET /datasets/{id} endpoint for an existing
+        Dataset resource.
+
+        If inplace is True, the current Dataset object will be updated with the
+        new values. Otherwise, a new Dataset object will be returned.
 
         Returns
         -------
-        Dataset
-            Dataset object.
+        Dataset or None
+            Dataset object if inplace is True, otherwise None.
 
         Raises
         ------
         HTTPError
             If the API returns an error.
         """
-        return get_dataset(self.id)
+        refreshed_dataset = get_dataset(self.id)
+        if inplace:
+            self.__dict__.update(refreshed_dataset.__dict__)
+        else:
+            return refreshed_dataset
 
     def update(self, name: str = None, description: str = None,
                tags: list = None, inplace: bool = False):
         """
-        Update a dataset resource. The attributes that can be updated are name,
-        description, and tags.
+        Update a Dataset resource. The attributes that can be updated are name,
+        description, and tags. The spatial data cannot be updated for an existing
+        Dataset.
+
+        If inplace is True, the current Dataset object will be updated with the
+        new values. Otherwise, a new Dataset object will be returned.
 
         Parameters
         ----------
@@ -142,6 +158,7 @@ class Dataset:
     def create_treelist(self, name: str, description: str,
                         method: str = "random") -> Treelist:
         """
+        # TODO: Add docstring
         Create a treelist from the dataset.
 
         Returns
@@ -149,12 +166,18 @@ class Dataset:
         Treelist
             Treelist object.
 
+        Raises
+        ------
+        HTTPError
+            If the API returns an error.
+
         """
         return create_treelist(self.id, name, description, method)
 
     def list_treelists(self) -> list[Treelist]:
         """
-        Get a list of treelist IDs associated with the dataset.
+        # TODO: Add docstring
+        Get a list of Treelist objects associated with the dataset.
 
         Returns
         -------
@@ -166,17 +189,57 @@ class Dataset:
         HTTPError
             If the API returns an error.
         """
-        return list_treelists(self.id)
+        return list_treelists(dataset_id=self.id)
 
-    # TODO: Add a method to list fuelgrids associated with a dataset
-    def list_fuelgrids(self):
-        pass
-
-    def delete(self):
+    def list_fuelgrids(self) -> list[Fuelgrid]:
         """
-        Deletes the current dataset resource. This is a recursive delete
-        operation so any TreeLists and FuelGrids associated with the dataset
-        will also be deleted.
+        # TODO: Add docstring
+        Get a list of Fuelgrid objects associated with the dataset.
+
+        Returns
+        -------
+        list[Fuelgrid]
+            List of Fuelgrid objects.
+        """
+        return list_fuelgrids(dataset_id=self.id)
+
+    def delete_treelists(self):
+        """
+        # TODO: Add Docstring
+        Delete all treelists associated with the dataset.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        HTTPError
+            If the API returns an error.
+        """
+        delete_all_treelists(dataset_id=self.id)
+
+    def delete_fuelgrids(self):
+        """
+        # TODO: Add docstring
+        Delete all fuelgrids associated with the dataset.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        HTTPError
+            If the API returns an error.
+        """
+        delete_all_fuelgrids(dataset_id=self.id)
+
+    def delete(self) -> None:
+        """
+        Delete a Dataset resource. This is a recursive delete, meaning that all
+        Treelists and Fuelgrids associated with the dataset will also be deleted.
+        Returns a list of the remaining Dataset objects for the current user.
 
         Raises
         ------
@@ -190,10 +253,14 @@ def create_dataset(name: str, description: str, spatial_data: str | dict,
                    tags: list = None) -> Dataset:
     """
     Creates a new FastFuels Dataset. A Dataset is the primary object for storing
-    spatial data in the FastFuels API. A Dataset can be created from a feature
-    id created through the GIS API or from a geoJSON. Datasets can be used to
-    create TreeLists for distributing trees on a landscape, and FuelGrids to
-    voxelize a TreeList for use in a 3D model.
+    spatial data in the FastFuels API. The primary role of a Dataset is to
+    store spatial data and to provide a container for Treelists and Fuelgrids.
+    All data products generated by FastFuels are associated with a Dataset.
+
+    Dataset spatial data can be provided as a GeoJSON dictionary. The spatial
+    data must be a valid GeoJSON FeatureCollection object. Alternatively, the
+    spatial data can be provided as a string containing a valid feature ID from
+    the Silvx Labs GIS API.
 
     Parameters
     ----------
@@ -236,12 +303,17 @@ def create_dataset(name: str, description: str, spatial_data: str | dict,
     if response.status_code != 201:
         raise HTTPError(response.json())
 
-    return Dataset(**response.json())
+    # Rename the "id" key to "dataset_id" for object instantiation
+    response_dict = response.json()
+    response_dict["dataset_id"] = response_dict.pop("id")
+
+    return Dataset(**response_dict)
 
 
 def get_dataset(dataset_id: str) -> Dataset:
     """
-    Get a dataset object by its ID.
+    Returns a Dataset object populated with the resource data for a given
+    Dataset ID.
 
     Parameters
     ----------
@@ -271,7 +343,7 @@ def get_dataset(dataset_id: str) -> Dataset:
 
 def list_datasets() -> list[Dataset]:
     """
-    Get a list of all datasets.
+    Get a list of all Dataset objects for the current user.
 
     Returns
     -------
@@ -297,8 +369,9 @@ def list_datasets() -> list[Dataset]:
 def update_dataset(dataset_id: str, name: str = None, description: str = None,
                    tags: list = None) -> Dataset:
     """
-    Update a dataset resource. The attributes that can be updated are name,
-    description, and tags.
+    Update a Dataset resource. The attributes that can be updated are name,
+    description, and tags. The spatial data cannot be updated for an existing
+    Dataset.
 
     Parameters
     ----------
@@ -350,7 +423,9 @@ def update_dataset(dataset_id: str, name: str = None, description: str = None,
 
 def delete_dataset(dataset_id: str) -> list[Dataset]:
     """
-    Delete a dataset resource.
+    Delete a Dataset resource. This is a recursive delete, meaning that all
+    Treelists and Fuelgrids associated with the dataset will also be deleted.
+    Returns a list of the remaining Dataset objects for the current user.
 
     Parameters
     ----------
@@ -375,7 +450,9 @@ def delete_dataset(dataset_id: str) -> list[Dataset]:
 
 def delete_all_datasets() -> None:
     """
-    Delete all dataset resources.
+    Delete all Dataset resources. This is a recursive delete, meaning that all
+    Treelists and Fuelgrids associated with the user's Datasets will also be
+    deleted.
 
     Raises
     ------

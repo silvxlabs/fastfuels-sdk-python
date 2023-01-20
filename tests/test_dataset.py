@@ -3,11 +3,16 @@ Test dataset endpoints and objects.
 """
 
 # Internal imports
+import sys
+sys.path.append("../")
 from fastfuels_sdk.datasets import *
+from fastfuels_sdk.fuelgrids import get_fuelgrid
+from fastfuels_sdk.treelists import get_treelist
 
 # Core imports
 import json
 from uuid import uuid4
+from time import sleep
 from datetime import datetime
 
 # External imports
@@ -22,11 +27,11 @@ class TestDatasetObject:
         spatial_data="3b8e4cf24c8047de8e13aed745fd5bdb"
     )
 
-    def test_get_method(self):
+    def test_refresh_method(self):
         """
         Test the get method of the Dataset object.
         """
-        new_dataset = self.dataset.get()
+        new_dataset = self.dataset.refresh()
 
         # Check that the dataset object is the same as the one returned by the
         # get method
@@ -40,6 +45,25 @@ class TestDatasetObject:
         assert new_dataset.treelists == self.dataset.treelists
         assert new_dataset.fuelgrids == self.dataset.fuelgrids
         assert new_dataset.version == self.dataset.version
+
+    def test_refresh_method_inplace(self):
+        """
+        Test the refresh method of the Dataset object using the inplace argument.
+        """
+        self.dataset.refresh(inplace=True)
+
+        # Check that the dataset object is the same as the one returned by the
+        # get method
+        assert self.dataset.id == self.dataset.id
+        assert self.dataset.name == self.dataset.name
+        assert self.dataset.description == self.dataset.description
+        assert self.dataset.spatial_data == self.dataset.spatial_data
+        assert self.dataset.tags == self.dataset.tags
+        assert self.dataset.created_on == self.dataset.created_on
+        assert self.dataset.fvs_variant == self.dataset.fvs_variant
+        assert self.dataset.treelists == self.dataset.treelists
+        assert self.dataset.fuelgrids == self.dataset.fuelgrids
+        assert self.dataset.version == self.dataset.version
 
     def test_update_method(self):
         """
@@ -63,6 +87,10 @@ class TestDatasetObject:
         assert new_dataset.fuelgrids == self.dataset.fuelgrids
         assert new_dataset.version == self.dataset.version
 
+        # Try the update method with no arguments
+        with pytest.raises(ValueError):
+            self.dataset.update()
+
     def test_update_method_inplace(self):
         """
         Test the update method of the Dataset object using the inplace argument.
@@ -78,6 +106,112 @@ class TestDatasetObject:
         assert self.dataset.name == "new name"
         assert self.dataset.description == "new description"
         assert self.dataset.tags == ["new-tag"]
+
+    def test_create_treelist_method(self):
+        """
+        Test the create_treelist method of the Dataset object.
+        """
+        treelist = self.dataset.create_treelist(
+            name="test-treelist",
+            description="test treelist with sdk")
+
+        assert treelist.id is not None
+        assert treelist.name == "test-treelist"
+        assert treelist.description == "test treelist with sdk"
+        assert treelist.method == "random"
+        assert treelist.dataset_id == self.dataset.id
+
+        self.dataset.refresh(inplace=True)
+        assert treelist.id in [treelist_id for treelist_id in
+                               self.dataset.treelists]
+
+    def test_list_treelists_method(self):
+        """
+        Test the list_treelists method of the Dataset object.
+        """
+        treelists = self.dataset.list_treelists()
+        assert isinstance(treelists, list)
+        assert len(treelists) == len(self.dataset.treelists)
+        assert all([isinstance(treelist, Treelist) for treelist in treelists])
+        for treelist in treelists:
+            assert treelist.id in self.dataset.treelists
+
+    def test_list_fuelgrids_method(self):
+        """
+        Test the list_fuelgrids method of the Dataset object.
+        """
+        treelist = self.dataset.create_treelist(
+            name="test-treelist",
+            description="test treelist with sdk")
+        while treelist.status != "Finished":
+            sleep(1)
+            treelist = get_treelist(treelist.id)
+
+        fuelgrid = treelist.create_fuelgrid(
+            name="test_fuelgrid",
+            description="test fuelgrid",
+            horizontal_resolution=1,
+            vertical_resolution=1,
+            border_pad=0,
+            distribution_method="uniform"
+        )
+        while fuelgrid.status != "Finished":
+            sleep(2)
+            fuelgrid = get_fuelgrid(fuelgrid.id)
+
+        self.dataset.refresh(inplace=True)
+        fuelgrids = self.dataset.list_fuelgrids()
+        assert isinstance(fuelgrids, list)
+        assert len(fuelgrids) == len(self.dataset.fuelgrids)
+        assert all([isinstance(fuelgrid, Fuelgrid) for fuelgrid in fuelgrids])
+        for fuelgrid in fuelgrids:
+            assert fuelgrid.id in self.dataset.fuelgrids
+
+    def test_delete_treelists_method(self):
+        """
+        Test the delete_treelists method of the Dataset object.
+        """
+        treelists = list_treelists(self.dataset.id)
+        for treelist in treelists:
+            while treelist.status != "Finished":
+                sleep(2)
+                treelist = get_treelist(treelist.id)
+
+        self.dataset.delete_treelists()
+        self.dataset.refresh(inplace=True)
+        assert self.dataset.treelists == []
+        assert self.dataset.fuelgrids == []
+        treelists = list_treelists(self.dataset.id)
+        assert len(treelists) == 0
+
+    def test_delete_fuelgrids_method(self):
+        """
+        Test the delete_fuelgrids method of the Dataset object.
+        """
+        treelist = self.dataset.create_treelist(
+            name="test-treelist",
+            description="test treelist with sdk")
+        while treelist.status != "Finished":
+            sleep(2)
+            treelist = get_treelist(treelist.id)
+
+        fuelgrid = treelist.create_fuelgrid(
+            name="test_fuelgrid",
+            description="test fuelgrid",
+            horizontal_resolution=1,
+            vertical_resolution=1,
+            border_pad=0,
+            distribution_method="uniform"
+        )
+        while fuelgrid.status != "Finished":
+            sleep(2)
+            fuelgrid = get_fuelgrid(fuelgrid.id)
+
+        self.dataset.delete_fuelgrids()
+        self.dataset.refresh(inplace=True)
+        assert self.dataset.fuelgrids == []
+        fuelgrids = list_fuelgrids(self.dataset.id)
+        assert len(fuelgrids) == 0
 
     def test_delete_method(self):
         """
@@ -127,7 +261,7 @@ def test_create_dataset_geojson():
     Test creating a dataset.
     """
     # Load the geojson
-    with open("tests/test-data/test.geojson", "r") as f:
+    with open("test-data/test.geojson", "r") as f:
         geojson = json.load(f)
 
     # Create a dataset
