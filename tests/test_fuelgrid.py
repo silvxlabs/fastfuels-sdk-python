@@ -3,6 +3,8 @@ Test fuelgrid object and endpoints.
 """
 
 # Internal imports
+import sys
+sys.path.append("../")
 from fastfuels_sdk.datasets import *
 from fastfuels_sdk.treelists import *
 from fastfuels_sdk.fuelgrids import *
@@ -20,16 +22,20 @@ import pytest
 import numpy as np
 from requests.exceptions import HTTPError
 
-# Create a test dataset
-DATASET = create_dataset(name="test_dataset", description="test dataset",
-                         spatial_data="3b8e4cf24c8047de8e13aed745fd5bdb")
 
-# Create a test treelist
-TREELIST = create_treelist(dataset_id=DATASET.id, name="test_treelist",
-                           description="test treelist")
-while TREELIST.status != "Finished":
-    TREELIST = get_treelist(TREELIST.id)
-    sleep(2)
+def setup_module(module):
+    # Create a test dataset
+    global DATASET
+    DATASET = create_dataset(name="test_dataset", description="test dataset",
+                             spatial_data="3b8e4cf24c8047de8e13aed745fd5bdb")
+
+    # Create a test treelist
+    global TREELIST
+    TREELIST = create_treelist(dataset_id=DATASET.id, name="test_treelist",
+                               description="test treelist")
+    while TREELIST.status != "Finished":
+        TREELIST = get_treelist(TREELIST.id)
+        sleep(2)
 
 
 def test_create_fuelgrid_uniform():
@@ -329,7 +335,7 @@ def test_download_fuelgrid_data():
                                border_pad=0,
                                distribution_method="uniform")
 
-    # Assert that we get a 202 response when the fuelgrid is not finished
+    # Assert that we get an error when the fuelgrid is not finished
     with pytest.raises(HTTPError):
         download_fuelgrid_data(fuelgrid.id, "test-data")
 
@@ -452,6 +458,44 @@ def test_download_fuelgrid_data_bad_id():
     """
     with pytest.raises(HTTPError):
         download_fuelgrid_data(uuid4().hex, "test-data")
+
+
+def test_delete_fuelgrid():
+    """
+    Test deleting a fuelgrid.
+    """
+    # Create a fuelgrid
+    fuelgrid = create_fuelgrid(dataset_id=DATASET.id,
+                               treelist_id=TREELIST.id,
+                               name="fuelgrid_delete_test",
+                               description="test fuelgrid",
+                               horizontal_resolution=1,
+                               vertical_resolution=1,
+                               border_pad=0,
+                               distribution_method="uniform")
+
+    # Wait for the fuelgrid to finish
+    while fuelgrid.status != "Finished":
+        fuelgrid = get_fuelgrid(fuelgrid.id)
+        sleep(2)
+
+    # Assert that the fuelgrid is in the database
+    assert get_fuelgrid(fuelgrid.id)
+    dataset = get_dataset(DATASET.id)
+    assert fuelgrid.id in [fg_id for fg_id in dataset.fuelgrids]
+    treelist = get_treelist(TREELIST.id)
+    assert fuelgrid.id in [fg_id for fg_id in treelist.fuelgrids]
+
+    # Delete the fuelgrid
+    delete_fuelgrid(fuelgrid.id)
+
+    # Assert that the fuelgrid is no longer in the database
+    with pytest.raises(HTTPError):
+        get_fuelgrid(fuelgrid.id)
+    dataset = get_dataset(DATASET.id)
+    assert fuelgrid.id not in [fg_id for fg_id in dataset.fuelgrids]
+    treelist = get_treelist(TREELIST.id)
+    assert fuelgrid.id not in [fg_id for fg_id in treelist.fuelgrids]
 
 
 def test_delete_all_fuelgrids():
