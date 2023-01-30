@@ -28,7 +28,7 @@ class Treelist:
     # TODO #5: Add Methods section.
     """
 
-    def __init__(self, treelist_id: str, name: str, description: str, method: str,
+    def __init__(self, id: str, name: str, description: str, method: str,
                  dataset_id: str, status: str, created_on: str,
                  summary: dict, fuelgrids: list[str], version: str):
         """
@@ -36,7 +36,7 @@ class Treelist:
 
         Parameters
         ----------
-        treelist_id : str
+        id : str
             The unique identifier of the treelist.
         name : str
             The name of the treelist.
@@ -59,7 +59,7 @@ class Treelist:
         version : str
             The version of standgen used to generate the treelist.
         """
-        self.id: str = treelist_id
+        self.id: str = id
         self.name: str = name
         self.description: str = description
         self.method: str = method
@@ -279,11 +279,7 @@ def create_treelist(dataset_id: str, name: str, description: str,
     if response.status_code != 201:
         raise HTTPError(response.json())
 
-    # Rename the "id" key to "treelist_id" for object instantiation
-    response_dict = response.json()
-    response_dict["treelist_id"] = response_dict.pop("id")
-
-    return Treelist(**response_dict)
+    return Treelist(**response.json())
 
 
 def get_treelist(treelist_id, units: str = "metric") -> Treelist:
