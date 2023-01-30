@@ -128,5 +128,14 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# IDE
+.idea/
+.vscode/
+
+# Local System
+.DS_Store
+
 # Local directory
 .config/
+ncar-data/
+local_projects/
