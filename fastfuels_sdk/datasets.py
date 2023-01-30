@@ -50,7 +50,7 @@ class Dataset:
 
     """
 
-    def __init__(self, dataset_id: str, name: str, description: str,
+    def __init__(self, id: str, name: str, description: str,
                  created_on: str, spatial_data: dict, tags: list[str],
                  fvs_variant: str, version: str, treelists: list[str],
                  fuelgrids: list[str]):
@@ -59,7 +59,7 @@ class Dataset:
 
         Parameters
         ----------
-        dataset_id : str
+        id : str
             The unique identifier for the dataset.
         name : str
             The name of the dataset.
@@ -81,7 +81,7 @@ class Dataset:
         fuelgrids : list[str]
             A list of fuelgrid IDs associated with the dataset.
         """
-        self.id: str = dataset_id
+        self.id: str = id
         self.name: str = name
         self.description: str = description
         self.created_on: datetime = datetime.fromisoformat(created_on)
@@ -303,11 +303,7 @@ def create_dataset(name: str, description: str, spatial_data: str | dict,
     if response.status_code != 201:
         raise HTTPError(response.json())
 
-    # Rename the "id" key to "dataset_id" for object instantiation
-    response_dict = response.json()
-    response_dict["dataset_id"] = response_dict.pop("id")
-
-    return Dataset(**response_dict)
+    return Dataset(**response.json())
 
 
 def get_dataset(dataset_id: str) -> Dataset:
