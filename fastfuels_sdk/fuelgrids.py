@@ -20,7 +20,7 @@ class Fuelgrid:
     Fuelgrid class for the FastFuels SDK.
     """
 
-    def __init__(self, fuelgrid_id: str, dataset_id: str, treelist_id: str,
+    def __init__(self, id: str, dataset_id: str, treelist_id: str,
                  name: str, description: str, surface_fuel_source: str,
                  surface_interpolation_method: str, distribution_method: str,
                  horizontal_resolution: float, vertical_resolution: float,
@@ -30,7 +30,7 @@ class Fuelgrid:
 
         Parameters
         ----------
-        fuelgrid_id : str
+        id : str
             The unique identifier for the fuelgrid.
         dataset_id : str
             The unique identifier for the dataset used to create the fuelgrid.
@@ -60,7 +60,7 @@ class Fuelgrid:
         version : str
             The version of treevox used to generate the fuelgrid.
         """
-        self.id: str = fuelgrid_id
+        self.id: str = id
         self.dataset_id: str = dataset_id
         self.treelist_id: str = treelist_id
         self.name: str = name
@@ -75,7 +75,7 @@ class Fuelgrid:
         self.created_on: datetime = datetime.fromisoformat(created_on)
         self.version: str = version
 
-    def download_data(self, fpath: Path | str) -> None:
+    def download_zarr(self, fpath: Path | str) -> None:
         """
         Stream fuel grid 3D array data to a binary zarr file
 
@@ -93,7 +93,7 @@ class Fuelgrid:
         HTTPError
             If the API returns an unsuccessful status code.
         """
-        download_fuelgrid_data(self.id, fpath)
+        download_zarr(self.id, fpath)
 
     def update(self, name: str = None, description: str = None,
                inplace: bool = False) -> None:
@@ -312,7 +312,7 @@ def list_fuelgrids(dataset_id: str = None,
     return [Fuelgrid(**fuelgrid) for fuelgrid in response.json()["fuelgrids"]]
 
 
-def download_fuelgrid_data(fuelgrid_id: str, fpath: Path | str) -> None:
+def download_zarr(fuelgrid_id: str, fpath: Path | str) -> None:
     """
     Stream fuel grid 3D array data to a binary zarr file
 
