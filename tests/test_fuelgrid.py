@@ -337,7 +337,7 @@ def test_download_fuelgrid_data():
 
     # Assert that we get an error when the fuelgrid is not finished
     with pytest.raises(HTTPError):
-        download_fuelgrid_data(fuelgrid.id, "test-data")
+        download_zarr(fuelgrid.id, "test-data")
 
     # Wait for the fuelgrid to finish
     while fuelgrid.status != "Finished":
@@ -353,7 +353,7 @@ def test_download_fuelgrid_data():
                   Path("test-data/fuelgrid_download_test.zip"),
                   Path("test-data")]:
         # Download the fuelgrid data to a file path
-        download_fuelgrid_data(fuelgrid.id, fpath)
+        download_zarr(fuelgrid.id, fpath)
 
         # Open the file and check that it is not empty
         zroot = zarr.open(f"test-data/{fuelgrid.name}.zip")
@@ -457,7 +457,7 @@ def test_download_fuelgrid_data_bad_id():
     Test downloading fuelgrid data with a bad fuelgrid id.
     """
     with pytest.raises(HTTPError):
-        download_fuelgrid_data(uuid4().hex, "test-data")
+        download_zarr(uuid4().hex, "test-data")
 
 
 def test_delete_fuelgrid():
