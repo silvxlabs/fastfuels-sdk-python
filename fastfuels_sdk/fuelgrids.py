@@ -138,9 +138,9 @@ class Fuelgrid:
 
 
 def create_fuelgrid(dataset_id: str, treelist_id: str, name: str,
-                    description: str, distribution_method: str,
-                    horizontal_resolution: float, vertical_resolution: float,
-                    border_pad: float, surface_fuel_source: str = "LF_SB40",
+                    description: str = "", distribution_method: str = "uniform",
+                    horizontal_resolution: float = 1, vertical_resolution: float = 1,
+                    border_pad: float = 0, surface_fuel_source: str = "LF_SB40",
                     surface_interpolation_method: str = "nearest") -> Fuelgrid:
     """
     Create a fuelgrid by voxelizing a treelist.
