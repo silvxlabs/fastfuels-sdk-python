@@ -1,0 +1,10 @@
+$nx  ! number of cells in x direction
+$ny  ! number of cells in y direction
+$nz  ! number of cells in z direction
+$dx  ! cell size in x direction (in meters)
+$dy  ! cell size in y direction (in meters)
+$dz  ! cell size in z direction (in meters)
+$seed  ! random number seed
+$wind_dir  ! wind direction (in degrees)
+$wind_var  ! wind direction variability (in degrees)
+$duration  ! duration of simulation (in years)
