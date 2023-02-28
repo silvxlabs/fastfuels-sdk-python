@@ -220,6 +220,9 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
     Required zarr arrays:
     - canopy/bulk-density
     - canopy/SAV
+
+    Code contributed by Eric Mueller, NIST on 04/05/2022. Modified by Anthony
+    Marcozzi to work with the new zarr file format.
     """
     # Validate the zarr file
     required_groups = ["canopy"]
@@ -295,6 +298,7 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
             f.write_record(np.array(bd, dtype=np.float64))
 
         f.close()
+
 
 def _write_np_array_to_dat(array: ndarray, dat_name: str,
                            output_dir: Path) -> None:
