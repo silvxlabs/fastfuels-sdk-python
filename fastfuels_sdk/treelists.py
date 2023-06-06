@@ -10,6 +10,7 @@ from fastfuels_sdk.fuelgrids import (Fuelgrid, create_fuelgrid, list_fuelgrids,
 # Core imports
 import json
 import tempfile
+from time import sleep
 from pathlib import Path
 from datetime import datetime
 
@@ -69,6 +70,27 @@ class Treelist:
         self.summary: dict = summary
         self.fuelgrids: list[str] = fuelgrids
         self.version: str = version
+
+    def refresh(self, inplace=False):
+        """
+        Refresh the Treelist object with the latest data from the server.
+
+        Parameters
+        ----------
+        inplace : bool, optional
+            Whether to update the treelist object in place, or return a new
+            treelist object, by default False
+
+        Returns
+        -------
+        Treelist | None
+            A new Treelist object if inplace is False, otherwise None.
+        """
+        treelist = get_treelist(self.id)
+        if inplace:
+            self.__dict__ = treelist.__dict__
+        else:
+            return treelist
 
     def get_data(self) -> DataFrame:
         """
@@ -221,6 +243,51 @@ class Treelist:
     # TODO: Write a method to list fuelgrids associated with a dataset
     def list_fuelgrids(self):
         pass
+
+    def wait_until_finished(self, step: float = 5, timeout: float = 600,
+                            inplace: bool = True, verbose: bool = False):
+        """
+        Wait until the treelist resource is finished.
+
+        Parameters
+        ----------
+        step : float, optional
+            The time in seconds to wait between checking the status of the
+            tree list, by default 5 seconds.
+        timeout : float, optional
+            The time in seconds to wait before raising a TimeoutError, by
+            default 600 seconds (10 minutes). Note that the timeout is
+            different from the timeout used in the API. Just because the
+            timeout is reached here does not mean that the treelist has
+            failed.
+        inplace : bool, optional
+            Whether to update the treelist object in place, or return a new
+            treelist object. By default, False.
+        verbose : bool, optional
+            Whether to print the status of the treelist, by default False.
+
+        Returns
+        -------
+        Treelist | None
+            If inplace is False, returns a new treelist object. Otherwise,
+            returns None and updates the existing treelist object in place.
+        """
+        elapsed_time = 0
+        treelist = get_treelist(self.id)
+        while treelist.status != "Finished":
+            if elapsed_time >= timeout:
+                raise TimeoutError("Timed out waiting for treelist to finish.")
+            sleep(step)
+            elapsed_time += step
+            treelist = get_treelist(self.id)
+            if verbose:
+                print(f"Treelist {treelist.name}: {treelist.status} "
+                      f"({elapsed_time:.2f}s)")
+
+        if inplace:
+            self.__dict__ = treelist.__dict__
+        else:
+            return treelist
 
     # TODO: Write a method to delete fuelgrids associated with a treelist
     def delete_fuelsgrids(self):
@@ -391,18 +458,17 @@ def get_treelist_data(treelist_id: str) -> DataFrame:
         If the API returns an unsuccessful status code.
     """
     # Send the request to the API
-    endpoint_url = f"{API_URL}/treelists/{treelist_id}/data?fmt=csv"
-    response = SESSION.get(endpoint_url)
+    endpoint_url = f"{API_URL}/treelists/{treelist_id}/data?fmt=json"
+
+    # Stream the response from the API
+    response = SESSION.get(endpoint_url, stream=True)
 
     # Raise an error if the API returns an unsuccessful status code
     if response.status_code != 200:
         raise HTTPError(response.json())
 
-    # Write the response to a temporary file
-    with tempfile.NamedTemporaryFile() as temp_file:
-        temp_file.write(response.content)
-        temp_file.seek(0)
-        df = pd.read_csv(temp_file.name)
+    json_str = response.json()
+    df = pd.read_json(json.dumps(json_str), orient="split")
 
     return df
 

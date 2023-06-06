@@ -8,6 +8,7 @@ from fastfuels_sdk.api import SESSION, API_URL
 # Core imports
 import json
 import shutil
+from time import sleep
 from pathlib import Path
 from datetime import datetime
 
@@ -24,7 +25,8 @@ class Fuelgrid:
                  name: str, description: str, surface_fuel_source: str,
                  surface_interpolation_method: str, distribution_method: str,
                  horizontal_resolution: float, vertical_resolution: float,
-                 border_pad: float, status: str, created_on: str, version: str):
+                 border_pad: float, status: str, created_on: str, version: str,
+                 outputs: dict):
         """
         Initialize a Fuelgrid object.
 
@@ -59,6 +61,8 @@ class Fuelgrid:
             8601 format and converted to a datetime object.
         version : str
             The version of treevox used to generate the fuelgrid.
+        outputs : dict
+            The outputs of the fuelgrid.
         """
         self.id: str = id
         self.dataset_id: str = dataset_id
@@ -74,6 +78,55 @@ class Fuelgrid:
         self.status: str = status
         self.created_on: datetime = datetime.fromisoformat(created_on)
         self.version: str = version
+        self.outputs: dict = outputs
+
+    def wait_until_finished(self, step: float = 5, timeout: float = 600,
+                            inplace: bool = False, verbose: bool = False):
+        """
+        Wait until the fuelgrid resource is finished.
+
+        Parameters
+        ----------
+        step : float, optional
+            The time in seconds to wait between checking the status of the
+            Fuelgrid, by default 5 seconds.
+        timeout : float, optional
+            The time in seconds to wait before raising a TimeoutError, by
+            default 600 seconds (10 minutes). Note that the timeout is
+            different from the timeout used in the API. Just because the
+            timeout is reached here does not mean that the Fuelgrid resource has
+            failed.
+        inplace : bool, optional
+            Whether to update the Fuelgrid object in place, or return a new
+            fuelgrid object. By default, False.
+        verbose : bool, optional
+            Whether to print the status of the Fuelgrid, by default False.
+
+        Returns
+        -------
+        Fuelgrid | None
+            If inplace is False, returns a new Fuelgrid object. Otherwise,
+            returns None and updates the existing fuelgrid object in place.
+        """
+        elapsed_time = 0
+        fuelgrid = get_fuelgrid(self.id)
+        while fuelgrid.status != "Finished":
+            if fuelgrid.status == "Failed":
+                raise RuntimeError(f"Fuelgrid {fuelgrid.name} has status "
+                                   f"'Failed'.")
+            if elapsed_time >= timeout:
+                raise TimeoutError("Timed out waiting for fuelgrid to finish.")
+            sleep(step)
+            elapsed_time += step
+            fuelgrid = get_fuelgrid(self.id)
+            if verbose:
+                print(f"Fuelgrid {fuelgrid.name}: {fuelgrid.status} "
+                      f"({elapsed_time:.2f}s)")
+
+        if inplace:
+            self.__dict__ = fuelgrid.__dict__
+        else:
+            return fuelgrid
 
     def download_zarr(self, fpath: Path | str) -> None:
         """
@@ -139,9 +192,11 @@ class Fuelgrid:
 
 def create_fuelgrid(dataset_id: str, treelist_id: str, name: str,
                     description: str = "", distribution_method: str = "uniform",
-                    horizontal_resolution: float = 1, vertical_resolution: float = 1,
+                    horizontal_resolution: float = 1,
+                    vertical_resolution: float = 1,
                     border_pad: float = 0, surface_fuel_source: str = "LF_SB40",
-                    surface_interpolation_method: str = "nearest") -> Fuelgrid:
+                    surface_interpolation_method: str = "nearest",
+                    write_sparse_array: bool = False) -> Fuelgrid:
     """
     Create a fuelgrid by voxelizing a treelist.
 
@@ -171,6 +226,13 @@ def create_fuelgrid(dataset_id: str, treelist_id: str, name: str,
     surface_interpolation_method : str
         The interpolation method to use for surface fuel data. "nearest",
         "zipper", "linear", and "cubic" are supported. Defaults to "nearest".
+    write_sparse_array : bool
+        If True, a sparse fuel grid array will be written to disk. This is in
+        addition to the zarr file. Defaults to False. This is useful for
+        linking the fuelgrid to treelist data for fire effects modeling. The
+        sparse array is a 3D array with the same dimensions as the zarr file.
+        Writing the sparse array can take a long time and is not recommended
+        for large fuel grids.
 
     Returns
     -------
@@ -224,7 +286,10 @@ def create_fuelgrid(dataset_id: str, treelist_id: str, name: str,
         "distribution_method": distribution_method,
         "horizontal_resolution": horizontal_resolution,
         "vertical_resolution": vertical_resolution,
-        "border_pad": border_pad
+        "border_pad": border_pad,
+        "outputs": {
+            "sparse_array": write_sparse_array,
+        }
     }
     payload = json.dumps(payload_dict)
 
