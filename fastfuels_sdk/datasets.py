@@ -155,7 +155,7 @@ class Dataset:
         else:
             return updated_dataset
 
-    def create_treelist(self, name: str, description: str,
+    def create_treelist(self, name: str, description: str = "",
                         method: str = "random") -> Treelist:
         """
         # TODO: Add docstring
