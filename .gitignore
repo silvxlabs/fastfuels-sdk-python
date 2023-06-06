@@ -139,3 +139,4 @@ dmypy.json
 .config/
 ncar-data/
 local_projects/
+tests/test-data/tmp/
