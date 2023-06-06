@@ -24,7 +24,8 @@ class Fuelgrid:
                  name: str, description: str, surface_fuel_source: str,
                  surface_interpolation_method: str, distribution_method: str,
                  horizontal_resolution: float, vertical_resolution: float,
-                 border_pad: float, status: str, created_on: str, version: str):
+                 border_pad: float, status: str, created_on: str, version: str,
+                 outputs: dict):
         """
         Initialize a Fuelgrid object.
 
@@ -59,6 +60,8 @@ class Fuelgrid:
             8601 format and converted to a datetime object.
         version : str
             The version of treevox used to generate the fuelgrid.
+        outputs : dict
+            The outputs of the fuelgrid.
         """
         self.id: str = id
         self.dataset_id: str = dataset_id
