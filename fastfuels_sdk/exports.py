@@ -88,24 +88,24 @@ def export_zarr_to_quicfire(zroot: zarr.hierarchy.Group,
     # Write bulk-density data to a .dat file
     bulk_density_array = canopy_group["bulk-density"][...]
     bulk_density_array[..., 0] += surface_group["bulk-density"][...]
-    _write_np_array_to_dat(bulk_density_array, "treesrhof.dat", output_dir)
+    _write_np_array_to_dat(bulk_density_array, "treesrhof.dat", output_dir, np.float32)
     del bulk_density_array
 
     # Write Fuel Moisture Content (FMC) data to a .dat file
     fmc_array = canopy_group["FMC"][...]
     fmc_array[..., 0] = surface_group["FMC"][...]
-    _write_np_array_to_dat(fmc_array, "treesmoist.dat", output_dir)
+    _write_np_array_to_dat(fmc_array, "treesmoist.dat", output_dir, np.float32)
     del fmc_array
 
     # Write fuel depth data to a .dat file
     fuel_depth_array = np.zeros_like(canopy_group["bulk-density"][...])
     fuel_depth_array[..., 0] = surface_group["fuel-depth"][...]
-    _write_np_array_to_dat(fuel_depth_array, "treesfueldepth.dat", output_dir)
+    _write_np_array_to_dat(fuel_depth_array, "treesfueldepth.dat", output_dir, np.float32)
     del fuel_depth_array
 
     # Write DEM data to a .dat file
     dem_array = surface_group["DEM"][...]
-    _write_np_array_to_dat(dem_array, "topo.dat", output_dir)
+    _write_np_array_to_dat(dem_array, "topo.dat", output_dir, np.float32)
 
 
 def export_zarr_to_duet(zroot: zarr.hierarchy.Group,
@@ -130,7 +130,7 @@ def export_zarr_to_duet(zroot: zarr.hierarchy.Group,
     Required zarr arrays:
     - canopy/bulk-density
     - canopy/FMC
-    - canopy/spcd
+    - canopy/species-code
 
     Parameters
     ----------
@@ -157,7 +157,7 @@ def export_zarr_to_duet(zroot: zarr.hierarchy.Group,
     """
     # Validate the zarr file
     required_groups = ["canopy"]
-    required_arrays = {"canopy": ["bulk-density", "FMC", "spcd"]}
+    required_arrays = {"canopy": ["bulk-density", "FMC", "species-code"]}
     _validate_zarr_file(zroot, required_groups, required_arrays)
 
     # Raise a warning if a user passed duration as a float and cast to int
@@ -174,20 +174,19 @@ def export_zarr_to_duet(zroot: zarr.hierarchy.Group,
     canopy_group = zroot["canopy"]
 
     # Write the canopy bulk density to a .dat file
-    canopy_bulk_density_array = canopy_group["bulk-density"][...].astype(
-        np.float32)
+    canopy_bulk_density_array = canopy_group["bulk-density"][...]
     _write_np_array_to_dat(canopy_bulk_density_array, "treesrhof.dat",
-                           output_dir)
+                           output_dir, np.float32)
     del canopy_bulk_density_array
 
     # Write the spcd to a .dat file
-    spcd_array = canopy_group["species-code"][...].astype(np.int16)
-    _write_np_array_to_dat(spcd_array, "treesspcd.dat", output_dir)
+    spcd_array = canopy_group["species-code"][...]
+    _write_np_array_to_dat(spcd_array, "treesspcd.dat", output_dir, np.int16)
     del spcd_array
 
     # Write Fuel Moisture Content (FMC) data to a .dat file
-    fmc_array = canopy_group["FMC"][...].astype(np.float32)
-    _write_np_array_to_dat(fmc_array, "treesmoist.dat", output_dir)
+    fmc_array = canopy_group["FMC"][...]
+    _write_np_array_to_dat(fmc_array, "treesmoist.dat", output_dir, np.float32)
     del fmc_array
 
     # Write a duet input file
@@ -301,7 +300,7 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
 
 
 def _write_np_array_to_dat(array: ndarray, dat_name: str,
-                           output_dir: Path) -> None:
+                           output_dir: Path, dtype: type =np.float32) -> None:
     """
     Write a numpy array to a fortran binary file. Array must be cast to the
     appropriate data type before calling this function. If the array is 3D,
@@ -309,7 +308,9 @@ def _write_np_array_to_dat(array: ndarray, dat_name: str,
     """
     # Reshape array from (y, x, z) to (z, y, x) (also for fortran)
     if len(array.shape) == 3:
-        array = np.moveaxis(array, 2, 0).astype(array.dtype)
+        array = np.moveaxis(array, 2, 0).astype(dtype)
+    else:
+        array = array.astype(dtype)
 
     # Write the zarr array to a dat file with scipy FortranFile package
     f = FortranFile(Path(output_dir, dat_name), "w")
