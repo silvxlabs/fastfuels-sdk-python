@@ -71,7 +71,7 @@ class Treelist(FastFuelsResource):
         self.fuelgrids: list[str] = fuelgrids
         self.version: str = version
 
-    def refresh(self, inplace=False):
+    def refresh(self, inplace=False) -> Treelist | None:
         """
         Refresh the Treelist object with the latest data from the server.
 
@@ -121,7 +121,7 @@ class Treelist(FastFuelsResource):
         return get_treelist_data(self.id)
 
     def update(self, name: str = None, description: str = None,
-               inplace: bool = False):
+               inplace: bool = False) -> Treelist | None:
         """
         Update a treelist resource. The attributes that can be updated are name
         and description.
@@ -141,8 +141,8 @@ class Treelist(FastFuelsResource):
 
         Returns
         -------
-        Treelist
-            Updated Treelist object.
+        Treelist | None
+            A new Treelist object if inplace is False, otherwise None.
 
         Raises
         ------
@@ -155,7 +155,7 @@ class Treelist(FastFuelsResource):
         else:
             return updated_treelist
 
-    def update_data(self, data: DataFrame, inplace: bool = False):
+    def update_data(self, data: DataFrame, inplace: bool = False) -> Treelist | None:
         """
         Allows a user to upload a custom .csv or .parquet file to update an
         existing treelist resource. Note that trees outside the spatial bounding
@@ -186,8 +186,8 @@ class Treelist(FastFuelsResource):
 
         Returns
         -------
-        Treelist
-            Updated Treelist object.
+        Treelist | None
+            A new Treelist object if inplace is False, otherwise None.
         """
         updated_treelist = update_treelist_data(self.id, data)
         if inplace:
@@ -284,7 +284,8 @@ class Treelist(FastFuelsResource):
         return list_fuelgrids(treelist_id=self.id)
 
     def wait_until_finished(self, step: float = 5, timeout: float = 600,
-                            inplace: bool = True, verbose: bool = False):
+                            inplace: bool = True,
+                            verbose: bool = False) -> Treelist | None:
         """
         Wait until the treelist resource has status "Finished".
 
@@ -345,7 +346,7 @@ class Treelist(FastFuelsResource):
         """
         delete_all_fuelgrids(treelist_id=self.id)
 
-    def delete(self):
+    def delete(self) -> None:
         """
         Delete the current Treelist instance. The deletion is permanent and
         cannot be undone.
