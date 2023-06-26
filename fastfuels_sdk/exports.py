@@ -2,8 +2,9 @@
 FastFuels SDK Exports Module
 """
 # Core imports
+from __future__ import annotations
 import warnings
-import pkg_resources
+import importlib.resources
 from pathlib import Path
 from string import Template
 from datetime import datetime
@@ -14,7 +15,8 @@ import zarr.hierarchy
 from numpy import ndarray
 from scipy.io import FortranFile
 
-TEMPLATES_PATH = pkg_resources.resource_filename('fastfuels_sdk', 'templates/')
+TEMPLATES_PATH = importlib.resources.files('fastfuels_sdk'). \
+    joinpath('templates')
 
 
 def export_zarr_to_quicfire(zroot: zarr.hierarchy.Group,
@@ -73,7 +75,7 @@ def export_zarr_to_quicfire(zroot: zarr.hierarchy.Group,
     # Validate the zarr file
     required_groups = ["canopy", "surface"]
     required_arrays = {
-        "canopy": ["bulk-density", "FMC", "fuel-depth"],
+        "canopy": ["bulk-density", "FMC"],
         "surface": ["bulk-density", "FMC", "fuel-depth", "DEM"]
     }
     _validate_zarr_file(zroot, required_groups, required_arrays)
@@ -89,7 +91,8 @@ def export_zarr_to_quicfire(zroot: zarr.hierarchy.Group,
     # Write bulk-density data to a .dat file
     bulk_density_array = canopy_group["bulk-density"][...]
     bulk_density_array[..., 0] += surface_group["bulk-density"][...]
-    _write_np_array_to_dat(bulk_density_array, "treesrhof.dat", output_dir, np.float32)
+    _write_np_array_to_dat(bulk_density_array, "treesrhof.dat", output_dir,
+                           np.float32)
     del bulk_density_array
 
     # Write Fuel Moisture Content (FMC) data to a .dat file
@@ -101,7 +104,8 @@ def export_zarr_to_quicfire(zroot: zarr.hierarchy.Group,
     # Write fuel depth data to a .dat file
     fuel_depth_array = np.zeros_like(canopy_group["bulk-density"][...])
     fuel_depth_array[..., 0] = surface_group["fuel-depth"][...]
-    _write_np_array_to_dat(fuel_depth_array, "treesfueldepth.dat", output_dir, np.float32)
+    _write_np_array_to_dat(fuel_depth_array, "treesfueldepth.dat", output_dir,
+                           np.float32)
     del fuel_depth_array
 
     # Write DEM data to a .dat file
@@ -209,11 +213,13 @@ def export_zarr_to_duet(zroot: zarr.hierarchy.Group,
         fout.write(template.substitute(duet_attrs))
 
 
-# TODO: This needs refactored
 def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
                        output_dir: Path | str) -> None:
     """
-    Write a FastFuels zarr file to an FDS input file stack.
+    Write a FastFuels zarr file to an FDS input file stack including the .bdf
+    binary arrays representing the voxelized crown bulk density, and the FDS
+    input file template containing the vegetative attributes, DEM geom, and
+    domain metadata.
 
     Required zarr groups:
     - canopy
@@ -262,147 +268,34 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
     dem_array -= np.min(dem_array)
 
     # meshgrid of x,y,z voxel centers
-    x_vec = np.linspace(dx / 2, nx - dx / 2, nx)
-    y_vec = np.linspace(dy / 2, ny - dy / 2, ny)
-    z_vec = np.linspace(dz / 2, nz - dz / 2, nz)
-    xx, yy, zz = np.meshgrid(x_vec, y_vec, z_vec, indexing='ij')
+    xx, yy, zz = _get_voxel_centers(nx, ny, nz, dx, dy, dz)
 
     # For each horizontal slice of zz adjust the z value by the DEM
-    for i in range(0, nz):
-        zval = zz[:, :, i] + dem_array
-        zz[:, :, i] = np.round(zval / (dz / 2)) * (dz / 2)  # Round to dz/2
+    zz = _adjust_z_values_by_dem(nz, zz, dem_array, dz)
 
     # for each fuel type identified, create binary data file
     for sav_i, sav in enumerate(sav_classes):
-        # Create a new file for each fuel type
-        output_path = output_dir / f"canopy_{int(sav)}.bdf"
-        f = FortranFile(output_path, 'w')
-
-        # get bulk density data from the zarr group
-        zarr_array = canopy_group['bulk-density']
-        bd_data = np.array(zarr_array)
-        bd_data = np.swapaxes(bd_data, 0, 1)
-        bd_data = bd_data[sav_data == sav]
-
-        # voxel centers for relevant fuel class
-        xv = xx[sav_data == sav]
-        yv = yy[sav_data == sav]
-        zv = zz[sav_data == sav]
-
-        # write out global bounding voxel faces
-        vxbounds = [min(xv) - dx / 2, max(xv) + dx / 2,
-                    min(yv) - dy / 2, max(yv) + dy / 2,
-                    min(zv) - dz / 2, max(zv) + dz / 2]
-        f.write_record(np.array(vxbounds, dtype=np.float64))
-
-        # write out voxel resolution
-        f.write_record(np.array([dx, dy, dz],
-                                dtype=np.float64))
-
-        # number of voxels for relevant fuel class
-        nvox = bd_data.shape[0]
-        f.write_record(np.array(nvox, dtype=np.int32))
-
-        # write out center and bulk density for each voxel
-        for (vxc, vyc, vzc, bd) in zip(xv, yv, zv, bd_data):
-            xyz = [vxc, vyc, vzc]
-            f.write_record(np.array(xyz, dtype=np.float64))
-            f.write_record(np.array(bd, dtype=np.float64))
-
-        f.close()
+        _write_binary_data_file_for_fuel_type(output_dir, canopy_group, sav,
+                                              sav_data, xx, yy, zz, dx, dy, dz)
 
     # For each canopy fuel type write a canopy SURF, INIT, and PART block
-    canopy_surf_lines = []
-    canopy_init_lines = []
-    canopy_part_lines = []
-    for sav in sav_classes:
-        canopy_id = f"canopy_{int(sav)}"
-        canopy_surf_lines.append(f"&SURF ID='surf_{canopy_id}'\n")
-        canopy_surf_lines.append(f"\tSURFACE_VOLUME_RATIO={sav}\n")
-        canopy_surf_lines.append(f"\tCOLOR='GREEN'\n")
-        canopy_surf_lines.append(f"\tLENGTH=0.5\n")
-        canopy_surf_lines.append(f"\tMOISTURE_FRACTION=0.5\n")
-        canopy_surf_lines.append(f"\tGEOMETRY='CYLINDRICAL' /\n\n")
-
-        canopy_part_lines.append(f"&PART ID='part_{canopy_id}'\n")
-        canopy_part_lines.append(f"\tSURF_ID='surf_{canopy_id}'\n")
-        canopy_part_lines.append(f"\tDRAG_LAW='CYLINDER'\n")
-        canopy_part_lines.append(f"\tSTATIC=T\n")
-        canopy_part_lines.append(f"\tQUANTITIES='PARTICLE BULK DENSITY' /\n\n")
-
-        canopy_init_lines.append(f"&INIT ID='init_{canopy_id}'\n")
-        canopy_init_lines.append(f"\tPART_ID='part_{canopy_id}'\n")
-        canopy_init_lines.append(f"\tBULK_DENSITY_FILE='{canopy_id}.bdf' /\n\n")
+    canopy_surf_lines, canopy_init_lines, canopy_part_lines = _generate_canopy_lines(
+        sav_classes)
 
     # For each surface fuel type write a surface SURF block
-    surface_surf_lines = []
-    surface_part_lines = []
-    surface_init_lines = []
-    sav_classes = [9770.]
-    for sav in sav_classes:
-        surface_id = f"surface_{int(sav)}"
-        surface_surf_lines.append(f"&SURF ID='surf_{surface_id}'\n")
-        surface_surf_lines.append(f"\tSURFACE_VOLUME_RATIO={sav}\n")
-        surface_surf_lines.append(f"\tCOLOR='GREEN'\n")
-        surface_surf_lines.append(f"\tLENGTH=0.5'\n")
-        surface_surf_lines.append(f"\tMOISTURE_FRACTION=0.5\n")
-        surface_surf_lines.append(f"\tGEOMETRY='CYLINDRICAL' /\n\n")
-
-        surface_part_lines.append(f"&PART ID='part_{surface_id}'\n")
-        surface_part_lines.append(f"\tSURF_ID='surf_{surface_id}'\n")
-        surface_part_lines.append(f"\tDRAG_LAW='CYLINDER'\n")
-        surface_part_lines.append(f"\tSTATIC=T\n")
-        surface_part_lines.append(f"\tQUANTITIES='PARTICLE BULK DENSITY' /\n\n")
+    surface_surf_lines, surface_part_lines = _generate_surface_lines(
+        sav_classes)
 
     # Combine the canopy and surface SURF blocks
     surf_lines = canopy_surf_lines + surface_surf_lines
-    init_lines = canopy_init_lines + surface_init_lines
+    init_lines = canopy_init_lines
     part_lines = canopy_part_lines + surface_part_lines
 
-    # Write the DEM to a GEOM text block
-    ijk_list = [nx, ny]
-    xb_list = [0, int(nx / dx), 0, int(ny / dy)]
-    zvals_list = []
+    # Generate the geom lines
+    geom_lines = _generate_geom_lines(dem_array, nx, ny, dx, dy)
 
-    # Copy the values in the DEM array in row-major order to the zvals_list
-    dem_array = np.swapaxes(dem_array, 0, 1)  # swap axes to row-major order
-    for i in range(ny):
-        for j in range(nx):
-            zvals_list.append(dem_array[i, j])
-
-    # Write the lists to a GEOM text block
-    geom_lines = []
-    geom_lines.append("&GEOM ID='terrain'\n")
-    geom_lines.append("\tSURF_ID='S1'\n")
-    geom_lines.append(f"\tIJK={ijk_list[0]}, {ijk_list[1]}, "
-                      f"XB={xb_list[0]}, {xb_list[1]}, {xb_list[2]}, "
-                      f"{xb_list[3]},\n")
-    geom_lines.append("\tZVALS=")
-    for z_idx, z in enumerate(zvals_list):
-        # if z is the last value in the list, don't add a comma
-        if z_idx == len(zvals_list) - 1:
-            geom_lines.append(f"{z}")
-        else:
-            geom_lines.append(f"{z},")
-    geom_lines.append("\n\t/")
-
-    # Write the mesh lines based on the domain size and resolution
-    mesh_lines = []
-    mesh_lines.append(f"&MESH IJK={nx}, {ny}, {nz}, XB={float(xb_list[0])}, "
-                      f"{float(xb_list[1])}, {float(xb_list[2])}, "
-                      f"{float(xb_list[3])}, 0.0, "
-                      f"{float(nz * dz)} /")
-
-    # Write the header lines
-    header_lines = []
-    header_lines.append("! FDS template generated by FastFuels Python SDK \n")
-    header_lines.append(f"! {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
-    header_lines.append(f"! Fuel domain has IJK={nx}, {ny}, {nz} \n")
-    header_lines.append(f"! Fuel domain has XB="
-                        f"{float(xb_list[0])}, {float(xb_list[1])}, "
-                        f"{float(xb_list[2])}, {float(xb_list[3])}, "
-                        f"0.0, {float(nz * dz)}\n")
-    header_lines.append(f"! Topography spans from 0.0 to {dem_array.max()}")
+    # Generate the header lines
+    header_lines = _generate_header_lines(nx, ny, nz, dx, dy, dz, dem_array)
 
     # Write the FDS template to a text file
     fds_attrs = {
@@ -410,7 +303,6 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
         "surf_lines": "".join(surf_lines),
         "part_lines": "".join(part_lines),
         "init_lines": "".join(init_lines),
-        "mesh_lines": "".join(mesh_lines),
         "header_lines": "".join(header_lines)
     }
     with open(Path(TEMPLATES_PATH, "fds_input.template"), "r") as fin:
@@ -419,8 +311,152 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
         fout.write(template.substitute(fds_attrs))
 
 
+def _get_voxel_centers(nx: int, ny: int, nz: int, dx: float, dy: float,
+                       dz: float):
+    x_vec = np.linspace(dx / 2, nx - dx / 2, nx)
+    y_vec = np.linspace(dy / 2, ny - dy / 2, ny)
+    z_vec = np.linspace(dz / 2, nz - dz / 2, nz)
+    return np.meshgrid(x_vec, y_vec, z_vec, indexing='ij')
+
+
+def _adjust_z_values_by_dem(nz: int, zz: np.array, dem_array: np.array,
+                            dz: float):
+    for i in range(nz):
+        zval = zz[:, :, i] + dem_array
+        zz[:, :, i] = np.round(zval / (dz / 2)) * (dz / 2)  # Round to dz/2
+    return zz
+
+
+def _write_binary_data_file_for_fuel_type(output_dir: Path,
+                                          canopy_group: zarr.hierarchy.Group,
+                                          sav: float, sav_data: np.array,
+                                          xx: np.array, yy: np.array,
+                                          zz: np.array, dx: float, dy: float,
+                                          dz: float):
+    output_path = output_dir / f"canopy_{int(sav)}.bdf"
+    with FortranFile(output_path, 'w') as f:
+        zarr_array = canopy_group['bulk-density']
+        bd_data = np.array(zarr_array)
+        bd_data = np.swapaxes(bd_data, 0, 1)
+        bd_data = bd_data[sav_data == sav]
+
+        xv = xx[sav_data == sav]
+        yv = yy[sav_data == sav]
+        zv = zz[sav_data == sav]
+
+        vxbounds = [min(xv) - dx / 2, max(xv) + dx / 2,
+                    min(yv) - dy / 2, max(yv) + dy / 2,
+                    min(zv) - dz / 2, max(zv) + dz / 2]
+        f.write_record(np.array(vxbounds, dtype=np.float64))
+
+        f.write_record(np.array([dx, dy, dz], dtype=np.float64))
+
+        nvox = bd_data.shape[0]
+        f.write_record(np.array(nvox, dtype=np.int32))
+
+        for (vxc, vyc, vzc, bd) in zip(xv, yv, zv, bd_data):
+            xyz = [vxc, vyc, vzc]
+            f.write_record(np.array(xyz, dtype=np.float64))
+            f.write_record(np.array(bd, dtype=np.float64))
+
+
+def _generate_surf_lines(sav_classes: np.array, name: str):
+    surf_lines = []
+    part_lines = []
+    for sav in sav_classes:
+        id = f"{name}_{int(sav)}"
+        surf_lines.append(f"&SURF ID='surf_{id}'\n")
+        surf_lines.append(f"\tSURFACE_VOLUME_RATIO={sav}\n")
+        surf_lines.append(f"\tCOLOR='GREEN'\n")
+        surf_lines.append(f"\tLENGTH=0.5'\n")
+        surf_lines.append(f"\tMOISTURE_FRACTION=0.5\n")
+        surf_lines.append(f"\tGEOMETRY='CYLINDRICAL' /\n\n")
+
+        part_lines.append(f"&PART ID='part_{id}'\n")
+        part_lines.append(f"\tSURF_ID='surf_{id}'\n")
+        part_lines.append(f"\tDRAG_LAW='CYLINDER'\n")
+        part_lines.append(f"\tSTATIC=T\n")
+        part_lines.append(f"\tQUANTITIES='PARTICLE BULK DENSITY' /\n\n")
+
+    return surf_lines, part_lines
+
+
+def _generate_canopy_lines(sav_classes: np.array):
+    canopy_surf_lines, canopy_part_lines = _generate_surf_lines(sav_classes,
+                                                                'canopy')
+
+    canopy_init_lines = []
+    for sav in sav_classes:
+        canopy_id = f"canopy_{int(sav)}"
+        canopy_init_lines.append(f"&INIT ID='init_{canopy_id}'\n")
+        canopy_init_lines.append(f"\tPART_ID='part_{canopy_id}'\n")
+        canopy_init_lines.append(f"\tBULK_DENSITY_FILE='{canopy_id}.bdf' /\n\n")
+
+    return canopy_surf_lines, canopy_init_lines, canopy_part_lines
+
+
+def _generate_surface_lines(sav_classes: np.array):
+    surface_surf_lines, surface_part_lines = _generate_surf_lines(sav_classes,
+                                                                  'surface')
+    return surface_surf_lines, surface_part_lines
+
+
+def _generate_geom_lines(dem_array: np.ndarray, nx: int, ny: int, dx: int,
+                         dy: int) -> list[str]:
+    """
+    Generate geom lines from the given DEM array and attributes.
+    """
+    # swap axes to row-major order
+    dem_array = np.swapaxes(dem_array, 0, 1)
+
+    # copy the values in the DEM array in row-major order to zvals_list
+    zvals_list = [dem_array[i, j] for i in range(ny) for j in range(nx)]
+
+    # create the geom lines
+    geom_lines = ["&GEOM ID='terrain'\n",
+                  "\tSURF_ID='S1'\n",
+                  f"\tIJK={nx}, {ny}, XB=0.0, {int(nx / dx)}, 0.0, "
+                  f"{int(ny / dy)},\n",
+                  "\tZVALS=" + ", ".join(map(str, zvals_list)) + "\n",
+                  "\t/\n"]
+
+    return geom_lines
+
+
+def _generate_mesh_lines(nx: int, ny: int, nz: int, dx: int, dy: int,
+                         dz: int) -> list[str]:
+    """
+    Generate mesh lines from given attributes.
+    """
+    mesh_lines = [
+        f"&MESH IJK={nx}, {ny}, {nz}, XB=0.0, "
+        f"{float(nx * dx)}, 0.0, "
+        f"{float(ny * dy)}, 0.0, "
+        f"{float(nz * dz)} /\n"
+    ]
+    return mesh_lines
+
+
+def _generate_header_lines(nx: int, ny: int, nz: int, dx: int, dy: int, dz: int,
+                           dem_array: np.ndarray) -> list[str]:
+    """
+    Generate header lines from given attributes.
+    """
+    header_lines = [
+        "! FDS template generated by FastFuels Python SDK \n",
+        f"! {datetime.now().strftime('%Y-%m-%d %H:%M')}\n",
+        f"! Fuel domain has IJK={nx}, {ny}, {nz} \n",
+        f"! Fuel domain has XB="
+        f"0.0, {float(nx * dx)}, "
+        f"0.0, {float(ny * dy)}, "
+        f"0.0, {float(nz * dz)}\n",
+        f"! Topography spans from 0.0 to {dem_array.max()}\n"
+    ]
+    return header_lines
+
+
 def _write_np_array_to_dat(array: ndarray, dat_name: str,
-                           output_dir: Path, dtype: type =np.float32) -> None:
+                           output_dir: Path, dtype: type = np.float32) -> None:
     """
     Write a numpy array to a fortran binary file. Array must be cast to the
     appropriate data type before calling this function. If the array is 3D,
