@@ -22,11 +22,60 @@ from requests.exceptions import HTTPError
 
 class Treelist(FastFuelsResource):
     """
-    # TODO #5: Explain what a treelist is.
     Treelist class for the FastFuels SDK.
 
-    # TODO #5: Add Attributes section.
-    # TODO #5: Add Methods section.
+    A treelist represents a collection of individual trees distributed on a
+    landscape. It provides methods to interact with treelist resources, such as
+    retrieving data, updating attributes, creating fuelgrids, and more.
+
+    Attributes
+    ----------
+    id : str
+        The unique identifier of the treelist.
+    name : str
+        The name of the treelist.
+    description : str
+        The description of the treelist.
+    method : str
+        Method used to distribute trees on the landscape.
+    dataset_id : str
+        The unique identifier of the dataset the treelist belongs to.
+    status : str
+        Status of the treelist at the time of the request. Note that the
+        status of a treelist can change after the request.
+    created_on : datetime
+        The date and time the treelist was created.
+    summary : dict
+        A dictionary containing summary statistics for the treelist.
+    fuelgrids : list[str]
+        A list of the IDs of the fuelgrids created from the treelist.
+    version : str
+        The version of standgen used to generate the treelist.
+
+    Methods
+    -------
+    refresh
+        Refreshes the Treelist object with the latest data from the server.
+    get_data
+        Retrieves the treelist data as a pandas DataFrame.
+    update
+        Updates a treelist resource with new values for name and description.
+    update_data
+        Uploads a custom .csv or .parquet file to update an existing treelist
+        resource.
+    create_fuelgrid
+        Creates a Fuelgrid object from the Treelist object.
+    list_fuelgrids
+        Lists all Fuelgrid objects associated with the current Treelist
+        instance.
+    wait_until_finished
+        Waits until the treelist resource has status "Finished".
+    delete_fuelgrids
+        Deletes all Fuelgrid objects associated with the current Treelist
+        instance.
+    delete
+        Deletes the current Treelist instance.
+
     """
 
     def __init__(self, id: str, name: str, description: str, method: str,
