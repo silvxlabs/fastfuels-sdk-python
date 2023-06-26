@@ -9,7 +9,7 @@ from time import sleep
 from datetime import datetime
 
 # Internal imports
-from fastfuels_sdk.api import SESSION, API_URL
+from fastfuels_sdk import SESSION, API_URL
 from fastfuels_sdk._base import FastFuelsResource
 from fastfuels_sdk.fuelgrids import (Fuelgrid, create_fuelgrid, list_fuelgrids,
                                      delete_all_fuelgrids)

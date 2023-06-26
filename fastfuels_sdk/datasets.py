@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 
 # Internal imports
-from fastfuels_sdk.api import SESSION, API_URL
+from fastfuels_sdk import SESSION, API_URL
 from fastfuels_sdk._base import FastFuelsResource
 from fastfuels_sdk.treelists import (Treelist, create_treelist, list_treelists,
                                      delete_all_treelists)
