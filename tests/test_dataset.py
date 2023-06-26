@@ -4,7 +4,7 @@ Test dataset endpoints and objects.
 
 # Internal imports
 import sys
-sys.path.append("../")
+sys.path.append("..")
 from fastfuels_sdk.datasets import *
 from fastfuels_sdk.fuelgrids import get_fuelgrid
 from fastfuels_sdk.treelists import get_treelist
@@ -114,6 +114,15 @@ class TestDatasetObject:
         treelist = self.dataset.create_treelist(
             name="test-treelist",
             description="test treelist with sdk")
+
+        # Wait for the treelist to be created
+        max_attempts = 60
+        while treelist.status != "Finished":
+            sleep(2)
+            treelist.refresh(inplace=True)
+            max_attempts -= 1
+            if max_attempts == 0:
+                raise RuntimeError("Treelist failed to finish")
 
         assert treelist.id is not None
         assert treelist.name == "test-treelist"
