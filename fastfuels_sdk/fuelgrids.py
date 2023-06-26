@@ -1,10 +1,6 @@
 """
 Fuelgrid class and endpoints for the FastFuels SDK.
 """
-
-# Internal imports
-from fastfuels_sdk.api import SESSION, API_URL
-
 # Core imports
 import json
 import shutil
@@ -12,11 +8,15 @@ from time import sleep
 from pathlib import Path
 from datetime import datetime
 
+# Internal imports
+from fastfuels_sdk.api import SESSION, API_URL
+from fastfuels_sdk._base import FastFuelsResource
+
 # External imports
 from requests.exceptions import HTTPError
 
 
-class Fuelgrid:
+class Fuelgrid(FastFuelsResource):
     """
     Fuelgrid class for the FastFuels SDK.
     """
@@ -450,19 +450,19 @@ def delete_fuelgrid(fuelgrid_id: str) -> list[Fuelgrid]:
     return [Fuelgrid(**fuelgrid) for fuelgrid in response.json()["fuelgrids"]]
 
 
-# TODO: Add a parameter to delete all fuelgrids for a dataset
-# TODO: Add a parameter to delete all fuelgrids for a treelist
 def delete_all_fuelgrids(dataset_id: str = None,
                          treelist_id: str = None) -> list[Fuelgrid]:
     """
-    Delete all fuelgrids.
+    Delete all fuelgrids associated with a specified dataset or treelist.
 
     Parameters
     ----------
     dataset_id : str, optional
-        The ID of the dataset to filter by, by default None
+        The ID of the dataset whose associated fuelgrids are to be deleted, by
+        default None
     treelist_id : str, optional
-        The ID of the treelist to filter by, by default None
+        The ID of the treelist whose associated fuelgrids are to be deleted,
+        by default None
 
     Returns
     -------
@@ -473,9 +473,22 @@ def delete_all_fuelgrids(dataset_id: str = None,
     ------
     HTTPError
         If the API returns an unsuccessful status code.
+
+    Notes
+    -----
+    If both dataset_id and treelist_id are provided, the function will use the
+    dataset_id as the query parameter.
+
     """
+    # Construct the endpoint URL
+    if dataset_id is not None:
+        endpoint_url = f"{API_URL}/fuelgrids?dataset_id={dataset_id}"
+    elif treelist_id is not None:
+        endpoint_url = f"{API_URL}/fuelgrids?treelist_id={treelist_id}"
+    else:
+        endpoint_url = f"{API_URL}/fuelgrids"
+
     # Send the request to the API
-    endpoint_url = f"{API_URL}/fuelgrids"
     response = SESSION.delete(endpoint_url)
 
     # Raise an exception if the request was unsuccessful
@@ -484,3 +497,4 @@ def delete_all_fuelgrids(dataset_id: str = None,
                         f"{response.status_code}. Response: {response.json()}")
 
     return [Fuelgrid(**fuelgrid) for fuelgrid in response.json()["fuelgrids"]]
+
