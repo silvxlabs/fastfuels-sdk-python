@@ -1,0 +1,23 @@
+# mkdocs.yml
+site_name: FastFuels SDK Documentation
+
+theme:
+  name: "material"
+
+nav:
+  - Home: index.md
+  - Tutorials: tutorials.md
+  - How-To Guides: how-to-guides.md
+  - Reference: reference.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: numpy
+            docstring_section_style: list
+            ignore_init_summary: true
+            show_root_heading: true
+            show_source: false

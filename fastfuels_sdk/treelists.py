@@ -1,18 +1,18 @@
 """
 Treelist class and endpoints for the FastFuels SDK.
 """
-
-# Internal imports
-from fastfuels_sdk.api import SESSION, API_URL
-from fastfuels_sdk.fuelgrids import (Fuelgrid, create_fuelgrid, list_fuelgrids,
-                                     delete_all_fuelgrids)
-
 # Core imports
+from __future__ import annotations
 import json
 import tempfile
 from time import sleep
-from pathlib import Path
 from datetime import datetime
+
+# Internal imports
+from fastfuels_sdk.api import SESSION, API_URL
+from fastfuels_sdk._base import FastFuelsResource
+from fastfuels_sdk.fuelgrids import (Fuelgrid, create_fuelgrid, list_fuelgrids,
+                                     delete_all_fuelgrids)
 
 # External imports
 import pandas as pd
@@ -20,15 +20,14 @@ from pandas import DataFrame
 from requests.exceptions import HTTPError
 
 
-class Treelist:
+class Treelist(FastFuelsResource):
     """
-    # TODO #5: Explain what a treelist is.
     Treelist class for the FastFuels SDK.
 
-    # TODO #5: Add Attributes section.
-    # TODO #5: Add Methods section.
+    A treelist represents a collection of individual trees distributed on a
+    landscape. It provides methods to interact with treelist resources, such as
+    retrieving data, updating attributes, creating fuelgrids, and more.
     """
-
     def __init__(self, id: str, name: str, description: str, method: str,
                  dataset_id: str, status: str, created_on: str,
                  summary: dict, fuelgrids: list[str], version: str):
@@ -71,7 +70,7 @@ class Treelist:
         self.fuelgrids: list[str] = fuelgrids
         self.version: str = version
 
-    def refresh(self, inplace=False):
+    def refresh(self, inplace=False) -> Treelist | None:
         """
         Refresh the Treelist object with the latest data from the server.
 
@@ -94,21 +93,34 @@ class Treelist:
 
     def get_data(self) -> DataFrame:
         """
-        # TODO #5: Explain what data is included in the DataFrame. Can reference the get_treelist_data() docstring.
-        Returns the treelist data as a pandas DataFrame.
+        Retrieves the treelist data as a pandas DataFrame.
 
+        Each row in the DataFrame represents a unique tree, and each column
+        corresponds to a tree attribute. The DataFrame includes the following
+        columns:
+
+        - 'SPCD': FIA Species code
+        - 'DIA_cm': Tree diameter at breast height, measured in centimeters
+        - 'HT_m': Tree height, measured in meters
+        - 'STATUSCD': FIA Status code
+        - 'CBH_m': Tree crown base height, measured in meters
+        - 'X_m': Tree X coordinate, based on the EPSG:5070 crs, in meters
+        - 'Y_m': Tree Y coordinate, based on the EPSG:5070 crs, in meters
 
         Returns
         -------
         DataFrame
             A pandas DataFrame containing the treelist data.
 
-        # TODO #5: Add Raises, Notes, and Examples sections.
+        Raises
+        ------
+        HTTPError
+            If the FastFuels API returns an unsuccessful status code.
         """
         return get_treelist_data(self.id)
 
     def update(self, name: str = None, description: str = None,
-               inplace: bool = False):
+               inplace: bool = False) -> Treelist | None:
         """
         Update a treelist resource. The attributes that can be updated are name
         and description.
@@ -128,8 +140,8 @@ class Treelist:
 
         Returns
         -------
-        Treelist
-            Updated Treelist object.
+        Treelist | None
+            A new Treelist object if inplace is False, otherwise None.
 
         Raises
         ------
@@ -142,40 +154,40 @@ class Treelist:
         else:
             return updated_treelist
 
-    def update_data(self, data: DataFrame, inplace: bool = False):
-        # """
-        # Allows a user to upload a custom .csv or .parquet file to update an
-        # existing treelist resource. Note that trees outside the spatial bounding
-        # box of the dataset will be removed.
-        #
-        # The custom treelist data must contain the following columns:
-        #  - 'SPCD'
-        #  - 'DIA_cm'
-        #  - 'HT_m'
-        #  - 'STATUSCD'
-        #  - 'CBH_m'
-        #  - 'X_m',
-        #  - 'Y_m'
-        #
-        # The following columns are optional, and if present, will replace default
-        # values during the voxelization process:
-        #  - 'FOLIAGE_WEIGHT_kg'
-        #  - 'CROWN_VOLUME_m3'
-        #  - 'CROWN_RADIUS_m'
-        #
-        # Parameters
-        # ----------
-        # data: DataFrame
-        #     A Pandas DataFrame containing the custom treelist data.
-        # inplace : bool, optional
-        #     Whether to update the treelist object in place, or return a new
-        #     treelist object. By default False.
-        #
-        # Returns
-        # -------
-        # Treelist
-        #     Updated Treelist object.
-        # """
+    def update_data(self, data: DataFrame, inplace: bool = False) -> Treelist | None:
+        """
+        Allows a user to upload a custom .csv or .parquet file to update an
+        existing treelist resource. Note that trees outside the spatial bounding
+        box of the dataset will be removed.
+
+        The custom treelist data must contain the following columns:
+         - 'SPCD'
+         - 'DIA_cm'
+         - 'HT_m'
+         - 'STATUSCD'
+         - 'CBH_m'
+         - 'X_m',
+         - 'Y_m'
+
+        The following columns are optional, and if present, will replace default
+        values during the voxelization process:
+         - 'FOLIAGE_WEIGHT_kg'
+         - 'CROWN_VOLUME_m3'
+         - 'CROWN_RADIUS_m'
+
+        Parameters
+        ----------
+        data: DataFrame
+            A Pandas DataFrame containing the custom treelist data.
+        inplace : bool, optional
+            Whether to update the treelist object in place, or return a new
+            treelist object. By default False.
+
+        Returns
+        -------
+        Treelist | None
+            A new Treelist object if inplace is False, otherwise None.
+        """
         updated_treelist = update_treelist_data(self.id, data)
         if inplace:
             self.__dict__.update(updated_treelist.__dict__)
@@ -188,33 +200,46 @@ class Treelist:
                         surface_fuel_source: str = "LF_SB40",
                         surface_interpolation_method: str = "nearest") -> Fuelgrid:
         """
-        # TODO #5: Explain what a fuelgrid is. Can copy from, or link to, the fuelgrid docstring
-        Create a fuelgrid from a treelist.
+        Creates a Fuelgrid object from a Treelist object. A fuelgrid represents
+        a voxelized 3D representation of a treelist.
+
+        This method creates a fuelgrid by transforming the treelist into a 3D
+        spatial grid with fuel attributes. The grid's dimensions are defined by
+        horizontal and vertical resolutions.
+
+        There is a slight discrepancy between the spatial extent of the
+        fuelgrid and the spatial extent of the Dataset. The fuelgrid spatial
+        extent is rounded to the nearest multiple of the horizontal
+        resolution to ensure that all grid cells are of uniform size.
+
+        Individual trees may extend beyond the Fuelgrid spatial extent. If
+        this is the case, the canopy of the tree will be cut off at the edge
+        of the Fuelgrid. This can be avoided by increasing the border_pad.
 
         Parameters
         ----------
         name : str
-            The name of the fuelgrid.
+            The desired name for the fuelgrid.
         description : str
-            The description of the fuelgrid.
+            A brief description of the fuelgrid.
         distribution_method : str
-            The method to use for distributing fuel data. "uniform", "random", and
-            "realistic" are currently supported.
+            The method used for distributing the fuel data. Current supported
+            methods include "uniform", "random", and "realistic".
         horizontal_resolution : float
-            The horizontal resolution of the fuelgrid in meters.
+            The desired horizontal resolution of the fuelgrid in meters.
         vertical_resolution : float
-            The vertical resolution of the fuelgrid in meters.
+            The desired vertical resolution of the fuelgrid in meters.
         border_pad : float
-            The amount of padding to add to the border of the fuelgrid in meters.
-            Voxelized trees that intersect with the border of the domain can be
-            cut off if the entire canopy is not included in the domain. This extra
-            padding can ensure that the entire canopy is included in the domain.
-        surface_fuel_source : str
-            The source of the surface fuel data. Only "LF_SB40" is currently
+            The amount of padding (in meters) to add to the border of the
+            fuelgrid. This padding can help prevent voxelized trees from being
+            cut off if they intersect with the border of the domain.
+        surface_fuel_source : str, optional
+            The source of the surface fuel data. Currently, only "LF_SB40" is
             supported. Defaults to "LF_SB40".
-        surface_interpolation_method : str
-            The interpolation method to use for surface fuel data. "nearest",
-            "zipper", "linear", and "cubic" are supported. Defaults to "nearest".
+        surface_interpolation_method : str, optional
+            The interpolation method used for surface fuel data. "nearest",
+            "zipper", "linear", and "cubic" are currently supported. Defaults
+            to "nearest".
 
         Returns
         -------
@@ -228,11 +253,10 @@ class Treelist:
         ValueError
             If surface_fuel_source is not "LF_SB40".
         ValueError
-            If surface_interpolation_method is not "nearest", "zipper", "linear"
-            , or "cubic".
+            If surface_interpolation_method is not "nearest", "zipper",
+            "linear", or "cubic".
         ValueError
             If distribution_method is not "uniform", "random", or "realistic".
-
         """
         return create_fuelgrid(self.dataset_id, self.id, name,
                                description, distribution_method,
@@ -240,14 +264,27 @@ class Treelist:
                                border_pad, surface_fuel_source,
                                surface_interpolation_method)
 
-    # TODO: Write a method to list fuelgrids associated with a dataset
-    def list_fuelgrids(self):
-        pass
+    def list_fuelgrids(self) -> list[Fuelgrid]:
+        """
+        List all Fuelgrid objects associated with the current Treelist instance.
+
+        Returns
+        -------
+        list[Fuelgrid]
+            List of Fuelgrid objects.
+
+        Raises
+        ------
+        HTTPError
+            If the API returns an unsuccessful status code.
+        """
+        return list_fuelgrids(treelist_id=self.id)
 
     def wait_until_finished(self, step: float = 5, timeout: float = 600,
-                            inplace: bool = True, verbose: bool = False):
+                            inplace: bool = True,
+                            verbose: bool = False) -> Treelist | None:
         """
-        Wait until the treelist resource is finished.
+        Wait until the treelist resource has status "Finished".
 
         Parameters
         ----------
@@ -261,7 +298,7 @@ class Treelist:
             timeout is reached here does not mean that the treelist has
             failed.
         inplace : bool, optional
-            Whether to update the treelist object in place, or return a new
+            Whether to refresh the treelist object in place, or return a new
             treelist object. By default, False.
         verbose : bool, optional
             Whether to print the status of the treelist, by default False.
@@ -289,18 +326,36 @@ class Treelist:
         else:
             return treelist
 
-    # TODO: Write a method to delete fuelgrids associated with a treelist
-    def delete_fuelsgrids(self):
-        pass
-
-    def delete(self):
+    def delete_fuelgrids(self) -> None | Treelist:
         """
-        Delete a treelist resource.
+        Delete all Fuelgrid objects associated with the current Treelist
+        instance.
+
+        Returns
+        -------
+        None
+            Deletes fuelgrids in place.
 
         Raises
         ------
         HTTPError
-            If the API returns an error.
+            If the API returns an unsuccessful status code.
+        """
+        delete_all_fuelgrids(treelist_id=self.id)
+
+    def delete(self) -> None:
+        """
+        Delete the current Treelist instance. The deletion is permanent and
+        cannot be undone.
+
+        Note: This is a recursive delete that will remove all Fuelgrids
+        associated with the Treelist.
+
+        Raises
+        ------
+        HTTPError
+            If the API returns an unsuccessful status code. This could happen if
+            the treelist does not exist, or if there is a server error.
         """
         delete_treelist(self.id)
 

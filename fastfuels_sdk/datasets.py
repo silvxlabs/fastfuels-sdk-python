@@ -1,53 +1,29 @@
 """
 Dataset class and endpoints for the FastFuels SDK.
 """
+# Core imports
+from __future__ import annotations
+import json
+from datetime import datetime
 
 # Internal imports
 from fastfuels_sdk.api import SESSION, API_URL
+from fastfuels_sdk._base import FastFuelsResource
 from fastfuels_sdk.treelists import (Treelist, create_treelist, list_treelists,
                                      delete_all_treelists)
 from fastfuels_sdk.fuelgrids import (Fuelgrid, list_fuelgrids,
                                      delete_all_fuelgrids)
 
-# Core imports
-import json
-from datetime import datetime
-
 # External imports
 from requests.exceptions import HTTPError
 
 
-class Dataset:
+class Dataset(FastFuelsResource):
     """
-    Class representing the Dataset resource. The Dataset resource is the main
-    resource in the FastFuels API. It represents a collection of spatial data
-    and associated metadata. The spatial data is used to generate Treelists
-    and Fuelgrids. CRUD operations are supported both as methods on the
-    Dataset object and as standalone functions.
-
-    Attributes
-    ----------
-    id : str
-        The unique identifier for the Dataset.
-    name : str
-        The name of the Dataset.
-    description : str
-        A description of the Dataset.
-    created_on : datetime
-        The date and time the Dataset was created.
-    tags : list[str]
-        A list of tags for the Dataset.
-    spatial_data : dict
-        The spatial data for the Dataset.
-    fvs_variant : str
-        The FVS variant associated with the Dataset's spatial data.
-    version : str
-        The version of FastFuels used to create the Dataset.
-    treelists : list[str]
-        A list of treelist IDs associated with the Dataset.
-    fuelgrids : list[str]
-        A list of fuelgrid IDs associated with the Dataset.
-
+    Class representing the Dataset resource in the FastFuels API. It represents
+    a collection of spatial data, TreeList, and Fuelgrid resources, alongside
+    associated metadata. The spatial data stored in the Dataset resource is used
+    to generate Treelists and Fuelgrids.
     """
 
     def __init__(self, id: str, name: str, description: str,
@@ -79,7 +55,7 @@ class Dataset:
         treelists : list[str]
             A list of treelist IDs associated with the dataset.
         fuelgrids : list[str]
-            A list of fuelgrid IDs associated with the dataset.
+            A list of Fuelgrid IDs associated with the dataset.
         """
         self.id: str = id
         self.name: str = name
@@ -120,9 +96,9 @@ class Dataset:
     def update(self, name: str = None, description: str = None,
                tags: list = None, inplace: bool = False):
         """
-        Update a Dataset resource. The attributes that can be updated are name,
-        description, and tags. The spatial data cannot be updated for an existing
-        Dataset.
+        Update a Dataset resource. The attributes that can be updated are
+        name, description, and tags. The spatial data cannot be updated for
+        an existing Dataset.
 
         If inplace is True, the current Dataset object will be updated with the
         new values. Otherwise, a new Dataset object will be returned.
@@ -158,55 +134,93 @@ class Dataset:
     def create_treelist(self, name: str, description: str = "",
                         method: str = "random") -> Treelist:
         """
-        # TODO: Add docstring
-        Create a treelist from the dataset.
+        Create a new Treelist resource associated with the current Dataset.
+
+        This method creates a new Treelist from the spatial bounding box of
+        the current Dataset. A Treelist resource contains metadata about the
+        Treelist and associated Fuelgrid resources. Once a Treelist resource
+        is created and enters the "Finished" status, the data can be accessed
+        as a Pandas DataFrame through the get_treelist_data() method.
+
+        Parameters
+        ----------
+        name : str
+            The name to assign to the new Treelist.
+        description : str, optional
+            A description of the new Treelist. Defaults to an empty string.
+        method : str, optional
+            The method to use for generating the Treelist. Currently, only
+            "random" is supported. Defaults to "random".
 
         Returns
         -------
         Treelist
-            Treelist object.
+            The new Treelist object.
 
         Raises
         ------
         HTTPError
-            If the API returns an error.
-
+            If the API returns an error when creating the Treelist.
         """
         return create_treelist(self.id, name, description, method)
 
     def list_treelists(self) -> list[Treelist]:
         """
-        # TODO: Add docstring
-        Get a list of Treelist objects associated with the dataset.
+        Retrieve a list of all Treelist resources associated with the current
+        Dataset.
+
+        This method fetches all Treelists that are associated with the
+        current Dataset from the FastFuels API and returns them as a list of
+        Treelist objects.
 
         Returns
         -------
         list[Treelist]
-            List of Treelist objects.
+            A list of Treelist objects associated with the current Dataset. If
+            no Treelists are associated with the Dataset, returns an empty list.
 
         Raises
         ------
         HTTPError
-            If the API returns an error.
+            If the FastFuels API returns an error when attempting to retrieve
+            the list of Treelist resources.
         """
         return list_treelists(dataset_id=self.id)
 
     def list_fuelgrids(self) -> list[Fuelgrid]:
         """
-        # TODO: Add docstring
-        Get a list of Fuelgrid objects associated with the dataset.
+        Retrieve a list of all Fuelgrid resources associated with the current
+        Dataset.
+
+        This method fetches all Fuelgrids that are associated with the
+        current Dataset from the FastFuels API and returns them as a list of
+        Fuelgrid objects.
 
         Returns
         -------
         list[Fuelgrid]
-            List of Fuelgrid objects.
+            A list of Fuelgrid objects associated with the current Dataset. If
+            no Fuelgrids are associated with the Dataset, returns an empty list.
+
+        Raises
+        ------
+        HTTPError
+            If the FastFuels API returns an error when attempting to retrieve
+            the list of Fuelgrid resources.
         """
         return list_fuelgrids(dataset_id=self.id)
 
     def delete_treelists(self):
         """
-        # TODO: Add Docstring
-        Delete all treelists associated with the dataset.
+        Delete all Treelist resources associated with the current Dataset.
+
+        This method sends a request to the FastFuels API to delete all
+        Treelist resources that are associated with the current Dataset. This
+        is a recursive delete operation and will also remove all Fuelgrids
+        associated with each Treelist.
+
+        Please note that the operation is irreversible and all data associated
+        with the Treelists and Fuelgrids will be lost.
 
         Returns
         -------
@@ -215,14 +229,19 @@ class Dataset:
         Raises
         ------
         HTTPError
-            If the API returns an error.
+            If the FastFuels API returns an error when attempting to delete the
+            Treelist resources.
         """
         delete_all_treelists(dataset_id=self.id)
 
     def delete_fuelgrids(self):
         """
-        # TODO: Add docstring
-        Delete all fuelgrids associated with the dataset.
+        Deletes all Fuelgrid resources associated with the current Dataset.
+
+        This method sends a request to the FastFuels API to delete all
+        Fuelgrid resources that are associated with the current Dataset.
+        Please note that this operation is irreversible and all data
+        associated with the Fuelgrids will be permanently deleted.
 
         Returns
         -------
@@ -231,25 +250,36 @@ class Dataset:
         Raises
         ------
         HTTPError
-            If the API returns an error.
+            If the FastFuels API returns an error when attempting to delete the
+            Fuelgrid resources.
         """
         delete_all_fuelgrids(dataset_id=self.id)
 
     def delete(self) -> None:
         """
-        Delete a Dataset resource. This is a recursive delete, meaning that all
-        Treelists and Fuelgrids associated with the dataset will also be deleted.
-        Returns a list of the remaining Dataset objects for the current user.
+        Deletes the current Dataset instance along with all its associated
+        Treelists and Fuelgrids.
+
+        This method performs a recursive deletion operation, meaning that it
+        not only deletes the Dataset object itself, but also all associated
+        Treelist and Fuelgrid objects linked to this Dataset. This operation
+        is irreversible and leads to the permanent removal of all related
+        data from the FastFuels API.
+
+        Returns
+        -------
+        None
 
         Raises
         ------
         HTTPError
-            If the API returns an error.
+            If the FastFuels API returns an error when attempting to delete the
+            Dataset resource and its associated Treelists and Fuelgrids.
         """
         delete_dataset(self.id)
 
 
-def create_dataset(name: str, description: str, spatial_data: str | dict,
+def create_dataset(name: str, description: str, spatial_data: dict,
                    tags: list = None) -> Dataset:
     """
     Creates a new FastFuels Dataset. A Dataset is the primary object for storing
@@ -258,9 +288,7 @@ def create_dataset(name: str, description: str, spatial_data: str | dict,
     All data products generated by FastFuels are associated with a Dataset.
 
     Dataset spatial data can be provided as a GeoJSON dictionary. The spatial
-    data must be a valid GeoJSON FeatureCollection object. Alternatively, the
-    spatial data can be provided as a string containing a valid feature ID from
-    the Silvx Labs GIS API.
+    data must be a valid GeoJSON FeatureCollection object.
 
     Parameters
     ----------
@@ -268,10 +296,8 @@ def create_dataset(name: str, description: str, spatial_data: str | dict,
         Name of the dataset.
     description : str
         Description of the dataset.
-    spatial_data : str | dict
-        Spatial data for the dataset. Can be a feature id from the GIS API or a
-        geoJSON. If the input is a string, it is assumed to be a feature id.
-        If the input is a dict, it is assumed to be a geoJSON.
+    spatial_data : dict
+        Spatial data for the dataset as a GeoJSON FeatureCollection object.
     tags : list, optional
         Tags for the dataset, by default None.
 

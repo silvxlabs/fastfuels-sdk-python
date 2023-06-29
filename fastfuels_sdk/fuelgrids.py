@@ -1,22 +1,23 @@
 """
 Fuelgrid class and endpoints for the FastFuels SDK.
 """
-
-# Internal imports
-from fastfuels_sdk.api import SESSION, API_URL
-
 # Core imports
+from __future__ import annotations
 import json
 import shutil
 from time import sleep
 from pathlib import Path
 from datetime import datetime
 
+# Internal imports
+from fastfuels_sdk.api import SESSION, API_URL
+from fastfuels_sdk._base import FastFuelsResource
+
 # External imports
 from requests.exceptions import HTTPError
 
 
-class Fuelgrid:
+class Fuelgrid(FastFuelsResource):
     """
     Fuelgrid class for the FastFuels SDK.
     """
@@ -80,8 +81,30 @@ class Fuelgrid:
         self.version: str = version
         self.outputs: dict = outputs
 
+    def refresh(self, inplace: bool = False) -> Fuelgrid | None:
+        """
+        Refresh the Fuelgrid object with the latest data from the server.
+
+        Parameters
+        ----------
+        inplace : bool, optional
+            Whether to update the Fuelgrid object in place, or return a new
+            Fuelgrid object, by default False
+
+        Returns
+        -------
+        Fuelgrid | None
+            A new Fuelgrid object if inplace is False, otherwise None.
+        """
+        fuelgrid = get_fuelgrid(self.id)
+        if inplace:
+            self.__dict__ = fuelgrid.__dict__
+        else:
+            return fuelgrid
+
     def wait_until_finished(self, step: float = 5, timeout: float = 600,
-                            inplace: bool = False, verbose: bool = False):
+                            inplace: bool = False,
+                            verbose: bool = False) -> Fuelgrid | None:
         """
         Wait until the fuelgrid resource is finished.
 
@@ -149,7 +172,7 @@ class Fuelgrid:
         download_zarr(self.id, fpath)
 
     def update(self, name: str = None, description: str = None,
-               inplace: bool = False) -> None:
+               inplace: bool = False) -> Fuelgrid | None:
         """
         Update the name and description of the fuelgrid.
 
@@ -165,14 +188,20 @@ class Fuelgrid:
 
         Returns
         -------
-        None
+        Fuelgrid | None
+            If inplace is False, returns a new Fuelgrid object. Otherwise,
+            returns None and updates the existing fuelgrid object in place.
 
         Raises
         ------
         HTTPError
             If the API returns an unsuccessful status code.
         """
-        # update_fuelgrid(self.id, name, description)
+        updated_fuelgrid = update_fuelgrid(self.id, name, description)
+        if inplace:
+            self.__dict__ = updated_fuelgrid.__dict__
+        else:
+            return updated_fuelgrid
 
     def delete(self) -> None:
         """
@@ -202,6 +231,8 @@ def create_fuelgrid(dataset_id: str, treelist_id: str, name: str,
 
     Parameters
     ----------
+    dataset_id : str
+        The ID of the dataset to use.
     treelist_id : str
         The ID of the treelist to use.
     name : str
@@ -419,6 +450,49 @@ def download_zarr(fuelgrid_id: str, fpath: Path | str) -> None:
         shutil.copyfileobj(response.raw, out_file)
 
 
+def update_fuelgrid(fuelgrid_id: str, name: str = None,
+                    description: str = None) -> Fuelgrid:
+    """
+    Update a fuelgrid by ID.
+
+    Parameters
+    ----------
+    fuelgrid_id : str
+        The ID of the fuelgrid to update.
+    name : str, optional
+        The new name of the fuelgrid.
+    description : str, optional
+        The new description of the fuelgrid.
+
+    Returns
+    -------
+    Fuelgrid
+        The updated fuelgrid.
+
+    Raises
+    ------
+    HTTPError
+        If the API returns an unsuccessful status code.
+    """
+    # Build the request payload
+    payload = {}
+    if name is not None:
+        payload['name'] = name
+    if description is not None:
+        payload['description'] = description
+
+    # Send the request to the API
+    endpoint_url = f"{API_URL}/fuelgrids/{fuelgrid_id}"
+    response = SESSION.put(endpoint_url, json=payload)
+
+    # Raise an exception if the request was unsuccessful
+    if response.status_code != 200:
+        raise HTTPError(f"Request to {endpoint_url} failed with status code "
+                        f"{response.status_code}. Response: {response.json()}")
+
+    return Fuelgrid(**response.json())
+
+
 def delete_fuelgrid(fuelgrid_id: str) -> list[Fuelgrid]:
     """
     Delete a fuelgrid by ID.
@@ -450,19 +524,19 @@ def delete_fuelgrid(fuelgrid_id: str) -> list[Fuelgrid]:
     return [Fuelgrid(**fuelgrid) for fuelgrid in response.json()["fuelgrids"]]
 
 
-# TODO: Add a parameter to delete all fuelgrids for a dataset
-# TODO: Add a parameter to delete all fuelgrids for a treelist
 def delete_all_fuelgrids(dataset_id: str = None,
                          treelist_id: str = None) -> list[Fuelgrid]:
     """
-    Delete all fuelgrids.
+    Delete all fuelgrids associated with a specified dataset or treelist.
 
     Parameters
     ----------
     dataset_id : str, optional
-        The ID of the dataset to filter by, by default None
+        The ID of the dataset whose associated fuelgrids are to be deleted, by
+        default None
     treelist_id : str, optional
-        The ID of the treelist to filter by, by default None
+        The ID of the treelist whose associated fuelgrids are to be deleted,
+        by default None
 
     Returns
     -------
@@ -473,9 +547,22 @@ def delete_all_fuelgrids(dataset_id: str = None,
     ------
     HTTPError
         If the API returns an unsuccessful status code.
+
+    Notes
+    -----
+    If both dataset_id and treelist_id are provided, the function will use the
+    dataset_id as the query parameter.
+
     """
+    # Construct the endpoint URL
+    if dataset_id is not None:
+        endpoint_url = f"{API_URL}/fuelgrids?dataset_id={dataset_id}"
+    elif treelist_id is not None:
+        endpoint_url = f"{API_URL}/fuelgrids?treelist_id={treelist_id}"
+    else:
+        endpoint_url = f"{API_URL}/fuelgrids"
+
     # Send the request to the API
-    endpoint_url = f"{API_URL}/fuelgrids"
     response = SESSION.delete(endpoint_url)
 
     # Raise an exception if the request was unsuccessful
