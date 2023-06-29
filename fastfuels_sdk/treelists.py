@@ -9,7 +9,7 @@ from time import sleep
 from datetime import datetime
 
 # Internal imports
-from fastfuels_sdk import SESSION, API_URL
+from fastfuels_sdk.api import SESSION, API_URL
 from fastfuels_sdk._base import FastFuelsResource
 from fastfuels_sdk.fuelgrids import (Fuelgrid, create_fuelgrid, list_fuelgrids,
                                      delete_all_fuelgrids)
@@ -27,57 +27,7 @@ class Treelist(FastFuelsResource):
     A treelist represents a collection of individual trees distributed on a
     landscape. It provides methods to interact with treelist resources, such as
     retrieving data, updating attributes, creating fuelgrids, and more.
-
-    Attributes
-    ----------
-    id : str
-        The unique identifier of the treelist.
-    name : str
-        The name of the treelist.
-    description : str
-        The description of the treelist.
-    method : str
-        Method used to distribute trees on the landscape.
-    dataset_id : str
-        The unique identifier of the dataset the treelist belongs to.
-    status : str
-        Status of the treelist at the time of the request. Note that the
-        status of a treelist can change after the request.
-    created_on : datetime
-        The date and time the treelist was created.
-    summary : dict
-        A dictionary containing summary statistics for the treelist.
-    fuelgrids : list[str]
-        A list of the IDs of the fuelgrids created from the treelist.
-    version : str
-        The version of standgen used to generate the treelist.
-
-    Methods
-    -------
-    refresh
-        Refreshes the Treelist object with the latest data from the server.
-    get_data
-        Retrieves the treelist data as a pandas DataFrame.
-    update
-        Updates a treelist resource with new values for name and description.
-    update_data
-        Uploads a custom .csv or .parquet file to update an existing treelist
-        resource.
-    create_fuelgrid
-        Creates a Fuelgrid object from the Treelist object.
-    list_fuelgrids
-        Lists all Fuelgrid objects associated with the current Treelist
-        instance.
-    wait_until_finished
-        Waits until the treelist resource has status "Finished".
-    delete_fuelgrids
-        Deletes all Fuelgrid objects associated with the current Treelist
-        instance.
-    delete
-        Deletes the current Treelist instance.
-
     """
-
     def __init__(self, id: str, name: str, description: str, method: str,
                  dataset_id: str, status: str, created_on: str,
                  summary: dict, fuelgrids: list[str], version: str):
@@ -257,6 +207,15 @@ class Treelist(FastFuelsResource):
         spatial grid with fuel attributes. The grid's dimensions are defined by
         horizontal and vertical resolutions.
 
+        There is a slight discrepancy between the spatial extent of the
+        fuelgrid and the spatial extent of the Dataset. The fuelgrid spatial
+        extent is rounded to the nearest multiple of the horizontal
+        resolution to ensure that all grid cells are of uniform size.
+
+        Individual trees may extend beyond the Fuelgrid spatial extent. If
+        this is the case, the canopy of the tree will be cut off at the edge
+        of the Fuelgrid. This can be avoided by increasing the border_pad.
+
         Parameters
         ----------
         name : str
@@ -298,17 +257,6 @@ class Treelist(FastFuelsResource):
             "linear", or "cubic".
         ValueError
             If distribution_method is not "uniform", "random", or "realistic".
-
-        Notes
-        -----
-        There is a slight discrepancy between the spatial extent of the fuelgrid and
-        the spatial extent of the Dataset. The fuelgrid spatial extent is rounded to
-        the nearest multiple of the horizontal resolution to ensure that all grid
-        cells are of uniform size.
-
-        Individual trees may extend beyond the Fuelgrid spatial extent. If this is
-        the case, the canopy of the tree will be cut off at the edge of the Fuelgrid.
-        This can be avoided by increasing the border_pad.
         """
         return create_fuelgrid(self.dataset_id, self.id, name,
                                description, distribution_method,
