@@ -16,3 +16,4 @@ jobs:
         uses: mhausenblas/mkdocs-deploy-gh-pages@master
         env:
           PERSONAL_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+          REQUIREMENTS: requirements/docs.txt
