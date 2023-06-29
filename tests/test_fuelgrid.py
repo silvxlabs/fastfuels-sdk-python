@@ -22,18 +22,19 @@ from requests.exceptions import HTTPError
 
 
 def setup_module(module):
+    with open("test-data/test.geojson") as f:
+        spatial_data = json.load(f)
+
     # Create a test dataset
     global DATASET
     DATASET = create_dataset(name="test_dataset", description="test dataset",
-                             spatial_data="3b8e4cf24c8047de8e13aed745fd5bdb")
+                             spatial_data=spatial_data)
 
     # Create a test treelist
     global TREELIST
-    TREELIST = create_treelist(dataset_id=DATASET.id, name="test_treelist",
-                               description="test treelist")
-    while TREELIST.status != "Finished":
-        TREELIST = get_treelist(TREELIST.id)
-        sleep(2)
+    TREELIST = DATASET.create_treelist(name="test_treelist",
+                                       description="test treelist",)
+    TREELIST.wait_until_finished()
 
 
 def test_create_fuelgrid_uniform():
