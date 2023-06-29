@@ -144,7 +144,7 @@ def test_export_zarr_to_duet():
 
 def test_export_zarr_to_fds():
     # Pull in data from the test zarr file
-    test_zroot = zarr.open("test-data/fds_demo.zip")
+    test_zroot = zarr.open("test-data/test_small_fuelgrid.zip")
     tmp_dir = Path("test-data/tmp")
     tmp_dir.mkdir(exist_ok=True)
 
