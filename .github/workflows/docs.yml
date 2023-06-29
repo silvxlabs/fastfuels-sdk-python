@@ -1,19 +1,15 @@
-name: Publish mkdocs via GitHub Pages
+name: build mkdocs
 on:
   push:
     branches:
       - main
-
 jobs:
-  build:
-    name: Deploy docs
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main
-        uses: actions/checkout@v3
-
-      - name: Deploy docs
-        uses: mhausenblas/mkdocs-deploy-gh-pages@master
-        env:
-          PERSONAL_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
-          REQUIREMENTS: requirements/docs.txt
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+      - run: pip install mkdocs mkdocstrings mkdocstrings-python mkdocs-material
+      - run: mkdocs gh-deploy --force --clean --verbose
