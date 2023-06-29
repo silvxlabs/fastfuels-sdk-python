@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 
 # Internal imports
-from fastfuels_sdk import SESSION, API_URL
+from fastfuels_sdk.api import SESSION, API_URL
 from fastfuels_sdk._base import FastFuelsResource
 from fastfuels_sdk.treelists import (Treelist, create_treelist, list_treelists,
                                      delete_all_treelists)
@@ -22,51 +22,8 @@ class Dataset(FastFuelsResource):
     """
     Class representing the Dataset resource in the FastFuels API. It represents
     a collection of spatial data, TreeList, and Fuelgrid resources, alongside
-    associated metadata. The spatial data is used to generate Treelists and
-    Fuelgrids.
-
-    Attributes
-    ----------
-    id : str
-        The unique identifier for the Dataset.
-    name : str
-        The user-defined name of the Dataset.
-    description : str
-        A user-provided description of the Dataset.
-    created_on : datetime
-        The timestamp indicating when the Dataset was created.
-    tags : list[str]
-        User-defined tags for the Dataset for categorization and filtering.
-    spatial_data : dict
-        The spatial data associated with the Dataset.
-    fvs_variant : str
-        The Forest Vegetation Simulator (FVS) variant linked to the Dataset.
-    version : str
-        The version of FastFuels that created the Dataset.
-    treelists : list[str]
-        IDs of associated Treelist resources.
-    fuelgrids : list[str]
-        IDs of associated Fuelgrid resources.
-
-    Methods
-    -------
-    refresh(inplace: bool = False)
-        Refresh the dataset information from the FastFuels API.
-    update(name: str = None, description: str = None, tags: list = None,
-           inplace: bool = False)
-        Update the name, description, or tags of the Dataset.
-    create_treelist(name: str, description: str = "", method: str = "random")
-        Create a new Treelist resource associated with this Dataset.
-    list_treelists()
-        Get a list of all Treelist resources associated with this Dataset.
-    list_fuelgrids()
-        Get a list of all Fuelgrid resources associated with this Dataset.
-    delete_treelists()
-        Delete all Treelist resources associated with this Dataset.
-    delete_fuelgrids()
-        Delete all Fuelgrid resources associated with this Dataset.
-    delete()
-        Delete this Dataset and all associated Treelists and Fuelgrids.
+    associated metadata. The spatial data stored in the Dataset resource is used
+    to generate Treelists and Fuelgrids.
     """
 
     def __init__(self, id: str, name: str, description: str,
