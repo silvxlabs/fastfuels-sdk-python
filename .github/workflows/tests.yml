@@ -1,15 +1,11 @@
 name: Tests
 on:
-  push:
+  pull_request:
     branches:
       - main
 
 env:
     FASTFUELS_API_KEY: ${{ secrets.FASTFUELS_API_KEY }}
-
-concurrency:
-  group: ${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   test:
