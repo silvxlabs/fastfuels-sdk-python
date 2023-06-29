@@ -15,8 +15,14 @@ import zarr.hierarchy
 from numpy import ndarray
 from scipy.io import FortranFile
 
-TEMPLATES_PATH = importlib.resources.files('fastfuels_sdk'). \
+try:
+    # Python 3.9+
+    TEMPLATES_PATH = importlib.resources.files('fastfuels_sdk'). \
     joinpath('templates')
+except AttributeError:
+    # Python 3.6-3.8
+    from pkg_resources import resource_filename
+    TEMPLATES_PATH = resource_filename('fastfuels_sdk', 'templates')
 
 
 def export_zarr_to_quicfire(zroot: zarr.hierarchy.Group,
