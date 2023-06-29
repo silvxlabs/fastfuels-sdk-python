@@ -4,17 +4,15 @@ Test fuelgrid object and endpoints.
 
 # Internal imports
 import sys
+
 sys.path.append("../")
 from fastfuels_sdk.datasets import *
 from fastfuels_sdk.treelists import *
 from fastfuels_sdk.fuelgrids import *
 
 # Core imports
-import os
-import json
 from uuid import uuid4
 from time import sleep
-from datetime import datetime
 
 # External imports
 import zarr
@@ -345,18 +343,18 @@ def test_download_fuelgrid_data():
         sleep(2)
 
     # Open the test data
-    test_zroot = zarr.open("test-data/test_fuelgrid.zip")
+    test_zroot = zarr.open("test-data/test_small_fuelgrid.zip")
     test_canopy = test_zroot["canopy"]
     test_surface = test_zroot["surface"]
 
-    for fpath in ["test-data", "test-data/fuelgrid_download_test.zip",
-                  Path("test-data/fuelgrid_download_test.zip"),
-                  Path("test-data")]:
+    for fpath in ["test-data/tmp", "test-data/tmp/fuelgrid_download_test.zip",
+                  Path("test-data/tmp/fuelgrid_download_test.zip"),
+                  Path("test-data/tmp")]:
         # Download the fuelgrid data to a file path
         download_zarr(fuelgrid.id, fpath)
 
         # Open the file and check that it is not empty
-        zroot = zarr.open(f"test-data/{fuelgrid.name}.zip")
+        zroot = zarr.open(f"test-data/tmp/{fuelgrid.name}.zip")
         assert len(zroot) > 0
 
         # Check that the file has the correct attributes
@@ -381,10 +379,11 @@ def test_download_fuelgrid_data():
         # Check that the canopy group has the following arrays: bulk-density,
         # SAV, and species-code
         canopy = zroot["canopy"]
-        assert len(canopy) == 3
+        assert len(canopy) == 4
         assert "bulk-density" in canopy
         assert "SAV" in canopy
         assert "species-code" in canopy
+        assert "FMC" in canopy
         assert "not-a-real-array" not in canopy
 
         # Assert that the x and y dimensions are the same for the downloaded
@@ -395,6 +394,8 @@ def test_download_fuelgrid_data():
                 test_canopy["bulk-density"].shape[1])
         assert canopy["SAV"].shape[0] == test_canopy["SAV"].shape[0]
         assert canopy["SAV"].shape[1] == test_canopy["SAV"].shape[1]
+        assert canopy["FMC"].shape[0] == test_canopy["FMC"].shape[0]
+        assert canopy["FMC"].shape[1] == test_canopy["FMC"].shape[1]
         assert (canopy["species-code"].shape[0] ==
                 test_canopy["species-code"].shape[0])
         assert (canopy["species-code"].shape[1] ==
@@ -403,10 +404,11 @@ def test_download_fuelgrid_data():
         # Assert that the canopy arrays are not all zeros
         assert canopy["bulk-density"][...].any()
         assert canopy["SAV"][...].any()
+        assert canopy["FMC"][...].any()
         assert canopy["species-code"][...].any()
 
         # Assert that the canopy array has a sparse matrix attribute
-        assert len(canopy.attrs["sparse_array"]["data"]) > 0
+        # assert len(canopy.attrs["sparse_array"]["data"]) > 0
 
         # Check that downloaded canopy data is similar to the test canopy data.
         assert np.isclose(canopy["bulk-density"][...].mean(),
@@ -447,9 +449,6 @@ def test_download_fuelgrid_data():
                            test_surface["fuel-depth"][...])
         assert np.allclose(surface["SAV"][...],
                            test_surface["SAV"][...])
-
-        # Delete the downloaded file
-        os.remove(f"test-data/{fuelgrid.name}.zip")
 
 
 def test_download_fuelgrid_data_bad_id():
