@@ -10,6 +10,7 @@ from fastfuels_sdk.datasets import *
 from fastfuels_sdk.treelists import *
 
 # Core imports
+import json
 from time import sleep
 from uuid import uuid4
 from datetime import datetime
@@ -21,10 +22,13 @@ from requests.exceptions import HTTPError
 
 
 def setup_module(module):
+    with open("test-data/test.geojson") as f:
+        spatial_data = json.load(f)
+
     # Create a test dataset
     global DATASET
     DATASET = create_dataset(name="test_dataset", description="test dataset",
-                             spatial_data="3b8e4cf24c8047de8e13aed745fd5bdb")
+                             spatial_data=spatial_data)
 
 
 TREELIST_STATUS_LIST = ["Queued", "Generating", "Computing Metrics",
