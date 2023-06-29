@@ -27,9 +27,7 @@ pip install fastfuels-sdk
 
 ### conda
 
-```bash
-conda install -c conda-forge fastfuels-sdk
-```
+Conda support is coming soon!
 
 ## Authentication
 
