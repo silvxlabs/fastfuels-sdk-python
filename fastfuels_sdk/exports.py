@@ -374,7 +374,7 @@ def _generate_surf_lines(sav_classes: np.array, name: str):
         surf_lines.append(f"&SURF ID='surf_{id}'\n")
         surf_lines.append(f"\tSURFACE_VOLUME_RATIO={sav}\n")
         surf_lines.append(f"\tCOLOR='GREEN'\n")
-        surf_lines.append(f"\tLENGTH=0.5'\n")
+        surf_lines.append(f"\tLENGTH=0.5\n")
         surf_lines.append(f"\tMOISTURE_FRACTION=0.5\n")
         surf_lines.append(f"\tGEOMETRY='CYLINDRICAL' /\n\n")
 
