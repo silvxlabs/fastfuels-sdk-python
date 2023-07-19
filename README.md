@@ -1,5 +1,9 @@
 # Python SDK for the FastFuels API
 
+## Quick-Links
+
+[Documentation](https://silvxlabs.github.io/fastfuels-sdk-python/) - [PyPi Package](https://pypi.org/project/fastfuels-sdk/) - [Project Description](https://www.firelab.org/project/fastfuels-3d-fuels-next-generation-fire-models)
+
 ## What is FastFuels?
 
 FastFuels is an innovative solution that propels the use of advanced 3D fire 
