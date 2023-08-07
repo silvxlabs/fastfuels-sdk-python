@@ -54,6 +54,10 @@ setup(
                  "Topic :: Scientific/Engineering", ],
     package_dir={"": "."},
     packages=find_packages(exclude=["docs", "tests"]),
+    package_data={
+        'fastfuels_sdk': ['templates/*.template'],
+    },
+    include_package_data=True,
     install_requires=INSTALL_REQUIRES,
     python_requires=">=3.8",
 )

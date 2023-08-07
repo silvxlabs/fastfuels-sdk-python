@@ -15,12 +15,9 @@ import zarr.hierarchy
 from numpy import ndarray
 from scipy.io import FortranFile
 
-try:
-    # Python 3.9+
-    TEMPLATES_PATH = importlib.resources.files('fastfuels_sdk'). \
-    joinpath('templates')
-except AttributeError:
-    # Python 3.6-3.8
+try:  # Python 3.9+
+    TEMPLATES_PATH = importlib.resources.files('fastfuels_sdk').joinpath('templates')
+except AttributeError:  # Python 3.6-3.8
     from pkg_resources import resource_filename
     TEMPLATES_PATH = resource_filename('fastfuels_sdk', 'templates')
 
@@ -319,9 +316,9 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
 
 def _get_voxel_centers(nx: int, ny: int, nz: int, dx: float, dy: float,
                        dz: float):
-    x_vec = np.linspace(dx / 2, nx*dx - dx / 2, nx)
-    y_vec = np.linspace(dy / 2, ny*dy - dy / 2, ny)
-    z_vec = np.linspace(dz / 2, nz*dz - dz / 2, nz)
+    x_vec = np.linspace(dx / 2, nx * dx - dx / 2, nx)
+    y_vec = np.linspace(dy / 2, ny * dy - dy / 2, ny)
+    z_vec = np.linspace(dz / 2, nz * dz - dz / 2, nz)
     return np.meshgrid(x_vec, y_vec, z_vec, indexing='ij')
 
 
