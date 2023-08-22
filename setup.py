@@ -9,9 +9,12 @@ def read_file(fname):
 
 
 def get_version():
-    with open(os.path.join("fastfuels_sdk", "_version.py")) as fd:
-        # contents are __version__ = "<vstring>"
-        return fd.read().split("=")[1].strip().strip('"')
+    """Get the version number."""
+    url = "https://api.github.com/repos/silvxlabs/fastfuels-sdk-python/releases/latest"
+    response = requests.get(url)
+    response.raise_for_status()
+    version = response.json()["tag_name"]
+    return version[1:]  # Remove the leading "v" from the version number
 
 
 def get_requirements(fname):
