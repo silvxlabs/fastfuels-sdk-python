@@ -1,5 +1,4 @@
-import os
-
+import requests
 from setuptools import find_packages, setup
 
 
