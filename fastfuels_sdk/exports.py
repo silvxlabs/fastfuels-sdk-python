@@ -472,8 +472,8 @@ def _write_np_array_to_dat(array: ndarray, dat_name: str,
         array = array.astype(dtype)
 
     # Write the zarr array to a dat file with scipy FortranFile package
-    f = FortranFile(Path(output_dir, dat_name), "w")
-    f.write_record(array)
+    with FortranFile(Path(output_dir, dat_name), "w") as f:
+        f.write_record(array)
 
 
 def _validate_zarr_file(zgroup: zarr.hierarchy.Group,
