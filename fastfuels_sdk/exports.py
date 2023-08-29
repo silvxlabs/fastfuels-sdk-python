@@ -14,6 +14,13 @@ import numpy as np
 import zarr.hierarchy
 from numpy import ndarray
 from scipy.io import FortranFile
+import geojson
+import landfire
+from landfire.geospatial import get_bbox_from_polygon
+import zipfile
+import rasterio as rio
+import rastero.mask
+
 
 try:  # Python 3.9+
     TEMPLATES_PATH = importlib.resources.files('fastfuels_sdk').joinpath('templates')
@@ -509,3 +516,114 @@ def _validate_zarr_file(zgroup: zarr.hierarchy.Group,
             if array not in zgroup[group]:
                 raise ValueError(f"The zarr file does not contain the required "
                                  f"'{array}' array in the '{group}' group.")
+
+def _query_landfire(zroot: zarr.hierarchy.Group,
+                    output_dir: Path | str,
+                    delete_files: bool = True) -> None:
+    """
+    Download a grid of SB40 fuel models from Landfire for the unit and convert to a numpy array
+
+    Parameters
+    ----------
+    zroot : zarr.hierarchy.Group
+        The root group of the zarr file.
+    output_dir : Path | str
+        The output directory to download Landfire data to.
+    delete_files: bool = True
+        Whether to delete intermediate tif files. Defaults to True
+
+    Returns
+    -------
+    NumPy Array
+        A numpy array of the SB40 FBFM keys for the site
+    """
+    # Validate the zarr file
+    required_groups = ["surface"]
+    required_arrays = {
+        "surface": ["bulk-density", "FMC", "fuel-depth", "DEM"]
+    }
+    _validate_zarr_file(zroot, required_groups, required_arrays)
+    
+    # Convert the output directory to a Path object if it is a string
+    if isinstance(output_dir, str):
+        output_dir = Path(output_dir)
+    
+    # Name intermediate files
+    temp = ["landfire_sb40.zip",
+            "landfire_sb40.tif",
+            "sb40_upsampled.tif",
+            "sb40_cropped.tif"]
+
+    # Create a bounding box from fuelgrid zarr
+    poly = geojson.Polygon(
+    coordinates=[
+        [   
+            [zroot.attrs['xmin'], zroot.attrs['ymin']],
+            [zroot.attrs['xmin'], zroot.attrs['ymax']],
+            [zroot.attrs['xmax'], zroot.attrs['ymax']],
+            [zroot.attrs['xmax'], zroot.attrs['ymin']],
+            [zroot.attrs['xmin'], zroot.attrs['ymin']],
+        ]
+        ],
+    precision=8,
+    )
+    bbox = get_bbox_from_polygon(aoi_polygon=poly, crs = 5070)
+
+    # Download Landfire data to output directory
+    lf = landfire.Landfire(bbox, output_crs = "5070")
+    lf.request_data(layers = ["200F40_19"], output_path=Path(output_dir, "landfire_sb40.zip"))
+
+    # Exctract tif from compressed download folder and rename
+    with zipfile.ZipFile(Path(output_dir, "landfire_sb40.zip")) as zf:
+        extension = '.tif'
+        rename = 'landfire_sb40.tif'
+        info = zf.infolist()
+        for file in info:
+            if file.filename.endswith(extension):
+                file.filename = rename
+                zf.extract(file, output_dir)
+    
+    # Upsample landfire raster to the quicfire resolution
+    with rio.open(Path(output_dir, "landfire_sb40.tif")) as sb: 
+        upscale_factor = 30/zroot.attrs['dx'] # lf res/qf res
+        profile = sb.profile.copy()
+        # resample data to target shape
+        data = sb.read(
+            out_shape=(
+                sb.count,
+                int(sb.height * upscale_factor),
+                int(sb.width * upscale_factor)
+            ),
+            resampling=Resampling.nearest
+        )
+    
+        # scale image transform
+        transform = sb.transform * sb.transform.scale(
+            (sb.width / data.shape[-1]),
+            (sb.height / data.shape[-2])
+        )
+        profile.update({"height": data.shape[-2],
+                    "width": data.shape[-1],
+                   "transform": transform})
+        with rio.open(Path(output_dir,"sb40_upsampled.tif"), "w", **profile) as dataset:
+            dataset.write(data)
+    
+    # Crop the upsampled raster to the unit bounds
+    with rio.open(Path(output_dir,"sb40_upsampled.tif"),"r+") as rst:
+        out_image, out_transform = rasterio.mask.mask(rst,poly,crop=True)
+        out_meta = rst.meta
+        out_meta.update({"driver": "GTiff",
+                         "height": out_image.shape[1],
+                         "width": out_image.shape[2],
+                         "transform": out_transform})
+        with rio.open(Path(output_dir,"sb40_cropped.tif"), "w", **out_meta) as cropped:
+            cropped.write(out_image)
+    
+    # Read in the cropped raster as a numpy array
+    with rio.open(Path(output_dir,"sb40_cropped.tif")) as rst:
+        arr = rst.read(1)
+    
+    if delete_files:
+        [Path(output_dir,file).unlink() for file in temp if Path(output_dir,file).exists()]
+
+    return arr
