@@ -19,7 +19,8 @@ import landfire
 from landfire.geospatial import get_bbox_from_polygon
 import zipfile
 import rasterio as rio
-import rastero.mask
+import rasterio.mask
+import pandas as pd
 
 
 try:  # Python 3.9+
@@ -320,6 +321,84 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
     with open(Path(output_dir, "template.fds"), "w") as fout:
         fout.write(template.substitute(fds_attrs))
 
+def calibrate_duet(zroot: zarr.hierarchy.Group,
+                   output_dir: Path | str,
+                   duet_dir: Path | str, 
+                   param_dir: Path | str = None) -> None:
+    """
+    Calibrate the values of the surface bulk density output from DUET by changing
+    the range or center and spread. Calibration can be based off of SB40-derived 
+    fuel loading values from Landfire, or from user inputs of summary statistics
+    of bulk density.
+
+    Possible summary statistics:
+    - Mean and standard deviation OR
+    - Maximum and minimum
+
+    These inputs may be supplied for the following fuel types:
+    - Grass AND/OR
+    - Litter (currently combined deciduous and coniferous) 
+    OR
+    - Total
+
+    The fuelgrid zarr is required to parameterize Landfire queries, with the following
+    groups and arrays:
+
+    Required zarr groups:
+    - surface
+
+    Required zarr arrays:
+    - surface/bulk-density
+
+    Parameters
+    ----------
+    zroot : zarr.hierarchy.Group
+        The root group of the zarr file.
+    output_dir : Path | str
+        The output directory to write the DUET input files to.
+    param_dir: Path | str = None
+        The directory containing the Sb40 parameters table, if
+        different from output_dir. Defaults to None
+
+    Returns
+    -------
+    None
+        Calibrated array of DUET surface bulk density is saved to the output directory.
+    """
+    # Validate the zarr file
+    required_groups = ["surface"]
+    required_arrays = {
+        "surface": ["bulk-density"]
+    }
+    _validate_zarr_file(zroot, required_groups, required_arrays)
+    
+    # Convert the output and SB40 parameters directories to a Path objects if they are strings
+    if isinstance(output_dir, str):
+        output_dir = Path(output_dir)
+    if isinstance(param_dir, str):
+        param_dir = Path(param_dir)
+    
+    # If user inputs are not present for all fuel types, use values from Landfire:
+    # Query Landfire and return array of SB40 keys
+    sb40_arr = _query_landfire(zroot, output_dir)
+
+    # Import SB40 FBFM parameters table
+    if param_dir == None:
+        param_dir = output_dir
+    sb40_params = pd.read_csv(Path(param_dir,"sb40_parameters.csv"))
+
+    # Generate dict of fastfuels bulk density values and apply to Landfire query
+    sb40_dict = _get_sb40_fuel_params(sb40_params)
+    ftype_arr, rhof_arr = _get_sb40_arrays(sb40_arr, sb40_params)
+    
+    # Read in bulk density output from DUET
+    nx = zroot.attrs["nx"]
+    ny = zroot.attrs["ny"]
+    nz = 2 # number of duet layers, right now grass and litter. Will be number of tree species + 1
+    dim = (nz,ny,nx)
+    duet_rhof = _read_dat_file(duet_dir, "surface_rhof.dat", dim)
+
+
 
 def _get_voxel_centers(nx: int, ny: int, nz: int, dx: float, dy: float,
                        dz: float):
@@ -517,9 +596,28 @@ def _validate_zarr_file(zgroup: zarr.hierarchy.Group,
                 raise ValueError(f"The zarr file does not contain the required "
                                  f"'{array}' array in the '{group}' group.")
 
+def _read_dat_file(dir: Path | str,
+                   filename: str,
+                   arr_dim: tuple) -> np.array:
+    """
+    Read in a .dat file as a numpy array.
+
+    Dimensions of the array must be known, and in the order (z,y,x)
+    """
+    # Convert the directory to a Path object if it is a string
+    if isinstance(dir, str):
+        dir = Path(dir)
+    
+    # Import and reshape .dat file
+    arr =  FortranFile(Path(dir, filename),'r','uint32').read_ints('float32').T.reshape(arr_dim)
+    
+    return arr
+    
+
+
 def _query_landfire(zroot: zarr.hierarchy.Group,
                     output_dir: Path | str,
-                    delete_files: bool = True) -> None:
+                    delete_files: bool = True) -> np.array:
     """
     Download a grid of SB40 fuel models from Landfire for the unit and convert to a numpy array
 
@@ -537,16 +635,6 @@ def _query_landfire(zroot: zarr.hierarchy.Group,
     NumPy Array
         A numpy array of the SB40 FBFM keys for the site
     """
-    # Validate the zarr file
-    required_groups = ["surface"]
-    required_arrays = {
-        "surface": ["bulk-density", "FMC", "fuel-depth", "DEM"]
-    }
-    _validate_zarr_file(zroot, required_groups, required_arrays)
-    
-    # Convert the output directory to a Path object if it is a string
-    if isinstance(output_dir, str):
-        output_dir = Path(output_dir)
     
     # Name intermediate files
     temp = ["landfire_sb40.zip",
@@ -627,3 +715,139 @@ def _query_landfire(zroot: zarr.hierarchy.Group,
         [Path(output_dir,file).unlink() for file in temp if Path(output_dir,file).exists()]
 
     return arr
+
+def _get_sb40_fuel_params(params: pd.DataFrame = None) -> dict:
+    """
+    Builds a dictionary of SB40 fuel parameter values and converts them to
+    the official FastFuels units
+
+    Returns:
+        dict: SB40 parameters for each fuel model
+    """
+    # Load in the SB40 fuel parameters
+    if params is not None:
+        sb40_df = params.copy()
+    else:
+        fpath = Path("src", "data_module", "data", "sb40_parameters.csv")
+        with open(fpath) as fin:
+            sb40_df = pd.read_csv(fin)
+
+    # Convert tons/ac-ft to kg/m^3
+    sb40_df["1_hr_kg_per_m3"] = sb40_df["1_hr_t_per_ac"] * 0.22417
+    sb40_df["10_hr_kg_per_m3"] = sb40_df["10_hr_t_per_ac"] * 0.22417
+    sb40_df["100_hr_kg_per_m3"] = sb40_df["100_hr_t_per_ac"] * 0.22417
+    sb40_df["live_herb_kg_per_m3"] = sb40_df["live_herb_t_per_ac"] * 0.22417
+    sb40_df["live_woody_kg_per_m3"] = sb40_df["live_woody_t_per_ac"] * 0.22417
+
+    # Convert inverse feet to meters
+    sb40_df["dead_1_hr_sav_ratio_1_per_m"] = sb40_df["dead_1_hr_sav_ratio_1_per_ft"] * 3.2808
+    sb40_df["live_herb_sav_ratio_1_per_m"] = sb40_df["live_herb_sav_ratio_1_per_ft"] * 3.2808
+    sb40_df["live_wood_sav_ratio_1_per_m"] = sb40_df["live_wood_sav_ratio_1_per_ft"] * 3.2808
+
+    # Convert percent to ratio
+    sb40_df["dead_fuel_extinction_moisture"] /= 100
+
+    # Convert feet to meters
+    sb40_df["fuel_bed_depth_m"] = sb40_df["fuel_bed_depth_ft"] * 0.3048
+
+    # Compute wet loading
+    sb40_df["wet_load"] = sb40_df["1_hr_kg_per_m3"] + sb40_df["live_herb_kg_per_m3"]
+
+    # Compute a live herb curing factor alpha as a function of wet loading.
+    # This is kind of a B.S. approach raised by Rod on a phone call with
+    # Anthony on 02/28/2023. I don't like this at all, but it is a temporary
+    # Fix for the BP3D team to run some simulations.
+    # low_load_fuel_models = [
+    sb40_df["alpha"] = [0.5 if rho > 1 else 1.0 for rho in sb40_df["wet_load"]]
+
+    # Compute dry loading
+    sb40_df["dry_herb_load"] = sb40_df["live_herb_kg_per_m3"] * sb40_df["alpha"]
+    sb40_df["dry_load"] = sb40_df["1_hr_kg_per_m3"] + sb40_df["dry_herb_load"]
+
+    # Compute SAV
+    sb40_df["sav_1hr_ratio"] = sb40_df["1_hr_kg_per_m3"] / sb40_df["dry_load"]
+    sb40_df["sav_1hr"] = sb40_df["sav_1hr_ratio"] * sb40_df["dead_1_hr_sav_ratio_1_per_m"]
+    sb40_df["sav_herb_ratio"] = sb40_df["dry_herb_load"] / sb40_df["dry_load"]
+    sb40_df["sav_herb"] = sb40_df["sav_herb_ratio"] * sb40_df["live_herb_sav_ratio_1_per_m"]
+    sb40_df["sav"] = sb40_df["sav_1hr"] + sb40_df["sav_herb"]
+
+    # Convert nan to 0
+    sb40_df.fillna(0, inplace=True)
+    
+    ## NIKO ADDITIONS
+    # Create dictionary for assigning fuel types for DUET calibration
+    duet_dict = {"NB" : 0, #0 = NEUTRAL, i.e. not predominantly grass or litter
+                 "GR" : 1, #1 = GRASS predominantly
+                 "GS" : 1,
+                 "SH" : 1, #I am considering shrubs as grass
+                 "TU" : 0,
+                 "TL" : -1, #-1 = LITTER predominantly
+                 "SB" : 0}
+    
+    # Add column to df with DUET designations
+    pattern = r'[0-9]' #take out numbers from fbfm_type strings
+    sb40_df["fbfm_cat"] = sb40_df["fbfm_code"].apply(lambda x: re.sub(pattern, '', x))
+    sb40_df["duet_fuel_type"] = sb40_df["fbfm_cat"].apply(lambda x: duet_dict.get(x))
+    ## END NIKO ADDITIONS
+
+    # Build the dictionary with fuel parameters for the Scott and Burgan 40
+    # fire behavior fuel models. Dict format: key ->
+    # [name, loading (tons/ac), SAV (1/ft), ext. MC (percent), bed depth (ft)]
+    # Note: Eventually we want to get rid of this and just use the dataframe.
+    # This is legacy from the old parameter table json.
+    sb40_dict = {}
+    for key in sb40_df["key"]:
+        row = sb40_df[sb40_df["key"] == key]
+        sb40_dict[key] = [
+            row["fbfm_code"].values[0],
+            row["dry_load"].values[0],
+            row["sav"].values[0],
+            row["dead_fuel_extinction_moisture"].values[0],
+            row["fuel_bed_depth_m"].values[0],
+            row["duet_fuel_type"].values[0]
+        ]
+
+    return sb40_dict
+
+def _get_sb40_arrays(sb40_keys: np.array, 
+                     sb40_dict: dict) -> tuple:
+    """
+    Use a dictionary of bulk density and fuel types that correspond to SB40
+    fuel models to assign those values across the study area.
+
+    Fuel types are as follows:
+    - 1: Predominantly grass. All cells with a GR or GS designation from SB40.
+    - -1: Predominantly tree litter. All cells with a TL designation from SB40. 
+    - 0: Neither predominantly grass or tree litter. All other SB40 designations.
+
+    Returns:
+        - np.array of fuel types
+        - np.array of bulk density values as calculated by fastfuels
+    """
+    ftype_dict = {key:val[5] for key,val in sb40_dict.items()}
+    ftype_arr = np.vectorize(ftype_dict.get)(sb40_keys)
+    
+    rhof_dict = {key:val[1] for key,val in sb40_dict.items()}
+    rhof_arr = np.vectorize(rhof_dict.get)(sb40_keys)
+
+    return ftype_arr, rhof_arr
+
+def _calibrate_meansd(x: np.array,
+                      mean: float,
+                      sd: float) -> np.array:
+    x1 = x[x>0]
+    x2 = mean + (x1 - np.mean(x1)) * (sd/np.std(x1))
+    xnew = x.copy()
+    xnew[np.where(x>0)] = x2
+    if np.min(xnew)<0:
+        xnew = _truncate_at_0(xnew)
+    return xnew
+
+def _truncate_at_0(arr: np.array) -> np.array:
+    # if values from the gaussian dist go below zero, "compress" the left side of the dist by rescaling to the range (0,mean)
+    arr2 = arr.copy()
+    bottom_half = arr2[arr2<np.median(arr2)]
+    squeezed = (bottom_half-np.min(bottom_half))/(np.max(bottom_half)-np.min(bottom_half)) * (np.median(arr2)-0) + 0
+    arr2[np.where(arr2<np.median(arr2))] = squeezed
+    arr2[np.where(arr==0)] = 0
+    return arr2
