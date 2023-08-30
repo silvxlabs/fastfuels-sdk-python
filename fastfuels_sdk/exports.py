@@ -323,8 +323,9 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
 
 def calibrate_duet(zroot: zarr.hierarchy.Group,
                    output_dir: Path | str,
-                   duet_dir: Path | str, 
-                   param_dir: Path | str = None) -> None:
+                   fuel_types: str | list,
+                   param_dir: Path | str = None,
+                   **kwargs: float) -> None:
     """
     Calibrate the values of the surface bulk density output from DUET by changing
     the range or center and spread. Calibration can be based off of SB40-derived 
@@ -355,10 +356,16 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     zroot : zarr.hierarchy.Group
         The root group of the zarr file.
     output_dir : Path | str
-        The output directory to write the DUET input files to.
-    param_dir: Path | str = None
+        The output directory where DUET files are stored, 
+        and where the calibrated file will be written to.
+    fuel_types : str | list
+        Sting or list indicating the fuel type(s) for which 
+        summary statistics are provided. One of: "total", "grass",
+        "litter", ["grass","litter"], or "none"
+    param_dir : Path | str = None
         The directory containing the Sb40 parameters table, if
         different from output_dir. Defaults to None
+    **kwargs : float
 
     Returns
     -------
@@ -378,25 +385,56 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     if isinstance(param_dir, str):
         param_dir = Path(param_dir)
     
+    # Validate the fuel type inputs
+    valid_ftypes = {"grass","litter","total",["grass","litter"],["litter","grass"],"none"}
+    if fuel_types not in valid_ftypes:
+        raise ValueError("calibrate_duet: fuel_types must be one of %r." % valid_ftypes)
+    
+    # Validate kwargs
+    if fuel_types == "none":
+        if len(kwargs.keys()) > 0:
+            raise Exception("calibrate_duet: no keyword arguments expected when fuel_types == 'none'")
+    elif len(kwargs.keys())==0:
+        raise ValueError("calibrate_duet: keyword arguments expected for fuel_types != 'none'")
+    else:
+        grass_kwargs = {"grass_mean","grass_sd","grass_max","grass_min"}
+        litter_kwargs = {"litter_mean","litter_sd","litter_max","litter_min"}
+        total_kwargs = {"total_mean","total_sd","toal_max","total_min"}
+        for key in kwargs.keys():
+            if fuel_types == "grass":
+                if key not in grass_kwargs:
+                    raise ValueError("calibrate_duet: invalid keyword argument '{}'. Must be two of {} when fuel_types == 'grass'".format(key,grass_kwargs))
+            elif fuel_types == "litter":
+                if key not in litter_kwargs:
+                    raise ValueError("calibrate_duet: invalid keyword argument '{}'. Must be two of {} when fuel_types == 'litter'".format(key,litter_kwargs))
+            elif fuel_types == "total":
+                if key not in litter_kwargs:
+                    raise ValueError("calibrate_duet: invalid keyword argument '{}'. Must be two of {} when fuel_types == 'total'".format(key,total_kwargs))
+    
+    #TODO: figure out how to create if statement to make sure people use *_mean and *_sd OR *_max and *_min. Not just one within a pair, not both pairs, and not mismatched
+
     # If user inputs are not present for all fuel types, use values from Landfire:
-    # Query Landfire and return array of SB40 keys
-    sb40_arr = _query_landfire(zroot, output_dir)
+    if fuel_types == "litter" or fuel_types == "grass" or fuel_types == "none":
+        # Query Landfire and return array of SB40 keys
+        sb40_arr = _query_landfire(zroot, output_dir)
 
-    # Import SB40 FBFM parameters table
-    if param_dir == None:
-        param_dir = output_dir
-    sb40_params = pd.read_csv(Path(param_dir,"sb40_parameters.csv"))
+        # Import SB40 FBFM parameters table
+        if param_dir == None:
+            param_dir = output_dir
+        sb40_params = pd.read_csv(Path(param_dir,"sb40_parameters.csv"))
 
-    # Generate dict of fastfuels bulk density values and apply to Landfire query
-    sb40_dict = _get_sb40_fuel_params(sb40_params)
-    ftype_arr, rhof_arr = _get_sb40_arrays(sb40_arr, sb40_params)
+        # Generate dict of fastfuels bulk density values and apply to Landfire query
+        sb40_dict = _get_sb40_fuel_params(sb40_params)
+        ftype_arr, rhof_arr = _get_sb40_arrays(sb40_arr, sb40_params)
     
     # Read in bulk density output from DUET
     nx = zroot.attrs["nx"]
     ny = zroot.attrs["ny"]
     nz = 2 # number of duet layers, right now grass and litter. Will be number of tree species + 1
     dim = (nz,ny,nx)
-    duet_rhof = _read_dat_file(duet_dir, "surface_rhof.dat", dim)
+    duet_rhof = _read_dat_file(output_dir, "surface_rhof.dat", dim)
+
+
 
 
 
@@ -816,7 +854,7 @@ def _get_sb40_arrays(sb40_keys: np.array,
     fuel models to assign those values across the study area.
 
     Fuel types are as follows:
-    - 1: Predominantly grass. All cells with a GR or GS designation from SB40.
+    - 1: Predominantly grass. All cells with a GR, GS, or SH designation from SB40.
     - -1: Predominantly tree litter. All cells with a TL designation from SB40. 
     - 0: Neither predominantly grass or tree litter. All other SB40 designations.
 
@@ -835,6 +873,10 @@ def _get_sb40_arrays(sb40_keys: np.array,
 def _calibrate_meansd(x: np.array,
                       mean: float,
                       sd: float) -> np.array:
+    """
+    Scales and shifts values in a numpy array based on an observed mean and standard deviation.
+    Assumes data is normally distributed.
+    """
     x1 = x[x>0]
     x2 = mean + (x1 - np.mean(x1)) * (sd/np.std(x1))
     xnew = x.copy()
@@ -844,10 +886,28 @@ def _calibrate_meansd(x: np.array,
     return xnew
 
 def _truncate_at_0(arr: np.array) -> np.array:
-    # if values from the gaussian dist go below zero, "compress" the left side of the dist by rescaling to the range (0,mean)
+    """
+    Artificially truncates data to positive values by scaling all values below the median
+    to the range (0, mean), effectively "compressing" those values.
+    """
     arr2 = arr.copy()
     bottom_half = arr2[arr2<np.median(arr2)]
     squeezed = (bottom_half-np.min(bottom_half))/(np.max(bottom_half)-np.min(bottom_half)) * (np.median(arr2)-0) + 0
     arr2[np.where(arr2<np.median(arr2))] = squeezed
     arr2[np.where(arr==0)] = 0
     return arr2
+
+def _calibrate_maxmin(x: np.array,
+                      max: float,
+                      min: float) -> np.array:
+    """
+    Scales and shifts values in a numpy array based on an observed range. Does not assume
+    data is normally distributed.
+    """
+    x1 = x[x>0]
+    x2 = (x1-np.min(x1))/(np.max(x1)-np.min(x1))
+    x3 = x2 * (max-min)
+    x4 = x3 + min
+    xnew = x.copy()
+    xnew[np.where(x>0)] = x4
+    return xnew
