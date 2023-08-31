@@ -391,12 +391,15 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
         raise ValueError("calibrate_duet: fuel_types must be one of %r." % valid_ftypes)
     
     # Validate kwargs
+    # Make sure there are no kwargs when fuel_types == "none"
     if fuel_types == "none":
         if len(kwargs.keys()) > 0:
             raise Exception("calibrate_duet: no keyword arguments expected when fuel_types == 'none'")
+    # Make sure kwargs are present when fuel_types != "none"
     elif len(kwargs.keys())==0:
         raise ValueError("calibrate_duet: keyword arguments expected for fuel_types != 'none'")
     else:
+        # Make sure kwargs match fuel_types
         grass_kwargs = {"grass_mean","grass_sd","grass_max","grass_min"}
         litter_kwargs = {"litter_mean","litter_sd","litter_max","litter_min"}
         total_kwargs = {"total_mean","total_sd","toal_max","total_min"}
@@ -410,8 +413,17 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
             elif fuel_types == "total":
                 if key not in litter_kwargs:
                     raise ValueError("calibrate_duet: invalid keyword argument '{}'. Must be two of {} when fuel_types == 'total'".format(key,total_kwargs))
-    
-    #TODO: figure out how to create if statement to make sure people use *_mean and *_sd OR *_max and *_min. Not just one within a pair, not both pairs, and not mismatched
+    # Make sure kwarg statistics match each other (eg providing mean necessitates providing sd)
+    kwarg_pairs = {"mean":"sd",
+                   "sd":"mean",
+                   "min":"max",
+                   "max":"min"}
+    for k, v in kwarg_pairs.items(): #note: this will not allow user to input different statistics for grass and litter (eg grass max/min and litter mean/sd)
+        if ([key for key in kwargs.keys() if key.endswith(k)]):
+            if ([key for key in kwargs.keys() if key.endswith(v)]):
+                pass
+            else:
+                raise ValueError("calibrate_duet: invalid keyword argument pair. *_mean must be matched by *_sd and *_max must be matched by *_min.")
 
     # If user inputs are not present for all fuel types, use values from Landfire:
     if fuel_types == "litter" or fuel_types == "grass" or fuel_types == "none":
@@ -425,7 +437,7 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
 
         # Generate dict of fastfuels bulk density values and apply to Landfire query
         sb40_dict = _get_sb40_fuel_params(sb40_params)
-        ftype_arr, rhof_arr = _get_sb40_arrays(sb40_arr, sb40_params)
+        ftype_arr, rhof_arr = _get_sb40_arrays(sb40_arr, sb40_dict)
     
     # Read in bulk density output from DUET
     nx = zroot.attrs["nx"]
@@ -434,9 +446,83 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     dim = (nz,ny,nx)
     duet_rhof = _read_dat_file(output_dir, "surface_rhof.dat", dim)
 
-
-
-
+    # Calibrate based on fuel_types and kwargs
+    if fuel_types == "total":
+        duet_rhof = np.add(duet_rhof[0,:,:], duet_rhof[1,:,:])
+    else:
+        duet_grass = duet_rhof[0,:,:]
+        duet_litter = duet_rhof[1,:,:]
+    if fuel_types == "total":
+        if ([key for key in kwargs.keys() if key.endswith("mean") or key.endswith("sd")]):
+            mean = [kwargs.get(key) for key in kwargs.keys() if key.endswith("mean")][0]
+            sd = [kwargs.get(key) for key in kwargs.keys() if key.endswith("sd")][0]
+            duet_calibrated = _calibrate_meansd(duet_rhof,mean,sd)
+        elif ([key for key in kwargs.keys() if key.endswith("max") or key.endswith("min")]):
+            max = [kwargs.get(key) for key in kwargs.keys() if key.endswith("max")][0]
+            min = [kwargs.get(key) for key in kwargs.keys() if key.endswith("min")][0]
+            duet_calibrated = _calibrate_maxmin(duet_rhof,max,min)
+    elif fuel_types == "litter":
+        if ([key for key in kwargs.keys() if key.endswith("mean") or key.endswith("sd")]):
+            mean = [kwargs.get(key) for key in kwargs.keys() if key.endswith("mean")][0]
+            sd = [kwargs.get(key) for key in kwargs.keys() if key.endswith("sd")][0]
+            litter_calibrated = _calibrate_meansd(duet_litter,mean,sd)
+        elif ([key for key in kwargs.keys() if key.endswith("max") or key.endswith("min")]):
+            max = [kwargs.get(key) for key in kwargs.keys() if key.endswith("max")][0]
+            min = [kwargs.get(key) for key in kwargs.keys() if key.endswith("min")][0]
+            litter_calibrated = _calibrate_maxmin(duet_litter,max,min)
+        # Use max/min from SB40 to calibrate grass values
+        max = np.max(rhof_arr[ftype_arr==1])
+        grass_arr = rhof_arr[ftype_arr==1]
+        min = np.min(grass_arr[grass_arr>0])
+        grass_calibrated = _calibrate_maxmin(duet_grass,max,min)
+        # Combine grass and litter arrays
+        duet_calibrated = np.add(grass_calibrated,litter_calibrated)
+    elif fuel_types == "grass":
+        if ([key for key in kwargs.keys() if key.endswith("mean") or key.endswith("sd")]):
+            mean = [kwargs.get(key) for key in kwargs.keys() if key.endswith("mean")][0]
+            sd = [kwargs.get(key) for key in kwargs.keys() if key.endswith("sd")][0]
+            grass_calibrated = _calibrate_meansd(duet_grass,mean,sd)
+        elif ([key for key in kwargs.keys() if key.endswith("max") or key.endswith("min")]):
+            max = [kwargs.get(key) for key in kwargs.keys() if key.endswith("max")][0]
+            min = [kwargs.get(key) for key in kwargs.keys() if key.endswith("min")][0]
+            grass_calibrated = _calibrate_maxmin(duet_grass,max,min)
+        # Use max/min from SB40 to calibrate grass values
+        max = np.max(rhof_arr[ftype_arr==-1])
+        litter_arr = rhof_arr[ftype_arr==-1]
+        min = np.min(litter_arr[litter_arr>0])
+        litter_calibrated = _calibrate_maxmin(duet_litter,max,min)
+        # Combine grass and litter arrays
+        duet_calibrated = np.add(grass_calibrated,litter_calibrated)
+    elif fuel_types == ["litter","grass"] or fuel_types == ["grass","litter"]:
+        if ([key for key in kwargs.keys() if key.endswith("mean") or key.endswith("sd")]):
+            grass_mean = [kwargs.get(key) for key in kwargs.keys() if key == "grass_mean"][0]
+            grass_sd = [kwargs.get(key) for key in kwargs.keys() if key == "grass_sd"][0]
+            litter_mean = [kwargs.get(key) for key in kwargs.keys() if key == "litter_mean"][0]
+            litter_sd = [kwargs.get(key) for key in kwargs.keys() if key == "litter_sd"][0]
+            grass_calibrated = _calibrate_meansd(duet_grass,grass_mean,grass_sd)
+            litter_calibrated = _calibrate_meansd(duet_litter,litter_mean,litter_sd)
+        elif ([key for key in kwargs.keys() if key.endswith("max") or key.endswith("min")]):
+            grass_max = [kwargs.get(key) for key in kwargs.keys() if key == "litter_max"][0]
+            grass_min = [kwargs.get(key) for key in kwargs.keys() if key == "litter_min"][0]
+            litter_max = [kwargs.get(key) for key in kwargs.keys() if key == "litter_max"][0]
+            litter_min = [kwargs.get(key) for key in kwargs.keys() if key == "litter_min"][0]
+            grass_calibrated = _calibrate_maxmin(duet_grass,grass_max,grass_min)
+            litter_calibrated = _calibrate_meansd(duet_litter,litter_mean,litter_sd)
+        # Combine grass and litter arrays
+        duet_calibrated = np.add(grass_calibrated,litter_calibrated)
+    elif fuel_types == "none":
+        # Use max/min from SB40 to calibrate grass values
+        grass_max = np.max(rhof_arr[ftype_arr==1])
+        grass_arr = rhof_arr[ftype_arr==1]
+        grass_min = np.min(grass_arr[grass_arr>0])
+        litter_max = np.max(rhof_arr[ftype_arr==-1])
+        litter_arr = rhof_arr[ftype_arr==-1]
+        litter_min = np.min(litter_arr[litter_arr>0])
+        grass_calibrated = _calibrate_maxmin(duet_grass,grass_max,grass_min)
+        litter_calibrated = _calibrate_maxmin(duet_litter,litter_max,litter_min)
+        duet_calibrated = np.add(grass_calibrated,litter_calibrated)
+    
+    return duet_calibrated
 
 def _get_voxel_centers(nx: int, ny: int, nz: int, dx: float, dy: float,
                        dz: float):
@@ -871,8 +957,8 @@ def _get_sb40_arrays(sb40_keys: np.array,
     return ftype_arr, rhof_arr
 
 def _calibrate_meansd(x: np.array,
-                      mean: float,
-                      sd: float) -> np.array:
+                      mean: float | int,
+                      sd: float | int) -> np.array:
     """
     Scales and shifts values in a numpy array based on an observed mean and standard deviation.
     Assumes data is normally distributed.
@@ -898,8 +984,8 @@ def _truncate_at_0(arr: np.array) -> np.array:
     return arr2
 
 def _calibrate_maxmin(x: np.array,
-                      max: float,
-                      min: float) -> np.array:
+                      max: float | int,
+                      min: float | int) -> np.array:
     """
     Scales and shifts values in a numpy array based on an observed range. Does not assume
     data is normally distributed.
