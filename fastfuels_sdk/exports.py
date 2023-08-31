@@ -323,7 +323,6 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
 
 def calibrate_duet(zroot: zarr.hierarchy.Group,
                    output_dir: Path | str,
-                   fuel_types: str | list,
                    param_dir: Path | str = None,
                    **kwargs: float) -> None:
     """
@@ -342,6 +341,10 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     OR
     - Total
 
+    Inputs are provided in the keyword arguments. For any inputs that are not provided,
+    calibration is based off of min and max values of SB40-derived fuel loads. No user
+    inputs are necessary.
+
     The fuelgrid zarr is required to parameterize Landfire queries, with the following
     groups and arrays:
 
@@ -358,14 +361,16 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     output_dir : Path | str
         The output directory where DUET files are stored, 
         and where the calibrated file will be written to.
-    fuel_types : str | list
-        Sting or list indicating the fuel type(s) for which 
-        summary statistics are provided. One of: "total", "grass",
-        "litter", ["grass","litter"], or "none"
     param_dir : Path | str = None
         The directory containing the Sb40 parameters table, if
         different from output_dir. Defaults to None
     **kwargs : float
+        Keyword arguments are reserved for summary statistics
+        of target values for fuel loading. Calibration is based 
+        on either a mean and standard deviation OR a maximum 
+        and minimum. Valid fuel types are "grass", "litter", 
+        or "total". Arguements should be given in the format 
+        fueltype_statistic = float (eg: litter_mean = 0.8).
 
     Returns
     -------
@@ -385,34 +390,39 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     if isinstance(param_dir, str):
         param_dir = Path(param_dir)
     
-    # Validate the fuel type inputs
-    valid_ftypes = {"grass","litter","total",["grass","litter"],["litter","grass"],"none"}
+    # Get fuel type(s) from kwargs
+    valid_ftypes = {["grass"],["litter"],["total"],["grass","litter"],["litter","grass"],["none"]}
+    fuel_types = []
+    if any([key for key in kwargs.keys() if key.startswith("total")]):
+        fuel_types.append("total")
+    if any([key for key in kwargs.keys() if key.startswith("grass")]):
+        fuel_types.append("grass")
+    if any([key for key in kwargs.keys() if key.startswith("litter")]):
+        fuel_types.append("litter")
+    if len(kwargs.keys()) == 0:
+        fuel_types.append("none")
+    else:
+        raise ValueError("calibrate_duet: invalid fuel type in keyword arguements. Must be one of %r." % valid_ftypes)
+
+    # Validate the fuel types
     if fuel_types not in valid_ftypes:
-        raise ValueError("calibrate_duet: fuel_types must be one of %r." % valid_ftypes)
+        raise ValueError("calibrate_duet: invalid fuel type in keyword arguements. Must be one of %r." % valid_ftypes)
     
     # Validate kwargs
-    # Make sure there are no kwargs when fuel_types == "none"
-    if fuel_types == "none":
-        if len(kwargs.keys()) > 0:
-            raise Exception("calibrate_duet: no keyword arguments expected when fuel_types == 'none'")
-    # Make sure kwargs are present when fuel_types != "none"
-    elif len(kwargs.keys())==0:
-        raise ValueError("calibrate_duet: keyword arguments expected for fuel_types != 'none'")
-    else:
-        # Make sure kwargs match fuel_types
-        grass_kwargs = {"grass_mean","grass_sd","grass_max","grass_min"}
-        litter_kwargs = {"litter_mean","litter_sd","litter_max","litter_min"}
-        total_kwargs = {"total_mean","total_sd","toal_max","total_min"}
-        for key in kwargs.keys():
-            if fuel_types == "grass":
-                if key not in grass_kwargs:
-                    raise ValueError("calibrate_duet: invalid keyword argument '{}'. Must be two of {} when fuel_types == 'grass'".format(key,grass_kwargs))
-            elif fuel_types == "litter":
-                if key not in litter_kwargs:
-                    raise ValueError("calibrate_duet: invalid keyword argument '{}'. Must be two of {} when fuel_types == 'litter'".format(key,litter_kwargs))
-            elif fuel_types == "total":
-                if key not in litter_kwargs:
-                    raise ValueError("calibrate_duet: invalid keyword argument '{}'. Must be two of {} when fuel_types == 'total'".format(key,total_kwargs))
+    # Make sure kwargs match fuel_types
+    grass_kwargs = {"grass_mean","grass_sd","grass_max","grass_min"}
+    litter_kwargs = {"litter_mean","litter_sd","litter_max","litter_min"}
+    total_kwargs = {"total_mean","total_sd","toal_max","total_min"}
+    for key in kwargs.keys():
+        if fuel_types == "grass":
+            if key not in grass_kwargs:
+                raise ValueError("calibrate_duet: invalid keyword argument '{}'. Must be two of {} when fuel_types == 'grass'".format(key,grass_kwargs))
+        elif fuel_types == "litter":
+            if key not in litter_kwargs:
+                raise ValueError("calibrate_duet: invalid keyword argument '{}'. Must be two of {} when fuel_types == 'litter'".format(key,litter_kwargs))
+        elif fuel_types == "total":
+            if key not in litter_kwargs:
+                raise ValueError("calibrate_duet: invalid keyword argument '{}'. Must be two of {} when fuel_types == 'total'".format(key,total_kwargs))
     # Make sure kwarg statistics match each other (eg providing mean necessitates providing sd)
     kwarg_pairs = {"mean":"sd",
                    "sd":"mean",
@@ -522,7 +532,8 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
         litter_calibrated = _calibrate_maxmin(duet_litter,litter_max,litter_min)
         duet_calibrated = np.add(grass_calibrated,litter_calibrated)
     
-    return duet_calibrated
+    _write_np_array_to_dat(duet_calibrated, "surface_rhof_calibrated.dat",
+                           output_dir, np.float32)
 
 def _get_voxel_centers(nx: int, ny: int, nz: int, dx: float, dy: float,
                        dz: float):
