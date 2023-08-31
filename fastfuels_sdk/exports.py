@@ -3,6 +3,8 @@ FastFuels SDK Exports Module
 """
 # Core imports
 from __future__ import annotations
+from pydoc import doc
+from turtle import setundobuffer
 import warnings
 import importlib.resources
 from pathlib import Path
@@ -324,6 +326,7 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
 def calibrate_duet(zroot: zarr.hierarchy.Group,
                    output_dir: Path | str,
                    param_dir: Path | str = None,
+                   keep_duet: str = None,
                    **kwargs: float) -> None:
     """
     Calibrate the values of the surface bulk density output from DUET by changing
@@ -364,6 +367,9 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     param_dir : Path | str = None
         The directory containing the Sb40 parameters table, if
         different from output_dir. Defaults to None
+    keep_duet : str
+        Which fuel type should not be modified by the calibration, 
+        if any. One of "grass" or "litter"
     **kwargs : float
         Keyword arguments are reserved for summary statistics
         of target values for fuel loading. Calibration is based 
@@ -389,7 +395,7 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
         output_dir = Path(output_dir)
     if isinstance(param_dir, str):
         param_dir = Path(param_dir)
-    
+
     # Get fuel type(s) from kwargs
     valid_ftypes = {["grass"],["litter"],["total"],["grass","litter"],["litter","grass"],["none"]}
     fuel_types = []
@@ -402,11 +408,11 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     if len(kwargs.keys()) == 0:
         fuel_types.append("none")
     else:
-        raise ValueError("calibrate_duet: invalid fuel type in keyword arguements. Must be one of %r." % valid_ftypes)
+        raise ValueError("calibrate_duet: Invalid fuel type in keyword arguements. Must be one of %r." % valid_ftypes)
 
     # Validate the fuel types
     if fuel_types not in valid_ftypes:
-        raise ValueError("calibrate_duet: invalid fuel type in keyword arguements. Must be one of %r." % valid_ftypes)
+        raise ValueError("calibrate_duet: Invalid fuel type in keyword arguements. Must be one of %r." % valid_ftypes)
     
     # Validate kwargs
     # Make sure kwargs match fuel_types
@@ -416,13 +422,13 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     for key in kwargs.keys():
         if fuel_types == "grass":
             if key not in grass_kwargs:
-                raise ValueError("calibrate_duet: invalid keyword argument '{}'. Must be two of {} when fuel_types == 'grass'".format(key,grass_kwargs))
+                raise ValueError("calibrate_duet: Invalid keyword argument '{}'. Must be two of {} when fuel_types == 'grass'".format(key,grass_kwargs))
         elif fuel_types == "litter":
             if key not in litter_kwargs:
-                raise ValueError("calibrate_duet: invalid keyword argument '{}'. Must be two of {} when fuel_types == 'litter'".format(key,litter_kwargs))
+                raise ValueError("calibrate_duet: Invalid keyword argument '{}'. Must be two of {} when fuel_types == 'litter'".format(key,litter_kwargs))
         elif fuel_types == "total":
             if key not in litter_kwargs:
-                raise ValueError("calibrate_duet: invalid keyword argument '{}'. Must be two of {} when fuel_types == 'total'".format(key,total_kwargs))
+                raise ValueError("calibrate_duet: Invalid keyword argument '{}'. Must be two of {} when fuel_types == 'total'".format(key,total_kwargs))
     # Make sure kwarg statistics match each other (eg providing mean necessitates providing sd)
     kwarg_pairs = {"mean":"sd",
                    "sd":"mean",
@@ -433,10 +439,23 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
             if ([key for key in kwargs.keys() if key.endswith(v)]):
                 pass
             else:
-                raise ValueError("calibrate_duet: invalid keyword argument pair. *_mean must be matched by *_sd and *_max must be matched by *_min.")
+                raise ValueError("calibrate_duet: Invalid keyword argument pair. *_mean must be matched by *_sd and *_max must be matched by *_min.")
+    
+    # Validate keep_duet argument
+    valid_keep_args = ["grass","litter"]
+    if keep_duet not in valid_keep_args:
+        raise ValueError("calibrate_duet: Invalid fuel type in keep_duet. Must be one of %r" % valid_keep_args)
+    if keep_duet in fuel_types:
+        raise ValueError("calibrate_duet: Same fuel type in keyword arguments and keep_duet.")
+    if fuel_types == "total" and len(keep_duet)>0:
+        raise Warning("All fuel types will be calibrated when keyword argument fuel type is 'total'. Consider removing keep_duet argument. Proceeding with calibration.")
 
     # If user inputs are not present for all fuel types, use values from Landfire:
-    if fuel_types == "litter" or fuel_types == "grass" or fuel_types == "none":
+    if fuel_types == "litter" and keep_duet=="grass":
+        pass
+    elif fuel_types == "grass" and keep_duet=="litter":
+        pass
+    elif fuel_types == "litter" or fuel_types == "grass" or fuel_types == "none":
         # Query Landfire and return array of SB40 keys
         sb40_arr = _query_landfire(zroot, output_dir)
 
@@ -480,13 +499,17 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
             max = [kwargs.get(key) for key in kwargs.keys() if key.endswith("max")][0]
             min = [kwargs.get(key) for key in kwargs.keys() if key.endswith("min")][0]
             litter_calibrated = _calibrate_maxmin(duet_litter,max,min)
-        # Use max/min from SB40 to calibrate grass values
-        max = np.max(rhof_arr[ftype_arr==1])
-        grass_arr = rhof_arr[ftype_arr==1]
-        min = np.min(grass_arr[grass_arr>0])
-        grass_calibrated = _calibrate_maxmin(duet_grass,max,min)
-        # Combine grass and litter arrays
-        duet_calibrated = np.add(grass_calibrated,litter_calibrated)
+        if len(keep_duet)==0:
+            # Use max/min from SB40 to calibrate grass values
+            max = np.max(rhof_arr[ftype_arr==1])
+            grass_arr = rhof_arr[ftype_arr==1]
+            min = np.min(grass_arr[grass_arr>0])
+            grass_calibrated = _calibrate_maxmin(duet_grass,max,min)
+            # Combine calibrated grass and litter arrays
+            duet_calibrated = np.add(grass_calibrated,litter_calibrated)
+        else:
+            # Combine calibrated litter and duet grass arrays
+            duet_calibrated = np.add(duet_grass,litter_calibrated)
     elif fuel_types == "grass":
         if ([key for key in kwargs.keys() if key.endswith("mean") or key.endswith("sd")]):
             mean = [kwargs.get(key) for key in kwargs.keys() if key.endswith("mean")][0]
@@ -496,13 +519,17 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
             max = [kwargs.get(key) for key in kwargs.keys() if key.endswith("max")][0]
             min = [kwargs.get(key) for key in kwargs.keys() if key.endswith("min")][0]
             grass_calibrated = _calibrate_maxmin(duet_grass,max,min)
-        # Use max/min from SB40 to calibrate grass values
-        max = np.max(rhof_arr[ftype_arr==-1])
-        litter_arr = rhof_arr[ftype_arr==-1]
-        min = np.min(litter_arr[litter_arr>0])
-        litter_calibrated = _calibrate_maxmin(duet_litter,max,min)
-        # Combine grass and litter arrays
-        duet_calibrated = np.add(grass_calibrated,litter_calibrated)
+        if len(keep_duet)==0:
+            # Use max/min from SB40 to calibrate grass values
+            max = np.max(rhof_arr[ftype_arr==-1])
+            litter_arr = rhof_arr[ftype_arr==-1]
+            min = np.min(litter_arr[litter_arr>0])
+            litter_calibrated = _calibrate_maxmin(duet_litter,max,min)
+            # Combine calibrated grass and litter arrays
+            duet_calibrated = np.add(grass_calibrated,litter_calibrated)
+        else:
+            # Combine duet litter and calibrated grass arrays
+            duet_calibrated = np.add(grass_calibrated,duet_litter)
     elif fuel_types == ["litter","grass"] or fuel_types == ["grass","litter"]:
         if ([key for key in kwargs.keys() if key.endswith("mean") or key.endswith("sd")]):
             grass_mean = [kwargs.get(key) for key in kwargs.keys() if key == "grass_mean"][0]
@@ -521,16 +548,23 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
         # Combine grass and litter arrays
         duet_calibrated = np.add(grass_calibrated,litter_calibrated)
     elif fuel_types == "none":
-        # Use max/min from SB40 to calibrate grass values
-        grass_max = np.max(rhof_arr[ftype_arr==1])
-        grass_arr = rhof_arr[ftype_arr==1]
-        grass_min = np.min(grass_arr[grass_arr>0])
-        litter_max = np.max(rhof_arr[ftype_arr==-1])
-        litter_arr = rhof_arr[ftype_arr==-1]
-        litter_min = np.min(litter_arr[litter_arr>0])
-        grass_calibrated = _calibrate_maxmin(duet_grass,grass_max,grass_min)
-        litter_calibrated = _calibrate_maxmin(duet_litter,litter_max,litter_min)
-        duet_calibrated = np.add(grass_calibrated,litter_calibrated)
+        if keep_duet != "grass":
+            # Use max/min from SB40 to calibrate grass values
+            grass_max = np.max(rhof_arr[ftype_arr==1])
+            grass_arr = rhof_arr[ftype_arr==1]
+            grass_min = np.min(grass_arr[grass_arr>0])
+            grass_calibrated = _calibrate_maxmin(duet_grass,grass_max,grass_min)
+        if keep_duet != "litter":
+            litter_max = np.max(rhof_arr[ftype_arr==-1])
+            litter_arr = rhof_arr[ftype_arr==-1]
+            litter_min = np.min(litter_arr[litter_arr>0])
+            litter_calibrated = _calibrate_maxmin(duet_litter,litter_max,litter_min)
+        if keep_duet == "grass":
+            duet_calibrated = np.add(duet_grass,litter_calibrated)
+        elif keep_duet == "litter":
+            duet_calibrated = np.add(grass_calibrated,duet_litter)
+        else:
+            duet_calibrated = np.add(grass_calibrated,litter_calibrated)
     
     _write_np_array_to_dat(duet_calibrated, "surface_rhof_calibrated.dat",
                            output_dir, np.float32)
@@ -560,7 +594,7 @@ def replace_surface_fuels(zroot: zarr.hierarchy.Group,
     Returns
     -------
     None
-        Modified bulk density array is written to the QUIC-Fire directory
+        Modified bulk density array (treesrhof.dat) is written to the QUIC-Fire directory
     """
     duet_name = "surface_rhof_calibrated.dat" if calibrated else "surface_rhof.dat"
     nx = zroot.attrs['nx']
