@@ -25,7 +25,9 @@ from landfire.geospatial import get_bbox_from_polygon
 import zipfile
 import rasterio as rio
 import rasterio.mask
+from rasterio.enums import Resampling
 import pandas as pd
+import re
 
 
 try:  # Python 3.9+
@@ -464,7 +466,6 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
         print("Querying LandFire...")
         # Query Landfire and return array of SB40 keys
         sb40_arr = _query_landfire(zroot, output_dir)
-
         # Import SB40 FBFM parameters table
         if param_dir == None:
             param_dir = output_dir
@@ -473,7 +474,6 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
         # Generate dict of fastfuels bulk density values and apply to Landfire query
         sb40_dict = _get_sb40_fuel_params(sb40_params)
         ftype_arr, rhof_arr = _get_sb40_arrays(sb40_arr, sb40_dict)
-        print("Done")
     
     # Read in bulk density output from DUET
     nx = zroot.attrs["nx"]
@@ -554,23 +554,27 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
         # Combine grass and litter arrays
         duet_calibrated = np.add(grass_calibrated,litter_calibrated)
     elif fuel_types == ["none"]:
+        print("GETTING EVERYTHING FROM LANDFIRE")
         if keep_duet != "grass":
             # Use max/min from SB40 to calibrate grass values
             grass_max = np.max(rhof_arr[ftype_arr==1])
             grass_arr = rhof_arr[ftype_arr==1]
             grass_min = np.min(grass_arr[grass_arr>0])
             grass_calibrated = _calibrate_maxmin(duet_grass,grass_max,grass_min)
+            print("MIN GRASS:", np.min(grass_calibrated))
         if keep_duet != "litter":
             litter_max = np.max(rhof_arr[ftype_arr==-1])
             litter_arr = rhof_arr[ftype_arr==-1]
             litter_min = np.min(litter_arr[litter_arr>0])
             litter_calibrated = _calibrate_maxmin(duet_litter,litter_max,litter_min)
+            print("MIN LITTER:", np.min(litter_calibrated))
         if keep_duet == "grass":
             duet_calibrated = np.add(duet_grass,litter_calibrated)
         elif keep_duet == "litter":
             duet_calibrated = np.add(grass_calibrated,duet_litter)
         else:
             duet_calibrated = np.add(grass_calibrated,litter_calibrated)
+            print("MIN TOTAL:", np.min(duet_calibrated))
     
     duet_calibrated = np.swapaxes(duet_calibrated,0,1) #need to to this or it doesn't match the uncalibrated duet outputs
     _write_np_array_to_dat(duet_calibrated, "surface_rhof_calibrated.dat",
@@ -858,18 +862,14 @@ def _query_landfire(zroot: zarr.hierarchy.Group,
             "sb40_cropped.tif"]
 
     # Create a bounding box from fuelgrid zarr
-    poly = geojson.Polygon(
-    coordinates=[
-        [   
+    coords = [   
             [zroot.attrs['xmin'], zroot.attrs['ymin']],
             [zroot.attrs['xmin'], zroot.attrs['ymax']],
             [zroot.attrs['xmax'], zroot.attrs['ymax']],
             [zroot.attrs['xmax'], zroot.attrs['ymin']],
             [zroot.attrs['xmin'], zroot.attrs['ymin']],
         ]
-        ],
-    precision=8,
-    )
+    poly = geojson.Polygon(coordinates=[coords],precision=8)
     bbox = get_bbox_from_polygon(aoi_polygon=poly, crs = 5070)
 
     # Download Landfire data to output directory
@@ -913,7 +913,7 @@ def _query_landfire(zroot: zarr.hierarchy.Group,
     
     # Crop the upsampled raster to the unit bounds
     with rio.open(Path(output_dir,"sb40_upsampled.tif"),"r+") as rst:
-        out_image, out_transform = rasterio.mask.mask(rst,poly,crop=True)
+        out_image, out_transform = rasterio.mask.mask(rst,[poly],crop=True)
         out_meta = rst.meta
         out_meta.update({"driver": "GTiff",
                          "height": out_image.shape[1],
@@ -929,7 +929,7 @@ def _query_landfire(zroot: zarr.hierarchy.Group,
     if delete_files:
         [Path(output_dir,file).unlink() for file in temp if Path(output_dir,file).exists()]
 
-    return arr
+    return arr[arr>0]
 
 def _get_sb40_fuel_params(params: pd.DataFrame = None) -> dict:
     """
