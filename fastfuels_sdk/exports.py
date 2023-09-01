@@ -329,7 +329,7 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
 def calibrate_duet(zroot: zarr.hierarchy.Group,
                    output_dir: Path | str,
                    param_dir: Path | str = None,
-                   keep_duet: str = None,
+                   use_sb40: bool = True,
                    **kwargs: float) -> None:
     """
     Calibrate the values of the surface bulk density output from DUET by changing
@@ -370,9 +370,10 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     param_dir : Path | str = None
         The directory containing the Sb40 parameters table, if
         different from output_dir. Defaults to None
-    keep_duet : str
-        Which fuel type should not be modified by the calibration, 
-        if any. One of "grass" or "litter"
+    use_sb40 : bool = True
+        Whether to calibrate using SB40 for any fuel types without
+        target inputs provided in **kwargs. If False, DUET values
+        for that fuel type will remain unchanged. Defaults to True
     **kwargs : float
         Keyword arguments are reserved for summary statistics
         of target values for fuel loading. Calibration is based 
@@ -386,9 +387,7 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     None
         Calibrated array of DUET surface bulk density is saved to the output directory.
     
-    TODO: make keep_duet boolean
-    TODO: fix rasterio cropping issue (grr) so that landfire raster is same size as 
-    fuelgrid. Band-aid rn in line 929   
+    TODO: make keep_duet boolean 
     """
     # Validate the zarr file
     required_groups = ["surface"]
@@ -418,6 +417,12 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     # Validate the fuel types
     if fuel_types not in valid_ftypes:
         raise ValueError("calibrate_duet: Invalid fuel type in keyword arguements. Must be one of %r." % valid_ftypes)
+    
+    # Validate use_sb40 argument
+    if fuel_types in [["litter","grass"],["grass","litter"],["total"]]:
+        use_sb40 = False
+    elif fuel_types == ["none"]:
+        use_sb40 = True
 
     # Validate kwargs
     # Make sure kwargs match fuel_types
@@ -448,23 +453,9 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     # Make sure kwarg statistics are given as a pair (eg mean AND sd, mean alone is not allowed)
     if len(kwargs.keys()) > 0 and len(kwargs.keys())%2 != 0:
         raise ValueError("calibrate_duet: Insufficient keyword arguments. *_mean and *_sd must be paired and/or *_max and *_min must be paired.")
-    
-    # Validate keep_duet argument
-    valid_keep_args = ["grass","litter"]
-    if keep_duet is not None:
-        if keep_duet not in valid_keep_args:
-            raise ValueError("calibrate_duet: Invalid fuel type in keep_duet. Must be one of %r" % valid_keep_args)
-        if keep_duet in fuel_types:
-            raise ValueError("calibrate_duet: Same fuel type in keyword arguments and keep_duet.")
-        if fuel_types == "total":
-            raise Warning("All fuel types will be calibrated when keyword argument fuel type is 'total'. Consider removing keep_duet argument. Proceeding with calibration.")
 
     # If user inputs are not present for all fuel types, use values from Landfire:
-    if fuel_types == ["litter"] and keep_duet=="grass":
-        pass
-    elif fuel_types == ["grass"] and keep_duet=="litter":
-        pass
-    elif fuel_types == ["litter"] or fuel_types == ["grass"] or fuel_types == ["none"]:
+    if fuel_types [["litter"],["grass"],["none"]] and use_sb40:
         print("Querying LandFire...")
         # Query Landfire and return array of SB40 keys
         sb40_arr = _query_landfire(zroot, output_dir)
@@ -507,7 +498,7 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
             max = [kwargs.get(key) for key in kwargs.keys() if key.endswith("max")][0]
             min = [kwargs.get(key) for key in kwargs.keys() if key.endswith("min")][0]
             litter_calibrated = _calibrate_maxmin(duet_litter,max,min)
-        if keep_duet is None:
+        if use_sb40:
             # Use max/min from SB40 to calibrate grass values
             max = np.max(rhof_arr[ftype_arr==1])
             grass_arr = rhof_arr[ftype_arr==1]
@@ -527,7 +518,7 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
             max = [kwargs.get(key) for key in kwargs.keys() if key.endswith("max")][0]
             min = [kwargs.get(key) for key in kwargs.keys() if key.endswith("min")][0]
             grass_calibrated = _calibrate_maxmin(duet_grass,max,min)
-        if keep_duet is None:
+        if use_sb40:
             # Use max/min from SB40 to calibrate grass values
             max = np.max(rhof_arr[ftype_arr==-1])
             litter_arr = rhof_arr[ftype_arr==-1]
@@ -928,6 +919,7 @@ def _query_landfire(zroot: zarr.hierarchy.Group,
         [Path(output_dir,file).unlink() for file in temp if Path(output_dir,file).exists()]
 
     return arr[arr>0]
+#TODO: fix rasterio cropping issue (grr) so that landfire raster is same size as fuelgrid
 
 def _get_sb40_fuel_params(params: pd.DataFrame = None) -> dict:
     """
