@@ -1,8 +1,6 @@
 """
 FastFuels SDK Exports Module
 
-TODO: debug _query_landfire
-TODO: make keep_duet boolean
 """
 # Core imports
 from __future__ import annotations
@@ -387,6 +385,10 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     -------
     None
         Calibrated array of DUET surface bulk density is saved to the output directory.
+    
+    TODO: make keep_duet boolean
+    TODO: fix rasterio cropping issue (grr) so that landfire raster is same size as 
+    fuelgrid. Band-aid rn in line 929   
     """
     # Validate the zarr file
     required_groups = ["surface"]
@@ -554,27 +556,23 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
         # Combine grass and litter arrays
         duet_calibrated = np.add(grass_calibrated,litter_calibrated)
     elif fuel_types == ["none"]:
-        print("GETTING EVERYTHING FROM LANDFIRE")
         if keep_duet != "grass":
             # Use max/min from SB40 to calibrate grass values
             grass_max = np.max(rhof_arr[ftype_arr==1])
             grass_arr = rhof_arr[ftype_arr==1]
             grass_min = np.min(grass_arr[grass_arr>0])
             grass_calibrated = _calibrate_maxmin(duet_grass,grass_max,grass_min)
-            print("MIN GRASS:", np.min(grass_calibrated))
         if keep_duet != "litter":
             litter_max = np.max(rhof_arr[ftype_arr==-1])
             litter_arr = rhof_arr[ftype_arr==-1]
             litter_min = np.min(litter_arr[litter_arr>0])
             litter_calibrated = _calibrate_maxmin(duet_litter,litter_max,litter_min)
-            print("MIN LITTER:", np.min(litter_calibrated))
         if keep_duet == "grass":
             duet_calibrated = np.add(duet_grass,litter_calibrated)
         elif keep_duet == "litter":
             duet_calibrated = np.add(grass_calibrated,duet_litter)
         else:
             duet_calibrated = np.add(grass_calibrated,litter_calibrated)
-            print("MIN TOTAL:", np.min(duet_calibrated))
     
     duet_calibrated = np.swapaxes(duet_calibrated,0,1) #need to to this or it doesn't match the uncalibrated duet outputs
     _write_np_array_to_dat(duet_calibrated, "surface_rhof_calibrated.dat",
