@@ -412,7 +412,7 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
         fuel_types.append("litter")
     if len(kwargs.keys()) == 0:
         fuel_types.append("none")
-    
+
     # Validate the fuel types
     if fuel_types not in valid_ftypes:
         raise ValueError("calibrate_duet: Invalid fuel type in keyword arguements. Must be one of %r." % valid_ftypes)
@@ -421,17 +421,17 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     # Make sure kwargs match fuel_types
     grass_kwargs = {"grass_mean","grass_sd","grass_max","grass_min"}
     litter_kwargs = {"litter_mean","litter_sd","litter_max","litter_min"}
-    total_kwargs = {"total_mean","total_sd","toal_max","total_min"}
+    total_kwargs = {"total_mean","total_sd","total_max","total_min"}
     for key in kwargs.keys():
         if fuel_types == ["grass"]:
             if key not in grass_kwargs:
-                raise ValueError("calibrate_duet: Invalid keyword argument '{}'. Must be two of {} when fuel_types == 'grass'".format(key,grass_kwargs))
+                raise ValueError("calibrate_duet: Invalid keyword argument '{}'. Must be two of {}".format(key,grass_kwargs))
         elif fuel_types == ["litter"]:
             if key not in litter_kwargs:
-                raise ValueError("calibrate_duet: Invalid keyword argument '{}'. Must be two of {} when fuel_types == 'litter'".format(key,litter_kwargs))
+                raise ValueError("calibrate_duet: Invalid keyword argument '{}'. Must be two of {}".format(key,litter_kwargs))
         elif fuel_types == ["total"]:
-            if key not in litter_kwargs:
-                raise ValueError("calibrate_duet: Invalid keyword argument '{}'. Must be two of {} when fuel_types == 'total'".format(key,total_kwargs))
+            if key not in total_kwargs:
+                raise ValueError("calibrate_duet: Invalid keyword argument '{}'. Must be two of {}".format(key,total_kwargs))
     # Make sure kwarg statistics match each other (eg providing mean necessitates providing sd)
     kwarg_pairs = {"mean":"sd",
                    "sd":"mean",
@@ -456,6 +456,45 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
             raise ValueError("calibrate_duet: Same fuel type in keyword arguments and keep_duet.")
         if fuel_types == "total":
             raise Warning("All fuel types will be calibrated when keyword argument fuel type is 'total'. Consider removing keep_duet argument. Proceeding with calibration.")
+        
+    # Print function specifications
+
+    if fuel_types == ["none"]:
+        grass_print = "Landfire SB40"
+        litter_print = "Landfire SB40"
+    elif fuel_types in [["total"],["grass","litter"],["litter","grass"]]:
+        grass_print = "User inputs"
+        litter_print = "User inputs"
+    elif fuel_types == ["grass"]:
+        grass_print = "User inputs"
+        litter_print = "Landfire SB40"
+    elif fuel_types == ["litter"]:
+        grass_print = "Landfire SB40"
+        litter_print = "User inputs"
+    
+    if keep_duet == "grass":
+        grass_print = "Keep DUET values"
+    elif keep_duet == "litter":
+        litter_print = "Keep DUET values"
+    
+    if grass_print == "Landfire SB40":
+        grass_method = "max/min"
+    elif ([key for key in kwargs.keys() if key.endswith("mean") or key.endswith("sd")]):
+        grass_method = "mean/sd"
+    elif ([key for key in kwargs.keys() if key.endswith("max") or key.endswith("min")]):
+        grass_method = "max/min"
+    if litter_print == "Landfire SB40":
+        litter_method = "max/min"
+    elif ([key for key in kwargs.keys() if key.endswith("mean") or key.endswith("sd")]):
+        litter_method = "mean/sd"
+    elif ([key for key in kwargs.keys() if key.endswith("max") or key.endswith("min")]):
+        litter_method = "max/min"
+    
+    
+    print("\nCalibration Specifications:")
+    print("GRASS: {} ({})".format(grass_print,grass_method))
+    print("LITTER: {} ({})\n".format(litter_print,litter_method))
+
 
     # If user inputs are not present for all fuel types, use values from Landfire:
     if fuel_types == ["litter"] and keep_duet=="grass":
@@ -463,7 +502,7 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     elif fuel_types == ["grass"] and keep_duet=="litter":
         pass
     elif fuel_types == ["litter"] or fuel_types == ["grass"] or fuel_types == ["none"]:
-        print("Querying LandFire...")
+        print("Querying LandFire...\n")
         # Query Landfire and return array of SB40 keys
         sb40_arr = _query_landfire(zroot, output_dir)
         # Import SB40 FBFM parameters table
@@ -480,7 +519,7 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     ny = zroot.attrs["ny"]
     nz = 2 # number of duet layers, right now grass and litter. Will be number of tree species + 1
     dim = (nz,ny,nx)
-    duet_rhof = _read_dat_file(output_dir, "surface_rhof.dat", dim)
+    duet_rhof = _read_dat_file(output_dir, "surface_rhof.dat", dim, order="F")
     # Calibrate based on fuel_types and kwargs
     if fuel_types == ["total"]:
         duet_rhof = np.add(duet_rhof[0,:,:], duet_rhof[1,:,:])
@@ -575,6 +614,7 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     duet_calibrated = np.swapaxes(duet_calibrated,0,1) #need to to this or it doesn't match the uncalibrated duet outputs
     _write_np_array_to_dat(duet_calibrated, "surface_rhof_calibrated.dat",
                            output_dir, np.float32)
+    print("Calibration Complete")
 
 
 def replace_surface_fuels(zroot: zarr.hierarchy.Group,
@@ -606,12 +646,14 @@ def replace_surface_fuels(zroot: zarr.hierarchy.Group,
     duet_name = "surface_rhof_calibrated.dat" if calibrated else "surface_rhof.dat"
     nx = zroot.attrs['nx']
     ny = zroot.attrs['ny']
-    nz = zroot.attrs['nz']
-    qf_dim = (nz,ny,nx)
-    duet_dim = (ny,nz)
+    nz = zroot.attrs['nz']-2 #ask about this
+    qf_dim = (ny,nx,nz)
+    duet_dim = (ny,nx) if calibrated else (2,ny,nx)
     qf_rhof = _read_dat_file(quicfire_dir, "treesrhof.dat", qf_dim)
-    duet_rhof = _read_dat_file(duet_dir, duet_name, duet_dim)
-    qf_rhof[0,:,:] = duet_rhof
+    duet_rhof = _read_dat_file(duet_dir, duet_name, duet_dim, order="F")
+    if calibrated == False:
+        duet_rhof = np.add(duet_rhof[0,:,:],duet_rhof[1,:,:])
+    qf_rhof[:,:,0] = duet_rhof
     _write_np_array_to_dat(qf_rhof, "treesrhof.dat", quicfire_dir, np.float32)
 
 
@@ -813,7 +855,8 @@ def _validate_zarr_file(zgroup: zarr.hierarchy.Group,
 
 def _read_dat_file(dir: Path | str,
                    filename: str,
-                   arr_dim: tuple) -> np.array:
+                   arr_dim: tuple,
+                   order: str = "C") -> np.array:
     """
     Read in a .dat file as a numpy array.
 
@@ -824,7 +867,7 @@ def _read_dat_file(dir: Path | str,
         dir = Path(dir)
     
     # Import and reshape .dat file
-    arr =  FortranFile(Path(dir, filename),'r','uint32').read_ints('float32').T.reshape(arr_dim, order="F")
+    arr =  FortranFile(Path(dir, filename),'r','uint32').read_ints('float32').T.reshape(arr_dim, order=order)
     
     return arr
     
