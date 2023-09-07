@@ -329,6 +329,9 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
 
 
 class DuetCalibrator:
+    """
+    TODO: think about filename structure for a series of calibrations, OHHHH don't automatically save a file, have a to_file method!!
+    """
     def __init__(self, zroot, output_dir, param_dir=None):
         self.zroot = zroot
         self.output_dir = Path(output_dir)
@@ -355,6 +358,16 @@ class DuetCalibrator:
                 calibrated fuel type to produce the final array. When ["grass","litter"] or 
                 ["litter","grass"] both fuel types are calibrated based on their respective inputs.
             
+            max_val : float | list
+                Target maximim value for calibration. If multiple values are given for multiple fuel
+                types, the position of each value in the list must match the position of their
+                corresponding fuel type.
+            
+            min_val : float | list
+                Target minimum value for calibration. If multiple values are given for multiple 
+                fuel types, the position of each value in the list must match the position of their
+                corresponding fuel type.
+                
             Returns
             -------
             None
@@ -373,6 +386,7 @@ class DuetCalibrator:
             calibrated_arr = _combine_with_uncalibrated_fuel_type(self, calibrated)
             arr_name = _name_calibrated_file(fuel_type, "maxmin")
             _write_np_array_to_dat(calibrated_arr, arr_name, self.output_dir)
+            self.duet_dict = _read_duet_arr(self)
 
 
         def calibrate_mean_sd(self,
@@ -394,6 +408,16 @@ class DuetCalibrator:
                 calibrated fuel type to produce the final array. When ["grass","litter"] or 
                 ["litter","grass"] both fuel types are calibrated based on their respective inputs.
             
+            mean_val : float | list
+                Target mean value for calibration. If multiple values are given for multiple fuel
+                types, the position of each value in the list must match the position of their
+                corresponding fuel type.
+            
+            sd_val : float | list
+                Target standard deviation for calibration. If multiple values are given for multiple 
+                fuel types, the position of each value in the list must match the position of their
+                corresponding fuel type.
+            
             Returns
             -------
             None
@@ -412,10 +436,22 @@ class DuetCalibrator:
             calibrated_arr = _combine_with_uncalibrated_fuel_type(self, calibrated)
             arr_name = _name_calibrated_file(fuel_type, "meansd")
             _write_np_array_to_dat(calibrated_arr, arr_name, self.output_dir)
+            self.duet_dict = _read_duet_arr(self)
         
 
-        def calibrate_with_sb40():
-            self._validate_inputs()
+        def calibrate_with_sb40(self,
+                                fuel_type: str | list) -> None:
+            _validate_inputs(fuel_type)
+            _query_landfire()
+            if isinstance(fuel_type, str):
+                fuel_type = [fuel_type]
+            calibrated = {}
+            for f in fuel_type:
+                calibrated[f] = _sb40_calibration(self.duet_dict[f], sb40_arr)
+            calibrated_arr = _combine_with_uncalibrated_fuel_type(self, calibrated)
+            arr_name = _name_calibrated_file(fuel_type, "sb40")
+            _write_np_array_to_dat(calibrated_arr, arr_name, self.output_dir)
+            self.duet_dict = _read_duet_arr(self)
 
 
         def revert_to_original_duet(self, 
@@ -439,17 +475,18 @@ class DuetCalibrator:
             self.duet_dict = _read_duet_arr(self)
 
 
-        def _validate_inputs(fuel_type, val1, val2):
+        def _validate_inputs(fuel_type, val1=None, val2=None):
             # Validate fuel types
             valid_ftypes = ['litter','grass','total',['litter','grass'],['grass','litter']]
             if fuel_type not in valid_ftypes:
                 raise ValueError("Invalid fuel type. Must be one of {}.".format(valid_ftypes))
             # Validate fuel summary arguments
-            if type(fuel_type) != type(val1) | type(val2):
-                raise ValueError("Data type of fuel_type must match data type of {} and {}.".format(val1,val2))
-            if isinstance(fuel_type, list):
-                if len(fuel_type) != len(val1) | len(val2):
-                    raise ValueError("Number of fuel value inputs must match number of fuel types ({} fuel inputs for fuel_type = {}).".format(len(fuel_type), fuel_type))
+            if val1 is not None:
+                if type(fuel_type) != type(val1) | type(val2):
+                    raise ValueError("Data type of fuel_type must match data type of {} and {}.".format(val1,val2))
+                if isinstance(fuel_type, list):
+                    if len(fuel_type) != len(val1) | len(val2):
+                        raise ValueError("Number of fuel value inputs must match number of fuel types ({} fuel inputs for fuel_type = {}).".format(len(fuel_type), fuel_type))
                 
 
         def _maxmin_calibration(x: np.array,
@@ -523,7 +560,7 @@ class DuetCalibrator:
             duet_dict["total"] = np.add(duet_rhof[0,:,:],duet_rhof[1,:,:])
             return duet_dict
         
-        
+
         def _name_calibrated_file(fuel_type: str,
                                   method: str) -> str:
             delim = "_"
