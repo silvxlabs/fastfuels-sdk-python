@@ -326,6 +326,151 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
     with open(Path(output_dir, "template.fds"), "w") as fout:
         fout.write(template.substitute(fds_attrs))
 
+
+
+class DuetCalibrator:
+    def __init__(self, zroot, output_dir, param_dir=None, **kwargs):
+        self.zroot = zroot
+        self.output_dir = Path(output_dir)
+        self.param_dir = Path(param_dir) if param_dir else None
+        self.kwargs = kwargs
+        self.arr_list = ["surface_rhof.dat"]
+        self.duet_dict = _read_duet_arr()
+        
+        def calibrate_max_min(self,
+                              fuel_type: str | list,
+                              max_val: float | list,
+                              min_val: float | list) -> None:
+            """
+            Calibrate the values of the surface bulk density output from DUET by setting the
+            range (maximum and minimum).
+
+            Parameters
+            ----------
+
+            fuel_type : str | list
+                Fuel type(s) to calibrate. May be one of "total", "grass", or "litter" given 
+                as a string, or both "grass" and "litter" given as a list. When "total", both
+                fuel types are calibrated based on one set of inputs. When "litter" or "grass",
+                the given fuel type is calibrated, the other is left unchanged and added to the 
+                calibrated fuel type to produce the final array. When ["grass","litter"] or 
+                ["litter","grass"] both fuel types are calibrated based on their respective inputs.
+            
+            Returns
+            -------
+            None
+                Calibrated array of DUET surface bulk density is saved to the output directory.
+                Filename indicates the fuel type and the max/min calibration method, and is 
+                incremented if previous calibrations of the same fuel type and method have been
+                conducted.
+
+            """
+            _validate_inputs(fuel_type,max_val,min_val)
+            if isinstance(fuel_type, str):
+                fuel_type = [fuel_type]
+            calibrated = {}
+            for f in fuel_type:
+                calibrated[f] = _maxmin_calibration(self.duet_dict[f], max_val, min_val)
+            calibrated_arr = _combine_with_uncalibrated_fuel_type(self, calibrated)
+            # Use descriptive filename with increments if previous calibrations have been done
+            delim = "_"
+            ftype_str = fuel_type if isinstance(fuel_type, str) else delim.join([str(ele) for ele in fuel_type])
+            arr_name = delim.join("surface_rhof_calibrated",ftype_str,"maxmin.dat")
+            if Path(self.output_dir, arr_name).exists():
+                i = 2
+                while Path(self.output_dir, delim.join("surface_rhof_calibrated",ftype_str,"maxmin","%s.dat" % i)).exists():
+                    i += 1
+                arr_name = delim.join("surface_rhof_calibrated",ftype_str,"maxmin","%s.dat" % i)
+            self.arr_list.append(arr_name)
+            _write_np_array_to_dat(calibrated_arr, arr_name, self.output_dir)
+
+
+        def calibrate_mean_sd():
+            self._validate_inputs()
+        
+        def calibrate_with_sb40():
+            self._validate_inputs()
+
+        def revert_to_original_duet(self, 
+                                    delete_files: bool = False) -> None:
+            """
+            Ensure that the next calibration will be conducted on the original DUET ouput and
+            optionally delete all previous calibrations.
+
+            Parameters
+            ----------
+
+            delete_files : bool
+                Whether to delete the .dat files resulting from all previous calibration. Default
+                is False, meaning files will not be deleted and any subsequent calibrations of the 
+                same method and fuel type will be saved with incremented filenames.
+            
+            """
+            if delete_files:
+                [Path(self.output_dir,self.arr_list[file]).unlink() for file in range(1, len(self.arr_list)) if Path(self.output_dir,self.arr_list[file]).exists()]
+            self.arr_list = ["surface_rhof.dat"]
+
+
+
+        def _validate_inputs(fuel_type, val1, val2):
+            # Validate fuel types
+            valid_ftypes = ['litter','grass','total',['litter','grass'],['grass','litter']]
+            if fuel_type not in valid_ftypes:
+                raise ValueError("Invalid fuel type. Must be one of {}.".format(valid_ftypes))
+            # Validate fuel summary arguments
+            if type(fuel_type) != type(val1) | type(val2):
+                raise ValueError("Data type of fuel_type must match data type of {} and {}.".format(val1,val2))
+            if isinstance(fuel_type, list):
+                if len(fuel_type) != len(val1) | len(val2):
+                    raise ValueError("Number of fuel value inputs must match number of fuel types ({} fuel inputs for fuel_type = {}).".format(len(fuel_type), fuel_type))
+                
+
+        def _maxmin_calibration(x: np.array,
+                      max_val: float | int,
+                      min_val: float | int) -> np.array:
+            """
+            Scales and shifts values in a numpy array based on an observed range. Does not assume
+            data is normally distributed.
+            """
+            x1 = x[x>0]
+            x2 = (x1-np.min(x1))/(np.max(x1)-np.min(x1))
+            x3 = x2 * (max_val-min_val)
+            x4 = x3 + min_val
+            xnew = x.copy()
+            xnew[np.where(x>0)] = x4
+            return xnew
+        
+
+        def _combine_with_uncalibrated_fuel_type(self, 
+                                                 calibrated_dict) -> np.array:
+            pairs = {"grass":"litter",
+                     "litter":"grass"}
+            if len(calibrated_dict.keys()) == 1:
+                if calibrated_dict.keys() in pairs.keys():
+                    ftype = list(calibrated_dict.keys())[0]
+                    calibrated_duet = np.add(calibrated_dict[ftype], self.duet_dict[pairs[ftype]])
+                else:
+                    calibrated_duet = calibrated_dict["total"]
+            else:
+                calibrated_duet = np.add(calibrated_dict["grass"], calibrated_dict["litter"])
+            return calibrated_duet
+
+        
+        def _read_duet_arr(self):
+            nx = self.zroot.attrs["nx"]
+            ny = self.zroot.attrs["ny"]
+            nz = 2 # number of duet layers, right now grass and litter. Will be number of tree species + 1
+            # filename will always be most recently calibrated array, unless revert_to_original_duet has been run
+            with open(Path(self.output_dir, self.arr_list[-1]), "rb") as fin:
+                duet_rhof = FortranFile(fin).read_reals(dtype="float32").reshape((nz, ny, nx), order="F")
+            duet_dict = {}
+            duet_dict["grass"] = duet_rhof[0,:,:]
+            duet_dict["litter"] = duet_rhof[1,:,:]
+            duet_dict["total"] = np.add(duet_rhof[0,:,:],duet_rhof[1,:,:])
+            return duet_dict
+        
+
+        
 def calibrate_duet(zroot: zarr.hierarchy.Group,
                    output_dir: Path | str,
                    param_dir: Path | str = None,
@@ -386,7 +531,6 @@ def calibrate_duet(zroot: zarr.hierarchy.Group,
     None
         Calibrated array of DUET surface bulk density is saved to the output directory.
     
-    TODO: make keep_duet boolean 
     """
     # Validate the zarr file
     required_groups = ["surface"]
