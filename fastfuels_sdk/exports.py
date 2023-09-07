@@ -26,6 +26,7 @@ import rasterio.mask
 from rasterio.enums import Resampling
 import pandas as pd
 import re
+import warnings
 
 
 try:  # Python 3.9+
@@ -329,15 +330,16 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
 
 
 class DuetCalibrator:
-    """
-    TODO: think about filename structure for a series of calibrations, OHHHH don't automatically save a file, have a to_file method!!
-    """
     def __init__(self, zroot, output_dir, param_dir=None):
         self.zroot = zroot
         self.output_dir = Path(output_dir)
         self.param_dir = Path(param_dir) if param_dir else None
-        self.arr_list = ["surface_rhof.dat"]
-        self.duet_dict = _read_duet_arr(self)
+        self.duet_dict = self._get_input_array()
+        self.calibrated = False
+        self.calibrated_array = None
+        self.calibrated_fuel_type = []
+        self.calibration_method = []
+        self.saved_files = []
         
         def calibrate_max_min(self,
                               fuel_type: str | list,
@@ -377,16 +379,17 @@ class DuetCalibrator:
                 conducted.
 
             """
-            _validate_inputs(fuel_type,max_val,min_val)
+            self._validate_inputs(fuel_type,max_val,min_val)
             if isinstance(fuel_type, str):
                 fuel_type = [fuel_type]
             calibrated = {}
             for f in fuel_type:
-                calibrated[f] = _maxmin_calibration(self.duet_dict[f], max_val, min_val)
-            calibrated_arr = _combine_with_uncalibrated_fuel_type(self, calibrated)
-            arr_name = _name_calibrated_file(fuel_type, "maxmin")
-            _write_np_array_to_dat(calibrated_arr, arr_name, self.output_dir)
-            self.duet_dict = _read_duet_arr(self)
+                calibrated[f] = self._maxmin_calibration(self.duet_dict[f], max_val, min_val)
+            self.calibrated_array = self._combine_fuel_types(calibrated_dict = calibrated)
+            self.calibrated = True
+            self.calibrated_fuel_type.append(fuel_type)
+            self.calibration_method.append("maxmin")
+            self.duet_dict = self._get_input_array()
 
 
         def calibrate_mean_sd(self,
@@ -427,37 +430,58 @@ class DuetCalibrator:
                 conducted.
 
             """
-            _validate_inputs(fuel_type,mean_val,sd_val)
+            self._validate_inputs(fuel_type,mean_val,sd_val)
             if isinstance(fuel_type, str):
                 fuel_type = [fuel_type]
             calibrated = {}
             for f in fuel_type:
-                calibrated[f] = _meansd_calibration(self.duet_dict[f], mean_val, sd_val)
-            calibrated_arr = _combine_with_uncalibrated_fuel_type(self, calibrated)
-            arr_name = _name_calibrated_file(fuel_type, "meansd")
-            _write_np_array_to_dat(calibrated_arr, arr_name, self.output_dir)
-            self.duet_dict = _read_duet_arr(self)
-        
+                calibrated[f] = self._maxmin_calibration(self.duet_dict[f], mean_val, sd_val)
+            self.calibrated_array = self._combine_fuel_types(calibrated_dict = calibrated)
+            self.calibrated = True
+            self.calibrated_fuel_type.append(fuel_type)
+            self.calibration_method.append("meansd")
+            self.duet_dict = self._get_input_array()
 
+        
         def calibrate_with_sb40(self,
                                 fuel_type: str | list) -> None:
-            _validate_inputs(fuel_type)
-            _query_landfire()
+            self._validate_inputs(fuel_type)
+            print("Querying LandFire...\n")
+            # Query Landfire and return array of SB40 keys
+            sb40_arr = self._query_landfire()
+            # Import SB40 FBFM parameters table
+            param_dir = self.output_dir if self.param_dir == None else self.param_dir
+            sb40_params = pd.read_csv(Path(param_dir,"sb40_parameters.csv"))
+            # Generate dict of fastfuels bulk density values and apply to Landfire query
+            sb40_dict = self._get_sb40_fuel_params(sb40_params)
+            sb40_ftype, sb40_rhof = self._get_sb40_arrays(sb40_arr, sb40_dict)
             if isinstance(fuel_type, str):
                 fuel_type = [fuel_type]
             calibrated = {}
             for f in fuel_type:
-                calibrated[f] = _sb40_calibration(self.duet_dict[f], sb40_arr)
-            calibrated_arr = _combine_with_uncalibrated_fuel_type(self, calibrated)
-            arr_name = _name_calibrated_file(fuel_type, "sb40")
-            _write_np_array_to_dat(calibrated_arr, arr_name, self.output_dir)
-            self.duet_dict = _read_duet_arr(self)
+                if f == "grass":
+                    max_val = np.max(sb40_rhof[sb40_ftype==1])
+                    grass_arr = sb40_rhof[sb40_ftype==1]
+                    min_val = np.min(grass_arr[grass_arr>0])
+                elif f == "litter":
+                    max_val = np.max(sb40_rhof[sb40_ftype==-1])
+                    litter_arr = sb40_rhof[sb40_ftype==-1]
+                    min_val = np.min(litter_arr[grass_arr>0])
+                else:
+                    max_val = np.max(sb40_rhof)
+                    min_val = np.min(sb40_rhof[sb40_rhof>0])
+                calibrated[f] = self._maxmin_calibration(self.duet_dict[f], max_val, min_val)
+            self.calibrated_array = self._combine_fuel_types(calibrated_dict = calibrated)
+            self.calibrated = True
+            self.calibrated_fuel_type.append(fuel_type)
+            self.calibration_method.append("sb40")
+            self.duet_dict = self._get_input_array()
 
 
         def revert_to_original_duet(self, 
                                     delete_files: bool = False) -> None:
             """
-            Ensure that the next calibration will be conducted on the original DUET ouput and
+            Ensure that the next calibration will be conducted on the original DUET output and
             optionally delete all previous calibrations.
 
             Parameters
@@ -470,16 +494,36 @@ class DuetCalibrator:
             
             """
             if delete_files:
-                [Path(self.output_dir,self.arr_list[file]).unlink() for file in range(1, len(self.arr_list)) if Path(self.output_dir,self.arr_list[file]).exists()]
-            self.arr_list = ["surface_rhof.dat"]
-            self.duet_dict = _read_duet_arr(self)
+                [Path(self.output_dir,self.saved_files[file]).unlink() for file in range(1, len(self.saved_files)) if Path(self.output_dir,self.saved_files[file]).exists()]
+            self.calibrated = False
+            self.calibrated_array = None
+            self.calibrated_fuel_type = []
+            self.calibration_method = []
+            self.saved_files = []
+            self.duet_dict = self._get_input_array()
+
+        def to_file(self) -> None:
+            """
+            Write the most recently calibrated surface fuel array to a .dat file.
+            """
+            if self.calibrated:
+                arr_name = self._name_calibrated_file()
+                _write_np_array_to_dat(self.calibrated_array, arr_name, self.output_dir)
+                self.saved_files.append(arr_name)
+            else:
+                raise Exception("Must calibrate array before writing to file.")
 
 
-        def _validate_inputs(fuel_type, val1=None, val2=None):
+        def _validate_inputs(self, fuel_type, val1=None, val2=None):
             # Validate fuel types
             valid_ftypes = ['litter','grass','total',['litter','grass'],['grass','litter']]
             if fuel_type not in valid_ftypes:
                 raise ValueError("Invalid fuel type. Must be one of {}.".format(valid_ftypes))
+            if fuel_type == "total" and self.calibrated == True:
+                raise ValueError("Invalide fuel type: 'total' fuel calibration cannot be applied to a previously calibrated array. Choose a different fuel type or use revert_to_original_duet() before calibrating total fuels.")
+            if fuel_type in self.calibrated_fuel_type:
+                warnings.warn("Fuel type {} already calibrated. Replacing previous calibrated values.")
+
             # Validate fuel summary arguments
             if val1 is not None:
                 if type(fuel_type) != type(val1) | type(val2):
@@ -517,7 +561,7 @@ class DuetCalibrator:
             xnew = x.copy()
             xnew[np.where(x>0)] = x2
             if np.min(xnew)<0:
-                xnew = _truncate_at_0(xnew)
+                xnew = self._truncate_at_0(xnew)
             return xnew
         
         def _truncate_at_0(arr: np.array) -> np.array:
@@ -532,46 +576,265 @@ class DuetCalibrator:
             arr2[np.where(arr==0)] = 0
             return arr2
 
-        def _combine_with_uncalibrated_fuel_type(self, 
-                                                 calibrated_dict) -> np.array:
-            pairs = {"grass":"litter",
-                     "litter":"grass"}
+
+        def _query_landfire(self,
+                            delete_files: bool = True) -> np.array:
+            """
+            Download a grid of SB40 fuel models from Landfire for the unit and convert to a numpy array
+
+            Parameters
+            ----------
+            delete_files: bool = True
+                Whether to delete intermediate tif files. Defaults to True
+
+            Returns
+            -------
+            NumPy Array
+                A numpy array of the SB40 FBFM keys for the site
+            """
+            
+            # Name intermediate files
+            temp = ["landfire_sb40.zip",
+                    "landfire_sb40.tif",
+                    "sb40_upsampled.tif",
+                    "sb40_cropped.tif"]
+
+            # Create a bounding box from fuelgrid zarr
+            coords = [   
+                    [self.zroot.attrs['xmin'], self.zroot.attrs['ymin']],
+                    [self.zroot.attrs['xmin'], self.zroot.attrs['ymax']],
+                    [self.zroot.attrs['xmax'], self.zroot.attrs['ymax']],
+                    [self.zroot.attrs['xmax'], self.zroot.attrs['ymin']],
+                    [self.zroot.attrs['xmin'], self.zroot.attrs['ymin']],
+                ]
+            poly = geojson.Polygon(coordinates=[coords],precision=8)
+            bbox = get_bbox_from_polygon(aoi_polygon=poly, crs = 5070)
+
+            # Download Landfire data to output directory
+            lf = landfire.Landfire(bbox, output_crs = "5070")
+            lf.request_data(layers = ["200F40_19"], output_path=Path(self.output_dir, "landfire_sb40.zip"))
+
+            # Exctract tif from compressed download folder and rename
+            with zipfile.ZipFile(Path(self.output_dir, "landfire_sb40.zip")) as zf:
+                extension = '.tif'
+                rename = 'landfire_sb40.tif'
+                info = zf.infolist()
+                for file in info:
+                    if file.filename.endswith(extension):
+                        file.filename = rename
+                        zf.extract(file, self.output_dir)
+            
+            # Upsample landfire raster to the quicfire resolution
+            with rio.open(Path(self.output_dir, "landfire_sb40.tif")) as sb: 
+                upscale_factor = 30/zroot.attrs['dx'] # lf res/qf res
+                profile = sb.profile.copy()
+                # resample data to target shape
+                data = sb.read(
+                    out_shape=(
+                        sb.count,
+                        int(sb.height * upscale_factor),
+                        int(sb.width * upscale_factor)
+                    ),
+                    resampling=Resampling.nearest
+                )
+            
+                # scale image transform
+                transform = sb.transform * sb.transform.scale(
+                    (sb.width / data.shape[-1]),
+                    (sb.height / data.shape[-2])
+                )
+                profile.update({"height": data.shape[-2],
+                            "width": data.shape[-1],
+                        "transform": transform})
+                with rio.open(Path(self.output_dir,"sb40_upsampled.tif"), "w", **profile) as dataset:
+                    dataset.write(data)
+            
+            # Crop the upsampled raster to the unit bounds
+            with rio.open(Path(self.output_dir,"sb40_upsampled.tif"),"r+") as rst:
+                out_image, out_transform = rasterio.mask.mask(rst,[poly],crop=True)
+                out_meta = rst.meta
+                out_meta.update({"driver": "GTiff",
+                                "height": out_image.shape[1],
+                                "width": out_image.shape[2],
+                                "transform": out_transform})
+                with rio.open(Path(self.output_dir,"sb40_cropped.tif"), "w", **out_meta) as cropped:
+                    cropped.write(out_image)
+            
+            # Read in the cropped raster as a numpy array
+            with rio.open(Path(self.output_dir,"sb40_cropped.tif")) as rst:
+                arr = rst.read(1)
+            
+            if delete_files:
+                [Path(self.output_dir,file).unlink() for file in temp if Path(self.output_dir,file).exists()]
+
+            return arr[arr>0]
+        #TODO: fix rasterio cropping issue (grr) so that landfire raster is same size as fuelgrid
+
+        def _get_sb40_fuel_params(params: pd.DataFrame = None) -> dict:
+            """
+            Builds a dictionary of SB40 fuel parameter values and converts them to
+            the official FastFuels units
+
+            Returns:
+                dict: SB40 parameters for each fuel model
+            """
+            # Load in the SB40 fuel parameters
+            if params is not None:
+                sb40_df = params.copy()
+            else:
+                fpath = Path("src", "data_module", "data", "sb40_parameters.csv")
+                with open(fpath) as fin:
+                    sb40_df = pd.read_csv(fin)
+
+            # Convert tons/ac-ft to kg/m^3
+            sb40_df["1_hr_kg_per_m3"] = sb40_df["1_hr_t_per_ac"] * 0.22417
+            sb40_df["10_hr_kg_per_m3"] = sb40_df["10_hr_t_per_ac"] * 0.22417
+            sb40_df["100_hr_kg_per_m3"] = sb40_df["100_hr_t_per_ac"] * 0.22417
+            sb40_df["live_herb_kg_per_m3"] = sb40_df["live_herb_t_per_ac"] * 0.22417
+            sb40_df["live_woody_kg_per_m3"] = sb40_df["live_woody_t_per_ac"] * 0.22417
+
+            # Convert inverse feet to meters
+            sb40_df["dead_1_hr_sav_ratio_1_per_m"] = sb40_df["dead_1_hr_sav_ratio_1_per_ft"] * 3.2808
+            sb40_df["live_herb_sav_ratio_1_per_m"] = sb40_df["live_herb_sav_ratio_1_per_ft"] * 3.2808
+            sb40_df["live_wood_sav_ratio_1_per_m"] = sb40_df["live_wood_sav_ratio_1_per_ft"] * 3.2808
+
+            # Convert percent to ratio
+            sb40_df["dead_fuel_extinction_moisture"] /= 100
+
+            # Convert feet to meters
+            sb40_df["fuel_bed_depth_m"] = sb40_df["fuel_bed_depth_ft"] * 0.3048
+
+            # Compute wet loading
+            sb40_df["wet_load"] = sb40_df["1_hr_kg_per_m3"] + sb40_df["live_herb_kg_per_m3"]
+
+            # Compute a live herb curing factor alpha as a function of wet loading.
+            # This is kind of a B.S. approach raised by Rod on a phone call with
+            # Anthony on 02/28/2023. I don't like this at all, but it is a temporary
+            # Fix for the BP3D team to run some simulations.
+            # low_load_fuel_models = [
+            sb40_df["alpha"] = [0.5 if rho > 1 else 1.0 for rho in sb40_df["wet_load"]]
+
+            # Compute dry loading
+            sb40_df["dry_herb_load"] = sb40_df["live_herb_kg_per_m3"] * sb40_df["alpha"]
+            sb40_df["dry_load"] = sb40_df["1_hr_kg_per_m3"] + sb40_df["dry_herb_load"]
+
+            # Compute SAV
+            sb40_df["sav_1hr_ratio"] = sb40_df["1_hr_kg_per_m3"] / sb40_df["dry_load"]
+            sb40_df["sav_1hr"] = sb40_df["sav_1hr_ratio"] * sb40_df["dead_1_hr_sav_ratio_1_per_m"]
+            sb40_df["sav_herb_ratio"] = sb40_df["dry_herb_load"] / sb40_df["dry_load"]
+            sb40_df["sav_herb"] = sb40_df["sav_herb_ratio"] * sb40_df["live_herb_sav_ratio_1_per_m"]
+            sb40_df["sav"] = sb40_df["sav_1hr"] + sb40_df["sav_herb"]
+
+            # Convert nan to 0
+            sb40_df.fillna(0, inplace=True)
+            
+            ## NIKO ADDITIONS
+            # Create dictionary for assigning fuel types for DUET calibration
+            duet_dict = {"NB" : 0, #0 = NEUTRAL, i.e. not predominantly grass or litter
+                        "GR" : 1, #1 = GRASS predominantly
+                        "GS" : 1,
+                        "SH" : 1, #I am considering shrubs as grass
+                        "TU" : 0,
+                        "TL" : -1, #-1 = LITTER predominantly
+                        "SB" : 0}
+            
+            # Add column to df with DUET designations
+            pattern = r'[0-9]' #take out numbers from fbfm_type strings
+            sb40_df["fbfm_cat"] = sb40_df["fbfm_code"].apply(lambda x: re.sub(pattern, '', x))
+            sb40_df["duet_fuel_type"] = sb40_df["fbfm_cat"].apply(lambda x: duet_dict.get(x))
+            ## END NIKO ADDITIONS
+
+            # Build the dictionary with fuel parameters for the Scott and Burgan 40
+            # fire behavior fuel models. Dict format: key ->
+            # [name, loading (tons/ac), SAV (1/ft), ext. MC (percent), bed depth (ft)]
+            # Note: Eventually we want to get rid of this and just use the dataframe.
+            # This is legacy from the old parameter table json.
+            sb40_dict = {}
+            for key in sb40_df["key"]:
+                row = sb40_df[sb40_df["key"] == key]
+                sb40_dict[key] = [
+                    row["fbfm_code"].values[0],
+                    row["dry_load"].values[0],
+                    row["sav"].values[0],
+                    row["dead_fuel_extinction_moisture"].values[0],
+                    row["fuel_bed_depth_m"].values[0],
+                    row["duet_fuel_type"].values[0]
+                ]
+
+            return sb40_dict
+
+        def _get_sb40_arrays(sb40_keys: np.array, 
+                             sb40_dict: dict) -> tuple:
+            """
+            Use a dictionary of bulk density and fuel types that correspond to SB40
+            fuel models to assign those values across the study area.
+
+            Fuel types are as follows:
+            - 1: Predominantly grass. All cells with a GR, GS, or SH designation from SB40.
+            - -1: Predominantly tree litter. All cells with a TL designation from SB40. 
+            - 0: Neither predominantly grass or tree litter. All other SB40 designations.
+
+            Returns:
+                - np.array of fuel types
+                - np.array of bulk density values as calculated by fastfuels
+            """
+            ftype_dict = {key:val[5] for key,val in sb40_dict.items()}
+            ftype_arr = np.vectorize(ftype_dict.get)(sb40_keys)
+            
+            rhof_dict = {key:val[1] for key,val in sb40_dict.items()}
+            rhof_arr = np.vectorize(rhof_dict.get)(sb40_keys)
+
+            return ftype_arr, rhof_arr
+
+        def _combine_fuel_types(self, 
+                                calibrated_dict) -> np.array:
+            calibrated_duet = np.zeros((2,self.zroot["ny"],self.zroot["nx"]))
             if len(calibrated_dict.keys()) == 1:
                 if calibrated_dict.keys() in pairs.keys():
                     ftype = list(calibrated_dict.keys())[0]
+                    if ftype == "grass":
+                        calibrated_duet[0,:,:] = calibrated_dict["grass"]
+                        calibrated_duet[1,:,:] = self.duet_dict["litter"]
+                    else:
+                        calibrated_duet[0,:,:] = self.duet_dict["grass"]
+                        calibrated_duet[1,:,:] = calibrated_dict["litter"]
                     calibrated_duet = np.add(calibrated_dict[ftype], self.duet_dict[pairs[ftype]])
                 else:
+                    calibrated_duet = np.zeros((self.zroot["ny"],self.zroot["nx"]))
                     calibrated_duet = calibrated_dict["total"]
             else:
-                calibrated_duet = np.add(calibrated_dict["grass"], calibrated_dict["litter"])
+                calibrated_duet[0,:,:] = calibrated_dict["grass"]
+                calibrated_duet[1,:,:] = calibrated_dict["litter"]
             return calibrated_duet
 
         
-        def _read_duet_arr(self):
-            nx = self.zroot.attrs["nx"]
-            ny = self.zroot.attrs["ny"]
-            nz = 2 # number of duet layers, right now grass and litter. Will be number of tree species + 1
-            # filename will always be most recently calibrated array, unless revert_to_original_duet has been run
-            with open(Path(self.output_dir, self.arr_list[-1]), "rb") as fin:
-                duet_rhof = FortranFile(fin).read_reals(dtype="float32").reshape((nz, ny, nx), order="F")
+        def _get_input_array(self):
             duet_dict = {}
-            duet_dict["grass"] = duet_rhof[0,:,:]
-            duet_dict["litter"] = duet_rhof[1,:,:]
-            duet_dict["total"] = np.add(duet_rhof[0,:,:],duet_rhof[1,:,:])
+            if self.calibrated:
+                duet_dict["grass"] = self.calibrated_array[0,:,:]
+                duet_dict["litter"] = self.calibrated_array[1,:,:]
+            else:
+                nx = self.zroot.attrs["nx"]
+                ny = self.zroot.attrs["ny"]
+                nz = 2 # number of duet layers, right now grass and litter. Will be number of tree species + 1
+                with open(Path(self.output_dir, "surface_rhof.dat"), "rb") as fin:
+                    duet_rhof = FortranFile(fin).read_reals(dtype="float32").reshape((nz, ny, nx), order="F")
+                duet_dict["grass"] = duet_rhof[0,:,:]
+                duet_dict["litter"] = duet_rhof[1,:,:]
+                duet_dict["total"] = np.add(duet_rhof[0,:,:],duet_rhof[1,:,:])
             return duet_dict
         
 
-        def _name_calibrated_file(fuel_type: str,
-                                  method: str) -> str:
+        def _name_calibrated_file(self) -> str:
             delim = "_"
-            ftype_str = fuel_type if isinstance(fuel_type, str) else delim.join([str(ele) for ele in fuel_type])
-            arr_name = delim.join("surface_rhof_calibrated",ftype_str,"{}.dat".format(method))
+            ftype_str = self.calibrated_fuel_type[0] if len(self.calibrated_fuel_type, str)==1 else delim.join([str(ele) for ele in self.calibrated_fuel_type])
+            method_str = self.calibration_method[0] if len(self.calibration_method, str)==1 else delim.join([str(ele) for ele in self.calibration_method])
+            arr_name = delim.join("surface_rhof_calibrated",ftype_str,"{}.dat".format(method_str))
             if Path(self.output_dir, arr_name).exists():
                 i = 2
-                while Path(self.output_dir, delim.join("surface_rhof_calibrated",ftype_str,method,"%s.dat" % i)).exists():
+                while Path(self.output_dir, delim.join("surface_rhof_calibrated",ftype_str,method_str,"%s.dat" % i)).exists():
                     i += 1
-                arr_name = delim.join("surface_rhof_calibrated",ftype_str,method,"%s.dat" % i)
-            self.arr_list.append(arr_name)
+                arr_name = delim.join("surface_rhof_calibrated",ftype_str,method_str,"%s.dat" % i)
             return arr_name
 
         
