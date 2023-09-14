@@ -531,7 +531,7 @@ class DuetCalibrator:
             raise Exception("Must calibrate array before writing to file.")
     
 
-    def replace_quicfire_surface_fuels(self, quicfire_dir):
+    def replace_quicfire_surface_fuels(self):
         """
         Replace surface fuel bulk density in quicfire output
         (from export_zarr_to_quicfire) with DUET output.
@@ -551,7 +551,7 @@ class DuetCalibrator:
         ny = self.zroot.attrs['ny']
         nz = self.zroot.attrs['nz']
         qf_dim = (ny,nx,nz)
-        qf_arr = _read_dat_file(quicfire_dir, "treesrhof.dat", qf_dim)
+        qf_arr = _read_dat_file(self.output_dir, "treesrhof.dat", qf_dim)
         if self.calibrated:
             tag = "calibrated"
             duet_arr = np.add(self.calibrated_array[0,:,:],self.calibrated_array[1,:,:])
@@ -559,17 +559,8 @@ class DuetCalibrator:
             tag = "unmodified"
             duet_arr = np.add(self.original_duet_array[0,:,:],self.original_duet_array[1,:,:])
         qf_arr[:,:,0] = duet_arr
-        _write_np_array_to_dat(qf_arr, "treesrhof.dat", quicfire_dir, np.float32)
+        _write_np_array_to_dat(qf_arr, "treesrhof.dat", self.output_dir, np.float32)
         print("Replaced FastFuels surface fuel layer with {} DUET surface fuels".format(tag))
-
-    def replace_surface_fuels(zroot: zarr.hierarchy.Group,
-                          duet_dir: Path | str,
-                          quicfire_dir: Path | str,
-                          calibrated: bool) -> None:
-        qf_rhof = _read_dat_file(quicfire_dir, "treesrhof.dat", qf_dim)
-        duet_rhof = _read_dat_file(duet_dir, duet_name, duet_dim, order="F")
-        if calibrated == False:
-            duet_rhof = np.add(duet_rhof[0,:,:],duet_rhof[1,:,:])
 
     def _validate_inputs(self, fuel_type, val1=None, val2=None):
         # Validate fuel types
