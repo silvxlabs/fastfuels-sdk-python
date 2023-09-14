@@ -329,7 +329,7 @@ def export_zarr_to_fds(zroot: zarr.hierarchy.Group,
 
 
 class DuetCalibrator:
-    #TODO: Create new version of replace_surface_fuels
+    #TODO: Instead of saving just the most recent array to self.calibrated_array, append to a list or a dict of calibrated arrays, so that you can access a bunch without reading in dat files
     def __init__(self, zroot, output_dir, param_dir=None):
         self.zroot = zroot
         self.output_dir = Path(output_dir)
@@ -529,7 +529,47 @@ class DuetCalibrator:
             self.saved_files.append(arr_name)
         else:
             raise Exception("Must calibrate array before writing to file.")
+    
 
+    def replace_quicfire_surface_fuels(self, quicfire_dir):
+        """
+        Replace surface fuel bulk density in quicfire output
+        (from export_zarr_to_quicfire) with DUET output.
+
+        Parameters
+        ----------
+        quicfire_dir: Path | str
+            Directory where QUIO-Fire .dat files are located,
+            and to where updated .dat files are written to.
+
+        Returns
+        -------
+        None
+            Modified bulk density array (treesrhof.dat) is written to the QUIC-Fire directory
+        """
+        nx = self.zroot.attrs['nx']
+        ny = self.zroot.attrs['ny']
+        nz = self.zroot.attrs['nz']
+        qf_dim = (ny,nx,nz)
+        qf_arr = _read_dat_file(quicfire_dir, "treesrhof.dat", qf_dim)
+        if self.calibrated:
+            tag = "calibrated"
+            duet_arr = np.add(self.calibrated_array[0,:,:],self.calibrated_array[1,:,:])
+        else:
+            tag = "unmodified"
+            duet_arr = np.add(self.original_duet_array[0,:,:],self.original_duet_array[1,:,:])
+        qf_arr[:,:,0] = duet_arr
+        _write_np_array_to_dat(qf_arr, "treesrhof.dat", quicfire_dir, np.float32)
+        print("Replaced FastFuels surface fuel layer with {} DUET surface fuels".format(tag))
+
+    def replace_surface_fuels(zroot: zarr.hierarchy.Group,
+                          duet_dir: Path | str,
+                          quicfire_dir: Path | str,
+                          calibrated: bool) -> None:
+        qf_rhof = _read_dat_file(quicfire_dir, "treesrhof.dat", qf_dim)
+        duet_rhof = _read_dat_file(duet_dir, duet_name, duet_dim, order="F")
+        if calibrated == False:
+            duet_rhof = np.add(duet_rhof[0,:,:],duet_rhof[1,:,:])
 
     def _validate_inputs(self, fuel_type, val1=None, val2=None):
         # Validate fuel types
@@ -867,46 +907,6 @@ class DuetCalibrator:
             if isinstance(i,list): rt.extend(self._flatten(i))
             else: rt.append(i)
         return rt
-
-
-def replace_surface_fuels(zroot: zarr.hierarchy.Group,
-                          duet_dir: Path | str,
-                          quicfire_dir: Path | str,
-                          calibrated: bool) -> None:
-    """
-    Replace surface fuel bulk density in quicfire output
-    (from export_zarr_to_quicfire) with DUET output.
-
-    Parameters
-    ----------
-    zroot: zarr.hierarchy.Group
-        The root group of the zarr file.
-    duet_dir: Path | str
-        Directory where DUET .dat files are located.
-    quicfire_dir: Path | str
-        Directory where QUIO-Fire .dat files are located,
-        and to where updated .dat files are written to.
-    calibrated: bool
-        Whether the DUET surface fuel loading has been
-        calibrated using calibrate_duet.
-
-    Returns
-    -------
-    None
-        Modified bulk density array (treesrhof.dat) is written to the QUIC-Fire directory
-    """
-    duet_name = "surface_rhof_calibrated.dat" if calibrated else "surface_rhof.dat"
-    nx = zroot.attrs['nx']
-    ny = zroot.attrs['ny']
-    nz = zroot.attrs['nz']-2 #ask about this
-    qf_dim = (ny,nx,nz)
-    duet_dim = (ny,nx) if calibrated else (2,ny,nx)
-    qf_rhof = _read_dat_file(quicfire_dir, "treesrhof.dat", qf_dim)
-    duet_rhof = _read_dat_file(duet_dir, duet_name, duet_dim, order="F")
-    if calibrated == False:
-        duet_rhof = np.add(duet_rhof[0,:,:],duet_rhof[1,:,:])
-    qf_rhof[:,:,0] = duet_rhof
-    _write_np_array_to_dat(qf_rhof, "treesrhof.dat", quicfire_dir, np.float32)
 
 
 def _get_voxel_centers(nx: int, ny: int, nz: int, dx: float, dy: float,
