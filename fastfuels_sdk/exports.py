@@ -551,15 +551,16 @@ class DuetCalibrator:
         ny = self.zroot.attrs['ny']
         nz = self.zroot.attrs['nz']
         qf_dim = (ny,nx,nz)
-        qf_arr = _read_dat_file(self.output_dir, "treesrhof.dat", qf_dim)
+        with open(Path(self.output_dir, "treesrhof.dat"), "rb") as fin:
+            qf_arr = FortranFile(fin).read_reals(dtype="float32").reshape((nz, ny, nx), order = "C")
         if self.calibrated:
             tag = "calibrated"
             duet_arr = np.add(self.calibrated_array[0,:,:],self.calibrated_array[1,:,:])
         else:
             tag = "unmodified"
             duet_arr = np.add(self.original_duet_array[0,:,:],self.original_duet_array[1,:,:])
-        qf_arr[:,:,0] = duet_arr
-        _write_np_array_to_dat(qf_arr, "treesrhof.dat", self.output_dir, np.float32)
+        qf_arr[0,:,:] = duet_arr
+        _write_np_array_to_dat(qf_arr, "treesrhof.dat", self.output_dir, np.float32, reshape = False)
         print("Replaced FastFuels surface fuel layer with {} DUET surface fuels".format(tag))
 
     def _validate_inputs(self, fuel_type, val1=None, val2=None):
@@ -1044,16 +1045,20 @@ def _generate_header_lines(nx: int, ny: int, nz: int, dx: int, dy: int, dz: int,
     return header_lines
 
 
-def _write_np_array_to_dat(array: ndarray, dat_name: str,
-                           output_dir: Path, dtype: type = np.float32) -> None:
+def _write_np_array_to_dat(array: np.ndarray, dat_name: str,
+                           output_dir: Path, dtype: type = np.float32,
+                           reshape: bool = True) -> None:
     """
     Write a numpy array to a fortran binary file. Array must be cast to the
     appropriate data type before calling this function. If the array is 3D,
     the array will be reshaped from (y, x, z) to (z, y, x) for fortran.
     """
     # Reshape array from (y, x, z) to (z, y, x) (also for fortran)
-    if len(array.shape) == 3:
-        array = np.moveaxis(array, 2, 0).astype(dtype)
+    if reshape:
+        if len(array.shape) == 3:
+            array = np.moveaxis(array, 2, 0).astype(dtype)
+        else:
+            array = array.astype(dtype)
     else:
         array = array.astype(dtype)
 
@@ -1095,21 +1100,3 @@ def _validate_zarr_file(zgroup: zarr.hierarchy.Group,
             if array not in zgroup[group]:
                 raise ValueError(f"The zarr file does not contain the required "
                                  f"'{array}' array in the '{group}' group.")
-
-def _read_dat_file(dir: Path | str,
-                   filename: str,
-                   arr_dim: tuple,
-                   order: str = "C") -> np.array:
-    """
-    Read in a .dat file as a numpy array.
-
-    Dimensions of the array must be known, and in the order (z,y,x)
-    """
-    # Convert the directory to a Path object if it is a string
-    if isinstance(dir, str):
-        dir = Path(dir)
-    
-    # Import and reshape .dat file
-    arr =  FortranFile(Path(dir, filename),'r','uint32').read_ints('float32').T.reshape(arr_dim, order=order)
-    
-    return arr
