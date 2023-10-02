@@ -3,6 +3,7 @@ Treelist class and endpoints for the FastFuels SDK.
 """
 # Core imports
 from __future__ import annotations
+import io
 import json
 import tempfile
 from time import sleep
@@ -513,17 +514,16 @@ def get_treelist_data(treelist_id: str) -> DataFrame:
         If the API returns an unsuccessful status code.
     """
     # Send the request to the API
-    endpoint_url = f"{API_URL}/treelists/{treelist_id}/data?fmt=json"
+    endpoint_url = f"{API_URL}/treelists/{treelist_id}/data?fmt=csv"
 
     # Stream the response from the API
-    response = SESSION.get(endpoint_url, stream=True)
+    response = SESSION.get(endpoint_url)
 
     # Raise an error if the API returns an unsuccessful status code
     if response.status_code != 200:
         raise HTTPError(response.json())
 
-    json_str = response.json()
-    df = pd.read_json(json.dumps(json_str), orient="split")
+    df = pd.read_csv(io.StringIO(response.text))
 
     return df
 
