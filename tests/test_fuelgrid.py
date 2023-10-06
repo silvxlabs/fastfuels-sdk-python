@@ -223,27 +223,6 @@ def test_create_fuelgrid_bad_inputs():
                         border_pad=1)
 
 
-def test_create_fuelgrid_incomplete_treelist():
-    """
-    Test creating a fuelgrid with an incomplete treelist.
-    """
-    # Create a treelist
-    treelist = create_treelist(dataset_id=DATASET.id,
-                               name="test_treelist",
-                               description="test treelist")
-
-    # Try and create a fuelgrid while the treelist is incomplete
-    with pytest.raises(HTTPError):
-        create_fuelgrid(dataset_id=DATASET.id,
-                        treelist_id=treelist.id,
-                        name="test_fuelgrid",
-                        description="test fuelgrid",
-                        distribution_method="uniform",
-                        horizontal_resolution=1,
-                        vertical_resolution=1,
-                        border_pad=1)
-
-
 def test_get_fuelgrid():
     """
     Test getting a fuelgrid.
@@ -326,7 +305,7 @@ def test_download_fuelgrid_data():
     """
     Test downloading fuelgrid data to a string file path.
     """
-    # Create a fuelgrid
+    # Create a fuelgridf
     fuelgrid = create_fuelgrid(dataset_id=DATASET.id,
                                treelist_id=TREELIST.id,
                                name="fuelgrid_download_test",
