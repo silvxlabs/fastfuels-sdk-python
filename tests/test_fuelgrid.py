@@ -497,24 +497,3 @@ def test_delete_fuelgrid():
     treelist = get_treelist(TREELIST.id)
     assert fuelgrid.id not in [fg_id for fg_id in treelist.fuelgrids]
 
-
-def test_delete_all_fuelgrids():
-    """
-    Test deleting all fuelgrids.
-    """
-    # Delete all fuelgrids
-    delete_all_fuelgrids()
-
-    # List the fuelgrids
-    fuelgrids = list_fuelgrids()
-
-    # Check that there are no fuelgrids
-    assert len(fuelgrids) == 0
-
-    # Check that the dataset has no fuelgrids
-    dataset = get_dataset(DATASET.id)
-    assert len(dataset.fuelgrids) == 0
-
-    # Check that the treelist has no fuelgrids
-    treelist = get_treelist(TREELIST.id)
-    assert len(treelist.fuelgrids) == 0

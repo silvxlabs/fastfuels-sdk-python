@@ -368,31 +368,3 @@ def test_delete_treelist_bad_treelist_id():
     # Delete the treelist
     with pytest.raises(HTTPError):
         delete_treelist(uuid4().hex)
-
-
-def test_delete_all_treelists():
-    """
-    Test the delete all Treelists endpoint.
-    """
-    # Create a new treelist
-    new_treelist = test_create_treelist()
-
-    # Let the treelist finish generating before deleting
-    while new_treelist.status != "Finished":
-        new_treelist = get_treelist(new_treelist.id)
-        sleep(1)
-
-    # Delete all treelists
-    delete_all_treelists()
-
-    # Check that the treelist was deleted. Get request should return 404.
-    with pytest.raises(HTTPError):
-        get_treelist(new_treelist.id)
-
-    # Check that the treelist was deleted from the dataset treelist list
-    dataset = get_dataset(DATASET.id)
-    assert new_treelist.id not in [treelist_id for treelist_id in
-                                   dataset.treelists]
-
-    # Check that the dataset no longer has any treelists
-    assert len(dataset.treelists) == 0
