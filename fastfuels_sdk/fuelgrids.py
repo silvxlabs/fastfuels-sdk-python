@@ -7,6 +7,7 @@ import json
 import shutil
 from time import sleep
 from pathlib import Path
+from dateutil import parser
 from datetime import datetime
 
 # Internal imports
@@ -77,7 +78,7 @@ class Fuelgrid(FastFuelsResource):
         self.vertical_resolution: float = vertical_resolution
         self.border_pad: float = border_pad
         self.status: str = status
-        self.created_on: datetime = datetime.fromisoformat(created_on)
+        self.created_on: datetime = parser.parse(created_on)
         self.version: str = version
         self.outputs: dict = outputs
 

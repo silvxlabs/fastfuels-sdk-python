@@ -7,6 +7,7 @@ import io
 import json
 import tempfile
 from time import sleep
+from dateutil import parser
 from datetime import datetime
 
 # Internal imports
@@ -66,7 +67,7 @@ class Treelist(FastFuelsResource):
         self.method: str = method
         self.dataset_id: str = dataset_id
         self.status: str = status
-        self.created_on: datetime = datetime.fromisoformat(created_on)
+        self.created_on: datetime = parser.parse(created_on)
         self.summary: dict = summary
         self.fuelgrids: list[str] = fuelgrids
         self.version: str = version

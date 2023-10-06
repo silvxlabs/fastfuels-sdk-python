@@ -4,6 +4,7 @@ Dataset class and endpoints for the FastFuels SDK.
 # Core imports
 from __future__ import annotations
 import json
+from dateutil import parser
 from datetime import datetime
 
 # Internal imports
@@ -60,7 +61,7 @@ class Dataset(FastFuelsResource):
         self.id: str = id
         self.name: str = name
         self.description: str = description
-        self.created_on: datetime = datetime.fromisoformat(created_on)
+        self.created_on: datetime = parser.parse(created_on)
         self.spatial_data: dict = spatial_data
         self.tags: list[str] = tags if tags else []
         self.fvs_variant: str = fvs_variant
