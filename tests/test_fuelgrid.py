@@ -22,7 +22,7 @@ from requests.exceptions import HTTPError
 
 
 def setup_module(module):
-    with open("test-data/test.geojson") as f:
+    with open("test-data/blue_mtn_100m.geojson") as f:
         spatial_data = json.load(f)
 
     # Create a test dataset
@@ -33,7 +33,7 @@ def setup_module(module):
     # Create a test treelist
     global TREELIST
     TREELIST = DATASET.create_treelist(name="test_treelist",
-                                       description="test treelist",)
+                                       description="test treelist", )
     TREELIST.wait_until_finished()
 
 
@@ -339,9 +339,7 @@ def test_download_fuelgrid_data():
         download_zarr(fuelgrid.id, "test-data")
 
     # Wait for the fuelgrid to finish
-    while fuelgrid.status != "Finished":
-        fuelgrid = get_fuelgrid(fuelgrid.id)
-        sleep(2)
+    fuelgrid.wait_until_finished()
 
     # Open the test data
     test_zroot = zarr.open("test-data/test_small_fuelgrid.zip")
@@ -363,14 +361,14 @@ def test_download_fuelgrid_data():
         assert attributes["dx"] == 1.0
         assert attributes["dy"] == 1.0
         assert attributes["dz"] == 1.0
-        assert attributes["nx"] == 72
-        assert attributes["ny"] == 93
-        assert attributes["nz"] > 40
+        assert attributes["nx"] == 102
+        assert attributes["ny"] == 102
+        assert attributes["nz"] > 50
         assert attributes["pad"] == 0
-        assert attributes["xmax"] == -1366699.5
-        assert attributes["xmin"] == -1366770.5
-        assert attributes["ymax"] == 2777949.5
-        assert attributes["ymin"] == 2777857.5
+        assert attributes["xmax"] == -1378710.5
+        assert attributes["xmin"] == -1378811.5
+        assert attributes["ymax"] == 2781633.5
+        assert attributes["ymin"] == 2781532.5
 
         # Check that the file contains two groups: canopy and surface
         assert "canopy" in zroot
@@ -389,27 +387,16 @@ def test_download_fuelgrid_data():
 
         # Assert that the x and y dimensions are the same for the downloaded
         # canopy and test canopy groups
-        assert (canopy["bulk-density"].shape[0] ==
-                test_canopy["bulk-density"].shape[0])
-        assert (canopy["bulk-density"].shape[1] ==
-                test_canopy["bulk-density"].shape[1])
-        assert canopy["SAV"].shape[0] == test_canopy["SAV"].shape[0]
-        assert canopy["SAV"].shape[1] == test_canopy["SAV"].shape[1]
-        assert canopy["FMC"].shape[0] == test_canopy["FMC"].shape[0]
-        assert canopy["FMC"].shape[1] == test_canopy["FMC"].shape[1]
-        assert (canopy["species-code"].shape[0] ==
-                test_canopy["species-code"].shape[0])
-        assert (canopy["species-code"].shape[1] ==
-                test_canopy["species-code"].shape[1])
+        assert canopy["bulk-density"].shape == test_canopy["bulk-density"].shape
+        assert canopy["SAV"].shape == test_canopy["SAV"].shape
+        assert canopy["FMC"].shape == test_canopy["FMC"].shape
+        assert canopy["species-code"].shape == test_canopy["species-code"].shape
 
         # Assert that the canopy arrays are not all zeros
         assert canopy["bulk-density"][...].any()
         assert canopy["SAV"][...].any()
         assert canopy["FMC"][...].any()
         assert canopy["species-code"][...].any()
-
-        # Assert that the canopy array has a sparse matrix attribute
-        # assert len(canopy.attrs["sparse_array"]["data"]) > 0
 
         # Check that downloaded canopy data is similar to the test canopy data.
         assert np.isclose(canopy["bulk-density"][...].mean(),
@@ -427,29 +414,26 @@ def test_download_fuelgrid_data():
         assert "not-a-real-array" not in surface
 
         # Assert that the surface arrays are the correct shape
-        assert (surface["bulk-density"][...].shape ==
-                test_surface["bulk-density"][...].shape)
-        assert (surface["DEM"][...].shape ==
-                test_surface["DEM"][...].shape)
-        assert (surface["FMC"][...].shape ==
-                test_surface["FMC"][...].shape)
-        assert (surface["fuel-depth"][...].shape ==
-                test_surface["fuel-depth"][...].shape)
-        assert (surface["SAV"][...].shape ==
-                test_surface["SAV"][...].shape)
+        assert surface["bulk-density"][...].shape == \
+               test_surface["bulk-density"][...].shape
+        assert surface["DEM"][...].shape == test_surface["DEM"][...].shape
+        assert surface["FMC"][...].shape == test_surface["FMC"][...].shape
+        assert surface["fuel-depth"][...].shape == test_surface["fuel-depth"][
+            ...].shape
+        assert surface["SAV"][...].shape == test_surface["SAV"][...].shape
 
-        # # Assert that the downloaded surface arrays and the test surface arrays
-        # # are similar
-        # assert np.allclose(surface["bulk-density"][...],
-        #                    test_surface["bulk-density"][...])
-        # assert np.allclose(surface["DEM"][...],
-        #                    test_surface["DEM"][...])
-        # assert np.allclose(surface["FMC"][...],
-        #                    test_surface["FMC"][...])
-        # assert np.allclose(surface["fuel-depth"][...],
-        #                    test_surface["fuel-depth"][...])
-        # assert np.allclose(surface["SAV"][...],
-        #                    test_surface["SAV"][...])
+        # Assert that the downloaded surface arrays and the test surface arrays
+        # are similar
+        assert np.isclose(surface["bulk-density"][...].mean(),
+                          test_surface["bulk-density"][...].mean(), atol=1e-3)
+        assert np.isclose(surface["FMC"][...].mean(),
+                          test_surface["FMC"][...].mean(), atol=1e-3)
+        assert np.isclose(surface["fuel-depth"][...].mean(),
+                          test_surface["fuel-depth"][...].mean(), atol=1e-3)
+        assert np.isclose(surface["SAV"][...].mean(),
+                          test_surface["SAV"][...].mean(), atol=1e-3)
+        assert np.allclose(surface["DEM"][...],
+                           test_surface["DEM"][...])
 
 
 def test_download_fuelgrid_data_bad_id():

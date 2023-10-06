@@ -4,6 +4,7 @@ Test dataset endpoints and objects.
 
 # Internal imports
 import sys
+
 sys.path.append("..")
 from fastfuels_sdk.datasets import *
 from fastfuels_sdk.fuelgrids import get_fuelgrid
@@ -270,7 +271,7 @@ def test_create_dataset_geojson():
     Test creating a dataset.
     """
     # Load the geojson
-    with open("test-data/test.geojson", "r") as f:
+    with open("test-data/blue_mtn_100m.geojson", "r") as f:
         geojson = json.load(f)
 
     # Create a dataset
@@ -288,16 +289,38 @@ def test_create_dataset_geojson():
     assert isinstance(dataset.spatial_data, dict)
     assert dataset.spatial_data["epsg"] == 4326
     assert dataset.spatial_data["bbox"] == {
-        "west": -122.56096774114704,
-        "east": -122.54357448500281,
-        "south": 40.894586153305994,
-        "north": 40.90793941697117
+        "west": -114.11068825039331,
+        "east": -114.10915903670343,
+        "south": 46.83794694927181,
+        "north": 46.839004883463616
     }
     assert dataset.tags == []
-    assert dataset.fvs_variant == "CA"
+    assert dataset.fvs_variant == "IE"
     assert dataset.version is not None
     assert dataset.treelists == []
     assert dataset.fuelgrids == []
+
+
+def test_create_dataset_created_on_issue():
+    """
+    Test creating a dataset using data from Sophie that was causing an issue
+    related to the created_on attribute not being a valid ISO format.
+    """
+    # Load the geojson
+    with open("test-data/create_on_test.geojson", "r") as f:
+        geojson = json.load(f)
+
+    # Create a dataset
+    dataset = create_dataset(
+        name="default-dataset",
+        description="My dataset description",
+        spatial_data=geojson
+    )
+
+    # Assert that the created_on attribute is a valid ISO format
+    assert isinstance(dataset, Dataset)
+    assert dataset.id is not None
+    assert isinstance(dataset.created_on, datetime)
 
 
 def test_create_dataset_bad_feature_id():
@@ -471,3 +494,28 @@ def test_delete_dataset_bad_id():
     # Delete the dataset
     with pytest.raises(HTTPError):
         delete_dataset(uuid4().hex)
+
+
+def test_delete_all_datasets():
+    """
+    Test deleting all datasets.
+    """
+    # Create a dataset
+    dataset_to_delete = test_create_dataset_feature()
+
+    # Create another dataset to make sure the list is not empty
+    dataset_to_stay = test_create_dataset_feature()
+
+    # Delete the dataset
+    delete_all_datasets()
+
+    # Check that the dataset was deleted
+    assert len(list_datasets()) == 0
+
+    # Try to get the dataset
+    with pytest.raises(HTTPError):
+        get_dataset(dataset_to_delete.id)
+
+    # Try to get the dataset
+    with pytest.raises(HTTPError):
+        get_dataset(dataset_to_stay.id)
