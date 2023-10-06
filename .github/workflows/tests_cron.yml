@@ -1,11 +1,10 @@
-name: Tests
+name: Test on Cron Schedule
 on:
-  pull_request:
-    branches:
-      - main
-
+  schedule:
+    # Runs every day at 1am
+    - cron: '0 1 * * *'
 env:
-    FASTFUELS_API_KEY: ${{ secrets.FASTFUELS_API_KEY }}
+  FASTFUELS_API_KEY: ${{ secrets.FASTFUELS_API_KEY }}
 
 jobs:
   test:
@@ -17,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ ubuntu-latest ]
         env:
           - requirements/tests-38.yml
           - requirements/tests-39.yml
