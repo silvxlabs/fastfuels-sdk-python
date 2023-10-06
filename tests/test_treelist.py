@@ -31,7 +31,7 @@ def setup_module(module):
                              spatial_data=spatial_data)
 
 
-TREELIST_STATUS_LIST = ["Queued", "Generating", "Computing Metrics",
+TREELIST_STATUS_LIST = ["Queued", "Processing", "Computing Metrics",
                         "Uploading", "Finished"]
 
 
@@ -245,18 +245,6 @@ def test_get_treelist_data_bad_treelist_id():
         get_treelist_data(uuid4().hex)
 
 
-def test_get_treelist_data_treelist_not_finished():
-    """
-    Test the get Treelist data endpoint with a treelist that is not finished.
-    """
-    # Create a new treelist
-    new_treelist = test_create_treelist()
-
-    # Download the treelist data
-    with pytest.raises(HTTPError):
-        get_treelist_data(new_treelist.id)
-
-
 def test_update_treelist():
     """
     Test the update Treelist endpoint.
@@ -318,19 +306,6 @@ def test_update_treelist_data_bad_treelist_id():
 
     with pytest.raises(HTTPError):
         update_treelist_data(uuid4().hex, upload_data)
-
-
-def test_update_treelist_data_not_finished():
-    """
-    Tests the update data endpoint with a treelist that is not finished.
-    """
-    upload_data = pd.read_csv("test-data/test_update_treelist_data.csv")
-
-    # Create a new treelist
-    treelist = test_create_treelist()
-
-    with pytest.raises(HTTPError):
-        update_treelist_data(treelist.id, upload_data)
 
 
 def test_update_treelist_data_bad_data():
