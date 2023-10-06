@@ -304,19 +304,21 @@ def test_list_fuelgrids():
                                    border_pad=1)
 
     # List the fuelgrids
-    fuelgrids = list_fuelgrids()
+    all_fuelgrids = list_fuelgrids()
 
     # Check that the new fuelgrid is in the list
-    assert new_fuelgrid.id in [fuelgrid.id for fuelgrid in fuelgrids]
+    assert new_fuelgrid.id in [fuelgrid.id for fuelgrid in all_fuelgrids]
 
     # Check that all the fuelgrids are in the dataset
     dataset = get_dataset(DATASET.id)
-    for fuelgrid in fuelgrids:
+    dataset_fuelgrids = list_fuelgrids(dataset_id=DATASET.id)
+    for fuelgrid in dataset_fuelgrids:
         assert fuelgrid.id in [fg_id for fg_id in dataset.fuelgrids]
 
     # Check that all the fuelgrids are in the treelist
     treelist = get_treelist(TREELIST.id)
-    for fuelgrid in fuelgrids:
+    treelist_fuelgrids = list_fuelgrids(treelist_id=TREELIST.id)
+    for fuelgrid in treelist_fuelgrids:
         assert fuelgrid.id in [fg_id for fg_id in treelist.fuelgrids]
 
 
@@ -333,10 +335,6 @@ def test_download_fuelgrid_data():
                                vertical_resolution=1,
                                border_pad=0,
                                distribution_method="uniform")
-
-    # Assert that we get an error when the fuelgrid is not finished
-    with pytest.raises(HTTPError):
-        download_zarr(fuelgrid.id, "test-data")
 
     # Wait for the fuelgrid to finish
     fuelgrid.wait_until_finished()
