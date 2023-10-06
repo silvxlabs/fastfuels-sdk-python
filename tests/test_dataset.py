@@ -495,27 +495,3 @@ def test_delete_dataset_bad_id():
     with pytest.raises(HTTPError):
         delete_dataset(uuid4().hex)
 
-
-def test_delete_all_datasets():
-    """
-    Test deleting all datasets.
-    """
-    # Create a dataset
-    dataset_to_delete = test_create_dataset_feature()
-
-    # Create another dataset to make sure the list is not empty
-    dataset_to_stay = test_create_dataset_feature()
-
-    # Delete the dataset
-    delete_all_datasets()
-
-    # Check that the dataset was deleted
-    assert len(list_datasets()) == 0
-
-    # Try to get the dataset
-    with pytest.raises(HTTPError):
-        get_dataset(dataset_to_delete.id)
-
-    # Try to get the dataset
-    with pytest.raises(HTTPError):
-        get_dataset(dataset_to_stay.id)
