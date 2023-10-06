@@ -22,7 +22,7 @@ from requests.exceptions import HTTPError
 
 
 def setup_module(module):
-    with open("test-data/test.geojson") as f:
+    with open("test-data/blue_mtn_100m.geojson") as f:
         spatial_data = json.load(f)
 
     # Create a test dataset
@@ -218,6 +218,25 @@ def test_get_treelist_data():
     assert num_live_trees == num_api_trees
 
 
+def test_get_treelist_data_ca():
+    with open("test-data/ca_geojson.geojson") as f:
+        spatial_data = json.load(f)
+    dataset = create_dataset(
+        name="ca-test",
+        description="test dataset with sdk",
+        spatial_data=spatial_data
+    )
+    treelist = dataset.create_treelist(
+        name="ca-test-treelist",
+        description="test treelist with sdk",
+    )
+    treelist.wait_until_finished()
+    treelist_data = treelist.get_data()
+
+    assert isinstance(treelist_data, pd.DataFrame)
+    assert len(treelist_data) > 2000000
+
+
 def test_get_treelist_data_bad_treelist_id():
     """
     Test the get Treelist data endpoint with a bad treelist id.
@@ -277,9 +296,7 @@ def test_update_treelist_data():
     treelist = test_create_treelist()
 
     # Let the treelist finish generating before updating
-    while treelist.status != "Finished":
-        treelist = get_treelist(treelist.id)
-        sleep(1)
+    treelist.wait_until_finished()
 
     # Load the test treelist data csv as a dataframe
     upload_data = pd.read_csv("test-data/test_update_treelist_data.csv")
@@ -368,31 +385,3 @@ def test_delete_treelist_bad_treelist_id():
     # Delete the treelist
     with pytest.raises(HTTPError):
         delete_treelist(uuid4().hex)
-
-
-def test_delete_all_treelists():
-    """
-    Test the delete all Treelists endpoint.
-    """
-    # Create a new treelist
-    new_treelist = test_create_treelist()
-
-    # Let the treelist finish generating before deleting
-    while new_treelist.status != "Finished":
-        new_treelist = get_treelist(new_treelist.id)
-        sleep(1)
-
-    # Delete all treelists
-    delete_all_treelists()
-
-    # Check that the treelist was deleted. Get request should return 404.
-    with pytest.raises(HTTPError):
-        get_treelist(new_treelist.id)
-
-    # Check that the treelist was deleted from the dataset treelist list
-    dataset = get_dataset(DATASET.id)
-    assert new_treelist.id not in [treelist_id for treelist_id in
-                                   dataset.treelists]
-
-    # Check that the dataset no longer has any treelists
-    assert len(dataset.treelists) == 0

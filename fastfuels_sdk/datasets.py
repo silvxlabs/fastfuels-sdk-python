@@ -4,6 +4,7 @@ Dataset class and endpoints for the FastFuels SDK.
 # Core imports
 from __future__ import annotations
 import json
+from dateutil import parser
 from datetime import datetime
 
 # Internal imports
@@ -60,7 +61,7 @@ class Dataset(FastFuelsResource):
         self.id: str = id
         self.name: str = name
         self.description: str = description
-        self.created_on: datetime = datetime.fromisoformat(created_on)
+        self.created_on: datetime = parser.parse(created_on)
         self.spatial_data: dict = spatial_data
         self.tags: list[str] = tags if tags else []
         self.fvs_variant: str = fvs_variant
@@ -469,24 +470,3 @@ def delete_dataset(dataset_id: str) -> list[Dataset]:
 
     return [Dataset(**dataset) for dataset in response.json()["datasets"]]
 
-
-def delete_all_datasets() -> None:
-    """
-    Delete all Dataset resources. This is a recursive delete, meaning that all
-    Treelists and Fuelgrids associated with the user's Datasets will also be
-    deleted.
-
-    Raises
-    ------
-    HTTPError
-        If the API returns an error.
-    """
-    # Send the request to the API
-    endpoint_url = f"{API_URL}/datasets"
-    response = SESSION.delete(endpoint_url)
-
-    # Raise an error if the API returns an error
-    if response.status_code != 200:
-        raise HTTPError(response.json())
-
-    return None
