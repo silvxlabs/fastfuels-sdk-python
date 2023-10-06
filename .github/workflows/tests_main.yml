@@ -1,8 +1,9 @@
-name: Test on Pull Request to Main
+name: Test on Push to Main
+
 on:
-  pull_request:
+  push:
     branches:
-      - main
+      - "main"
 
 env:
     FASTFUELS_API_KEY: ${{ secrets.FASTFUELS_API_KEY }}
