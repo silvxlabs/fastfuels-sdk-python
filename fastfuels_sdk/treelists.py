@@ -3,6 +3,7 @@ Treelist class and endpoints for the FastFuels SDK.
 """
 # Core imports
 from __future__ import annotations
+import os
 import io
 import json
 import tempfile
@@ -615,11 +616,21 @@ def update_treelist_data(treelist_id: str, data: DataFrame) -> Treelist:
     Treelist
         Updated Treelist resource with the updated data.
     """
-    # Upload the data as a CSV file and send the request to the API
-    with tempfile.NamedTemporaryFile(suffix=".csv") as file:
-        data.to_csv(file.name, index=False)
-        endpoint_url = f"{API_URL}/treelists/{treelist_id}/data"
-        response = SESSION.patch(endpoint_url, files={"file": file})
+    # Create a temporary file
+    temp_fd, temp_filepath = tempfile.mkstemp(suffix=".csv")
+    try:
+        # Write the data to the temporary file
+        with os.fdopen(temp_fd, 'w') as temp_file:
+            data.to_csv(temp_file, index=False)
+
+        # Read the data from the temporary file and send the request
+        with open(temp_filepath, 'rb') as temp_file:
+            endpoint_url = f"{API_URL}/treelists/{treelist_id}/data"
+            response = SESSION.patch(endpoint_url, files={
+                "file": (temp_filepath, temp_file, "text/csv")})
+    finally:
+        # Clean up the temporary file
+        os.remove(temp_filepath)
 
     # Raise an error if the API returns an unsuccessful status code
     if response.status_code != 200:
