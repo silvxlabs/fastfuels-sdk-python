@@ -1,5 +1,6 @@
 numpy<2
 pandas
+pytest
 requests
 scipy
 zarr>2
