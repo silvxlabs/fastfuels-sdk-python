@@ -91,20 +91,41 @@ method.
 treelist.wait_until_finished()
 ```
 
-## Simulate a silvicultural treatment on a Treelist
+## Download Treelist data as a CSV file
 
-Once a 
-[Treelist](reference.md#fastfuels_sdk.Treelist) 
-has finished generating, you can access the Treelist data in a 
-DataFrame object by using the
-[`get_data`](reference.md#fastfuels_sdk.treelists.Treelist.get_data)
+Once a Treelist has finished generating, you can download the Treelist data as
+a CSV file using the 
+[`download_csv`](reference.md#fastfuels_sdk.treelists.Treelist.download_csv)
 method.
 
 ```python
+import json
+from fastfuels_sdk import create_dataset
+
+# Load a geojson file
+with open('path/to/geojson/file') as f:
+    geojson = json.load(f)
+    
+# Create a dataset
+dataset = create_dataset(name="my-dataset",
+                         description="My dataset description",
+                         spatial_data=geojson)
+
+# Create a treelist from a dataset
+treelist = dataset.create_treelist(name="my-treelist",
+                                   description="My treelist description")
+
+# Wait for a treelist to finish generating
+treelist.wait_until_finished(verbose=True)
+
 # Get the treelist data
 df = treelist.get_data()
-df.head()
+
+# Download the treelist data as a CSV file
+df.to_csv('path/to/treelist.csv')
 ```
+
+## Simulate a silvicultural treatment on a Treelist
 
 Some users may want to modify Treelist data to simulate different scenarios such
 as forest growth, silvicultural treatments, or natural disturbance such as 
