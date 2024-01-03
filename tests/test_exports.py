@@ -64,6 +64,16 @@ def test_export_zarr_to_quicfire():
         np.float32)
     assert np.allclose(treesfueldepth_array, fd_array)
 
+    # Load the treesss.dat file and check that the values are the same as the
+    # SAV array
+    treesss_dat = FortranFile(tmp_dir / "treesss.dat", "r")
+    treesss_array = treesss_dat.read_reals(dtype=np.float32)
+    treesss_array = treesss_array.reshape((nz, ny, nx))
+    treesss_array = np.moveaxis(treesss_array, 0, 2).astype(np.float32)
+    sav_array = canopy_group["SAV"][...]
+    sav_array[..., 0] = test_zroot["surface"]["SAV"][...]
+    assert np.allclose(treesss_array, sav_array)
+
     # Load the topo.dat file and check that the values are the
     # same as the DEM array
     topo_dat = FortranFile(tmp_dir / "topo.dat", "r")

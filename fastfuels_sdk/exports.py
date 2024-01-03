@@ -22,8 +22,7 @@ except AttributeError:  # Python 3.6-3.8
     TEMPLATES_PATH = resource_filename('fastfuels_sdk', 'templates')
 
 
-def export_zarr_to_quicfire(zroot: zarr.hierarchy.Group,
-                            output_dir: Path | str) -> None:
+def export_zarr_to_quicfire(zroot: zarr.hierarchy.Group, output_dir: Path | str) -> None:
     """
     Write a FastFuels zarr file to a QUIC-Fire .dat input file stack. The
     QUIC-Fire .dat files are written to the output directory, and consists of
@@ -31,6 +30,7 @@ def export_zarr_to_quicfire(zroot: zarr.hierarchy.Group,
     - treesrhof.dat
     - treesmoist.dat
     - treesfueldepth.dat
+    - treesss.dat
     - topo.dat
 
     Canopy and surface data are combined into a single .dat file for each
@@ -57,9 +57,11 @@ def export_zarr_to_quicfire(zroot: zarr.hierarchy.Group,
     Required Arrays:
     - canopy/bulk-density
     - canopy/FMC
+    - canopy/SAV
     - surface/bulk-density
     - surface/FMC
     - surface/fuel-depth
+    - surface/SAV
     - surface/DEM
 
 
@@ -78,8 +80,8 @@ def export_zarr_to_quicfire(zroot: zarr.hierarchy.Group,
     # Validate the zarr file
     required_groups = ["canopy", "surface"]
     required_arrays = {
-        "canopy": ["bulk-density", "FMC"],
-        "surface": ["bulk-density", "FMC", "fuel-depth", "DEM"]
+        "canopy": ["bulk-density", "FMC", "SAV"],
+        "surface": ["bulk-density", "FMC", "SAV", "fuel-depth", "DEM"]
     }
     _validate_zarr_file(zroot, required_groups, required_arrays)
 
@@ -91,27 +93,29 @@ def export_zarr_to_quicfire(zroot: zarr.hierarchy.Group,
     canopy_group = zroot["canopy"]
     surface_group = zroot["surface"]
 
-    # Write bulk-density data to a .dat file
+    # Write bulk-density data to the treesrhof.dat file
     bulk_density_array = canopy_group["bulk-density"][...]
     bulk_density_array[..., 0] += surface_group["bulk-density"][...]
     _write_np_array_to_dat(bulk_density_array, "treesrhof.dat", output_dir,
                            np.float32)
-    del bulk_density_array
 
-    # Write Fuel Moisture Content (FMC) data to a .dat file
+    # Write Fuel Moisture Content (FMC) data to the treesmoist.dat file
     fmc_array = canopy_group["FMC"][...]
     fmc_array[..., 0] = surface_group["FMC"][...]
     _write_np_array_to_dat(fmc_array, "treesmoist.dat", output_dir, np.float32)
-    del fmc_array
 
-    # Write fuel depth data to a .dat file
+    # Write fuel depth data to the treesfueldepth.dat file
     fuel_depth_array = np.zeros_like(canopy_group["bulk-density"][...])
     fuel_depth_array[..., 0] = surface_group["fuel-depth"][...]
     _write_np_array_to_dat(fuel_depth_array, "treesfueldepth.dat", output_dir,
                            np.float32)
-    del fuel_depth_array
 
-    # Write DEM data to a .dat file
+    # Write SAV data to the treesss.dat file
+    sav_array = canopy_group["SAV"][...]
+    sav_array[..., 0] = surface_group["SAV"][...]
+    _write_np_array_to_dat(sav_array, "treesss.dat", output_dir, np.float32)
+
+    # Write DEM data to the topo.dat file
     dem_array = surface_group["DEM"][...]
     _write_np_array_to_dat(dem_array, "topo.dat", output_dir, np.float32)
 
