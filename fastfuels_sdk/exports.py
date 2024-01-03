@@ -113,7 +113,8 @@ def export_zarr_to_quicfire(zroot: zarr.hierarchy.Group, output_dir: Path | str)
     # Write SAV data to the treesss.dat file
     sav_array = canopy_group["SAV"][...]
     sav_array[..., 0] = surface_group["SAV"][...]
-    _write_np_array_to_dat(sav_array, "treesss.dat", output_dir, np.float32)
+    size_scale_array = np.nan_to_num(2 / sav_array, nan=0, posinf=0, neginf=0, copy=False)
+    _write_np_array_to_dat(size_scale_array, "treesss.dat", output_dir, np.float32)
 
     # Write DEM data to the topo.dat file
     dem_array = surface_group["DEM"][...]
