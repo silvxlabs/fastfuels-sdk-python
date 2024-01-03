@@ -72,7 +72,8 @@ def test_export_zarr_to_quicfire():
     treesss_array = np.moveaxis(treesss_array, 0, 2).astype(np.float32)
     sav_array = canopy_group["SAV"][...]
     sav_array[..., 0] = test_zroot["surface"]["SAV"][...]
-    assert np.allclose(treesss_array, sav_array)
+    size_scale_array = np.nan_to_num(2 / sav_array, nan=0, posinf=0, neginf=0, copy=False)
+    assert np.allclose(treesss_array, size_scale_array)
 
     # Load the topo.dat file and check that the values are the
     # same as the DEM array
