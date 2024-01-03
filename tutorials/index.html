@@ -1,0 +1,656 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../how-to-guides/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.3">
+    
+    
+      
+        <title>Tutorials - FastFuels SDK Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.50c56a3b.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#fastfuels-resources" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="FastFuels SDK Documentation" class="md-header__button md-logo" aria-label="FastFuels SDK Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            FastFuels SDK Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Tutorials
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="FastFuels SDK Documentation" class="md-nav__button md-logo" aria-label="FastFuels SDK Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    FastFuels SDK Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#fastfuels-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      FastFuels Resources
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="FastFuels Resources">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataset
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#treelist" class="md-nav__link">
+    <span class="md-ellipsis">
+      Treelist
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Treelist">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dataframe" class="md-nav__link">
+    <span class="md-ellipsis">
+      DataFrame
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fuelgrid" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fuelgrid
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Fuelgrid">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#zarr" class="md-nav__link">
+    <span class="md-ellipsis">
+      Zarr
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to-guides/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How-To Guides
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#fastfuels-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      FastFuels Resources
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="FastFuels Resources">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dataset
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#treelist" class="md-nav__link">
+    <span class="md-ellipsis">
+      Treelist
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Treelist">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dataframe" class="md-nav__link">
+    <span class="md-ellipsis">
+      DataFrame
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fuelgrid" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fuelgrid
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Fuelgrid">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#zarr" class="md-nav__link">
+    <span class="md-ellipsis">
+      Zarr
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  <h1>Tutorials</h1>
+
+<h2 id="fastfuels-resources">FastFuels Resources</h2>
+<p>FastFuels is a Python SDK for generating synthetic forest fuels data. The SDK
+connects to a FastFuels API and communicates with it using a REST protocol.
+The API defines a set of endpoints for creating and managing FastFuels data
+in the form of three resources: Dataset, Treelist, and Fuelgrid. In brief,
+a Dataset is a collection of spatial data, a Treelist is a collection of
+trees, and a Fuelgrid is a collection of fuel cells. The SDK provides
+convenience methods for creating and managing these resources.</p>
+<h3 id="dataset">Dataset</h3>
+<p>A Dataset is a collection of spatial data. The spatial data is used to query
+data products for generating Treelists and Fuelgrids.</p>
+<p>Dataset resources also maintain connections to Treelist and Fuelgrid resources
+that are generated from the Dataset's spatial data. This allows for easy
+access to Treelist and Fuelgrid resources that are generated from the same
+spatial data.</p>
+<h3 id="treelist">Treelist</h3>
+<p>A Treelist is a collection of trees. Trees are populated in a Treelist by
+querying the 
+<a href="https://www.firelab.org/project/treemap-tree-level-model-forests-united-states">TreeMap</a> 
+and 
+<a href="https://www.fia.fs.usda.gov/library/database-documentation">FIA Database</a>
+products using the spatial data from a Dataset resource. A Treelist maintains
+a reference to a tabular data structure that contains information about the
+trees in the Treelist. </p>
+<h4 id="dataframe">DataFrame</h4>
+<p>Trees are stored in a 
+<a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html">pandas DataFrame</a>,
+which is a two-dimensional, size-mutable, potentially heterogeneous tabular
+data structure with labeled axes (rows and columns).
+Each row in the DataFrame represents a unique tree on the landscape.
+Columns of the DataFrame are as follows:</p>
+<ul>
+<li>
+<p><code>SPCD</code>: FIA Species code. This is an identifier for the species of the tree according to the Forest Inventory and Analysis (FIA) program of the U.S. Forest Service.</p>
+</li>
+<li>
+<p><code>DIA_cm</code>: Tree Diameter at Breast Height (DBH). This is a standard forestry measurement representing the diameter of the tree's trunk at a standard height of 1.3 meters (or 4.5 feet) above ground level. In this dataset, the DBH is measured in centimeters.</p>
+</li>
+<li>
+<p><code>HT_m</code>: Tree height. The total height of the tree, measured in meters.</p>
+</li>
+<li>
+<p><code>STATUSCD</code>: FIA Status code. This code indicates the status of the tree (e.g., whether it's alive, dead, or has been cut down) as per the FIA's coding system.</p>
+</li>
+<li>
+<p><code>CBH_m</code>: Tree Crown Base Height. This represents the height above ground level at which the tree's crown (branches and leaves) starts. In this dataset, the crown base height is measured in meters.</p>
+</li>
+<li>
+<p><code>X_m</code> and <code>Y_m</code>: These are the tree's projected coordinates in meters. Projections are in the EPSG:5070 coordinate reference system, which is a standard projection for the conterminous United States.</p>
+</li>
+</ul>
+<h3 id="fuelgrid">Fuelgrid</h3>
+<p>A Fuelgrid is a collection of 3D fuel cells. Fuelgrids are voxelized 
+representations of the landscape that contain canopy and surface fuel
+information for use in fire behavior models. Fuelgrids are generated using
+the individual trees in a Treelist and the spatial data of a Dataset resource.
+Fuelgrid canopy data comes from voxelizing the trees in a Treelist, and
+surface fuel data comes from querying the 
+<a href="https://landfire.gov/fbfm40.php">LANDFIRE 40 Scott and Burgan Fire Behavior Fuel Models</a>
+product using the spatial data from a Dataset resource.</p>
+<p>Additionally, surface fuel data can be modified using 
+<a href="https://www.sciencedirect.com/science/article/abs/pii/S0304380023001564?via%3Dihub">DUET</a>
+to account for the distribution of leaf litter based on tree canopy structure.
+The SDK provides functionality for exporting Fuelgrid data to DUET input files.</p>
+<h4 id="zarr">Zarr</h4>
+<p>A Fuelgrid maintains a reference to a 
+<a href="https://zarr.readthedocs.io/en/stable/">zarr</a>
+array group that contains the 3D canopy and 2D surface fuel data. The zarr array
+group is organized as follows:</p>
+<pre><code>/
+ ├── canopy
+ │   ├── FMC; float32; Fuel moisture content, in percent
+ │   ├── SAV; float32; Surface area to volume ratio, in 1/m
+ │   ├── bulk-density; float32; Canopy bulk density, in kg/m^3
+ │   └── species-code; uint16; FIA species code for the dominant voxel species
+ └── surface
+     ├── DEM; float32; Digital Elevation Model, in meters
+     ├── FMC; float32; Fuel moisture content, in percent
+     ├── SAV; float32; Surface area to volume ratio, in 1/m
+     ├── bulk-density; float32; Surface fuel bulk density, in kg/m^3
+     └── fuel-depth; float32; Surface fuel depth (or height), in meters
+</code></pre>
+<p>An in-depth tutorial for interacting with Fuelgrid data in the zarr format can
+be found <a href="https://github.com/silvxlabs/demos/blob/main/notebooks/zarr-demo.ipynb">here</a>.</p>
+<p>In addition to the above data hierarchy, zarr Fuelgrids also contain metadata
+in an <code>attrs</code> dictionary. The <code>attrs</code> dictionary contains the following:</p>
+<ul>
+<li><code>dx</code>: The x-axis resolution of the Fuelgrid, in meters</li>
+<li><code>dy</code>: The y-axis resolution of the Fuelgrid, in meters</li>
+<li><code>dz</code>: The z-axis resolution of the Fuelgrid, in meters</li>
+<li><code>nx</code>: The number of cells in the x-axis of the Fuelgrid</li>
+<li><code>ny</code>: The number of cells in the y-axis of the Fuelgrid</li>
+<li><code>nz</code>: The number of cells in the z-axis of the Fuelgrid</li>
+<li><code>pad</code>: The number of cells to pad the Fuelgrid with in each direction</li>
+<li><code>xmax</code>: The maximum x-coordinate of the Fuelgrid, in meters</li>
+<li><code>xmin</code>: The minimum x-coordinate of the Fuelgrid, in meters</li>
+<li><code>ymax</code>: The maximum y-coordinate of the Fuelgrid, in meters</li>
+<li><code>ymin</code>: The minimum y-coordinate of the Fuelgrid, in meters</li>
+<li><code>zmax</code>: The maximum z-coordinate of the Fuelgrid, in meters</li>
+<li><code>zmin</code>: The minimum z-coordinate of the Fuelgrid, in meters</li>
+</ul>
+<p>The 2D affine transformation matrix is not currently stored in the 
+attributes dictionary, but can be created as follows:</p>
+<pre><code class="language-python">import numpy as np
+
+dx, dy = fuelgrid.attrs['dx'], fuelgrid.attrs['dy']
+xmin, ymin = fuelgrid.attrs['xmin'], fuelgrid.attrs['ymin']
+
+affine = np.array([[dx, 0, xmin - dx/2], 
+                   [0, dy, ymin - dy/2], 
+                   [0, 0, 1]])
+</code></pre>
+<p>Note that all spatial coordinates use the EPSG:5070 coordinate reference system.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7c377c4.min.js"></script>
+      
+    
+  </body>
+</html>

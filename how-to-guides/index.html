@@ -1,0 +1,928 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../tutorials/">
+      
+      
+        <link rel="next" href="../reference/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.3">
+    
+    
+      
+        <title>How-To Guides - FastFuels SDK Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.50c56a3b.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#create-a-dataset" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="FastFuels SDK Documentation" class="md-header__button md-logo" aria-label="FastFuels SDK Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            FastFuels SDK Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              How-To Guides
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="FastFuels SDK Documentation" class="md-nav__button md-logo" aria-label="FastFuels SDK Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    FastFuels SDK Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    How-To Guides
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    How-To Guides
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a Dataset
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Create a Dataset">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-a-geojson-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using a GeoJSON file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-other-spatial-data-file-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using other spatial data file formats
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-treelist" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a Treelist
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Create a Treelist">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#treelist-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Treelist status
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#download-treelist-data-as-a-csv-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Download Treelist data as a CSV file
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#simulate-a-silvicultural-treatment-on-a-treelist" class="md-nav__link">
+    <span class="md-ellipsis">
+      Simulate a silvicultural treatment on a Treelist
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-fuelgrid" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a Fuelgrid
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modify-fuelgrid-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Modify Fuelgrid data
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#export-voxelized-fuels-to-fire-model-inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Export Voxelized Fuels to Fire Model Inputs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Export Voxelized Fuels to Fire Model Inputs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quic-fire" class="md-nav__link">
+    <span class="md-ellipsis">
+      QUIC-fire
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a Dataset
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Create a Dataset">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-a-geojson-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using a GeoJSON file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-other-spatial-data-file-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using other spatial data file formats
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-treelist" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a Treelist
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Create a Treelist">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#treelist-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      Treelist status
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#download-treelist-data-as-a-csv-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Download Treelist data as a CSV file
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#simulate-a-silvicultural-treatment-on-a-treelist" class="md-nav__link">
+    <span class="md-ellipsis">
+      Simulate a silvicultural treatment on a Treelist
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-fuelgrid" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a Fuelgrid
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modify-fuelgrid-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Modify Fuelgrid data
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#export-voxelized-fuels-to-fire-model-inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Export Voxelized Fuels to Fire Model Inputs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Export Voxelized Fuels to Fire Model Inputs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quic-fire" class="md-nav__link">
+    <span class="md-ellipsis">
+      QUIC-fire
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  <h1>How-To Guides</h1>
+
+<h2 id="create-a-dataset">Create a Dataset</h2>
+<p>The core resource in the FastFuels SDK is the 
+<a href="../reference/#fastfuels_sdk.Dataset">Dataset</a>. 
+A Dataset contains
+spatial data for generating FastFuels Treelists.</p>
+<p>The entry point for creating a 
+Dataset is the 
+<a href="../reference/#fastfuels_sdk.create_dataset"><code>create_dataset</code></a> function. This</p>
+<h3 id="using-a-geojson-file">Using a GeoJSON file</h3>
+<pre><code class="language-python">import json
+from fastfuels_sdk import create_dataset
+
+# Load a geojson file
+with open('path/to/geojson/file') as f:
+    geojson = json.load(f)
+
+# Create a dataset
+dataset = create_dataset(name=&quot;my-dataset&quot;,
+                         description=&quot;My dataset description&quot;,
+                         spatial_data=geojson)
+</code></pre>
+<h3 id="using-other-spatial-data-file-formats">Using other spatial data file formats</h3>
+<pre><code class="language-python">import json
+import geopandas as gpd
+from fastfuels_sdk import create_dataset
+
+# Load a spatial data file
+gdf = gpd.read_file('path/to/spatial/data/file')
+geojson = json.loads(gdf.to_json())
+
+# Create a dataset
+dataset = create_dataset(name=&quot;my-dataset&quot;,
+                         description=&quot;My dataset description&quot;,
+                         spatial_data=geojson)
+</code></pre>
+<h2 id="create-a-treelist">Create a Treelist</h2>
+<p>A <a href="../reference/#fastfuels_sdk.Dataset">Dataset</a> is used to generate a 
+<a href="../reference/#fastfuels_sdk.Treelist">Treelist</a> object with the
+<a href="../reference/#fastfuels_sdk.datasets.Dataset.create_treelist"><code>create_treelist</code></a>
+method.</p>
+<pre><code class="language-python">import json
+from fastfuels_sdk import create_dataset
+
+# Load a geojson file
+with open('path/to/geojson/file') as f:
+    geojson = json.load(f)
+
+# Create a dataset
+dataset = create_dataset(name=&quot;my-dataset&quot;,
+                         description=&quot;My dataset description&quot;,
+                         spatial_data=geojson)
+
+# Create a treelist from a dataset
+treelist = dataset.create_treelist(name=&quot;my-treelist&quot;,
+                                   description=&quot;My treelist description&quot;)
+</code></pre>
+<h3 id="treelist-status">Treelist status</h3>
+<p>The 
+<a href="../reference/#fastfuels_sdk.datasets.Dataset.create_treelist"><code>create_treelist</code></a>
+method is asynchronous, and will return a 
+<a href="../reference/#fastfuels_sdk.Treelist"><code>Treelist</code></a>
+object with a status of <code>Queued</code>. Some operations, such as downloading the
+Treelist data, modifying the Treelist data, or creating a Fuelgrid require the
+Treelist to be in a <code>Finished</code> status. You can check the status of a Treelist
+using the <code>status</code> property.</p>
+<pre><code class="language-python"># Check the status of a treelist
+print(treelist.status)
+</code></pre>
+<p>Additionally, you can wait for a Treelist to finish generating using the
+<a href="../reference/#fastfuels_sdk.treelists.Treelist.wait_until_finished"><code>wait_until_finished</code></a>
+method.</p>
+<pre><code class="language-python"># Wait for a treelist to finish generating
+treelist.wait_until_finished()
+</code></pre>
+<h2 id="download-treelist-data-as-a-csv-file">Download Treelist data as a CSV file</h2>
+<p>Once a Treelist has finished generating, you can download the Treelist data as
+a CSV file using the 
+<a href="../reference/#fastfuels_sdk.treelists.Treelist.download_csv"><code>download_csv</code></a>
+method.</p>
+<pre><code class="language-python">import json
+from fastfuels_sdk import create_dataset
+
+# Load a geojson file
+with open('path/to/geojson/file') as f:
+    geojson = json.load(f)
+
+# Create a dataset
+dataset = create_dataset(name=&quot;my-dataset&quot;,
+                         description=&quot;My dataset description&quot;,
+                         spatial_data=geojson)
+
+# Create a treelist from a dataset
+treelist = dataset.create_treelist(name=&quot;my-treelist&quot;,
+                                   description=&quot;My treelist description&quot;)
+
+# Wait for a treelist to finish generating
+treelist.wait_until_finished(verbose=True)
+
+# Get the treelist data
+df = treelist.get_data()
+
+# Download the treelist data as a CSV file
+df.to_csv('path/to/treelist.csv')
+</code></pre>
+<h2 id="simulate-a-silvicultural-treatment-on-a-treelist">Simulate a silvicultural treatment on a Treelist</h2>
+<p>Some users may want to modify Treelist data to simulate different scenarios such
+as forest growth, silvicultural treatments, or natural disturbance such as 
+wildfire. The FastFuels SDK supports uploading custom data to the existing 
+Treelist resource. The custom data must be in the form of a DataFrame with the
+following columns: </p>
+<ul>
+<li>SPCD</li>
+<li>DIA_cm</li>
+<li>HT_m</li>
+<li>STATUSCD</li>
+<li>CBH_m</li>
+<li>X_m</li>
+<li>Y_m</li>
+</ul>
+<p>The following example simulates a silvicultural treatment by removing all 
+trees with a diameter at breast height (DIA_cm) less than 20.32cm (8 inches). 
+The Treelist data is then uploaded to the Treelist resource using the 
+<a href="../reference/#fastfuels_sdk.treelists.Treelist.update_data"><code>update_data</code></a>
+method for further use in the FastFuels SDK.</p>
+<pre><code class="language-python">import json
+from fastfuels_sdk import create_dataset
+
+# Load a geojson file
+with open('path/to/geojson/file') as f:
+    geojson = json.load(f)
+
+# Create a dataset
+dataset = create_dataset(name=&quot;my-dataset&quot;,
+                         description=&quot;My dataset description&quot;,
+                         spatial_data=geojson)
+
+# Create a treelist from a dataset
+treelist = dataset.create_treelist(name=&quot;my-treelist&quot;,
+                                   description=&quot;My treelist description&quot;)
+
+# Wait for a treelist to finish generating
+treelist.wait_until_finished(verbose=True)
+
+# Get the treelist data
+df = treelist.get_data()
+
+# Remove trees with diameter less than 20.32cm (8 inches)
+df = df[df['DIA_cm'] &gt;= 20.32]
+
+# Upload the modified treelist data
+treelist.update_data(df, inplace=True)
+</code></pre>
+<h2 id="create-a-fuelgrid">Create a Fuelgrid</h2>
+<p><a href="../reference/#fastfuels_sdk.Treelist">Treelist</a> 
+objects can be used to generate a 
+<a href="../reference/#fastfuels_sdk.Fuelgrid">Fuelgrid</a>
+, or a 3D voxelized fuel
+model. The Fuelgrid is generated using the 
+<a href="../reference/#fastfuels_sdk.treelists.Treelist.create_fuelgrid"><code>create_fuelgrid</code></a>
+method. The Fuelgrid generation process is asynchronous, and will return a
+<a href="../reference/#fastfuels_sdk.Fuelgrid">Fuelgrid</a> object with a status of
+<code>Queued</code>. Some operations, such as downloading the Fuelgrid data, require the
+Fuelgrid to be in a <code>Finished</code> status.</p>
+<pre><code class="language-python">import json
+from fastfuels_sdk import create_dataset
+
+# Load a geojson file
+with open('path/to/geojson/file') as f:
+    geojson = json.load(f)
+
+# Create a dataset
+dataset = create_dataset(name=&quot;my-dataset&quot;,
+                         description=&quot;My dataset description&quot;,
+                         spatial_data=geojson)
+
+# Create a treelist from a dataset
+treelist = dataset.create_treelist(name=&quot;my-treelist&quot;,
+                                   description=&quot;My treelist description&quot;)
+
+# Wait for a treelist to finish generating
+treelist.wait_until_finished(verbose=True)
+
+# Create a fuelgrid from a treelist
+fuelgrid = treelist.create_fuelgrid(name=&quot;my-fuelgrid&quot;,
+                                    description=&quot;My fuelgrid description&quot;,
+                                    distribution_method=&quot;realistic&quot;,
+                                    horizontal_resolution=1,
+                                    vertical_resolution=1,
+                                    border_pad=0)
+</code></pre>
+<h2 id="modify-fuelgrid-data">Modify Fuelgrid data</h2>
+<p>Some users may want to modify 
+<a href="../reference/#fastfuels_sdk.Fuelgrid">Fuelgrid</a> 
+data to simulate different scenarios
+such as saw line along a road or fireline, 3D fuel treatments, or blackline
+operations. </p>
+<p>Users should note that Fuelgrid data is stored in a compressed format, and 
+cannot modify the data directly. Instead, users should download the Fuelgrid
+data using the 
+<a href="../reference/#fastfuels_sdk.fuelgrids.Fuelgrid.download_zarr"><code>download_zarr</code></a>
+method and copy the data to a new, mutable zarr store.</p>
+<pre><code class="language-python">import zarr
+import json
+from fastfuels_sdk import create_dataset
+
+# Load a geojson file
+with open('path/to/geojson/file') as f:
+    geojson = json.load(f)
+
+# Create a dataset
+dataset = create_dataset(name=&quot;my-dataset&quot;,
+                         description=&quot;My dataset description&quot;,
+                         spatial_data=geojson)
+
+# Create a treelist from a dataset
+treelist = dataset.create_treelist(name=&quot;my-treelist&quot;,
+                                   description=&quot;My treelist description&quot;)
+
+# Wait for a treelist to finish generating
+treelist.wait_until_finished(verbose=True)
+
+# Create a fuelgrid from a treelist
+fuelgrid = treelist.create_fuelgrid(name=&quot;my-fuelgrid&quot;,
+                                    description=&quot;My fuelgrid description&quot;,
+                                    distribution_method=&quot;realistic&quot;,
+                                    horizontal_resolution=1,
+                                    vertical_resolution=1,
+                                    border_pad=0)
+
+# Wait for a fuelgrid to finish generating
+fuelgrid.wait_until_finished(verbose=True)
+
+# Download the Fuelgrid zarr data
+fuelgrid.download_zarr('path/to/fuelgrid.zip')
+
+# Load the immutable zarr store
+zarr_immutable = zarr.open('path/to/fuelgrid.zip', mode='r')
+
+# Create a mutable zarr store
+zarr_mutable = zarr.open('path/to/fuelgrid_mutable.zarr', mode='w')
+
+# Copy the data from the immutable zarr store to the mutable zarr store
+zarr.copy_all(zarr_immutable, zarr_mutable)
+
+# Remove canopy fuels in the saw line mask
+zarr_mutable['canopy']['bulk-density'][saw_line_mask] = 0
+zarr_mutable['canopy']['FMC'][saw_line_mask] = 0
+zarr_mutable['canopy']['SAV'][saw_line_mask] = 0
+
+# Remove surface fuels from the blackline operation mask
+zarr_mutable['surface']['bulk-density'][blackline_mask] = 0
+zarr_mutable['surface']['fuel-depth'][blackline_mask] = 0
+zarr_mutable['surface']['SAV'][blackline_mask] = 0
+zarr_mutable['surface']['FMC'][blackline_mask] = 0
+</code></pre>
+<h2 id="export-voxelized-fuels-to-fire-model-inputs">Export Voxelized Fuels to Fire Model Inputs</h2>
+<h3 id="quic-fire">QUIC-fire</h3>
+<pre><code class="language-python">import zarr
+import json
+from fastfuels_sdk import create_dataset, export_zarr_to_quicfire
+
+# Load a geojson file
+with open('path/to/geojson/file') as f:
+    geojson = json.load(f)
+
+# Create a dataset
+dataset = create_dataset(name=&quot;my-dataset&quot;,
+                         description=&quot;My dataset description&quot;,
+                         spatial_data=geojson)
+
+# Create a treelist from a dataset
+treelist = dataset.create_treelist(name=&quot;my-treelist&quot;,
+                                   description=&quot;My treelist description&quot;)
+
+# Wait for a treelist to finish generating
+treelist.wait_until_finished(verbose=True)
+
+# Create a fuelgrid from a treelist
+fuelgrid = treelist.create_fuelgrid(name=&quot;my-fuelgrid&quot;,
+                                    description=&quot;My fuelgrid description&quot;,
+                                    distribution_method=&quot;realistic&quot;,
+                                    horizontal_resolution=1,
+                                    vertical_resolution=1,
+                                    border_pad=0)
+
+# Wait for a fuelgrid to finish generating
+fuelgrid.wait_until_finished(verbose=True)
+
+# Download the Fuelgrid zarr data
+fuelgrid.download_zarr('path/to/fuelgrid.zip')
+
+# Export the Fuelgrid zarr data to QUIC-fire inputs
+zroot = zarr.open('path/to/fuelgrid.zip', mode='r')
+export_zarr_to_quicfire(zroot, 'path/to/quicfire/inputs')
+</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7c377c4.min.js"></script>
+      
+    
+  </body>
+</html>
