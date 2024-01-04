@@ -473,13 +473,19 @@ class DuetCalibrator:
         calibrated = {}
         for f in fuel_type:
             if f == "grass":
-                max_val = np.max(sb40_rhof[sb40_ftype==1])
-                grass_arr = sb40_rhof[sb40_ftype==1]
-                min_val = np.min(grass_arr[grass_arr>0])
+                if 1 in sb40_ftype:
+                    max_val = np.max(sb40_rhof[sb40_ftype==1])
+                    grass_arr = sb40_rhof[sb40_ftype==1]
+                    min_val = np.min(grass_arr[grass_arr>0])
+                else:
+                    print("WARNING: grass fuel not present in sb40. Continuing with litter only.")
             elif f == "litter":
-                max_val = np.max(sb40_rhof[sb40_ftype==-1])
-                litter_arr = sb40_rhof[sb40_ftype==-1]
-                min_val = np.min(litter_arr[litter_arr>0])
+                if -1 in sb40_ftype:
+                    max_val = np.max(sb40_rhof[sb40_ftype==-1])
+                    litter_arr = sb40_rhof[sb40_ftype==-1]
+                    min_val = np.min(litter_arr[litter_arr>0])
+                else:
+                    print("WARNING: litter fuel not present in sb40. Continuing with grass only.")
             else:
                 max_val = np.max(sb40_rhof)
                 min_val = np.min(sb40_rhof[sb40_rhof>0])
