@@ -143,3 +143,6 @@ tests/test-data/tmp/
 
 #PDFs
 *.pdf
+
+#Code workspace
+*.code-workspace
