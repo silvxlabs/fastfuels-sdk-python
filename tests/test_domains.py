@@ -8,6 +8,7 @@ from uuid import uuid4
 
 # Internal imports
 from tests import TEST_DATA_DIR
+from tests.utils import create_default_domain
 from fastfuels_sdk.domains import Domain, list_domains, get_domain
 from fastfuels_sdk.client_library.exceptions import NotFoundException
 
@@ -20,18 +21,7 @@ from shapely import to_geojson
 @pytest.fixture(scope="module")
 def test_domain():
     """Fixture that creates a test domain to be used by the tests"""
-    # Load test GeoJSON data
-    with open(TEST_DATA_DIR / "blue_mtn.geojson") as f:
-        geojson = json.load(f)
-
-    # Create a domain using the GeoJSON
-    domain = Domain.from_geojson(
-        geojson,
-        name="test_domain",
-        description="Domain for testing domain operations",
-        horizontal_resolution=1.0,
-        vertical_resolution=1.0,
-    )
+    domain = create_default_domain()
 
     # Return the domain for use in tests
     yield domain
