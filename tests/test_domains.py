@@ -27,7 +27,6 @@ def test_domain():
     yield domain
 
     # Cleanup could be added here if needed
-    # Note: Currently there's no delete_domain functionality
 
 
 class TestCreateDomain:
@@ -494,3 +493,16 @@ class TestGetDomainFunction:
         """Test error handling for a non-existent domain ID"""
         with pytest.raises(NotFoundException):
             get_domain(uuid4().hex)
+
+
+class TestDeleteDomain:
+    def test_delete_domain_success(self, test_domain: Domain):
+        """Test successful deletion of a domain"""
+        # Get the domain using the ID from our test domain
+        retrieved_domain = get_domain(test_domain.id)
+        duplicated_domain = retrieved_domain.update(in_place=False)
+        duplicated_domain.delete()
+        with pytest.raises(NotFoundException):
+            get_domain(duplicated_domain.id)
+
+    # Note: No Domain.update() functionality yet
