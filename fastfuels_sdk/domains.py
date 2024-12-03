@@ -327,6 +327,13 @@ class Domain(DomainModel):
         # If no updates, return self or new instance based on in_place
         return self if in_place else Domain(**self.model_dump())
 
+    def delete(self) -> None:
+        """
+        Delete an existing domain resource based on the domain ID
+        """
+        response = _DOMAIN_API.delete_domain(domain_id=self.id)
+        return response
+
 
 def list_domains(
     page: Optional[int] = None,
