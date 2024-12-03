@@ -29,6 +29,15 @@ def test_domain():
     # Cleanup could be added here if needed
 
 
+@pytest.fixture(scope="module")
+def test_domain_to_delete():
+    """Fixture that creates a test domain to be used by the delete() test"""
+    domain_to_delete = create_default_domain()
+
+    # Return the domain for use in delete() test
+    yield domain_to_delete
+
+
 class TestCreateDomain:
     test_files = ["blue_mtn", "blue_mtn_5070"]
     test_format = ["geojson", "kml", "shp"]
@@ -496,29 +505,9 @@ class TestGetDomainFunction:
 
 
 class TestDeleteDomain:
-    def create_domain_to_delete(self) -> Domain:
-        """Creates a unique domain to be deleted"""
-        # Load test GeoJSON data
-        with open(TEST_DATA_DIR / "blue_mtn.geojson") as f:
-            geojson = json.load(f)
-
-        # Create a domain using the GeoJSON
-        domain = Domain.from_geojson(
-            geojson,
-            name="test_delete_domain",
-            description="Domain for testing Domain.delete function",
-            horizontal_resolution=1.0,
-            vertical_resolution=1.0,
-        )
-
-        # Return the domain for use in tests
-        return domain
-
-    # Cleanup could be added here if needed
-    def test_delete_domain_success(self):
+    def test_delete_domain_success(self, test_domain_to_delete: Domain):
         """Test successful deletion of a domain"""
-        # Get the domain using the ID from our test domain
-        domain_to_delete = TestDeleteDomain.create_domain_to_delete()
+        domain_to_delete = test_domain_to_delete
         domain_to_delete.delete()
         # get_domain should not work with the id of the domain we just deleted
         with pytest.raises(NotFoundException):
