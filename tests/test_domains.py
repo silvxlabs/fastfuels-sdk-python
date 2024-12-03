@@ -2,17 +2,19 @@
 test_domains.py
 """
 
+# Core imports
 import json
-import time
 from uuid import uuid4
-from pathlib import Path
 
+# Internal imports
 from tests import TEST_DATA_DIR
 from fastfuels_sdk.domains import Domain, list_domains, get_domain
 from fastfuels_sdk.client_library.exceptions import NotFoundException
 
+# External imports
 import pytest
 import geopandas as gdp
+from shapely import to_geojson
 
 
 @pytest.fixture(scope="module")
@@ -123,17 +125,187 @@ class TestCreateDomain:
         geodataframe = gdp.GeoDataFrame.from_file(fpath)
         domain = Domain.from_geodataframe(
             geodataframe,
-            name=f"test {test_name}",
+            name=self.domain_name,
             description=f"test {test_name} from {test_format} geodataframe",
-            horizontal_resolution=1.0,
-            vertical_resolution=1.0,
+            horizontal_resolution=self.horizontal_resolution,
+            vertical_resolution=self.vertical_resolution,
         )
 
         assert len(domain.id) > 0
-        assert domain.name == f"test {test_name}"
+        assert domain.name == self.domain_name
         assert domain.description == f"test {test_name} from {test_format} geodataframe"
-        assert domain.horizontal_resolution == 1.0
-        assert domain.vertical_resolution == 1.0
+        assert domain.horizontal_resolution == self.horizontal_resolution
+        assert domain.vertical_resolution == self.vertical_resolution
+
+
+class TestGetDomainMethod:
+    def test_get_update_default(self, test_domain):
+        """Test get() returns new instance with updated data by default"""
+        original_domain = test_domain
+        updated_domain = original_domain.get()
+
+        # Verify new instance returned
+        assert updated_domain is not original_domain
+
+        # Verify data matches
+        assert updated_domain.id == original_domain.id
+        assert updated_domain.name == original_domain.name
+        assert updated_domain.features == original_domain.features
+        assert (
+            updated_domain.horizontal_resolution
+            == original_domain.horizontal_resolution
+        )
+
+    def test_get_update_in_place(self, test_domain):
+        """Test get(in_place=True) updates existing instance"""
+        domain = test_domain
+        result = domain.get(in_place=True)
+
+        # Verify same instance returned
+        assert result is domain
+
+        # Verify instance was updated
+        assert isinstance(result, Domain)
+        assert result.id == test_domain.id
+        assert result.name == test_domain.name
+        assert result.features == test_domain.features
+
+
+class TestUpdateDomainMethod:
+    """Test suite for Domain.update() method."""
+
+    @pytest.fixture(autouse=True, scope="class")
+    def setup_test_domain(self, test_domain):
+        """Fixture that provides a fresh copy of test domain for each test method."""
+        self.domain = test_domain.copy()
+
+    def test_update_name(self):
+        """Test updating just the name."""
+        new_name = "Updated Test Domain"
+        updated = self.domain.update(name=new_name)
+
+        # Verify new instance returned
+        assert updated is not self.domain
+        # Verify name updated
+        assert updated.name == new_name
+        # Verify other fields unchanged
+        assert updated.id == self.domain.id
+        assert updated.description == self.domain.description
+        assert updated.tags == self.domain.tags
+
+    def test_update_description(self):
+        """Test updating just the description."""
+        new_desc = "Updated test domain description"
+        updated = self.domain.update(description=new_desc)
+
+        assert updated is not self.domain
+        assert updated.description == new_desc
+        assert updated.name == self.domain.name
+        assert updated.tags == self.domain.tags
+
+    def test_update_tags(self):
+        """Test updating just the tags."""
+        new_tags = ["test", "updated", "2024"]
+        updated = self.domain.update(tags=new_tags)
+
+        assert updated is not self.domain
+        assert updated.tags == new_tags
+        assert updated.name == self.domain.name
+        assert updated.description == self.domain.description
+
+    def test_update_multiple_fields(self):
+        """Test updating multiple fields at once."""
+        updates = {
+            "name": "Multi-Updated Domain",
+            "description": "Updated description",
+            "tags": ["multiple", "updates"],
+        }
+        updated = self.domain.update(**updates)
+
+        assert updated is not self.domain
+        assert updated.name == updates["name"]
+        assert updated.description == updates["description"]
+        assert updated.tags == updates["tags"]
+        # Verify other fields unchanged
+        assert updated.id == self.domain.id
+        assert updated.horizontal_resolution == self.domain.horizontal_resolution
+        assert updated.vertical_resolution == self.domain.vertical_resolution
+
+    def test_update_in_place(self):
+        """Test updating in place modifies the existing instance."""
+        new_name = "In-Place Updated Domain"
+        result = self.domain.update(name=new_name, in_place=True)
+
+        # Verify same instance returned and modified
+        assert result is self.domain
+        assert self.domain.name == new_name
+        assert isinstance(result, Domain)
+
+    def test_update_no_changes(self):
+        """Test update with no field changes returns same data."""
+        updated = self.domain.update()
+
+        assert updated is not self.domain  # Still new instance
+        assert updated.id == self.domain.id
+        assert updated.name == self.domain.name
+        assert updated.description == self.domain.description
+        assert updated.tags == self.domain.tags
+
+    def test_update_no_changes_in_place(self):
+        """Test update with no changes in place returns same instance unchanged."""
+        original_dict = self.domain.to_dict()
+        result = self.domain.update(in_place=True)
+
+        assert result is self.domain
+        assert self.domain.to_dict() == original_dict
+
+    def test_update_clear_fields(self):
+        """Test updating fields to None or empty values."""
+        updated = self.domain.update(
+            description="", tags=[]  # Empty string  # Empty list
+        )
+
+        assert updated.description == ""
+        assert updated.tags == []
+        # Verify other fields preserved
+        assert updated.name == self.domain.name
+
+    def test_update_preserves_immutable_fields(self):
+        """Test that immutable fields aren't affected by updates."""
+        original_resolution = self.domain.horizontal_resolution
+        original_features = self.domain.features
+
+        updated = self.domain.update(name="New Name")
+
+        assert updated.horizontal_resolution == original_resolution
+        assert updated.features == original_features
+
+    @pytest.mark.parametrize(
+        "bad_tags",
+        [
+            "not_a_list",  # String instead of list
+            [1, 2, 3],  # Numbers instead of strings
+            [None],  # None in list
+        ],
+    )
+    def test_update_invalid_tags(self, bad_tags):
+        """Test error handling for invalid tag values."""
+        with pytest.raises(Exception) as exc_info:
+            self.domain.update(tags=bad_tags)
+        assert "validation error" in str(exc_info.value).lower()
+
+    def test_chained_updates(self):
+        """Test that updates can be chained when using in_place=True."""
+        result = (
+            self.domain.update(name="First Update", in_place=True)
+            .update(description="Second Update", in_place=True)
+            .update(tags=["third", "update"], in_place=True)
+        )
+
+        assert result is self.domain
+        assert self.domain.name == "First Update"
+        assert self.domain.description == "Second Update"
+        assert self.domain.tags == ["third", "update"]
 
 
 class TestListDomains:
@@ -300,7 +472,7 @@ class TestListDomains:
         assert response.current_page == 9999
 
 
-class TestGetDomain:
+class TestGetDomainFunction:
     def test_get_domain_success(self, test_domain):
         """Test successful retrieval of a domain"""
         # Get the domain using the ID from our test domain
