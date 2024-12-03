@@ -331,8 +331,8 @@ class Domain(DomainModel):
         """
         Delete an existing domain resource based on the domain ID
         """
-        response = _DOMAIN_API.delete_domain(domain_id=self.id)
-        return response
+        _DOMAIN_API.delete_domain(domain_id=self.id)
+        return None
 
 
 def list_domains(
