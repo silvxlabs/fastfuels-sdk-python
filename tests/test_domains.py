@@ -77,8 +77,33 @@ class TestCreateDomain:
         assert domain.horizontal_resolution == self.horizontal_resolution
         assert domain.vertical_resolution == self.vertical_resolution
 
-        if "crs" in geojson:
+        # If the geojson has a CRS, and the CRS is projected, assert that the domain has the same CRS
+        if geojson_gdf.crs.is_projected:
             assert domain.crs.properties.name == geojson["crs"]["properties"]["name"]
+        # Otherwise the domain should have been projected to UTM
+        else:
+            utm_crs_epsg = geojson_gdf.estimate_utm_crs().srs
+            assert domain.crs.properties.name == utm_crs_epsg
+
+        # Assert that the domain has the expected number of features
+        assert len(domain.features) == 2  # Has "input" and "domain" features
+        assert "input" in [f.properties["name"] for f in domain.features]
+        assert "domain" in [f.properties["name"] for f in domain.features]
+
+        geojson_gdf_proj = geojson_gdf.to_crs(domain.crs.properties.name)
+        geojson_polygon_dict = json.loads(to_geojson(geojson_gdf_proj.geometry[0]))
+
+        # Assert that the input feature is the same as the input feature in the geojson (after accounting for differing CRS)
+        input_feature = domain.features[1]
+        input_feature_geometry = input_feature.geometry.to_dict()
+        assert input_feature_geometry == geojson_polygon_dict
+
+        # Assert that the geojson is inside the domain (after accounting for differing CRS)
+        domain_feature = domain.features[0]
+        domain_feature_gdf = gdp.GeoDataFrame.from_features(
+            [domain_feature.to_dict()], crs=domain.crs.properties.name
+        )
+        assert geojson_gdf_proj.within(domain_feature_gdf.geometry[0]).all()
 
     def test_from_geojson_bad_geojson(self):
         geojson = {"type": "FeatureCollection", "features": []}
