@@ -164,108 +164,112 @@ class TestGetDomainMethod:
 class TestUpdateDomainMethod:
     """Test suite for Domain.update() method."""
 
-    @pytest.fixture(autouse=True, scope="class")
-    def setup_test_domain(self, test_domain):
-        """Fixture that provides a fresh copy of test domain for each test method."""
-        self.domain = test_domain.copy()
-
-    def test_update_name(self):
+    def test_update_name(self, test_domain):
         """Test updating just the name."""
+        test_domain = test_domain.get()
         new_name = "Updated Test Domain"
-        updated = self.domain.update(name=new_name)
+        updated = test_domain.update(name=new_name)
 
         # Verify new instance returned
-        assert updated is not self.domain
+        assert updated is not test_domain
         # Verify name updated
         assert updated.name == new_name
         # Verify other fields unchanged
-        assert updated.id == self.domain.id
-        assert updated.description == self.domain.description
-        assert updated.tags == self.domain.tags
+        assert updated.id == test_domain.id
+        assert updated.description == test_domain.description
+        assert updated.tags == test_domain.tags
 
-    def test_update_description(self):
+    def test_update_description(self, test_domain):
         """Test updating just the description."""
+        test_domain = test_domain.get()
         new_desc = "Updated test domain description"
-        updated = self.domain.update(description=new_desc)
+        updated = test_domain.update(description=new_desc)
 
-        assert updated is not self.domain
+        assert updated is not test_domain
         assert updated.description == new_desc
-        assert updated.name == self.domain.name
-        assert updated.tags == self.domain.tags
+        assert updated.name == test_domain.name
+        assert updated.tags == test_domain.tags
 
-    def test_update_tags(self):
+    def test_update_tags(self, test_domain):
         """Test updating just the tags."""
+        test_domain = test_domain.get()
         new_tags = ["test", "updated", "2024"]
-        updated = self.domain.update(tags=new_tags)
+        updated = test_domain.update(tags=new_tags)
 
-        assert updated is not self.domain
+        assert updated is not test_domain
         assert updated.tags == new_tags
-        assert updated.name == self.domain.name
-        assert updated.description == self.domain.description
+        assert updated.name == test_domain.name
+        assert updated.description == test_domain.description
 
-    def test_update_multiple_fields(self):
+    def test_update_multiple_fields(self, test_domain):
         """Test updating multiple fields at once."""
+        test_domain = test_domain.get()
         updates = {
             "name": "Multi-Updated Domain",
             "description": "Updated description",
             "tags": ["multiple", "updates"],
         }
-        updated = self.domain.update(**updates)
+        updated = test_domain.update(**updates)
 
-        assert updated is not self.domain
+        assert updated is not test_domain
         assert updated.name == updates["name"]
         assert updated.description == updates["description"]
         assert updated.tags == updates["tags"]
         # Verify other fields unchanged
-        assert updated.id == self.domain.id
-        assert updated.horizontal_resolution == self.domain.horizontal_resolution
-        assert updated.vertical_resolution == self.domain.vertical_resolution
+        assert updated.id == test_domain.id
+        assert updated.horizontal_resolution == test_domain.horizontal_resolution
+        assert updated.vertical_resolution == test_domain.vertical_resolution
 
-    def test_update_in_place(self):
+    def test_update_in_place(self, test_domain):
         """Test updating in place modifies the existing instance."""
+        test_domain = test_domain.get()
         new_name = "In-Place Updated Domain"
-        result = self.domain.update(name=new_name, in_place=True)
+        result = test_domain.update(name=new_name, in_place=True)
 
         # Verify same instance returned and modified
-        assert result is self.domain
-        assert self.domain.name == new_name
+        assert result is test_domain
+        assert test_domain.name == new_name
         assert isinstance(result, Domain)
 
-    def test_update_no_changes(self):
+    def test_update_no_changes(self, test_domain):
         """Test update with no field changes returns same data."""
-        updated = self.domain.update()
+        test_domain = test_domain.get()
+        updated = test_domain.update()
 
-        assert updated is not self.domain  # Still new instance
-        assert updated.id == self.domain.id
-        assert updated.name == self.domain.name
-        assert updated.description == self.domain.description
-        assert updated.tags == self.domain.tags
+        assert updated is not test_domain  # Still new instance
+        assert updated.id == test_domain.id
+        assert updated.name == test_domain.name
+        assert updated.description == test_domain.description
+        assert updated.tags == test_domain.tags
 
-    def test_update_no_changes_in_place(self):
+    def test_update_no_changes_in_place(self, test_domain):
         """Test update with no changes in place returns same instance unchanged."""
-        original_dict = self.domain.to_dict()
-        result = self.domain.update(in_place=True)
+        test_domain = test_domain.get()
+        original_dict = test_domain.to_dict()
+        result = test_domain.update(in_place=True)
 
-        assert result is self.domain
-        assert self.domain.to_dict() == original_dict
+        assert result is test_domain
+        assert test_domain.to_dict() == original_dict
 
-    def test_update_clear_fields(self):
+    def test_update_clear_fields(self, test_domain):
         """Test updating fields to None or empty values."""
-        updated = self.domain.update(
+        test_domain = test_domain.get()
+        updated = test_domain.update(
             description="", tags=[]  # Empty string  # Empty list
         )
 
         assert updated.description == ""
         assert updated.tags == []
         # Verify other fields preserved
-        assert updated.name == self.domain.name
+        assert updated.name == test_domain.name
 
-    def test_update_preserves_immutable_fields(self):
+    def test_update_preserves_immutable_fields(self, test_domain):
         """Test that immutable fields aren't affected by updates."""
-        original_resolution = self.domain.horizontal_resolution
-        original_features = self.domain.features
+        test_domain = test_domain.get()
+        original_resolution = test_domain.horizontal_resolution
+        original_features = test_domain.features
 
-        updated = self.domain.update(name="New Name")
+        updated = test_domain.update(name="New Name")
 
         assert updated.horizontal_resolution == original_resolution
         assert updated.features == original_features
@@ -278,24 +282,25 @@ class TestUpdateDomainMethod:
             [None],  # None in list
         ],
     )
-    def test_update_invalid_tags(self, bad_tags):
+    def test_update_invalid_tags(self, test_domain, bad_tags):
         """Test error handling for invalid tag values."""
         with pytest.raises(Exception) as exc_info:
-            self.domain.update(tags=bad_tags)
+            test_domain.update(tags=bad_tags)  # noqa
         assert "validation error" in str(exc_info.value).lower()
 
-    def test_chained_updates(self):
+    def test_chained_updates(self, test_domain):
         """Test that updates can be chained when using in_place=True."""
+        test_domain = test_domain.get()
         result = (
-            self.domain.update(name="First Update", in_place=True)
+            test_domain.update(name="First Update", in_place=True)
             .update(description="Second Update", in_place=True)
             .update(tags=["third", "update"], in_place=True)
         )
 
-        assert result is self.domain
-        assert self.domain.name == "First Update"
-        assert self.domain.description == "Second Update"
-        assert self.domain.tags == ["third", "update"]
+        assert result is test_domain
+        assert test_domain.name == "First Update"
+        assert test_domain.description == "Second Update"
+        assert test_domain.tags == ["third", "update"]
 
 
 class TestListDomains:
