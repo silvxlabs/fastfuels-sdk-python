@@ -43,9 +43,20 @@ class TestCreateDomain:
     test_format = ["geojson", "kml", "shp"]
 
     @pytest.mark.parametrize("test_name", test_files)
-    def test_from_geojson(self, test_name):
+    @pytest.mark.parametrize("geojson_type", ["Feature", "FeatureCollection"])
+    def test_from_geojson(self, test_name, geojson_type):
+        # Load test GeoJSON data
+        geojson_gdf = gdp.GeoDataFrame.from_file(TEST_DATA_DIR / f"{test_name}.geojson")
         with open(TEST_DATA_DIR / f"{test_name}.geojson") as f:
             geojson = json.load(f)
+
+        if geojson_type == "Feature":
+            feature_geojson = geojson["features"][0]
+            if "crs" in geojson:
+                feature_geojson["crs"] = geojson["crs"]
+            geojson = feature_geojson
+
+        # Create a domain using the GeoJSON
         domain = Domain.from_geojson(
             geojson,
             name="test",
@@ -65,40 +76,6 @@ class TestCreateDomain:
 
     def test_from_geojson_bad_geojson(self):
         geojson = {"type": "FeatureCollection", "features": []}
-        with pytest.raises(ValueError):
-            Domain.from_geojson(
-                geojson,
-                name="test",
-                description="test",
-                horizontal_resolution=1.0,
-                vertical_resolution=1.0,
-            )
-
-    @pytest.mark.parametrize("test_name", ["blue_mtn", "blue_mtn_5070"])
-    def test_from_geojson_feature(self, test_name):
-        with open(TEST_DATA_DIR / f"{test_name}.geojson") as f:
-            geojson = json.load(f)
-        feature_geojson = geojson["features"][0]
-        if "crs" in geojson:
-            feature_geojson["crs"] = geojson["crs"]
-        domain = Domain.from_geojson(
-            feature_geojson,
-            name="test",
-            description="test",
-            horizontal_resolution=1.0,
-            vertical_resolution=1.0,
-        )
-
-        assert domain.name == "test"
-        assert domain.description == "test"
-        assert domain.horizontal_resolution == 1.0
-        assert domain.vertical_resolution == 1.0
-
-        if "crs" in geojson:
-            assert domain.crs.properties.name == geojson["crs"]["properties"]["name"]
-
-    def test_from_geojson_bad_feature(self):
-        geojson = {"type": "Feature", "geometry": {}, "properties": {}}
         with pytest.raises(ValueError):
             Domain.from_geojson(
                 geojson,
