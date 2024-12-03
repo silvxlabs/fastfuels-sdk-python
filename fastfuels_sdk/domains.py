@@ -2,17 +2,20 @@
 domains.py
 """
 
+# Core imports
 import json
-from typing import Optional
+from typing import Optional, List
 
+# Internal imports
 from fastfuels_sdk.api import get_client
 from fastfuels_sdk.client_library.api import DomainsApi
-from fastfuels_sdk.client_library.models import Domain as DomainModel
 from fastfuels_sdk.client_library.models import (
+    Domain as DomainModel,
     CreateDomainRequest,
     ListDomainResponse,
     DomainSortField,
     DomainSortOrder,
+    UpdateDomainRequest,
 )
 
 _DOMAIN_API = DomainsApi(get_client())
@@ -106,16 +109,96 @@ class Domain(DomainModel):
         you want to retain the updated data. Use in_place=True when you want to
         ensure all references to this Domain instance see the updated data.
         """
+        # Fetch latest data from API
         response = _DOMAIN_API.get_domain(self.id)
 
         if in_place:
             # Update all attributes of current instance
-            for key, value in response.to_dict().items():
+            for key, value in response.model_dump().items():
                 setattr(self, key, value)
             return self
 
         # Return new instance with fresh data
-        return Domain(**response.to_dict())
+        return Domain(**response.model_dump())
+
+    def update(
+        self,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        in_place: bool = False,
+    ) -> "Domain":
+        """Update the domain's mutable properties.
+
+        This method allows updating the name, description, and tags of a domain.
+        Other properties cannot be modified - a new domain must be created instead.
+
+        Parameters
+        ----------
+        name : str, optional
+            New name for the domain
+        description : str, optional
+            New description for the domain
+        tags : List[str], optional
+            New list of tags for the domain
+        in_place : bool, optional
+            If True, updates the current Domain instance with the new data and returns
+            self. If False, returns a new Domain instance with the updated data,
+            leaving the current instance unchanged. Default is False.
+
+        Returns
+        -------
+        Domain
+            Either the current Domain instance (if in_place=True) or a new Domain
+            instance (if in_place=False) containing the updated data.
+
+        Examples
+        --------
+        Update and get new instance:
+        >>> domain = Domain.get_domain("123")
+        >>> updated = domain.update(name="New Name")  # domain remains unchanged
+        >>> updated.name
+        'New Name'
+
+        Update in-place:
+        >>> domain = Domain.get_domain("123")
+        >>> domain.update(name="New Name", in_place=True)  # domain is modified
+        >>> domain.name
+        'New Name'
+
+        Notes
+        -----
+        Only name, description, and tags can be updated. Other properties like
+        horizontal_resolution, vertical_resolution, features, etc. cannot be
+        modified - you must create a new domain instead.
+        """
+        # Create update request with only the fields that are provided
+        update_data = {}
+        if name is not None:
+            update_data["name"] = name
+        if description is not None:
+            update_data["description"] = description
+        if tags is not None:
+            update_data["tags"] = tags
+
+        # Only make API call if there are fields to update
+        if update_data:
+            request = UpdateDomainRequest(**update_data)
+            response = _DOMAIN_API.update_domain(
+                domain_id=self.id, update_domain_request=request
+            )
+
+            if in_place:
+                # Update current instance attributes
+                for key, value in response.model_dump().items():
+                    setattr(self, key, value)
+                return self
+
+            # Return new instance with updated data
+            return Domain(**response.model_dump())
+
+        # If no updates, return self or new instance based on in_place
+        return self if in_place else Domain(**self.model_dump())
 
 
 def list_domains(
