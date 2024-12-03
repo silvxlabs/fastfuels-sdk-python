@@ -36,7 +36,53 @@ class Domain(DomainModel):
         horizontal_resolution: float = 2.0,
         vertical_resolution: float = 1.0,
     ) -> "Domain":
-        """ """
+        """Create a new Domain resource from GeoJSON data.
+
+        Creates and stores a spatial Domain in the FastFuels API that serves as a geographic container
+        for other system resources. The Domain is defined by GeoJSON geometry which must specify a
+        valid area between 0 and 16 square kilometers.
+
+        The system processes the input geometry in several ways:
+        1. If geographic coordinates (e.g. EPSG:4326) are provided, they are automatically projected
+           to the appropriate UTM zone for accurate spatial operations
+        2. If already in a projected coordinate system, the input CRS is preserved
+        3. If specified as 'local', the coordinates are treated as non-georeferenced
+        4. The geometry's bounding box is calculated and padded to align with the specified grid
+           resolution
+
+        Parameters
+        ----------
+        geojson : dict
+            A GeoJSON dictionary containing either a Feature or FeatureCollection. Must include a valid
+            geometry defining the spatial location of the domain.
+        name : str, optional
+            Name for the domain resource, default ""
+        description : str, optional
+            Description of the domain resource, default ""
+        horizontal_resolution : float, optional
+            Horizontal resolution in meters for grid representation, default 2.0
+        vertical_resolution : float, optional
+            Vertical resolution in meters for grid representation, default 1.0
+
+        Returns
+        -------
+        Domain
+            The newly created Domain object.
+
+        Examples
+        --------
+        >>> with open("my_file.geojson") as f:
+        ...     my_geojson = json.load(f)
+        >>> domain = Domain.from_geojson(
+        ...     geojson=my_geojson,
+        ...     name="my domain",
+        ...     description="A domain for testing",
+        ...     horizontal_resolution=2.0,
+        ...     vertical_resolution=1.0
+        ... )
+        >>> domain.id
+        'abc123...'
+        """
         feature_data = {
             **geojson,
             "name": name,
