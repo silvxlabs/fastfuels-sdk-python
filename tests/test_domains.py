@@ -25,8 +25,8 @@ def test_domain():
     # Create a domain using the GeoJSON
     domain = Domain.from_geojson(
         geojson,
-        name="test_get_domain",
-        description="Domain for testing get_domain function",
+        name="test_domain",
+        description="Domain for testing domain operations",
         horizontal_resolution=1.0,
         vertical_resolution=1.0,
     )
@@ -41,6 +41,11 @@ def test_domain():
 class TestCreateDomain:
     test_files = ["blue_mtn", "blue_mtn_5070"]
     test_format = ["geojson", "kml", "shp"]
+
+    domain_name = "test_domain"
+    domain_description = "Domain for testing domain operations"
+    horizontal_resolution = 1.0
+    vertical_resolution = 1.0
 
     @pytest.mark.parametrize("test_name", test_files)
     @pytest.mark.parametrize("geojson_type", ["Feature", "FeatureCollection"])
@@ -59,17 +64,18 @@ class TestCreateDomain:
         # Create a domain using the GeoJSON
         domain = Domain.from_geojson(
             geojson,
-            name="test",
-            description="test",
-            horizontal_resolution=1.0,
-            vertical_resolution=1.0,
+            name=self.domain_name,
+            description=self.domain_description,
+            horizontal_resolution=self.horizontal_resolution,
+            vertical_resolution=self.vertical_resolution,
         )
 
+        # Assert that the domain has the expected attributes
         assert len(domain.id) > 0
-        assert domain.name == "test"
-        assert domain.description == "test"
-        assert domain.horizontal_resolution == 1.0
-        assert domain.vertical_resolution == 1.0
+        assert domain.name == self.domain_name
+        assert domain.description == self.domain_description
+        assert domain.horizontal_resolution == self.horizontal_resolution
+        assert domain.vertical_resolution == self.vertical_resolution
 
         if "crs" in geojson:
             assert domain.crs.properties.name == geojson["crs"]["properties"]["name"]
