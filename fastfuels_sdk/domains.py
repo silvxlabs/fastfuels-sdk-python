@@ -46,7 +46,7 @@ class Domain(DomainModel):
         response = _DOMAIN_API.create_domain(
             create_domain_request=request.model_dump()  # noqa
         )
-        return cls(**response.to_dict()) if response else None
+        return cls(**response.model_dump()) if response else None
 
     @classmethod
     def from_geodataframe(
