@@ -180,7 +180,7 @@ def list_domains(
     list_response = _DOMAIN_API.list_domains(
         page=page, size=size, sort_by=sort_by, sort_order=sort_order
     )
-    list_response.domains = [Domain(**d.to_dict()) for d in list_response.domains]
+    list_response.domains = [Domain(**d.model_dump()) for d in list_response.domains]
     return list_response
 
 
@@ -206,4 +206,4 @@ def get_domain(domain_id: str) -> Domain:
     2.0
     """
     get_domain_response = _DOMAIN_API.get_domain(domain_id)
-    return Domain(**get_domain_response.to_dict())
+    return Domain(**get_domain_response.model_dump())
