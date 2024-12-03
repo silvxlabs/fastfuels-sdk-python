@@ -106,7 +106,61 @@ class Domain(DomainModel):
         horizontal_resolution: float = 2.0,
         vertical_resolution: float = 1.0,
     ):
-        """ """
+        """Create a new Domain resource from a GeoDataFrame.
+
+        The Domain acts as a spatial container in the FastFuels API, defining the geographic boundaries
+        for fire behavior modeling and analysis. This method provides a convenient way to create a Domain
+        from existing geospatial data loaded in a GeoDataFrame.
+
+        The GeoDataFrame's geometry undergoes several processing steps:
+        1. For data in geographic coordinates (e.g. EPSG:4326), the system automatically projects to
+          the appropriate UTM zone based on the geometry's centroid. This ensures accurate distance
+          and area calculations.
+        2. If the data is already in a projected coordinate system (e.g. NAD83 / UTM or State Plane),
+          that CRS is preserved to maintain consistency with existing data.
+        3. For local coordinate systems, the geometry is treated as non-georeferenced and no
+          projection is performed.
+        4. The system calculates a bounding box around the geometry and pads it to align with the
+          specified resolution, ensuring proper grid alignment for analysis.
+
+        One key advantage of using GeoDataFrames is the ability to read from multiple file formats.
+        The same Domain creation process works whether your data comes from Shapefiles, KML, GeoJSON,
+        or other formats supported by geopandas.
+
+        Input geometry must define a valid area between 0 and 16 square kilometers to ensure efficient
+        processing and analysis.
+
+        Parameters
+        ----------
+        geodataframe : geopandas.GeoDataFrame
+           GeoDataFrame containing the geometry defining the domain
+        name : str, optional
+           Name for the domain resource, default ""
+        description : str, optional
+           Description of the domain resource, default ""
+        horizontal_resolution : float, optional
+           Horizontal resolution in meters for grid representation, default 2.0
+        vertical_resolution : float, optional
+           Vertical resolution in meters for grid representation, default 1.0
+
+        Returns
+        -------
+        Domain
+           The newly created Domain object.
+
+        Examples
+        --------
+        >>> gdf = gpd.read_file("blue_mtn.shp")  # Can read shp, geojson, kml
+        >>> domain = Domain.from_geodataframe(
+        ...     gdf,
+        ...     name="test_domain",
+        ...     description="Domain from shapefile",
+        ...     horizontal_resolution=1.0,
+        ...     vertical_resolution=1.0
+        ... )
+        >>> domain.name
+        'test_domain'
+        """
         return cls.from_geojson(
             geojson=json.loads(geodataframe.to_json()),
             name=name,
