@@ -328,8 +328,24 @@ class Domain(DomainModel):
         return self if in_place else Domain(**self.model_dump())
 
     def delete(self) -> None:
-        """
-        Delete an existing domain resource based on the domain ID
+        """Delete an existing domain resource based on the domain ID.
+
+        The Domain object becomes invalid after deletion and should not be used for further operations. Doing so will
+        raise a NotFoundException.
+
+        Returns
+        -------
+        None
+            Returns None on successful deletion
+
+        Examples
+        --------
+        >>> domain = Domain.from_id("abc123")
+        >>> domain.delete()  # Domain resource is permanently deleted
+
+        Perform operations on a deleted domain:
+        >>> domain.get()
+        # Raises NotFoundException
         """
         _DOMAIN_API.delete_domain(domain_id=self.id)
         return None
