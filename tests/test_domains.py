@@ -26,16 +26,8 @@ def test_domain():
     # Return the domain for use in tests
     yield domain
 
-    # Cleanup could be added here if needed
-
-
-@pytest.fixture(scope="module")
-def test_domain_to_delete():
-    """Fixture that creates a test domain to be used by the delete() test"""
-    domain_to_delete = create_default_domain()
-
-    # Return the domain for use in delete() test
-    yield domain_to_delete
+    # Cleanup: Delete the domain after the tests
+    domain.delete()
 
 
 class TestCreateDomain:
@@ -382,12 +374,11 @@ class TestListDomains:
         yield
 
         # Cleanup: Delete any domains we created
-        # Note: Uncomment when delete_domain functionality is implemented
-        # for domain in created_domains:
-        #     try:
-        #         delete_domain(domain.id)
-        #     except Exception as e:
-        #         print(f"Warning: Could not delete test domain {domain.id}: {e}")
+        for domain in created_domains:
+            try:
+                domain.delete()
+            except Exception as e:
+                print(f"Warning: Could not delete test domain {domain.id}: {e}")
 
     def test_list_domains_basic(self):
         """Test the structure and content of list_domains response."""
@@ -505,10 +496,15 @@ class TestListDomains:
 
 
 class TestDeleteDomain:
-    def test_delete_domain_success(self, test_domain_to_delete: Domain):
+    def test_delete_domain_success(self):
         """Test successful deletion of a domain"""
-        domain_to_delete = test_domain_to_delete
+        domain_to_delete = create_default_domain()
         domain_to_delete.delete()
+
+        # list_domains should not return the domain we just deleted
+        domains = list_domains()
+        assert domain_to_delete.id not in [d.id for d in domains.domains]  # noqa
+
         # get_domain should not work with the id of the domain we just deleted
         with pytest.raises(NotFoundException):
-            get_domain(domain_to_delete.id)
+            domain_to_delete.get()
