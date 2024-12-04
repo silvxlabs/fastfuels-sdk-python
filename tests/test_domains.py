@@ -9,7 +9,7 @@ from uuid import uuid4
 # Internal imports
 from tests import TEST_DATA_DIR
 from tests.utils import create_default_domain
-from fastfuels_sdk.domains import Domain, list_domains, get_domain
+from fastfuels_sdk.domains import Domain, list_domains
 from fastfuels_sdk.client_library.exceptions import NotFoundException
 
 # External imports
@@ -128,7 +128,36 @@ class TestCreateDomain:
         assert domain.vertical_resolution == self.vertical_resolution
 
 
-class TestGetDomainMethod:
+class TestCreateDomainFromId:
+    def test_success(self, test_domain):
+        """Test successful retrieval of a domain"""
+        # Get the domain using the ID from our test domain
+        retrieved_domain = Domain.from_id(test_domain.id)
+
+        # Verify the retrieved domain matches our test domain
+        assert retrieved_domain.id == test_domain.id
+        assert retrieved_domain.name == test_domain.name
+        assert retrieved_domain.description == test_domain.description
+        assert (
+            retrieved_domain.horizontal_resolution == test_domain.horizontal_resolution
+        )
+        assert retrieved_domain.vertical_resolution == test_domain.vertical_resolution
+        assert retrieved_domain.type == test_domain.type
+
+        # Check the features are present
+        assert len(retrieved_domain.features) == len(test_domain.features)
+
+        # Verify CRS information
+        assert retrieved_domain.crs.type == test_domain.crs.type
+        assert retrieved_domain.crs.properties.name == test_domain.crs.properties.name
+
+    def test_bad_id(self):
+        """Test error handling for a non-existent domain ID"""
+        with pytest.raises(NotFoundException):
+            Domain.from_id(uuid4().hex)
+
+
+class TestGetDomain:
     def test_get_update_default(self, test_domain):
         """Test get() returns new instance with updated data by default"""
         original_domain = test_domain
@@ -161,7 +190,7 @@ class TestGetDomainMethod:
         assert result.features == test_domain.features
 
 
-class TestUpdateDomainMethod:
+class TestUpdateDomain:
     """Test suite for Domain.update() method."""
 
     def test_update_name(self, test_domain):
@@ -465,32 +494,3 @@ class TestListDomains:
         assert response.current_page == 9999, "Page number not preserved"
         assert response.total_items is not None, "Total items should still be returned"
         assert response.current_page == 9999
-
-
-class TestGetDomainFunction:
-    def test_get_domain_success(self, test_domain):
-        """Test successful retrieval of a domain"""
-        # Get the domain using the ID from our test domain
-        retrieved_domain = get_domain(test_domain.id)
-
-        # Verify the retrieved domain matches our test domain
-        assert retrieved_domain.id == test_domain.id
-        assert retrieved_domain.name == test_domain.name
-        assert retrieved_domain.description == test_domain.description
-        assert (
-            retrieved_domain.horizontal_resolution == test_domain.horizontal_resolution
-        )
-        assert retrieved_domain.vertical_resolution == test_domain.vertical_resolution
-        assert retrieved_domain.type == test_domain.type
-
-        # Check the features are present
-        assert len(retrieved_domain.features) == len(test_domain.features)
-
-        # Verify CRS information
-        assert retrieved_domain.crs.type == test_domain.crs.type
-        assert retrieved_domain.crs.properties.name == test_domain.crs.properties.name
-
-    def test_bad_id(self):
-        """Test error handling for a non-existent domain ID"""
-        with pytest.raises(NotFoundException):
-            get_domain(uuid4().hex)

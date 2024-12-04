@@ -28,6 +28,32 @@ class Domain(DomainModel):
         super().__init__(**kwargs)
 
     @classmethod
+    def from_id(cls, domain_id: str) -> "Domain":
+        """Retrieve an existing Domain resource by its ID.
+
+        Fetches a Domain from the FastFuels API using its unique identifier.
+        Raises NotFoundException if no domain exists with the given ID.
+
+        Parameters
+        ----------
+        domain_id : str
+            The unique identifier of the domain to retrieve
+
+        Returns
+        -------
+        Domain
+            The requested Domain object
+
+        Examples
+        --------
+        >>> domain = Domain.from_domain_id("abc123")
+        >>> domain.id
+        'abc123'
+        """
+        get_domain_response = _DOMAIN_API.get_domain(domain_id)
+        return cls(**get_domain_response.model_dump())
+
+    @classmethod
     def from_geojson(
         cls,
         geojson: dict,
@@ -132,8 +158,8 @@ class Domain(DomainModel):
 
         Parameters
         ----------
-        geodataframe : geopandas.GeoDataFrame
-           GeoDataFrame containing the geometry defining the domain
+        geodataframe : GeoDataFrame
+           Geopandas GeoDataFrame object containing the geometry defining the domain.
         name : str, optional
            Name for the domain resource, default ""
         description : str, optional
@@ -150,12 +176,13 @@ class Domain(DomainModel):
 
         Examples
         --------
-        >>> gdf = gpd.read_file("blue_mtn.shp")  # Can read shp, geojson, kml
+        >>> import geopandas as gpd
+        >>> gdf = gpd.read_file("blue_mtn.shp")  # Can read shp, geojson, kml, etc.
         >>> domain = Domain.from_geodataframe(
         ...     gdf,
         ...     name="test_domain",
         ...     description="Domain from shapefile",
-        ...     horizontal_resolution=1.0,
+        ...     horizontal_resolution=2.0,
         ...     vertical_resolution=1.0
         ... )
         >>> domain.name
@@ -365,28 +392,3 @@ def list_domains(
     )
     list_response.domains = [Domain(**d.model_dump()) for d in list_response.domains]
     return list_response
-
-
-def get_domain(domain_id: str) -> Domain:
-    """Retrieve a specific domain by its ID.
-
-    Parameters
-    ----------
-    domain_id : str
-        The unique identifier of the domain to retrieve.
-
-    Returns
-    -------
-    Domain
-        The requested domain object.
-
-    Examples
-    --------
-    >>> domain = get_domain("abc123")
-    >>> print(domain.name)
-    "My Domain"
-    >>> print(domain.horizontal_resolution)
-    2.0
-    """
-    get_domain_response = _DOMAIN_API.get_domain(domain_id)
-    return Domain(**get_domain_response.model_dump())
