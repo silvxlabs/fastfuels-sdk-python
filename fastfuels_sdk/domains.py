@@ -22,7 +22,61 @@ _DOMAIN_API = DomainsApi(get_client())
 
 
 class Domain(DomainModel):
-    """ """
+    """Domain resource for the FastFuels API.
+
+    Represents a spatial container that defines geographic boundaries for fire behavior modeling and analysis.
+    A Domain includes metadata like name and description along with geometric data defining its spatial extent.
+    Domains must specify a valid area between 0 and 16 square kilometers.
+
+    The Domain handles coordinate system transformations automatically:
+    1. Geographic coordinates (e.g. EPSG:4326) are projected to appropriate UTM zone
+    2. Projected coordinates are preserved in their original CRS
+    3. Local coordinates are treated as non-georeferenced
+    4. Geometries are padded to align with specified grid resolution
+
+    Parameters
+    ----------
+    id : str
+       Unique identifier for the domain
+    name : str
+       Human-readable name for the domain
+    description : str
+       Detailed description of the domain
+    type : str
+       Always "FeatureCollection"
+    features : List[dict]
+       GeoJSON features defining domain extent and input geometry
+    horizontalResolution : float
+       Grid cell size in meters for x/y dimensions
+    verticalResolution : float
+       Grid cell size in meters for z dimension
+    crs : dict
+       Coordinate reference system specification
+    tags : List[str], optional
+       User-defined tags for organization
+
+    Examples
+    --------
+    Create domain from GeoJSON:
+    >>> with open("area.geojson") as f:
+    ...     geojson = json.load(f)
+    >>> domain = Domain.from_geojson(
+    ...     geojson,
+    ...     name="Test Domain",
+    ...     horizontal_resolution=2.0
+    ... )
+
+    Get domain by ID:
+    >>> domain = Domain.from_id("abc123")
+    >>> print(domain.name)
+    'Test Domain'
+
+    See Also
+    --------
+    Domain.from_geojson : Create domain from GeoJSON data
+    Domain.from_geodataframe : Create domain from GeoPandas GeoDataFrame
+    list_domains : List available domains
+    """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -326,6 +380,29 @@ class Domain(DomainModel):
 
         # If no updates, return self or new instance based on in_place
         return self if in_place else Domain(**self.model_dump())
+
+    def delete(self) -> None:
+        """Delete an existing domain resource based on the domain ID.
+
+        The Domain object becomes invalid after deletion and should not be used for further operations. Doing so will
+        raise a NotFoundException.
+
+        Returns
+        -------
+        None
+            Returns None on successful deletion
+
+        Examples
+        --------
+        >>> domain = Domain.from_id("abc123")
+        >>> domain.delete()  # Domain resource is permanently deleted
+
+        Perform operations on a deleted domain:
+        >>> domain.get()
+        # Raises NotFoundException
+        """
+        _DOMAIN_API.delete_domain(domain_id=self.id)
+        return None
 
 
 def list_domains(

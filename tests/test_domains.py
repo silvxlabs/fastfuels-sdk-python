@@ -26,8 +26,8 @@ def test_domain():
     # Return the domain for use in tests
     yield domain
 
-    # Cleanup could be added here if needed
-    # Note: Currently there's no delete_domain functionality
+    # Cleanup: Delete the domain after the tests
+    domain.delete()
 
 
 class TestCreateDomain:
@@ -190,7 +190,7 @@ class TestGetDomain:
         assert result.features == test_domain.features
 
 
-class TestUpdateDomain:
+class TestUpdateDomainMethod:
     """Test suite for Domain.update() method."""
 
     def test_update_name(self, test_domain):
@@ -374,12 +374,11 @@ class TestListDomains:
         yield
 
         # Cleanup: Delete any domains we created
-        # Note: Uncomment when delete_domain functionality is implemented
-        # for domain in created_domains:
-        #     try:
-        #         delete_domain(domain.id)
-        #     except Exception as e:
-        #         print(f"Warning: Could not delete test domain {domain.id}: {e}")
+        for domain in created_domains:
+            try:
+                domain.delete()
+            except Exception as e:
+                print(f"Warning: Could not delete test domain {domain.id}: {e}")
 
     def test_list_domains_basic(self):
         """Test the structure and content of list_domains response."""
@@ -494,3 +493,18 @@ class TestListDomains:
         assert response.current_page == 9999, "Page number not preserved"
         assert response.total_items is not None, "Total items should still be returned"
         assert response.current_page == 9999
+
+
+class TestDeleteDomain:
+    def test_delete_domain_success(self):
+        """Test successful deletion of a domain"""
+        domain_to_delete = create_default_domain()
+        domain_to_delete.delete()
+
+        # list_domains should not return the domain we just deleted
+        domains = list_domains()
+        assert domain_to_delete.id not in [d.id for d in domains.domains]  # noqa
+
+        # get_domain should not work with the id of the domain we just deleted
+        with pytest.raises(NotFoundException):
+            domain_to_delete.get()
