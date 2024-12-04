@@ -27,7 +27,15 @@ def test_domain():
     yield domain
 
     # Cleanup could be added here if needed
-    # Note: Currently there's no delete_domain functionality
+
+
+@pytest.fixture(scope="module")
+def test_domain_to_delete():
+    """Fixture that creates a test domain to be used by the delete() test"""
+    domain_to_delete = create_default_domain()
+
+    # Return the domain for use in delete() test
+    yield domain_to_delete
 
 
 class TestCreateDomain:
@@ -190,7 +198,7 @@ class TestGetDomain:
         assert result.features == test_domain.features
 
 
-class TestUpdateDomain:
+class TestUpdateDomainMethod:
     """Test suite for Domain.update() method."""
 
     def test_update_name(self, test_domain):
@@ -494,3 +502,13 @@ class TestListDomains:
         assert response.current_page == 9999, "Page number not preserved"
         assert response.total_items is not None, "Total items should still be returned"
         assert response.current_page == 9999
+
+
+class TestDeleteDomain:
+    def test_delete_domain_success(self, test_domain_to_delete: Domain):
+        """Test successful deletion of a domain"""
+        domain_to_delete = test_domain_to_delete
+        domain_to_delete.delete()
+        # get_domain should not work with the id of the domain we just deleted
+        with pytest.raises(NotFoundException):
+            get_domain(domain_to_delete.id)
