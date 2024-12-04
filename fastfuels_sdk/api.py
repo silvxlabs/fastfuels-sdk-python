@@ -10,6 +10,17 @@ from client_library.api_client import ApiClient
 _client: Optional[ApiClient] = None
 
 
+def set_api_key(api_key: str) -> None:
+    global _client
+
+    config = {
+        "header_name": "api-key",
+        "header_value": api_key,
+    }
+
+    _client = ApiClient(**config)
+
+
 def get_client() -> ApiClient:
     global _client
 
