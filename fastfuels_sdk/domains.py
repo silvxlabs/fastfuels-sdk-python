@@ -34,26 +34,26 @@ class Domain(DomainModel):
     3. Local coordinates are treated as non-georeferenced
     4. Geometries are padded to align with specified grid resolution
 
-    Parameters
+    Attributes
     ----------
     id : str
-       Unique identifier for the domain
+        Unique identifier for the domain
     name : str
-       Human-readable name for the domain
+        Human-readable name for the domain
     description : str
-       Detailed description of the domain
+        Detailed description of the domain
     type : str
-       Always "FeatureCollection"
+        Always "FeatureCollection"
     features : List[dict]
-       GeoJSON features defining domain extent and input geometry
+        GeoJSON features defining domain extent and input geometry
     horizontalResolution : float
-       Grid cell size in meters for x/y dimensions
+        Grid cell size in meters for x/y dimensions
     verticalResolution : float
-       Grid cell size in meters for z dimension
+        Grid cell size in meters for z dimension
     crs : dict
-       Coordinate reference system specification
+        Coordinate reference system specification
     tags : List[str], optional
-       User-defined tags for organization
+        User-defined tags for organization
 
     Examples
     --------
@@ -213,20 +213,20 @@ class Domain(DomainModel):
         Parameters
         ----------
         geodataframe : GeoDataFrame
-           Geopandas GeoDataFrame object containing the geometry defining the domain.
+            Geopandas GeoDataFrame object containing the geometry defining the domain.
         name : str, optional
-           Name for the domain resource, default ""
+            Name for the domain resource, default ""
         description : str, optional
-           Description of the domain resource, default ""
+            Description of the domain resource, default ""
         horizontal_resolution : float, optional
-           Horizontal resolution in meters for grid representation, default 2.0
+            Horizontal resolution in meters for grid representation, default 2.0
         vertical_resolution : float, optional
-           Vertical resolution in meters for grid representation, default 1.0
+            Vertical resolution in meters for grid representation, default 1.0
 
         Returns
         -------
         Domain
-           The newly created Domain object.
+            The newly created Domain object.
 
         Examples
         --------

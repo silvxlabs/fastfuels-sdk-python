@@ -1,9 +1,3 @@
-::: fastfuels_sdk.create_dataset
+::: fastfuels_sdk.Domain
 
-::: fastfuels_sdk.Dataset
-
-::: fastfuels_sdk.Treelist
-
-::: fastfuels_sdk.Fuelgrid
-
-::: fastfuels_sdk.FastFuelsResource
+::: fastfuels_sdk.list_domains

@@ -3,11 +3,13 @@ site_name: FastFuels SDK Documentation
 
 theme:
   name: "material"
+  features:
+    - content.code.copy
 
 nav:
   - Home: index.md
-  - Tutorials: tutorials.md
-  - How-To Guides: how-to-guides.md
+  - How-To Guides:
+    - Domains: guides/domains.md
   - Reference: reference.md
 
 plugins:
@@ -21,3 +23,12 @@ plugins:
             ignore_init_summary: true
             show_root_heading: true
             show_source: false
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
