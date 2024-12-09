@@ -25,3 +25,5 @@ find . -type f -name "*.py" -exec perl -pi -e 's/(?<![\.])(client_library\.rest)
 find . -type f -name "*.py" -exec perl -pi -e 's/(?<![\.])(client_library\.api_response)/fastfuels_sdk.$1/g' {} +
 find . -type f -name "*.py" -exec perl -pi -e 's/(?<![\.])(client_library\.configuration)/fastfuels_sdk.$1/g' {} +
 find . -type f -name "*.py" -exec perl -pi -e 's/(?<![\.])(client_library\.exceptions)/fastfuels_sdk.$1/g' {} +
+
+rm -r python_client/
