@@ -46,9 +46,9 @@ class Domain(DomainModel):
         Always "FeatureCollection"
     features : List[dict]
         GeoJSON features defining domain extent and input geometry
-    horizontalResolution : float
+    horizontal_resolution : float
         Grid cell size in meters for x/y dimensions
-    verticalResolution : float
+    vertical_resolution : float
         Grid cell size in meters for z dimension
     crs : dict
         Coordinate reference system specification
