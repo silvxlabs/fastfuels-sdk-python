@@ -110,94 +110,353 @@ class Inventories(InventoriesModel):
 
     def create_tree_inventory(
         self,
-        sources: list[str],
-        tree_map: TreeMapSource,
-        modifications: list[TreeInventoryModification],
-        treatments: list[CreateTreeInventoryRequestTreatments],
-        feature_masks: list[str],
-    ) -> TreeInventory:
-        """ """
-
-    def create_tree_inventory_from_treemap(
-        self,
-        version: str = "2016",
-        seed: int = None,
+        sources: str | list[str] | TreeInventorySource | list[TreeInventorySource],
+        tree_map: Optional[TreeMapSource | dict] = None,
+        modifications: Optional[dict | list[dict]] = None,
+        treatments: Optional[dict | list[dict]] = None,
+        feature_masks: Optional[str | list[str]] = None,
         in_place: bool = False,
-        modifications: list[dict] = None,
-        treatments: list[dict] = None,
     ) -> TreeInventory:
-        """Create a tree inventory using TreeMap data for the current domain.
+        """Create a tree inventory for the current domain.
 
-        This method generates a new tree inventory using TreeMap, which provides nationwide
-        coverage of tree data. The generated inventory includes information about tree
-        species, sizes, and locations within your domain.
-
-
+        This method generates a tree inventory using specified data sources and configurations.
+        A tree inventory represents a complete forest inventory within the spatial context
+        of your domain. Currently, TreeMap is the primary supported data source, providing
+        nationwide coverage of tree data.
 
         Parameters
         ----------
-        version : str, optional
-            The TreeMap version to use for generating the inventory. Available versions:
-            - "2016" (default) - Uses the 2016 TreeMap dataset
-            - "2014" - Uses the 2014 TreeMap dataset
+        sources : str or list[str] or TreeInventorySource
+            Data source(s) to use for the tree inventory. Currently supports:
+            - "TreeMap": Uses the TreeMap raster product for nationwide coverage
 
-        seed : int, optional
-            A random seed for reproducible tree inventory generation. If not provided,
-            a random seed will be used, resulting in different trees each time.
+        tree_map : TreeMapSource or dict, optional
+            Configuration for TreeMap source if being used. Can be provided as a dict with:
+            - version: "2014" or "2016" (default: "2016")
+            - seed: Integer for reproducible generation (optional)
+
+        modifications : dict or list[dict], optional
+            List of modifications to apply. Each modification has:
+            - conditions: List of conditions that must be met
+            - actions: List of actions to apply when conditions are met
+
+            Example:
+            ```python
+            {
+                "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
+                "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+            }
+            ```
+
+        treatments : dict or list[dict], optional
+            List of silvicultural treatments to apply. Supports:
+
+            Proportional Thinning:
+            ```python
+            {
+                "method": "proportionalThinning",
+                "targetMetric": "basalArea",
+                "targetValue": 25.0  # in m²/ha
+            }
+            ```
+
+            Directional Thinning:
+            ```python
+            {
+                "method": "directionalThinning",
+                "direction": "below",  # or "above"
+                "targetMetric": "diameter",  # or "basalArea"
+                "targetValue": 30.0  # cm for diameter, m²/ha for basalArea
+            }
+            ```
+
+        feature_masks : str or list[str], optional
+            Features to mask out from the inventory.
+            Supported values: ["road", "water"]
 
         in_place : bool, optional
-            Controls whether to update the current Inventories object:
-            - If True, updates this object's tree inventory (self.tree)
-            - If False (default), leaves this object unchanged
+            If True, updates this object's tree inventory (self.tree).
+            If False (default), leaves this object unchanged.
 
         Returns
         -------
         TreeInventory
-            The newly created tree inventory object, regardless of the in_place setting.
+            The newly created tree inventory object.
 
         Notes
         -----
-        - The inventory generation happens asynchronously. When this method returns,
-          the inventory will be in a "pending" state. You'll need to check its status
-          to know when it's ready for use.
-        - TreeMap provides nationwide coverage but may have varying accuracy in
-          different regions.
+        - The inventory generation happens asynchronously. The returned inventory
+          will initially have a "pending" status.
         - Using the same seed value will generate the same trees when all other
           parameters are identical.
 
-        Example
-        -------
+        Examples
+        --------
         >>> from fastfuels_sdk import Domain, Inventories
         >>> my_domain = Domain.from_id("domain_id")
         >>> inventories = Inventories.from_domain(my_domain)
-        >>> # Create a new tree inventory without modifying the current object
-        >>> tree_inventory = inventories.create_tree_inventory_from_treemap()
-        >>>
-        >>> # Create a tree inventory and update the current object
-        >>> tree_inventory = inventories.create_tree_inventory_from_treemap(in_place=True)
-        >>>
-        >>> # Create with a specific TreeMap version and seed
-        >>> tree_inventory = inventories.create_tree_inventory_from_treemap(
-        ...     version="2014",
-        ...     seed=42,
+
+        Basic usage with TreeMap:
+        >>> inventory = inventories.create_tree_inventory(sources="TreeMap")
+
+        Specify TreeMap version and seed:
+        >>> inventory = inventories.create_tree_inventory(
+        ...     sources="TreeMap",
+        ...     tree_map={"version": "2014", "seed": 42}
+        ... )
+
+        Add height modification:
+        >>> inventory = inventories.create_tree_inventory(
+        ...     sources="TreeMap",
+        ...     modifications={
+        ...         "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
+        ...         "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+        ...     }
+        ... )
+
+        Add proportional thinning treatment:
+        >>> inventory = inventories.create_tree_inventory(
+        ...     sources="TreeMap",
+        ...     treatments={
+        ...         "method": "proportionalThinning",
+        ...         "targetMetric": "basalArea",
+        ...         "targetValue": 25.0
+        ...     }
+        ... )
+
+        Mask out roads and water:
+        >>> inventory = inventories.create_tree_inventory(
+        ...     sources="TreeMap",
+        ...     feature_masks=["road", "water"]
         ... )
         """
-        treemap_request = TreeMapSource(version=TreeMapVersion(version), seed=seed)
-        request_body = CreateTreeInventoryRequest(
-            sources=[TreeInventorySource.TREEMAP],
-            tree_map=treemap_request,
-            modifications=modifications,
-            treatments=treatments,
+        # Convert sources to list[TreeInventorySource]
+        if isinstance(sources, (str, TreeInventorySource)):
+            sources = [sources]
+        parsed_sources = [
+            TreeInventorySource(s) if isinstance(s, str) else s for s in sources
+        ]
+
+        # Convert tree_map if it's a dict
+        parsed_tree_map = (
+            TreeMapSource(**tree_map) if isinstance(tree_map, dict) else tree_map
         )
+
+        # Handle modifications that might be a single dict or list of dicts
+        parsed_modifications = None
+        if modifications:
+            if isinstance(modifications, dict):
+                modifications = [modifications]
+            parsed_modifications = [
+                TreeInventoryModification.from_dict(mod) for mod in modifications
+            ]
+
+        # Handle treatments that might be a single dict or list of dicts
+        parsed_treatments = None
+        if treatments:
+            if isinstance(treatments, dict):
+                treatments = [treatments]
+            parsed_treatments = [
+                CreateTreeInventoryRequestTreatments(**treatment)
+                for treatment in treatments
+            ]
+
+        # Handle feature masks that might be a single string or list of strings
+        parsed_feature_masks = None
+        if feature_masks:
+            if isinstance(feature_masks, str):
+                parsed_feature_masks = [feature_masks]
+            else:
+                parsed_feature_masks = feature_masks
+
+        # Create the request body
+        request_body = CreateTreeInventoryRequest(
+            sources=parsed_sources,
+            tree_map=parsed_tree_map,
+            modifications=parsed_modifications,
+            treatments=parsed_treatments,
+            feature_masks=parsed_feature_masks,
+        )
+
+        # Make API call
         response = _TREE_INVENTORY_API.create_tree_inventory(
             self.domain_id, request_body
         )
-        tree_inventory = TreeInventory(**response.model_dump())
+        response_dict = response.model_dump(exclude={"modifications", "treatments"})
+        tree_inventory = TreeInventory(**response_dict)
+        tree_inventory.modifications = [mod for mod in response.modifications]
+        tree_inventory.treatments = [treat for treat in response.treatments]
 
         if in_place:
             self.tree = tree_inventory
 
         return tree_inventory
+
+    def create_tree_inventory_from_treemap(
+        self,
+        version: str = "2016",
+        seed: int = None,
+        modifications: Optional[dict | list[dict]] = None,
+        treatments: Optional[dict | list[dict]] = None,
+        feature_masks: Optional[str | list[str]] = None,
+        in_place: bool = False,
+    ) -> TreeInventory:
+        """Create a tree inventory using TreeMap data for the current domain.
+
+        This is a convenience method that provides a simplified interface for creating
+        tree inventories specifically from TreeMap data. While create_tree_inventory()
+        offers a more general interface supporting multiple data sources, this method
+        is optimized for the common case of using TreeMap data with a focus on the
+        most relevant parameters.
+
+        Use this method when:
+        - You want to create an inventory using TreeMap data (most common case)
+        - You prefer a simpler interface focused on TreeMap-specific parameters
+        - You want clearer defaults and documentation for TreeMap usage
+
+        Use create_tree_inventory() instead when:
+        - You need to use data sources other than TreeMap
+        - You prefer more explicit control over source configuration
+        - You need to specify multiple data sources
+
+        Parameters
+        ----------
+        version : str, optional
+            The TreeMap version to use. Available versions:
+            - "2016" (default) - More recent dataset, recommended for most use cases
+            - "2014" - Earlier dataset, use if you need historical comparison
+
+        seed : int, optional
+            Random seed for reproducible tree generation. When provided, generates
+            identical trees for the same domain and parameters. If omitted, generates
+            different trees each time.
+
+        modifications : dict or list[dict], optional
+            Rules for modifying tree attributes. Each modification includes:
+            - conditions: List of criteria that trees must meet
+            - actions: Changes to apply to matching trees
+
+            Example - Reduce height of tall trees:
+            ```python
+            {
+                "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
+                "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+            }
+            ```
+
+            Available fields:
+            - HT: Height (meters)
+            - DIA: Diameter at breast height (centimeters)
+            - CR: Crown ratio (0-1)
+            - SPCD: Species code (integer)
+
+        treatments : dict or list[dict], optional
+            Silvicultural treatments to apply. Supports:
+
+            Proportional Thinning - Reduces stand density to target basal area:
+            ```python
+            {
+                "method": "proportionalThinning",
+                "targetMetric": "basalArea",
+                "targetValue": 25.0  # Target basal area in m²/ha
+            }
+            ```
+
+            Directional Thinning - Removes trees based on size:
+            ```python
+            {
+                "method": "directionalThinning",
+                "direction": "below",  # "below" or "above"
+                "targetMetric": "diameter",  # "diameter" or "basalArea"
+                "targetValue": 30.0  # cm for diameter, m²/ha for basalArea
+            }
+            ```
+
+        feature_masks : str or list[str], optional
+            Features to exclude from the inventory by removing trees that intersect with them.
+            Available masks:
+            - "road": Removes trees on roads
+            - "water": Removes trees in water bodies
+
+        in_place : bool, optional
+            Controls whether to update the current Inventories object:
+            - If True, updates this object's tree inventory (self.tree)
+            - If False (default), returns new inventory without modifying current object
+
+        Returns
+        -------
+        TreeInventory
+            The newly created tree inventory object.
+
+        Notes
+        -----
+        - Generation is asynchronous - the inventory starts in "pending" status
+        - Final generation can take several minutes depending on domain size
+        - Check inventory.status for current state: "pending", "running", "completed"
+        - TreeMap accuracy varies by region and forest type
+        - Use same seed value to reproduce exact tree patterns
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Domain, Inventories
+        >>> my_domain = Domain.from_id("domain_id")
+        >>> inventories = Inventories.from_domain(my_domain)
+
+        Basic inventory creation:
+        >>> tree_inventory = inventories.create_tree_inventory_from_treemap()
+
+        Reproducible inventory with specific version:
+        >>> tree_inventory = inventories.create_tree_inventory_from_treemap(
+        ...     version="2014",
+        ...     seed=42
+        ... )
+
+        Reduce height of tall trees:
+        >>> tree_inventory = inventories.create_tree_inventory_from_treemap(
+        ...     modifications={
+        ...         "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
+        ...         "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+        ...     }
+        ... )
+
+        Thin to target basal area:
+        >>> tree_inventory = inventories.create_tree_inventory_from_treemap(
+        ...     treatments={
+        ...         "method": "proportionalThinning",
+        ...         "targetMetric": "basalArea",
+        ...         "targetValue": 25.0
+        ...     }
+        ... )
+
+        Remove trees from roads and water:
+        >>> tree_inventory = inventories.create_tree_inventory_from_treemap(
+        ...     feature_masks=["road", "water"]
+        ... )
+
+        Combined modifications, thinning, and masks:
+        >>> tree_inventory = inventories.create_tree_inventory_from_treemap(
+        ...     seed=42,
+        ...     modifications={
+        ...         "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
+        ...         "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+        ...     },
+        ...     treatments={
+        ...         "method": "proportionalThinning",
+        ...         "targetMetric": "basalArea",
+        ...         "targetValue": 25.0
+        ...     },
+        ...     feature_masks=["road", "water"]
+        ... )
+        """
+        tree_map = TreeMapSource(version=TreeMapVersion(version), seed=seed)
+        return self.create_tree_inventory(
+            sources=[TreeInventorySource.TREEMAP],
+            tree_map=tree_map,
+            modifications=modifications,
+            treatments=treatments,
+            feature_masks=feature_masks,
+            in_place=in_place,
+        )
 
 
 class TreeInventory(TreeInventoryModel):
