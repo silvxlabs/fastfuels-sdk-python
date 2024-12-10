@@ -18,6 +18,19 @@ _TREE_INVENTORY_API = TreeInventoryApi(get_client())
 
 
 class Inventories(InventoriesModel):
+    """
+    This class serves as an interface for interacting with the inventory data associated
+    with a particular domain. It provides methods to fetch, update, and initialize inventory
+    data from the API.
+
+    Attributes
+    ----------
+    domain_id : str
+        The ID of the domain associated with the inventory.
+    tree : TreeInventory, optional
+        The tree inventory data associated with the domain. By default, this attribute is `None`.
+    """
+
     domain_id: str
 
     @classmethod
