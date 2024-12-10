@@ -23,6 +23,17 @@ def test_domain():
     domain.delete()
 
 
+@pytest.fixture(scope="module")
+def test_inventories(test_domain):
+    """Fixture that creates a test inventories object to be used by the tests"""
+    inventories = Inventories.from_domain(test_domain)
+
+    # Return the inventory for use in tests
+    yield inventories
+
+    # Cleanup: Handled by the test_domain fixture
+
+
 class TestInventoriesFromId:
     def test_success(self, test_domain):
         """
@@ -49,3 +60,33 @@ class TestInventoriesFromId:
         bad_test_domain.id = "bad_id"
         with pytest.raises(NotFoundException):
             Inventories.from_domain(bad_test_domain)
+
+
+class TestGetInventories:
+    def test_default(self, test_inventories):
+        """
+        Tests whether inventories are successfully fetched and updated using assignment.
+        """
+        new_inventories = test_inventories.get()
+        assert new_inventories is not None
+        assert isinstance(new_inventories, Inventories)
+        assert new_inventories is not test_inventories
+        assert new_inventories.domain_id == test_inventories.domain_id
+        assert new_inventories.tree == test_inventories.tree
+
+    def test_in_place(self, test_inventories):
+        """
+        Tests whether inventories are successfully fetched and updated in place.
+        """
+        test_inventories.get(in_place=True)
+        assert test_inventories is not None
+        assert isinstance(test_inventories, Inventories)
+
+    def test_in_place_with_assignment(self, test_inventories):
+        """
+        Tests whether inventories are successfully fetched and updated in place with assignment.
+        """
+        new_inventories = test_inventories.get(in_place=True)
+        assert new_inventories is test_inventories
+        assert new_inventories.domain_id == test_inventories.domain_id
+        assert new_inventories.tree == test_inventories.tree
