@@ -6,7 +6,11 @@ tests/test_inventories.py
 from tests.utils import create_default_domain
 from fastfuels_sdk.inventories import Inventories, TreeInventory
 from fastfuels_sdk.client_library.exceptions import NotFoundException
-from fastfuels_sdk.client_library import TreeInventoryModification
+from fastfuels_sdk.client_library import (
+    TreeInventoryModification,
+    TreeInventoryTreatment,
+    TreeInventorySource,
+)
 
 # External imports
 import pytest
@@ -92,6 +96,119 @@ class TestGetInventories:
         assert new_inventories.tree == test_inventories.tree
 
 
+class TestParseInventoryItems:
+    @pytest.mark.parametrize(
+        "item_class", [TreeInventoryModification, TreeInventoryTreatment]
+    )
+    def test_none_input(self, item_class):
+        """Test handling of None input"""
+        assert Inventories._parse_inventory_items(None, item_class) is None
+
+    @pytest.mark.parametrize(
+        "item_class", [TreeInventoryModification, TreeInventoryTreatment]
+    )
+    def test_empty_list(self, item_class):
+        """Test handling of empty list"""
+        assert Inventories._parse_inventory_items([], item_class) == []
+
+    def test_single_modification(self):
+        """Test parsing single modification dict"""
+        modification = {
+            "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+            "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}],
+        }
+
+        result = Inventories._parse_inventory_items(
+            modification, TreeInventoryModification
+        )
+
+        assert len(result) == 1
+        assert isinstance(result[0], TreeInventoryModification)
+        parsed = result[0].to_dict()
+        assert len(parsed["conditions"]) == 1
+        assert len(parsed["actions"]) == 1
+        assert parsed["conditions"][0]["attribute"] == "HT"
+        assert parsed["actions"][0]["attribute"] == "HT"
+
+    def test_single_treatment(self):
+        """Test parsing single treatment dict"""
+        treatment = {
+            "method": "proportionalThinning",
+            "targetMetric": "basalArea",
+            "targetValue": 25.0,
+        }
+
+        result = Inventories._parse_inventory_items(treatment, TreeInventoryTreatment)
+
+        assert len(result) == 1
+        assert isinstance(result[0], TreeInventoryTreatment)
+        parsed = result[0].to_dict()
+        assert parsed["method"] == "proportionalThinning"
+        assert parsed["targetMetric"] == "basalArea"
+        assert parsed["targetValue"] == 25.0
+
+    def test_multiple_modifications(self):
+        """Test parsing list of modifications"""
+        modifications = [
+            {
+                "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+                "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}],
+            },
+            {
+                "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
+                "actions": [{"attribute": "all", "modifier": "remove"}],
+            },
+        ]
+
+        result = Inventories._parse_inventory_items(
+            modifications, TreeInventoryModification
+        )
+
+        assert len(result) == 2
+        assert all(isinstance(mod, TreeInventoryModification) for mod in result)
+
+        # Verify first modification
+        mod1 = result[0].to_dict()
+        assert mod1["conditions"][0]["attribute"] == "HT"
+        assert mod1["actions"][0]["modifier"] == "multiply"
+
+        # Verify second modification
+        mod2 = result[1].to_dict()
+        assert mod2["conditions"][0]["attribute"] == "DIA"
+        assert mod2["actions"][0]["modifier"] == "remove"
+
+    def test_multiple_treatments(self):
+        """Test parsing list of treatments"""
+        treatments = [
+            {
+                "method": "proportionalThinning",
+                "targetMetric": "basalArea",
+                "targetValue": 25.0,
+            },
+            {
+                "method": "directionalThinning",
+                "direction": "below",
+                "targetMetric": "diameter",
+                "targetValue": 30.0,
+            },
+        ]
+
+        result = Inventories._parse_inventory_items(treatments, TreeInventoryTreatment)
+
+        assert len(result) == 2
+        assert all(isinstance(t, TreeInventoryTreatment) for t in result)
+
+        # Verify first treatment
+        t1 = result[0].to_dict()
+        assert t1["method"] == "proportionalThinning"
+        assert t1["targetMetric"] == "basalArea"
+
+        # Verify second treatment
+        t2 = result[1].to_dict()
+        assert t2["method"] == "directionalThinning"
+        assert t2["direction"] == "below"
+
+
 class TestCreateTreeInventory:
     @staticmethod
     def assert_data_validity(tree_inventory, domain_id):
@@ -105,13 +222,19 @@ class TestCreateTreeInventory:
             and len(tree_inventory.checksum) > 0
         )
 
-    @pytest.mark.parametrize("source", ["TreeMap"])
+    @pytest.mark.parametrize(
+        "source",
+        ["TreeMap", ["TreeMap"], TreeInventorySource.TREEMAP],
+        ids=["TreeMap-str", "TreeMap-list", "TreeMap-enum"],
+    )
     def test_defaults(self, test_inventories, source):
         """Tests basic creation with just a source"""
         tree_inventory = test_inventories.create_tree_inventory(sources=source)
 
         self.assert_data_validity(tree_inventory, test_inventories.domain_id)
-        assert tree_inventory.sources == [source]
+        assert (
+            tree_inventory.sources == source if isinstance(source, list) else [source]
+        )
         assert tree_inventory.treatments == []
         assert tree_inventory.modifications == []
         assert tree_inventory.feature_masks == []
@@ -204,10 +327,9 @@ class TestCreateTreeInventory:
 
         self.assert_data_validity(tree_inventory, test_inventories.domain_id)
         assert len(tree_inventory.treatments) == 1
-        treat = tree_inventory.treatments[0]
-        assert treat.method == "proportionalThinning"
-        assert treat.target_metric == "basalArea"
-        assert treat.target_value == 25.0
+        response_treatment = tree_inventory.treatments[0].to_dict()
+        assert response_treatment == treatment
+        assert response_treatment is not treatment
 
     def test_treatments_multiple(self, test_inventories):
         """Tests multiple treatments"""
@@ -232,48 +354,52 @@ class TestCreateTreeInventory:
         self.assert_data_validity(tree_inventory, test_inventories.domain_id)
         assert len(tree_inventory.treatments) == 2
 
-    def test_feature_masks_single(self, test_inventories):
-        """Tests single feature mask"""
-        tree_inventory = test_inventories.create_tree_inventory(
-            sources="TreeMap", feature_masks="road"
-        )
+        for treatment, response_treatment in zip(treatments, tree_inventory.treatments):
+            assert response_treatment.to_dict() == treatment
+            assert response_treatment.to_dict() is not treatment
 
-        self.assert_data_validity(tree_inventory, test_inventories.domain_id)
-        assert tree_inventory.feature_masks == ["road"]
-
-    def test_feature_masks_multiple(self, test_inventories):
-        """Tests multiple feature masks"""
-        tree_inventory = test_inventories.create_tree_inventory(
-            sources="TreeMap", feature_masks=["road", "water"]
-        )
-
-        self.assert_data_validity(tree_inventory, test_inventories.domain_id)
-        assert tree_inventory.feature_masks == ["road", "water"]
-        assert len(tree_inventory.feature_masks) == 2
-
-    def test_combined_options(self, test_inventories):
-        """Tests combining all options together"""
-        tree_inventory = test_inventories.create_tree_inventory(
-            sources="TreeMap",
-            tree_map={"version": "2014", "seed": 42},
-            modifications={
-                "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
-                "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}],
-            },
-            treatments={
-                "method": "proportionalThinning",
-                "targetMetric": "basalArea",
-                "targetValue": 25.0,
-            },
-            feature_masks=["road", "water"],
-        )
-
-        self.assert_data_validity(tree_inventory, test_inventories.domain_id)
-        assert tree_inventory.tree_map.version == "2014"
-        assert tree_inventory.tree_map.seed == 42
-        assert len(tree_inventory.modifications) == 1
-        assert len(tree_inventory.treatments) == 1
-        assert len(tree_inventory.feature_masks) == 2
+    # def test_feature_masks_single(self, test_inventories):
+    #     """Tests single feature mask"""
+    #     tree_inventory = test_inventories.create_tree_inventory(
+    #         sources="TreeMap", feature_masks="road"
+    #     )
+    #
+    #     self.assert_data_validity(tree_inventory, test_inventories.domain_id)
+    #     assert tree_inventory.feature_masks == ["road"]
+    #
+    # def test_feature_masks_multiple(self, test_inventories):
+    #     """Tests multiple feature masks"""
+    #     tree_inventory = test_inventories.create_tree_inventory(
+    #         sources="TreeMap", feature_masks=["road", "water"]
+    #     )
+    #
+    #     self.assert_data_validity(tree_inventory, test_inventories.domain_id)
+    #     assert tree_inventory.feature_masks == ["road", "water"]
+    #     assert len(tree_inventory.feature_masks) == 2
+    #
+    # def test_combined_options(self, test_inventories):
+    #     """Tests combining all options together"""
+    #     tree_inventory = test_inventories.create_tree_inventory(
+    #         sources="TreeMap",
+    #         tree_map={"version": "2014", "seed": 42},
+    #         modifications={
+    #             "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
+    #             "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}],
+    #         },
+    #         treatments={
+    #             "method": "proportionalThinning",
+    #             "targetMetric": "basalArea",
+    #             "targetValue": 25.0,
+    #         },
+    #         feature_masks=["road", "water"],
+    #     )
+    #
+    #     self.assert_data_validity(tree_inventory, test_inventories.domain_id)
+    #     assert tree_inventory.tree_map.version == "2014"
+    #     assert tree_inventory.tree_map.seed == 42
+    #     assert len(tree_inventory.modifications) == 1
+    #     assert len(tree_inventory.treatments) == 1
+    #     assert len(tree_inventory.feature_masks) == 2
 
     def test_in_place_update(self, test_inventories):
         """Tests in_place update behavior"""

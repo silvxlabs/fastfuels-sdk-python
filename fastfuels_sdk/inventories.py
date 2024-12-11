@@ -18,7 +18,7 @@ from fastfuels_sdk.client_library.models import (
     TreeMapVersion,
     TreeInventorySource,
     TreeInventoryModification,
-    CreateTreeInventoryRequestTreatmentsInner as CreateTreeInventoryRequestTreatments,
+    TreeInventoryTreatment,
 )
 
 _INVENTORIES_API = InventoriesApi(get_client())
@@ -107,6 +107,35 @@ class Inventories(InventoriesModel):
                 setattr(self, key, value)
             return self
         return Inventories(domain_id=self.domain_id, **response.model_dump())
+
+    @staticmethod
+    def _parse_inventory_items(
+        items,
+        item_class,
+    ):
+        """Parse inventory modifications or treatments into the correct format before sending to the API.
+
+        Parameters
+        ----------
+        items : dict or list[dict] or None
+            Raw items to parse. Each item should be a dictionary containing
+            the required fields for the specified item_class.
+
+        item_class : type
+            Class to parse items into (TreeInventoryModification or TreeInventoryTreatment)
+
+        Returns
+        -------
+        list or None
+            Parsed items in the correct format, or None if input was None
+        """
+        if items is None:
+            return None
+
+        if isinstance(items, dict):
+            items = [items]
+
+        return [item_class.from_dict(item) for item in items]  # type: ignore
 
     def create_tree_inventory(
         self,
@@ -230,62 +259,25 @@ class Inventories(InventoriesModel):
         ...     feature_masks=["road", "water"]
         ... )
         """
-        # Convert sources to list[TreeInventorySource]
-        if isinstance(sources, (str, TreeInventorySource)):
-            sources = [sources]
-        parsed_sources = [
-            TreeInventorySource(s) if isinstance(s, str) else s for s in sources
-        ]
-
-        # Convert tree_map if it's a dict
-        parsed_tree_map = (
-            TreeMapSource(**tree_map) if isinstance(tree_map, dict) else tree_map
-        )
-
-        # Handle modifications that might be a single dict or list of dicts
-        parsed_modifications = None
-        if modifications:
-            if isinstance(modifications, dict):
-                modifications = [modifications]
-            parsed_modifications = [
-                TreeInventoryModification.from_dict(mod) for mod in modifications
-            ]
-
-        # Handle treatments that might be a single dict or list of dicts
-        parsed_treatments = None
-        if treatments:
-            if isinstance(treatments, dict):
-                treatments = [treatments]
-            parsed_treatments = [
-                CreateTreeInventoryRequestTreatments(**treatment)
-                for treatment in treatments
-            ]
-
-        # Handle feature masks that might be a single string or list of strings
-        parsed_feature_masks = None
-        if feature_masks:
-            if isinstance(feature_masks, str):
-                parsed_feature_masks = [feature_masks]
-            else:
-                parsed_feature_masks = feature_masks
 
         # Create the request body
         request_body = CreateTreeInventoryRequest(
-            sources=parsed_sources,
-            tree_map=parsed_tree_map,
-            modifications=parsed_modifications,
-            treatments=parsed_treatments,
-            feature_masks=parsed_feature_masks,
+            sources=[sources] if isinstance(sources, str) else sources,
+            tree_map=tree_map,
+            modifications=self._parse_inventory_items(
+                modifications, TreeInventoryModification
+            ),
+            treatments=self._parse_inventory_items(treatments, TreeInventoryTreatment),
+            feature_masks=(
+                [feature_masks] if isinstance(feature_masks, str) else feature_masks
+            ),
         )
 
         # Make API call
         response = _TREE_INVENTORY_API.create_tree_inventory(
             self.domain_id, request_body
         )
-        response_dict = response.model_dump(exclude={"modifications", "treatments"})
-        tree_inventory = TreeInventory(**response_dict)
-        tree_inventory.modifications = [mod for mod in response.modifications]
-        tree_inventory.treatments = [treat for treat in response.treatments]
+        tree_inventory = TreeInventory(**response.model_dump())
 
         if in_place:
             self.tree = tree_inventory
