@@ -17,24 +17,24 @@ import json
 import pprint
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
 from typing import Any, List, Optional
-from fastfuels_sdk.client_library.models.directional_thinning import DirectionalThinning
-from fastfuels_sdk.client_library.models.proportional_thinning import ProportionalThinning
+from fastfuels_sdk.client_library.models.tree_inventory_treatment_directional_thinning import TreeInventoryTreatmentDirectionalThinning
+from fastfuels_sdk.client_library.models.tree_inventory_treatment_proportional_thinning import TreeInventoryTreatmentProportionalThinning
 from pydantic import StrictStr, Field
 from typing import Union, List, Set, Optional, Dict
 from typing_extensions import Literal, Self
 
-CREATETREEINVENTORYREQUESTTREATMENTSINNER_ONE_OF_SCHEMAS = ["DirectionalThinning", "ProportionalThinning"]
+TREEINVENTORYTREATMENT_ONE_OF_SCHEMAS = ["TreeInventoryTreatmentDirectionalThinning", "TreeInventoryTreatmentProportionalThinning"]
 
-class CreateTreeInventoryRequestTreatmentsInner(BaseModel):
+class TreeInventoryTreatment(BaseModel):
     """
-    CreateTreeInventoryRequestTreatmentsInner
+    A treatment to apply to the tree inventory data
     """
-    # data type: DirectionalThinning
-    oneof_schema_1_validator: Optional[DirectionalThinning] = None
-    # data type: ProportionalThinning
-    oneof_schema_2_validator: Optional[ProportionalThinning] = None
-    actual_instance: Optional[Union[DirectionalThinning, ProportionalThinning]] = None
-    one_of_schemas: Set[str] = { "DirectionalThinning", "ProportionalThinning" }
+    # data type: TreeInventoryTreatmentDirectionalThinning
+    oneof_schema_1_validator: Optional[TreeInventoryTreatmentDirectionalThinning] = None
+    # data type: TreeInventoryTreatmentProportionalThinning
+    oneof_schema_2_validator: Optional[TreeInventoryTreatmentProportionalThinning] = None
+    actual_instance: Optional[Union[TreeInventoryTreatmentDirectionalThinning, TreeInventoryTreatmentProportionalThinning]] = None
+    one_of_schemas: Set[str] = { "TreeInventoryTreatmentDirectionalThinning", "TreeInventoryTreatmentProportionalThinning" }
 
     model_config = ConfigDict(
         validate_assignment=True,
@@ -57,25 +57,25 @@ class CreateTreeInventoryRequestTreatmentsInner(BaseModel):
 
     @field_validator('actual_instance')
     def actual_instance_must_validate_oneof(cls, v):
-        instance = CreateTreeInventoryRequestTreatmentsInner.model_construct()
+        instance = TreeInventoryTreatment.model_construct()
         error_messages = []
         match = 0
-        # validate data type: DirectionalThinning
-        if not isinstance(v, DirectionalThinning):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `DirectionalThinning`")
+        # validate data type: TreeInventoryTreatmentDirectionalThinning
+        if not isinstance(v, TreeInventoryTreatmentDirectionalThinning):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `TreeInventoryTreatmentDirectionalThinning`")
         else:
             match += 1
-        # validate data type: ProportionalThinning
-        if not isinstance(v, ProportionalThinning):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `ProportionalThinning`")
+        # validate data type: TreeInventoryTreatmentProportionalThinning
+        if not isinstance(v, TreeInventoryTreatmentProportionalThinning):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `TreeInventoryTreatmentProportionalThinning`")
         else:
             match += 1
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in CreateTreeInventoryRequestTreatmentsInner with oneOf schemas: DirectionalThinning, ProportionalThinning. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when setting `actual_instance` in TreeInventoryTreatment with oneOf schemas: TreeInventoryTreatmentDirectionalThinning, TreeInventoryTreatmentProportionalThinning. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in CreateTreeInventoryRequestTreatmentsInner with oneOf schemas: DirectionalThinning, ProportionalThinning. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting `actual_instance` in TreeInventoryTreatment with oneOf schemas: TreeInventoryTreatmentDirectionalThinning, TreeInventoryTreatmentProportionalThinning. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -90,25 +90,25 @@ class CreateTreeInventoryRequestTreatmentsInner(BaseModel):
         error_messages = []
         match = 0
 
-        # deserialize data into DirectionalThinning
+        # deserialize data into TreeInventoryTreatmentDirectionalThinning
         try:
-            instance.actual_instance = DirectionalThinning.from_json(json_str)
+            instance.actual_instance = TreeInventoryTreatmentDirectionalThinning.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into ProportionalThinning
+        # deserialize data into TreeInventoryTreatmentProportionalThinning
         try:
-            instance.actual_instance = ProportionalThinning.from_json(json_str)
+            instance.actual_instance = TreeInventoryTreatmentProportionalThinning.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
 
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into CreateTreeInventoryRequestTreatmentsInner with oneOf schemas: DirectionalThinning, ProportionalThinning. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when deserializing the JSON string into TreeInventoryTreatment with oneOf schemas: TreeInventoryTreatmentDirectionalThinning, TreeInventoryTreatmentProportionalThinning. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into CreateTreeInventoryRequestTreatmentsInner with oneOf schemas: DirectionalThinning, ProportionalThinning. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into TreeInventoryTreatment with oneOf schemas: TreeInventoryTreatmentDirectionalThinning, TreeInventoryTreatmentProportionalThinning. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -122,7 +122,7 @@ class CreateTreeInventoryRequestTreatmentsInner(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], DirectionalThinning, ProportionalThinning]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], TreeInventoryTreatmentDirectionalThinning, TreeInventoryTreatmentProportionalThinning]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None
