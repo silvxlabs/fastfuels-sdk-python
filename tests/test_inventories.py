@@ -131,6 +131,27 @@ class TestCreateTreeInventory:
         assert tree_inventory.tree_map.version == "2014"
         assert tree_inventory.tree_map.seed == 42
 
+    @staticmethod
+    def validate_modifications(tree_inventory, modifications):
+        for i, modification in enumerate(modifications):
+            mod = tree_inventory.modifications[i].to_dict()
+            assert len(mod["conditions"]) == len(modification["conditions"])
+            assert len(mod["actions"]) == len(modification["actions"])
+            for condition, mod_condition in zip(
+                modification["conditions"], mod["conditions"]
+            ):
+                assert condition["attribute"] == mod_condition["attribute"]
+                assert condition["operator"] == mod_condition["operator"]
+                assert condition["value"] == mod_condition["value"]
+
+            for action, mod_action in zip(modification["actions"], mod["actions"]):
+                assert action["attribute"] == mod_action["attribute"]
+                assert action["modifier"] == mod_action["modifier"]
+                if action["modifier"] != "remove":
+                    assert action["value"] == mod_action["value"]
+                else:
+                    assert "value" not in mod_action
+
     def test_modifications_single(self, test_inventories):
         """Tests single modification"""
         modification = {
@@ -145,29 +166,19 @@ class TestCreateTreeInventory:
         self.assert_data_validity(tree_inventory, test_inventories.domain_id)
         assert len(tree_inventory.modifications) == 1
 
-        # TODO: Update this to work with dict
-        mod = tree_inventory.modifications[0].to_dict()
-        assert len(mod.conditions) == 1
-        assert len(mod.actions) == 1
-        condition = mod.conditions[0]
-        action = mod.actions[0]
-        assert condition.attribute == "HT"
-        assert condition.operator == "gt"
-        assert condition.value == 20
-        assert action.attribute == "HT"
-        assert action.modifier == "multiply"
-        assert action.value == 0.9
+        # Validate the modification
+        self.validate_modifications(tree_inventory, [modification])
 
     def test_modifications_multiple(self, test_inventories):
         """Tests multiple modifications"""
         modifications = [
             {
-                "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
-                "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}],
+                "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+                "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}],
             },
             {
-                "conditions": [{"field": "DIA", "operator": "lt", "value": 10}],
-                "actions": [{"field": "all", "modifier": "remove"}],
+                "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
+                "actions": [{"attribute": "all", "modifier": "remove"}],
             },
         ]
 
@@ -177,6 +188,7 @@ class TestCreateTreeInventory:
 
         self.assert_data_validity(tree_inventory, test_inventories.domain_id)
         assert len(tree_inventory.modifications) == 2
+        self.validate_modifications(tree_inventory, modifications)
 
     def test_treatments_single(self, test_inventories):
         """Tests single treatment"""
