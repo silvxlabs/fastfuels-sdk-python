@@ -39,7 +39,7 @@ class CreateSurfaceGridRequest(BaseModel):
     fuel_moisture: Optional[CreateSurfaceGridRequestFuelMoisture] = Field(default=None, alias="fuelMoisture")
     savr: Optional[CreateSurfaceGridRequestFuelDepth] = Field(default=None, alias="SAVR")
     fbfm: Optional[CreateSurfaceGridRequestFBFM] = Field(default=None, alias="FBFM")
-    modifications: Optional[List[SurfaceGridModification]] = None
+    modifications: Optional[Annotated[List[SurfaceGridModification], Field(max_length=1000)]] = Field(default=None, description="List of modifications to apply to the surface grid")
     __properties: ClassVar[List[str]] = ["attributes", "fuelLoad", "fuelDepth", "fuelMoisture", "SAVR", "FBFM", "modifications"]
 
     model_config = ConfigDict(
@@ -127,11 +127,6 @@ class CreateSurfaceGridRequest(BaseModel):
         # and model_fields_set contains the field
         if self.fbfm is None and "fbfm" in self.model_fields_set:
             _dict['FBFM'] = None
-
-        # set to None if modifications (nullable) is None
-        # and model_fields_set contains the field
-        if self.modifications is None and "modifications" in self.model_fields_set:
-            _dict['modifications'] = None
 
         return _dict
 

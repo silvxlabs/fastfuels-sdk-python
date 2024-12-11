@@ -24,20 +24,20 @@ from fastfuels_sdk.client_library.models.modifier import Modifier
 from typing import Optional, Set
 from typing_extensions import Self
 
-class FuelLoadModificationAction(BaseModel):
+class TreeInventoryModificationCRAction(BaseModel):
     """
-    FuelLoadModificationAction
+    TreeInventoryModificationCRAction
     """ # noqa: E501
-    var_field: StrictStr = Field(alias="field")
+    attribute: StrictStr
     modifier: Modifier
-    value: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]
-    __properties: ClassVar[List[str]] = ["field", "modifier", "value"]
+    value: Union[Annotated[float, Field(le=1.0, strict=True)], Annotated[int, Field(le=1, strict=True)]]
+    __properties: ClassVar[List[str]] = ["attribute", "modifier", "value"]
 
-    @field_validator('var_field')
-    def var_field_validate_enum(cls, value):
+    @field_validator('attribute')
+    def attribute_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['fuelLoad']):
-            raise ValueError("must be one of enum values ('fuelLoad')")
+        if value not in set(['CR']):
+            raise ValueError("must be one of enum values ('CR')")
         return value
 
     model_config = ConfigDict(
@@ -58,7 +58,7 @@ class FuelLoadModificationAction(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of FuelLoadModificationAction from a JSON string"""
+        """Create an instance of TreeInventoryModificationCRAction from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -83,7 +83,7 @@ class FuelLoadModificationAction(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of FuelLoadModificationAction from a dict"""
+        """Create an instance of TreeInventoryModificationCRAction from a dict"""
         if obj is None:
             return None
 
@@ -91,7 +91,7 @@ class FuelLoadModificationAction(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "field": obj.get("field"),
+            "attribute": obj.get("attribute"),
             "modifier": obj.get("modifier"),
             "value": obj.get("value")
         })

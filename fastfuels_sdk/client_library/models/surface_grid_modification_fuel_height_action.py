@@ -17,35 +17,27 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List, Union
+from typing_extensions import Annotated
+from fastfuels_sdk.client_library.models.modifier import Modifier
 from typing import Optional, Set
 from typing_extensions import Self
 
-class SPCDModificationCondition(BaseModel):
+class SurfaceGridModificationFuelHeightAction(BaseModel):
     """
-    SPCDModificationCondition
+    SurfaceGridModificationFuelHeightAction
     """ # noqa: E501
-    var_field: Optional[StrictStr] = Field(default='SPCD', alias="field")
-    operator: StrictStr
-    value: StrictInt
-    __properties: ClassVar[List[str]] = ["field", "operator", "value"]
+    attribute: StrictStr
+    modifier: Modifier
+    value: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]
+    __properties: ClassVar[List[str]] = ["attribute", "modifier", "value"]
 
-    @field_validator('var_field')
-    def var_field_validate_enum(cls, value):
+    @field_validator('attribute')
+    def attribute_validate_enum(cls, value):
         """Validates the enum"""
-        if value is None:
-            return value
-
-        if value not in set(['SPCD']):
-            raise ValueError("must be one of enum values ('SPCD')")
-        return value
-
-    @field_validator('operator')
-    def operator_validate_enum(cls, value):
-        """Validates the enum"""
-        if value not in set(['eq']):
-            raise ValueError("must be one of enum values ('eq')")
+        if value not in set(['fuelDepth']):
+            raise ValueError("must be one of enum values ('fuelDepth')")
         return value
 
     model_config = ConfigDict(
@@ -66,7 +58,7 @@ class SPCDModificationCondition(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of SPCDModificationCondition from a JSON string"""
+        """Create an instance of SurfaceGridModificationFuelHeightAction from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -91,7 +83,7 @@ class SPCDModificationCondition(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of SPCDModificationCondition from a dict"""
+        """Create an instance of SurfaceGridModificationFuelHeightAction from a dict"""
         if obj is None:
             return None
 
@@ -99,8 +91,8 @@ class SPCDModificationCondition(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "field": obj.get("field") if obj.get("field") is not None else 'SPCD',
-            "operator": obj.get("operator"),
+            "attribute": obj.get("attribute"),
+            "modifier": obj.get("modifier"),
             "value": obj.get("value")
         })
         return _obj

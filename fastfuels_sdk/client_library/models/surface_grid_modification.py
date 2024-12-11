@@ -18,10 +18,10 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List
 from typing_extensions import Annotated
-from fastfuels_sdk.client_library.models.surface_grid_modification_actions_inner import SurfaceGridModificationActionsInner
-from fastfuels_sdk.client_library.models.surface_grid_modification_conditions_inner import SurfaceGridModificationConditionsInner
+from fastfuels_sdk.client_library.models.surface_grid_modification_action import SurfaceGridModificationAction
+from fastfuels_sdk.client_library.models.surface_grid_modification_condition import SurfaceGridModificationCondition
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -29,8 +29,8 @@ class SurfaceGridModification(BaseModel):
     """
     SurfaceGridModification
     """ # noqa: E501
-    conditions: Optional[List[SurfaceGridModificationConditionsInner]] = None
-    actions: Annotated[List[SurfaceGridModificationActionsInner], Field(min_length=1)]
+    conditions: List[SurfaceGridModificationCondition] = Field(description="The conditions for the surface grid modification.")
+    actions: Annotated[List[SurfaceGridModificationAction], Field(min_length=1)] = Field(description="The actions for the surface grid modification.")
     __properties: ClassVar[List[str]] = ["conditions", "actions"]
 
     model_config = ConfigDict(
@@ -98,8 +98,8 @@ class SurfaceGridModification(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "conditions": [SurfaceGridModificationConditionsInner.from_dict(_item) for _item in obj["conditions"]] if obj.get("conditions") is not None else None,
-            "actions": [SurfaceGridModificationActionsInner.from_dict(_item) for _item in obj["actions"]] if obj.get("actions") is not None else None
+            "conditions": [SurfaceGridModificationCondition.from_dict(_item) for _item in obj["conditions"]] if obj.get("conditions") is not None else None,
+            "actions": [SurfaceGridModificationAction.from_dict(_item) for _item in obj["actions"]] if obj.get("actions") is not None else None
         })
         return _obj
 

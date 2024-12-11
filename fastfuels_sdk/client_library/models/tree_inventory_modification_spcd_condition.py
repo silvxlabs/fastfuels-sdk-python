@@ -17,30 +17,32 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List, Optional, Union
-from typing_extensions import Annotated
-from fastfuels_sdk.client_library.models.operator import Operator
+from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
 
-class HTModificationCondition(BaseModel):
+class TreeInventoryModificationSPCDCondition(BaseModel):
     """
-    HTModificationCondition
+    TreeInventoryModificationSPCDCondition
     """ # noqa: E501
-    var_field: Optional[StrictStr] = Field(default='HT', alias="field")
-    operator: Operator
-    value: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]
-    __properties: ClassVar[List[str]] = ["field", "operator", "value"]
+    attribute: StrictStr
+    operator: StrictStr
+    value: StrictInt
+    __properties: ClassVar[List[str]] = ["attribute", "operator", "value"]
 
-    @field_validator('var_field')
-    def var_field_validate_enum(cls, value):
+    @field_validator('attribute')
+    def attribute_validate_enum(cls, value):
         """Validates the enum"""
-        if value is None:
-            return value
+        if value not in set(['SPCD']):
+            raise ValueError("must be one of enum values ('SPCD')")
+        return value
 
-        if value not in set(['HT']):
-            raise ValueError("must be one of enum values ('HT')")
+    @field_validator('operator')
+    def operator_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(['eq']):
+            raise ValueError("must be one of enum values ('eq')")
         return value
 
     model_config = ConfigDict(
@@ -61,7 +63,7 @@ class HTModificationCondition(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of HTModificationCondition from a JSON string"""
+        """Create an instance of TreeInventoryModificationSPCDCondition from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -86,7 +88,7 @@ class HTModificationCondition(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of HTModificationCondition from a dict"""
+        """Create an instance of TreeInventoryModificationSPCDCondition from a dict"""
         if obj is None:
             return None
 
@@ -94,7 +96,7 @@ class HTModificationCondition(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "field": obj.get("field") if obj.get("field") is not None else 'HT',
+            "attribute": obj.get("attribute"),
             "operator": obj.get("operator"),
             "value": obj.get("value")
         })
