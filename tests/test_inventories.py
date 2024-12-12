@@ -2,7 +2,11 @@
 tests/test_inventories.py
 """
 
+# Core imports
+from time import sleep
+
 # Internal imports
+from tests import TEST_TMP_DIR
 from tests.utils import create_default_domain
 from fastfuels_sdk.inventories import Inventories, TreeInventory
 from fastfuels_sdk.client_library.exceptions import NotFoundException, ApiException
@@ -611,23 +615,6 @@ class TestGetTreeInventory:
         assert new_tree_inventory == test_tree_inventory
 
 
-class TestDeleteTreeInventory:
-
-    def test_delete_existing_inventory(self):
-        """Tests deleting an existing tree inventory"""
-        domain = create_default_domain()
-        inventories = Inventories.from_domain(domain)
-        tree_inventory = inventories.create_tree_inventory(sources="TreeMap")
-        tree_inventory.delete()
-
-        # Verify the inventory was deleted
-        with pytest.raises(NotFoundException, match="Reason: Not Found"):
-            tree_inventory.get()
-
-        inventories.get(in_place=True)
-        assert inventories.tree is None
-
-
 class TestCreateTreeInventoryExport:
     @pytest.mark.parametrize("export_format", ["csv", "parquet", "geojson"])
     def test_create_incomplete_tree_inventory(self, test_tree_inventory, export_format):
@@ -662,4 +649,39 @@ class TestCreateTreeInventoryExport:
 
 
 class TestGetTreeInventoryExport:
-    pass
+    @pytest.mark.parametrize(
+        "export_fixture",
+        [
+            "tree_inventory_export_csv",
+            "tree_inventory_export_parquet",
+            "tree_inventory_export_geojson",
+        ],
+    )
+    def test_created_export(self, export_fixture, request):
+        export = request.getfixturevalue(export_fixture)
+        assert export is not None
+        assert isinstance(export, Export)
+        assert export.domain_id is not None
+        assert export.resource == "inventories"
+        assert export.sub_resource == "tree"
+        assert export.attribute is None
+        assert export.format in export_fixture
+        assert export.status in ["pending", "running", "completed"]
+        assert export.created_on is not None
+        assert export.modified_on is not None
+        assert export.expires_on is not None
+        assert export.signed_url is None
+
+
+class TestDeleteTreeInventory:
+
+    def test_delete_existing_inventory(self, test_inventories, test_tree_inventory):
+        """Tests deleting an existing tree inventory"""
+        test_tree_inventory.delete()
+
+        # Verify the inventory was deleted
+        with pytest.raises(NotFoundException, match="Reason: Not Found"):
+            test_tree_inventory.get()
+
+        test_inventories.get(in_place=True)
+        assert test_inventories.tree is None

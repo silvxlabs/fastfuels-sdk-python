@@ -5,11 +5,16 @@ inventories.py
 # Core imports
 from __future__ import annotations
 from time import sleep
+from pathlib import Path
 from typing import Optional
+from urllib.request import urlretrieve
+
+from mkdocs.utils.cache import download_url
 
 # Internal imports
 from fastfuels_sdk.api import get_client
 from fastfuels_sdk.domains import Domain
+from fastfuels_sdk.exports import Export
 from fastfuels_sdk.client_library.api import InventoriesApi, TreeInventoryApi
 from fastfuels_sdk.client_library.models import (
     Inventories as InventoriesModel,
@@ -20,7 +25,6 @@ from fastfuels_sdk.client_library.models import (
     TreeInventorySource,
     TreeInventoryModification,
     TreeInventoryTreatment,
-    Export,
 )
 
 _INVENTORIES_API = InventoriesApi(get_client())
@@ -496,12 +500,14 @@ class TreeInventory(TreeInventoryModel):
 
     def create_export(self, export_format: str) -> Export:
         """ """
-        return _TREE_INVENTORY_API.create_tree_inventory_export(
+        response = _TREE_INVENTORY_API.create_tree_inventory_export(
             domain_id=self.domain_id, export_format=export_format
         )
+        return Export(**response.model_dump())
 
     def get_export(self, export_format: str) -> Export:
         """ """
-        return _TREE_INVENTORY_API.get_tree_inventory_export(
+        response = _TREE_INVENTORY_API.get_tree_inventory_export(
             domain_id=self.domain_id, export_format=export_format
         )
+        return Export(**response.model_dump())
