@@ -5,11 +5,12 @@ tests/test_inventories.py
 # Internal imports
 from tests.utils import create_default_domain
 from fastfuels_sdk.inventories import Inventories, TreeInventory
-from fastfuels_sdk.client_library.exceptions import NotFoundException
+from fastfuels_sdk.client_library.exceptions import NotFoundException, ApiException
 from fastfuels_sdk.client_library import (
     TreeInventoryModification,
     TreeInventoryTreatment,
     TreeInventorySource,
+    Export,
 )
 
 # External imports
@@ -35,6 +36,34 @@ def test_inventories(test_domain):
 
     # Return the inventory for use in tests
     yield inventories
+    # Cleanup: Handled by the test_domain fixture
+
+
+@pytest.fixture(scope="module")
+def test_domain_with_tree_inventory(test_domain, test_inventories):
+    """Fixture that creates a test domain with a tree inventory to be used by the tests"""
+    test_inventories.create_tree_inventory(sources="TreeMap")
+
+    # Return the domain for use in tests
+    yield test_domain
+    # Cleanup: Handled by the test_domain fixture
+
+
+@pytest.fixture(scope="module")
+def test_tree_inventory(test_domain_with_tree_inventory):
+    """Fixture that creates a test tree inventory to be used by the tests"""
+    tree_inventory = TreeInventory.from_domain(test_domain_with_tree_inventory)
+
+    # Return the tree inventory for use in tests
+    yield tree_inventory
+    # Cleanup: Handled by the test_domain fixture
+
+
+@pytest.fixture(scope="module")
+def test_tree_inventory_completed(test_tree_inventory):
+    test_tree_inventory.wait_until_completed(in_place=True)
+
+    yield test_tree_inventory
     # Cleanup: Handled by the test_domain fixture
 
 
@@ -542,3 +571,95 @@ class TestCreateTreeInventoryFromTreeMap:
             test_inventories.create_tree_inventory_from_treemap(
                 seed="2asfasdsdf123`12"  # noqa
             )
+
+
+class TestTreeInventoryFromDomain:
+    def test_valid_domain(self, test_domain_with_tree_inventory):
+        """Test creation of TreeInventory from a valid domain"""
+        tree_inventory = TreeInventory.from_domain(test_domain_with_tree_inventory)
+        assert tree_inventory is not None
+        assert isinstance(tree_inventory, TreeInventory)
+        assert tree_inventory.domain_id == test_domain_with_tree_inventory.id
+
+    def test_invalid_domain(self, test_domain):
+        """Test creation of TreeInventory from an invalid domain"""
+        bad_test_domain = test_domain.model_copy(deep=True)
+        bad_test_domain.id = "bad_id"
+        with pytest.raises(NotFoundException):
+            TreeInventory.from_domain(bad_test_domain)
+
+
+class TestGetTreeInventory:
+    def test_default(self, test_tree_inventory):
+        """Tests fetching the tree inventory"""
+        tree_inventory = test_tree_inventory.get()
+        assert tree_inventory is not None
+        assert isinstance(tree_inventory, TreeInventory)
+        assert tree_inventory is not test_tree_inventory
+        assert tree_inventory == test_tree_inventory
+
+    def test_in_place(self, test_tree_inventory):
+        """Tests fetching the tree inventory in place"""
+        test_tree_inventory.get(in_place=True)
+        assert test_tree_inventory is not None
+        assert isinstance(test_tree_inventory, TreeInventory)
+
+    def test_in_place_with_assignment(self, test_tree_inventory):
+        """Tests fetching the tree inventory in place with assignment"""
+        new_tree_inventory = test_tree_inventory.get(in_place=True)
+        assert new_tree_inventory is test_tree_inventory
+        assert new_tree_inventory == test_tree_inventory
+
+
+class TestDeleteTreeInventory:
+
+    def test_delete_existing_inventory(self):
+        """Tests deleting an existing tree inventory"""
+        domain = create_default_domain()
+        inventories = Inventories.from_domain(domain)
+        tree_inventory = inventories.create_tree_inventory(sources="TreeMap")
+        tree_inventory.delete()
+
+        # Verify the inventory was deleted
+        with pytest.raises(NotFoundException, match="Reason: Not Found"):
+            tree_inventory.get()
+
+        inventories.get(in_place=True)
+        assert inventories.tree is None
+
+
+class TestCreateTreeInventoryExport:
+    @pytest.mark.parametrize("export_format", ["csv", "parquet", "geojson"])
+    def test_create_incomplete_tree_inventory(self, test_tree_inventory, export_format):
+        """
+        Tests the creation of an export for an incomplete tree inventory. This should raise an
+        ApiException since the tree inventory has not been completed yet.
+        """
+        with pytest.raises(ApiException):
+            test_tree_inventory.create_export(export_format=export_format)
+
+    @pytest.mark.parametrize("export_format", ["csv", "parquet", "geojson"])
+    def test_create(self, test_tree_inventory_completed, export_format):
+        export = test_tree_inventory_completed.create_export(
+            export_format=export_format
+        )
+        assert export is not None
+        assert isinstance(export, Export)
+        assert export.domain_id == test_tree_inventory_completed.domain_id
+        assert export.resource == "inventories"
+        assert export.sub_resource == "tree"
+        assert export.attribute is None
+        assert export.format == export_format
+        assert export.status == "pending"
+        assert export.created_on is not None
+        assert export.modified_on is not None
+        assert export.expires_on is not None
+        assert export.signed_url is None
+
+    def test_create_invalid_format(self, test_tree_inventory_completed):
+        with pytest.raises(ApiException):
+            test_tree_inventory_completed.create_export(export_format="invalid_format")
+
+
+class TestGetTreeInventoryExport:
+    pass

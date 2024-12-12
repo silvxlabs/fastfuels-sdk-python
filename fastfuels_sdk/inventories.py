@@ -4,6 +4,7 @@ inventories.py
 
 # Core imports
 from __future__ import annotations
+from time import sleep
 from typing import Optional
 
 # Internal imports
@@ -19,6 +20,7 @@ from fastfuels_sdk.client_library.models import (
     TreeInventorySource,
     TreeInventoryModification,
     TreeInventoryTreatment,
+    Export,
 )
 
 _INVENTORIES_API = InventoriesApi(get_client())
@@ -259,8 +261,6 @@ class Inventories(InventoriesModel):
         ...     feature_masks=["road", "water"]
         ... )
         """
-
-        # Create the request body
         request_body = CreateTreeInventoryRequest(
             sources=[sources] if isinstance(sources, str) else sources,
             tree_map=tree_map,
@@ -272,13 +272,10 @@ class Inventories(InventoriesModel):
                 [feature_masks] if isinstance(feature_masks, str) else feature_masks
             ),
         )
-
-        # Make API call
         response = _TREE_INVENTORY_API.create_tree_inventory(
             self.domain_id, request_body
         )
         tree_inventory = TreeInventory(**response.model_dump())
-
         if in_place:
             self.tree = tree_inventory
 
@@ -440,10 +437,9 @@ class Inventories(InventoriesModel):
         ...     feature_masks=["road", "water"]
         ... )
         """
-        tree_map = TreeMapSource(version=TreeMapVersion(version), seed=seed)
         return self.create_tree_inventory(
             sources=[TreeInventorySource.TREEMAP],
-            tree_map=tree_map,
+            tree_map=TreeMapSource(version=TreeMapVersion(version), seed=seed),
             modifications=modifications,
             treatments=treatments,
             feature_masks=feature_masks,
@@ -454,13 +450,58 @@ class Inventories(InventoriesModel):
 class TreeInventory(TreeInventoryModel):
     """ """
 
-    # @classmethod
-    # def from_treemap(
-    #     cls, domain: Domain, version: str = "2016", seed: int = None
-    # ) -> TreeInventory:
-    #     treemap_request = TreeMapSource(version=TreeMapVersion(version), seed=seed)
-    #     request_body = CreateTreeInventoryRequest(
-    #         sources=[TreeInventorySource.TREEMAP], tree_map=treemap_request
-    #     )
-    #     response = _TREE_INVENTORY_API.create_tree_inventory(domain.id, request_body)
-    #     return cls(**response.model_dump())
+    @classmethod
+    def from_domain(cls, domain: Domain) -> TreeInventory:
+        """ """
+        response = _TREE_INVENTORY_API.get_tree_inventory(domain_id=domain.id)
+        return cls(**response.model_dump())
+
+    def get(self, in_place: bool = False):
+        """ """
+        response = _TREE_INVENTORY_API.get_tree_inventory(domain_id=self.domain_id)
+        if in_place:
+            # Update all attributes of current instance
+            for key, value in response.model_dump().items():
+                setattr(self, key, value)
+            return self
+        return TreeInventory(**response.model_dump())
+
+    def wait_until_completed(
+        self,
+        step: float = 5,
+        timeout: float = 600,
+        in_place: bool = True,
+        verbose: bool = False,
+    ) -> TreeInventory:
+        """ """
+        elapsed_time = 0
+        tree_inventory = self.get(in_place=in_place if in_place else False)
+        while tree_inventory.status != "completed":
+            if elapsed_time >= timeout:
+                raise TimeoutError("Timed out waiting for tree inventory to finish.")
+            sleep(step)
+            elapsed_time += step
+            tree_inventory = self.get(in_place=in_place if in_place else False)
+            if verbose:
+                print(
+                    f"Tree inventory has status `{tree_inventory.status}` ({elapsed_time:.2f}s)"
+                )
+        return tree_inventory
+
+    def delete(self) -> None:
+        """ """
+        _TREE_INVENTORY_API.delete_tree_inventory(domain_id=self.domain_id)
+
+        return None
+
+    def create_export(self, export_format: str) -> Export:
+        """ """
+        return _TREE_INVENTORY_API.create_tree_inventory_export(
+            domain_id=self.domain_id, export_format=export_format
+        )
+
+    def get_export(self, export_format: str) -> Export:
+        """ """
+        return _TREE_INVENTORY_API.get_tree_inventory_export(
+            domain_id=self.domain_id, export_format=export_format
+        )
