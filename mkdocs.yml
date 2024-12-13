@@ -9,7 +9,10 @@ theme:
 nav:
   - Home: index.md
   - How-To Guides:
+    - Authentication: guides/authentication.md
     - Domains: guides/domains.md
+    - Inventories: guides/inventories.md
+
   - Reference: reference.md
 
 plugins:
@@ -19,10 +22,14 @@ plugins:
         python:
           options:
             docstring_style: numpy
-            docstring_section_style: list
+            docstring_section_style: table
             ignore_init_summary: true
             show_root_heading: true
             show_source: false
+            members_order: source
+            annotations_path: brief
+            separate_signature: true
+            show_signature_annotations: true
 
 markdown_extensions:
   - pymdownx.highlight:
