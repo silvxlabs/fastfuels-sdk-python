@@ -275,7 +275,9 @@ class Inventories(InventoriesModel):
         response = _TREE_INVENTORY_API.create_tree_inventory(
             self.domain_id, request_body
         )
-        tree_inventory = TreeInventory(**response.model_dump())
+        tree_inventory = TreeInventory(
+            domain_id=self.domain_id, **response.model_dump()
+        )
         if in_place:
             self.tree = tree_inventory
 
@@ -537,6 +539,8 @@ class TreeInventory(TreeInventoryModel):
     Inventories : Container for domain inventory resources
     Export : Handles exporting inventory data
     """
+
+    domain_id: str
 
     @classmethod
     def from_domain(cls, domain: Domain) -> TreeInventory:

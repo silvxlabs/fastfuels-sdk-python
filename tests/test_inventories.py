@@ -257,10 +257,15 @@ class TestCreateTreeInventory:
 
     @pytest.mark.parametrize(
         "source",
-        ["TreeMap", ["TreeMap"], TreeInventorySource.TREEMAP],
-        ids=["TreeMap-str", "TreeMap-list", "TreeMap-enum"],
+        [
+            "TreeMap",
+            ["TreeMap"],
+            TreeInventorySource.TREEMAP,
+            [TreeInventorySource.TREEMAP],
+        ],
+        ids=["str", "str-list", "enum", "enum-list"],
     )
-    def test_defaults(self, test_inventories, source):
+    def test_create_with_different_source_types(self, test_inventories, source):
         """Tests basic creation with just a source"""
         tree_inventory = test_inventories.create_tree_inventory(sources=source)
 
@@ -469,15 +474,6 @@ class TestCreateTreeInventoryFromTreeMap:
             isinstance(tree_inventory.tree_map.seed, int)
             and tree_inventory.tree_map.seed > 0
         )
-
-    @staticmethod
-    def normalize_datetime(inventory):
-        """Normalize datetime fields by ensuring consistent timezone handling"""
-        if inventory.created_on and inventory.created_on.tzinfo:
-            inventory.created_on = inventory.created_on.replace(tzinfo=None)
-        if inventory.modified_on and inventory.modified_on.tzinfo:
-            inventory.modified_on = inventory.modified_on.replace(tzinfo=None)
-        return inventory
 
     def test_defaults(self, test_domain, test_inventories):
         """Test basic creation without in_place"""
