@@ -12,6 +12,7 @@ nav:
     - Authentication: guides/authentication.md
     - Domains: guides/domains.md
     - Inventories: guides/inventories.md
+    - Features: guides/features.md
 
   - Reference: reference.md
 

@@ -22,3 +22,12 @@ def create_default_domain() -> Domain:
     )
 
     return domain
+
+
+def normalize_datetime(resource):
+    """Normalize datetime fields by ensuring consistent timezone handling"""
+    if resource.created_on and resource.created_on.tzinfo:
+        resource.created_on = resource.created_on.replace(tzinfo=None)
+    if resource.modified_on and resource.modified_on.tzinfo:
+        resource.modified_on = resource.modified_on.replace(tzinfo=None)
+    return resource
