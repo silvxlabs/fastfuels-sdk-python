@@ -17,30 +17,32 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List, Optional, Union
-from typing_extensions import Annotated
-from fastfuels_sdk.client_library.models.modifier import Modifier
+from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
 
-class CRModificationAction(BaseModel):
+class TreeInventoryModificationSPCDAction(BaseModel):
     """
-    CRModificationAction
+    TreeInventoryModificationSPCDAction
     """ # noqa: E501
-    var_field: Optional[StrictStr] = Field(default='CR', alias="field")
-    modifier: Modifier
-    value: Union[Annotated[float, Field(le=1.0, strict=True)], Annotated[int, Field(le=1, strict=True)]]
-    __properties: ClassVar[List[str]] = ["field", "modifier", "value"]
+    attribute: StrictStr
+    modifier: StrictStr
+    value: StrictInt
+    __properties: ClassVar[List[str]] = ["attribute", "modifier", "value"]
 
-    @field_validator('var_field')
-    def var_field_validate_enum(cls, value):
+    @field_validator('attribute')
+    def attribute_validate_enum(cls, value):
         """Validates the enum"""
-        if value is None:
-            return value
+        if value not in set(['SPCD']):
+            raise ValueError("must be one of enum values ('SPCD')")
+        return value
 
-        if value not in set(['CR']):
-            raise ValueError("must be one of enum values ('CR')")
+    @field_validator('modifier')
+    def modifier_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(['replace']):
+            raise ValueError("must be one of enum values ('replace')")
         return value
 
     model_config = ConfigDict(
@@ -61,7 +63,7 @@ class CRModificationAction(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of CRModificationAction from a JSON string"""
+        """Create an instance of TreeInventoryModificationSPCDAction from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -86,7 +88,7 @@ class CRModificationAction(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of CRModificationAction from a dict"""
+        """Create an instance of TreeInventoryModificationSPCDAction from a dict"""
         if obj is None:
             return None
 
@@ -94,7 +96,7 @@ class CRModificationAction(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "field": obj.get("field") if obj.get("field") is not None else 'CR',
+            "attribute": obj.get("attribute"),
             "modifier": obj.get("modifier"),
             "value": obj.get("value")
         })

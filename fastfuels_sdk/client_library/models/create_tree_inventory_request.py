@@ -20,10 +20,10 @@ import json
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
-from fastfuels_sdk.client_library.models.create_tree_inventory_request_treatments_inner import CreateTreeInventoryRequestTreatmentsInner
 from fastfuels_sdk.client_library.models.feature_type import FeatureType
 from fastfuels_sdk.client_library.models.tree_inventory_modification import TreeInventoryModification
 from fastfuels_sdk.client_library.models.tree_inventory_source import TreeInventorySource
+from fastfuels_sdk.client_library.models.tree_inventory_treatment import TreeInventoryTreatment
 from fastfuels_sdk.client_library.models.tree_map_source import TreeMapSource
 from typing import Optional, Set
 from typing_extensions import Self
@@ -35,7 +35,7 @@ class CreateTreeInventoryRequest(BaseModel):
     sources: Annotated[List[TreeInventorySource], Field(min_length=1, max_length=1)] = Field(description="The data sources used to build the tree inventory. Currently, only one data source at a time is supported.")
     tree_map: Optional[TreeMapSource] = Field(default=None, alias="TreeMap")
     modifications: Optional[Annotated[List[TreeInventoryModification], Field(max_length=1000)]] = Field(default=None, description="List of modifications to apply to the tree inventory data")
-    treatments: Optional[Annotated[List[CreateTreeInventoryRequestTreatmentsInner], Field(max_length=1000)]] = Field(default=None, description="List of silvicultural treatments to apply.")
+    treatments: Optional[Annotated[List[TreeInventoryTreatment], Field(max_length=1000)]] = Field(default=None, description="List of silvicultural treatments to apply.")
     feature_masks: Optional[List[FeatureType]] = Field(default=None, description="List of Features to mask tree inventory data. This has the effect of removing trees that intersect with the feature.", alias="featureMasks")
     __properties: ClassVar[List[str]] = ["sources", "TreeMap", "modifications", "treatments", "featureMasks"]
 
@@ -115,7 +115,7 @@ class CreateTreeInventoryRequest(BaseModel):
             "sources": obj.get("sources"),
             "TreeMap": TreeMapSource.from_dict(obj["TreeMap"]) if obj.get("TreeMap") is not None else None,
             "modifications": [TreeInventoryModification.from_dict(_item) for _item in obj["modifications"]] if obj.get("modifications") is not None else None,
-            "treatments": [CreateTreeInventoryRequestTreatmentsInner.from_dict(_item) for _item in obj["treatments"]] if obj.get("treatments") is not None else None,
+            "treatments": [TreeInventoryTreatment.from_dict(_item) for _item in obj["treatments"]] if obj.get("treatments") is not None else None,
             "featureMasks": obj.get("featureMasks")
         })
         return _obj

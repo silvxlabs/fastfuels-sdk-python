@@ -20,8 +20,8 @@ import json
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List
 from typing_extensions import Annotated
-from fastfuels_sdk.client_library.models.tree_inventory_modification_actions_inner import TreeInventoryModificationActionsInner
-from fastfuels_sdk.client_library.models.tree_inventory_modification_conditions_inner import TreeInventoryModificationConditionsInner
+from fastfuels_sdk.client_library.models.tree_inventory_modification_action import TreeInventoryModificationAction
+from fastfuels_sdk.client_library.models.tree_inventory_modification_condition import TreeInventoryModificationCondition
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -29,8 +29,8 @@ class TreeInventoryModification(BaseModel):
     """
     TreeInventoryModification
     """ # noqa: E501
-    conditions: List[TreeInventoryModificationConditionsInner]
-    actions: Annotated[List[TreeInventoryModificationActionsInner], Field(min_length=1)]
+    conditions: List[TreeInventoryModificationCondition] = Field(description="The conditions for the tree inventory modification.")
+    actions: Annotated[List[TreeInventoryModificationAction], Field(min_length=1)] = Field(description="The actions for the tree inventory modification.")
     __properties: ClassVar[List[str]] = ["conditions", "actions"]
 
     model_config = ConfigDict(
@@ -98,8 +98,8 @@ class TreeInventoryModification(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "conditions": [TreeInventoryModificationConditionsInner.from_dict(_item) for _item in obj["conditions"]] if obj.get("conditions") is not None else None,
-            "actions": [TreeInventoryModificationActionsInner.from_dict(_item) for _item in obj["actions"]] if obj.get("actions") is not None else None
+            "conditions": [TreeInventoryModificationCondition.from_dict(_item) for _item in obj["conditions"]] if obj.get("conditions") is not None else None,
+            "actions": [TreeInventoryModificationAction.from_dict(_item) for _item in obj["actions"]] if obj.get("actions") is not None else None
         })
         return _obj
 

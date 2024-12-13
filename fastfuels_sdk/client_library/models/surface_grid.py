@@ -20,6 +20,7 @@ import json
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from typing_extensions import Annotated
 from fastfuels_sdk.client_library.models.create_surface_grid_request_fbfm import CreateSurfaceGridRequestFBFM
 from fastfuels_sdk.client_library.models.create_surface_grid_request_fuel_depth import CreateSurfaceGridRequestFuelDepth
 from fastfuels_sdk.client_library.models.create_surface_grid_request_fuel_load import CreateSurfaceGridRequestFuelLoad
@@ -40,7 +41,7 @@ class SurfaceGrid(BaseModel):
     fuel_moisture: Optional[CreateSurfaceGridRequestFuelMoisture] = Field(default=None, alias="fuelMoisture")
     savr: Optional[CreateSurfaceGridRequestFuelDepth] = Field(default=None, alias="SAVR")
     fbfm: Optional[CreateSurfaceGridRequestFBFM] = Field(default=None, alias="FBFM")
-    modifications: Optional[List[SurfaceGridModification]] = None
+    modifications: Optional[Annotated[List[SurfaceGridModification], Field(max_length=1000)]] = Field(default=None, description="List of modifications to apply to the surface grid")
     status: Optional[JobStatus] = None
     created_on: Optional[datetime] = Field(default=None, alias="createdOn")
     modified_on: Optional[datetime] = Field(default=None, alias="modifiedOn")
@@ -137,11 +138,6 @@ class SurfaceGrid(BaseModel):
         # and model_fields_set contains the field
         if self.fbfm is None and "fbfm" in self.model_fields_set:
             _dict['FBFM'] = None
-
-        # set to None if modifications (nullable) is None
-        # and model_fields_set contains the field
-        if self.modifications is None and "modifications" in self.model_fields_set:
-            _dict['modifications'] = None
 
         # set to None if status (nullable) is None
         # and model_fields_set contains the field

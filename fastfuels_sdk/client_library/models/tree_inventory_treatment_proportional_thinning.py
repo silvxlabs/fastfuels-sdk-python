@@ -18,29 +18,32 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List, Optional, Union
+from typing import Any, ClassVar, Dict, List, Union
 from typing_extensions import Annotated
-from fastfuels_sdk.client_library.models.operator import Operator
 from typing import Optional, Set
 from typing_extensions import Self
 
-class CRModificationCondition(BaseModel):
+class TreeInventoryTreatmentProportionalThinning(BaseModel):
     """
-    CRModificationCondition
+    TreeInventoryTreatmentProportionalThinning
     """ # noqa: E501
-    var_field: Optional[StrictStr] = Field(default='CR', alias="field")
-    operator: Operator
-    value: Union[Annotated[float, Field(le=1.0, strict=True)], Annotated[int, Field(le=1, strict=True)]]
-    __properties: ClassVar[List[str]] = ["field", "operator", "value"]
+    method: StrictStr
+    target_metric: StrictStr = Field(alias="targetMetric")
+    target_value: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]] = Field(alias="targetValue")
+    __properties: ClassVar[List[str]] = ["method", "targetMetric", "targetValue"]
 
-    @field_validator('var_field')
-    def var_field_validate_enum(cls, value):
+    @field_validator('method')
+    def method_validate_enum(cls, value):
         """Validates the enum"""
-        if value is None:
-            return value
+        if value not in set(['proportionalThinning']):
+            raise ValueError("must be one of enum values ('proportionalThinning')")
+        return value
 
-        if value not in set(['CR']):
-            raise ValueError("must be one of enum values ('CR')")
+    @field_validator('target_metric')
+    def target_metric_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(['basalArea']):
+            raise ValueError("must be one of enum values ('basalArea')")
         return value
 
     model_config = ConfigDict(
@@ -61,7 +64,7 @@ class CRModificationCondition(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of CRModificationCondition from a JSON string"""
+        """Create an instance of TreeInventoryTreatmentProportionalThinning from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -86,7 +89,7 @@ class CRModificationCondition(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of CRModificationCondition from a dict"""
+        """Create an instance of TreeInventoryTreatmentProportionalThinning from a dict"""
         if obj is None:
             return None
 
@@ -94,9 +97,9 @@ class CRModificationCondition(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "field": obj.get("field") if obj.get("field") is not None else 'CR',
-            "operator": obj.get("operator"),
-            "value": obj.get("value")
+            "method": obj.get("method"),
+            "targetMetric": obj.get("targetMetric"),
+            "targetValue": obj.get("targetValue")
         })
         return _obj
 

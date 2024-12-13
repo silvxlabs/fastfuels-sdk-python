@@ -17,35 +17,34 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
+from pydantic import BaseModel, ConfigDict, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class SPCDModificationAction(BaseModel):
+class TreeInventoryModificationRemoveAction(BaseModel):
     """
-    SPCDModificationAction
+    TreeInventoryModificationRemoveAction
     """ # noqa: E501
-    var_field: Optional[StrictStr] = Field(default='SPCD', alias="field")
-    modifier: StrictStr
-    value: StrictInt
-    __properties: ClassVar[List[str]] = ["field", "modifier", "value"]
+    attribute: StrictStr
+    modifier: Optional[StrictStr] = 'remove'
+    __properties: ClassVar[List[str]] = ["attribute", "modifier"]
 
-    @field_validator('var_field')
-    def var_field_validate_enum(cls, value):
+    @field_validator('attribute')
+    def attribute_validate_enum(cls, value):
         """Validates the enum"""
-        if value is None:
-            return value
-
-        if value not in set(['SPCD']):
-            raise ValueError("must be one of enum values ('SPCD')")
+        if value not in set(['all']):
+            raise ValueError("must be one of enum values ('all')")
         return value
 
     @field_validator('modifier')
     def modifier_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['replace']):
-            raise ValueError("must be one of enum values ('replace')")
+        if value is None:
+            return value
+
+        if value not in set(['remove']):
+            raise ValueError("must be one of enum values ('remove')")
         return value
 
     model_config = ConfigDict(
@@ -66,7 +65,7 @@ class SPCDModificationAction(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of SPCDModificationAction from a JSON string"""
+        """Create an instance of TreeInventoryModificationRemoveAction from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -91,7 +90,7 @@ class SPCDModificationAction(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of SPCDModificationAction from a dict"""
+        """Create an instance of TreeInventoryModificationRemoveAction from a dict"""
         if obj is None:
             return None
 
@@ -99,9 +98,8 @@ class SPCDModificationAction(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "field": obj.get("field") if obj.get("field") is not None else 'SPCD',
-            "modifier": obj.get("modifier"),
-            "value": obj.get("value")
+            "attribute": obj.get("attribute"),
+            "modifier": obj.get("modifier") if obj.get("modifier") is not None else 'remove'
         })
         return _obj
 

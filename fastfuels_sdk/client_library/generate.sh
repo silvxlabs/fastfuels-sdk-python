@@ -1,10 +1,15 @@
 rm -r api/ models/ __init__.py api_client.py api_response.py configuration.py exceptions.py py.typed rest.py
 
 PACKAGE_NAME="client_library"
+URL="https://api.fastfuels.silvxlabs.com"
+# URL="http://127.0.0.1:8080"
 
-curl https://api.fastfuels.silvxlabs.com/openapi.json > api_spec.json
+curl $URL/openapi.json > api_spec.json
 
-openapi-generator generate -i api_spec.json -g python -o ./python_client --package-name $PACKAGE_NAME
+openapi-generator generate -i api_spec.json \
+  -g python \
+  -o ./python_client \
+  --package-name $PACKAGE_NAME
 
 mv python_client/$PACKAGE_NAME/* .
 

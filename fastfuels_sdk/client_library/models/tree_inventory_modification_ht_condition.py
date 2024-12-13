@@ -24,20 +24,20 @@ from fastfuels_sdk.client_library.models.operator import Operator
 from typing import Optional, Set
 from typing_extensions import Self
 
-class FuelLoadModificationCondition(BaseModel):
+class TreeInventoryModificationHTCondition(BaseModel):
     """
-    FuelLoadModificationCondition
+    TreeInventoryModificationHTCondition
     """ # noqa: E501
-    var_field: StrictStr = Field(alias="field")
+    attribute: StrictStr
     operator: Operator
     value: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]
-    __properties: ClassVar[List[str]] = ["field", "operator", "value"]
+    __properties: ClassVar[List[str]] = ["attribute", "operator", "value"]
 
-    @field_validator('var_field')
-    def var_field_validate_enum(cls, value):
+    @field_validator('attribute')
+    def attribute_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['fuelLoad']):
-            raise ValueError("must be one of enum values ('fuelLoad')")
+        if value not in set(['HT']):
+            raise ValueError("must be one of enum values ('HT')")
         return value
 
     model_config = ConfigDict(
@@ -58,7 +58,7 @@ class FuelLoadModificationCondition(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of FuelLoadModificationCondition from a JSON string"""
+        """Create an instance of TreeInventoryModificationHTCondition from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -83,7 +83,7 @@ class FuelLoadModificationCondition(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of FuelLoadModificationCondition from a dict"""
+        """Create an instance of TreeInventoryModificationHTCondition from a dict"""
         if obj is None:
             return None
 
@@ -91,7 +91,7 @@ class FuelLoadModificationCondition(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "field": obj.get("field"),
+            "attribute": obj.get("attribute"),
             "operator": obj.get("operator"),
             "value": obj.get("value")
         })

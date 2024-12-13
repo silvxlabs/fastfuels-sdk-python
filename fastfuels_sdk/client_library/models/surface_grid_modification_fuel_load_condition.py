@@ -18,29 +18,26 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List, Optional, Union
+from typing import Any, ClassVar, Dict, List, Union
 from typing_extensions import Annotated
-from fastfuels_sdk.client_library.models.modifier import Modifier
+from fastfuels_sdk.client_library.models.operator import Operator
 from typing import Optional, Set
 from typing_extensions import Self
 
-class DIAModificationAction(BaseModel):
+class SurfaceGridModificationFuelLoadCondition(BaseModel):
     """
-    DIAModificationAction
+    SurfaceGridModificationFuelLoadCondition
     """ # noqa: E501
-    var_field: Optional[StrictStr] = Field(default='DIA', alias="field")
-    modifier: Modifier
+    attribute: StrictStr
+    operator: Operator
     value: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]
-    __properties: ClassVar[List[str]] = ["field", "modifier", "value"]
+    __properties: ClassVar[List[str]] = ["attribute", "operator", "value"]
 
-    @field_validator('var_field')
-    def var_field_validate_enum(cls, value):
+    @field_validator('attribute')
+    def attribute_validate_enum(cls, value):
         """Validates the enum"""
-        if value is None:
-            return value
-
-        if value not in set(['DIA']):
-            raise ValueError("must be one of enum values ('DIA')")
+        if value not in set(['fuelLoad']):
+            raise ValueError("must be one of enum values ('fuelLoad')")
         return value
 
     model_config = ConfigDict(
@@ -61,7 +58,7 @@ class DIAModificationAction(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of DIAModificationAction from a JSON string"""
+        """Create an instance of SurfaceGridModificationFuelLoadCondition from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -86,7 +83,7 @@ class DIAModificationAction(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of DIAModificationAction from a dict"""
+        """Create an instance of SurfaceGridModificationFuelLoadCondition from a dict"""
         if obj is None:
             return None
 
@@ -94,8 +91,8 @@ class DIAModificationAction(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "field": obj.get("field") if obj.get("field") is not None else 'DIA',
-            "modifier": obj.get("modifier"),
+            "attribute": obj.get("attribute"),
+            "operator": obj.get("operator"),
             "value": obj.get("value")
         })
         return _obj

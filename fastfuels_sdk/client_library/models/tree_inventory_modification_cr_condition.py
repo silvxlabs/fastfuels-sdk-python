@@ -18,32 +18,26 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List
-from fastfuels_sdk.client_library.models.fbfm40 import FBFM40
+from typing import Any, ClassVar, Dict, List, Union
+from typing_extensions import Annotated
+from fastfuels_sdk.client_library.models.operator import Operator
 from typing import Optional, Set
 from typing_extensions import Self
 
-class FBFMModificationAction(BaseModel):
+class TreeInventoryModificationCRCondition(BaseModel):
     """
-    FBFMModificationAction
+    TreeInventoryModificationCRCondition
     """ # noqa: E501
-    var_field: StrictStr = Field(alias="field")
-    modifier: StrictStr
-    value: FBFM40
-    __properties: ClassVar[List[str]] = ["field", "modifier", "value"]
+    attribute: StrictStr
+    operator: Operator
+    value: Union[Annotated[float, Field(le=1.0, strict=True)], Annotated[int, Field(le=1, strict=True)]]
+    __properties: ClassVar[List[str]] = ["attribute", "operator", "value"]
 
-    @field_validator('var_field')
-    def var_field_validate_enum(cls, value):
+    @field_validator('attribute')
+    def attribute_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['FBFM']):
-            raise ValueError("must be one of enum values ('FBFM')")
-        return value
-
-    @field_validator('modifier')
-    def modifier_validate_enum(cls, value):
-        """Validates the enum"""
-        if value not in set(['replace']):
-            raise ValueError("must be one of enum values ('replace')")
+        if value not in set(['CR']):
+            raise ValueError("must be one of enum values ('CR')")
         return value
 
     model_config = ConfigDict(
@@ -64,7 +58,7 @@ class FBFMModificationAction(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of FBFMModificationAction from a JSON string"""
+        """Create an instance of TreeInventoryModificationCRCondition from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -89,7 +83,7 @@ class FBFMModificationAction(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of FBFMModificationAction from a dict"""
+        """Create an instance of TreeInventoryModificationCRCondition from a dict"""
         if obj is None:
             return None
 
@@ -97,8 +91,8 @@ class FBFMModificationAction(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "field": obj.get("field"),
-            "modifier": obj.get("modifier"),
+            "attribute": obj.get("attribute"),
+            "operator": obj.get("operator"),
             "value": obj.get("value")
         })
         return _obj

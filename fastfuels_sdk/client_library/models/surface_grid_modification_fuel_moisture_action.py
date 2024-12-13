@@ -18,38 +18,26 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List, Optional, Union
+from typing import Any, ClassVar, Dict, List, Union
 from typing_extensions import Annotated
+from fastfuels_sdk.client_library.models.modifier import Modifier
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ProportionalThinning(BaseModel):
+class SurfaceGridModificationFuelMoistureAction(BaseModel):
     """
-    ProportionalThinning
+    SurfaceGridModificationFuelMoistureAction
     """ # noqa: E501
-    method: Optional[StrictStr] = 'proportionalThinning'
-    target_metric: Optional[StrictStr] = Field(default='basalArea', alias="targetMetric")
-    target_value: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]] = Field(alias="targetValue")
-    __properties: ClassVar[List[str]] = ["method", "targetMetric", "targetValue"]
+    attribute: StrictStr
+    modifier: Modifier
+    value: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]
+    __properties: ClassVar[List[str]] = ["attribute", "modifier", "value"]
 
-    @field_validator('method')
-    def method_validate_enum(cls, value):
+    @field_validator('attribute')
+    def attribute_validate_enum(cls, value):
         """Validates the enum"""
-        if value is None:
-            return value
-
-        if value not in set(['proportionalThinning']):
-            raise ValueError("must be one of enum values ('proportionalThinning')")
-        return value
-
-    @field_validator('target_metric')
-    def target_metric_validate_enum(cls, value):
-        """Validates the enum"""
-        if value is None:
-            return value
-
-        if value not in set(['basalArea']):
-            raise ValueError("must be one of enum values ('basalArea')")
+        if value not in set(['fuelMoisture']):
+            raise ValueError("must be one of enum values ('fuelMoisture')")
         return value
 
     model_config = ConfigDict(
@@ -70,7 +58,7 @@ class ProportionalThinning(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ProportionalThinning from a JSON string"""
+        """Create an instance of SurfaceGridModificationFuelMoistureAction from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -95,7 +83,7 @@ class ProportionalThinning(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ProportionalThinning from a dict"""
+        """Create an instance of SurfaceGridModificationFuelMoistureAction from a dict"""
         if obj is None:
             return None
 
@@ -103,9 +91,9 @@ class ProportionalThinning(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "method": obj.get("method") if obj.get("method") is not None else 'proportionalThinning',
-            "targetMetric": obj.get("targetMetric") if obj.get("targetMetric") is not None else 'basalArea',
-            "targetValue": obj.get("targetValue")
+            "attribute": obj.get("attribute"),
+            "modifier": obj.get("modifier"),
+            "value": obj.get("value")
         })
         return _obj
 
