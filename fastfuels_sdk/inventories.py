@@ -5,11 +5,7 @@ inventories.py
 # Core imports
 from __future__ import annotations
 from time import sleep
-from pathlib import Path
 from typing import Optional
-from urllib.request import urlretrieve
-
-from mkdocs.utils.cache import download_url
 
 # Internal imports
 from fastfuels_sdk.api import get_client
@@ -452,16 +448,216 @@ class Inventories(InventoriesModel):
 
 
 class TreeInventory(TreeInventoryModel):
-    """ """
+    """
+    A class representing a forest inventory within a spatial domain.
+
+    The TreeInventory class provides access to tree inventory data and operations for a specific
+    domain. It supports creating inventories from various data sources (primarily TreeMap),
+    monitoring inventory processing status, applying modifications and treatments, and
+    exporting data in multiple formats.
+
+    Attributes
+    ----------
+    domain_id : str
+        The unique identifier of the domain this inventory belongs to.
+    status : str
+        Current processing status of the inventory:
+        - "pending": Initial state after creation
+        - "running": Being processed
+        - "completed": Ready for use
+        - "failed": Processing encountered an error
+    created_on : datetime
+        When the inventory was created.
+    modified_on : datetime
+        When the inventory was last modified.
+    checksum : str
+        Unique identifier for this version of the inventory.
+    sources : list[str]
+        Data sources used to generate the inventory (e.g. ["TreeMap"]).
+    tree_map : TreeMapSource, optional
+        Configuration used for TreeMap source, if applicable.
+    modifications : list[TreeInventoryModification], optional
+        Applied modifications to tree attributes.
+    treatments : list[TreeInventoryTreatment], optional
+        Applied silvicultural treatments.
+    feature_masks : list[str], optional
+        Applied feature masks (e.g. ["road", "water"]).
+
+    Methods
+    -------
+    from_domain(domain)
+        Retrieve an existing inventory for a domain.
+    get(in_place=False)
+        Fetch the latest inventory data.
+    wait_until_completed(step=5, timeout=600, in_place=True, verbose=False)
+        Wait for inventory processing to finish.
+    delete()
+        Permanently remove this inventory.
+    create_export(export_format)
+        Create an export of the inventory data.
+    get_export(export_format)
+        Check status of an existing export.
+
+    Notes
+    -----
+    - Tree inventories are created using Inventories.create_tree_inventory() or
+        Inventories.create_tree_inventory_from_treemap()
+    - Processing is asynchronous - use wait_until_completed() to wait for the
+      "completed" status
+    - Processing time varies with domain size, modifications, and treatments
+    - Once completed, inventories can be exported to CSV, Parquet, or GeoJSON formats
+    - A domain can only have one tree inventory at a time
+
+    Examples
+    --------
+    Get an existing inventory:
+    >>> from fastfuels_sdk import Domain, TreeInventory
+    >>> domain = Domain.from_id("domain123")
+    >>> inventory = TreeInventory.from_domain(domain)
+    >>> inventory.wait_until_completed()
+    >>> print(f"Status: {inventory.status}")
+    Status: completed
+
+    Export inventory data:
+    >>> # Create and wait for export
+    >>> export = inventory.create_export("csv")
+    >>> export.wait_until_completed(in_place=True)
+    >>> from pathlib import Path
+    >>> export.to_file(Path.cwd() / "trees.csv")
+
+    Delete inventory:
+    >>> inventory.delete()
+    >>> # Create new inventory if needed
+    >>> inventories = Inventories.from_domain(domain)
+    >>> new_inventory = inventories.create_tree_inventory(sources="TreeMap")
+
+    See Also
+    --------
+    Domain : Spatial container for inventory data
+    Inventories : Container for domain inventory resources
+    Export : Handles exporting inventory data
+    """
 
     @classmethod
     def from_domain(cls, domain: Domain) -> TreeInventory:
-        """ """
+        """
+        Retrieve an existing tree inventory for a domain.
+
+        This method fetches the tree inventory data associated with the provided domain.
+        The tree inventory represents a complete forest inventory within the spatial
+        context of your domain.
+
+        Parameters
+        ----------
+        domain : Domain
+            The Domain object containing the ID of the domain whose tree inventory
+            should be retrieved.
+
+        Returns
+        -------
+        TreeInventory
+            A TreeInventory object containing the retrieved inventory data. Key attributes:
+            - status: Current status of the inventory ("pending", "running", "completed", "failed")
+            - created_on: Timestamp when the inventory was created
+            - modified_on: Timestamp when the inventory was last modified
+            - checksum: Unique identifier for this version of the inventory
+            - sources: List of data sources used to generate inventory (e.g. ["TreeMap"])
+            - tree_map: Configuration used for TreeMap source, if applicable
+            - modifications: List of applied tree attribute modifications
+            - treatments: List of applied silvicultural treatments
+            - feature_masks: List of applied feature masks (e.g. roads, water)
+
+        Raises
+        ------
+        NotFoundException
+            If no tree inventory exists for the given domain or if the domain itself
+            does not exist.
+        ApiException
+            If there is an error communicating with the API.
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Domain, TreeInventory
+        >>> my_domain = Domain.from_id("domain123")
+        >>> inventory = TreeInventory.from_domain(my_domain)
+        >>> print(inventory.status)
+        'completed'
+
+        Notes
+        -----
+        - Tree inventories are typically created using Domain.create_tree_inventory() or
+          Domain.create_tree_inventory_from_treemap()
+        - A domain can only have one tree inventory at a time
+        - Use get() to refresh the inventory data and wait_until_completed() to wait
+          for processing to finish
+        """
         response = _TREE_INVENTORY_API.get_tree_inventory(domain_id=domain.id)
         return cls(**response.model_dump())
 
     def get(self, in_place: bool = False):
-        """ """
+        """
+        Fetch the latest tree inventory data from the API.
+
+        This method retrieves the most recent tree inventory data for the domain,
+        allowing you to check the current status and access updated information.
+        You can either update the current TreeInventory instance in-place or get
+        a new instance with the fresh data.
+
+        Parameters
+        ----------
+        in_place : bool, optional
+            If True, updates the current TreeInventory instance with the new data
+            and returns self. If False (default), returns a new TreeInventory
+            instance with the latest data, leaving the current instance unchanged.
+
+        Returns
+        -------
+        TreeInventory
+            Either the current TreeInventory instance (if in_place=True) or a new
+            TreeInventory instance (if in_place=False) containing the latest data.
+            Key attributes that may be updated include:
+            - status: Current processing status
+            - modified_on: Last modification timestamp
+            - checksum: Unique identifier for this version
+            - sources: Data sources used
+            - tree_map: TreeMap configuration
+            - modifications: Applied modifications
+            - treatments: Applied treatments
+            - feature_masks: Applied masks
+
+        Raises
+        ------
+        NotFoundException
+            If the tree inventory or domain no longer exists
+        ApiException
+            If there is an error communicating with the API
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Domain, TreeInventory
+        >>> my_domain = Domain.from_id("domain_id")
+
+        Create new instance with latest data:
+        >>> inventory = TreeInventory.from_domain(my_domain)
+        >>> updated = inventory.get()  # inventory remains unchanged
+        >>> updated is inventory
+        False
+
+        Update existing instance in-place:
+        >>> inventory = TreeInventory.from_domain(my_domain)
+        >>> inventory.get(in_place=True)  # inventory is updated
+        >>> # Any references to inventory now see the updated data
+
+        Notes
+        -----
+        - The default behavior (in_place=False) ensures immutability by returning
+          a new instance. This is safer for concurrent operations but requires
+          reassignment if you want to retain the updated data.
+        - Use in_place=True when you want to ensure all references to this
+          TreeInventory instance see the updated data.
+        - This method is often used in conjunction with wait_until_completed()
+          to monitor the progress of tree inventory processing.
+        """
         response = _TREE_INVENTORY_API.get_tree_inventory(domain_id=self.domain_id)
         if in_place:
             # Update all attributes of current instance
@@ -477,7 +673,89 @@ class TreeInventory(TreeInventoryModel):
         in_place: bool = True,
         verbose: bool = False,
     ) -> TreeInventory:
-        """ """
+        """
+        Wait for the tree inventory processing to complete.
+
+        Tree inventories are processed asynchronously and may take between several seconds to
+        minutes to complete depending on domain size and complexity. This method polls the API at
+        regular intervals until the inventory reaches a 'completed' status or the
+        timeout is reached.
+
+        Parameters
+        ----------
+        step : float, optional
+            Number of seconds to wait between status checks. Default is 5 seconds.
+            Use larger values to reduce API calls, smaller values for more frequent
+            updates.
+
+        timeout : float, optional
+            Maximum number of seconds to wait for completion. Default is 600 seconds
+            (10 minutes). If the timeout is reached before completion, raises a
+            TimeoutError.
+
+        in_place : bool, optional
+            If True (default), updates the current TreeInventory instance with new data
+            at each check. If False, leaves the current instance unchanged and returns
+            a new instance when complete.
+
+        verbose : bool, optional
+            If True, prints status updates at each check. Default is False.
+
+        Returns
+        -------
+        TreeInventory
+            Either the current TreeInventory instance (if in_place=True) or a new
+            TreeInventory instance (if in_place=False) with the completed inventory
+            data.
+
+        Raises
+        ------
+        TimeoutError
+            If the tree inventory does not complete within the specified timeout.
+        NotFoundException
+            If the tree inventory or domain no longer exists.
+        ApiException
+            If there is an error communicating with the API.
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Domain, TreeInventory
+        >>> my_domain = Domain.from_id("domain123")
+
+        Basic usage with default parameters:
+        >>> inventory = TreeInventory.from_domain(my_domain)
+        >>> completed = inventory.wait_until_completed()
+        >>> print(completed.status)
+        'completed'
+
+        With progress updates:
+        >>> inventory = TreeInventory.from_domain(my_domain)
+        >>> completed = inventory.wait_until_completed(
+        ...     step=10,
+        ...     timeout=1200,
+        ...     verbose=True
+        ... )
+        Tree inventory has status `pending` (10.00s)
+        Tree inventory has status `running` (20.00s)
+        Tree inventory has status `completed` (30.00s)
+
+        Without in-place updates:
+        >>> inventory = TreeInventory.from_domain(my_domain)
+        >>> completed = inventory.wait_until_completed(in_place=False)
+        >>> completed is inventory
+        False
+
+        Notes
+        -----
+        - Processing time varies based on domain size, data sources, modifications,
+          and treatments
+        - The method polls by calling get() at each interval, which counts against
+          API rate limits
+        - Consider longer step intervals for large domains or when making many
+          API calls
+        - For very large domains, you may need to increase the timeout beyond
+          the default 10 minutes
+        """
         elapsed_time = 0
         tree_inventory = self.get(in_place=in_place if in_place else False)
         while tree_inventory.status != "completed":
@@ -493,20 +771,191 @@ class TreeInventory(TreeInventoryModel):
         return tree_inventory
 
     def delete(self) -> None:
-        """ """
+        """
+        Delete this tree inventory.
+
+        Permanently removes the tree inventory from the domain. This action:
+        - Deletes the tree inventory data from the database
+        - Cancels any ongoing processing jobs
+        - Removes associated data from cache and cloud storage
+        - Cannot be undone
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        NotFoundException
+            If the tree inventory or domain no longer exists.
+        ApiException
+            If there is an error communicating with the API.
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Domain, TreeInventory
+        >>> my_domain = Domain.from_id("domain_id")
+        >>> tree_inventory = TreeInventory.from_domain(my_domain)
+        >>> tree_inventory.delete()
+        >>> # The inventory is now permanently deleted
+        >>> tree_inventory.get()  # This will raise NotFoundException
+
+        Notes
+        -----
+        - After deletion, any subsequent operations on this TreeInventory instance
+          will raise NotFoundException
+        - A new tree inventory can be created for the domain after deletion using
+          Domain.create_tree_inventory() or Domain.create_tree_inventory_from_treemap()
+        - Consider creating an export of important inventory data before deletion
+          using create_export()
+        """
         _TREE_INVENTORY_API.delete_tree_inventory(domain_id=self.domain_id)
 
         return None
 
     def create_export(self, export_format: str) -> Export:
-        """ """
+        """
+        Create an export of the tree inventory data.
+
+        Initiates an asynchronous process to export the tree inventory data into
+        a specified file format. The export process runs in the background and
+        generates a downloadable file once complete. Returns an Export object that
+        provides methods for monitoring progress and downloading the result.
+
+        Parameters
+        ----------
+        export_format : str
+            The desired format for the exported data. Must be one of:
+            - "csv": Comma-separated values format
+            - "parquet": Apache Parquet format (efficient for large datasets)
+            - "geojson": GeoJSON format (includes spatial information)
+
+        Returns
+        -------
+        Export
+            An Export object for managing the export process.
+
+        Raises
+        ------
+        ApiException
+            If the tree inventory is not in "completed" status or if there is
+            an error communicating with the API.
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Domain, TreeInventory
+        >>> my_domain = Domain.from_id("domain_id")
+
+        Basic export with automatic filename:
+        >>> inventory = TreeInventory.from_domain(my_domain)
+        >>> inventory.wait_until_completed()
+        >>> # Create and wait for export
+        >>> export = inventory.create_export("csv")
+        >>> export = export.wait_until_completed()
+        >>> # Download to current directory
+        >>> from pathlib import Path
+        >>> export.to_file(Path.cwd())  # Creates 'inventories_tree.csv'
+
+        Export with custom filename and progress monitoring:
+        >>> export = inventory.create_export("parquet")
+        >>> export = export.wait_until_completed(
+        ...     step=5,          # Check every 5 seconds
+        ...     timeout=300,     # Wait up to 5 minutes
+        ... )
+        >>> export.to_file("my_trees.parquet")
+
+        Create multiple format exports:
+        >>> # Create exports
+        >>> csv_export = inventory.create_export("csv")
+        >>> parquet_export = inventory.create_export("parquet")
+        >>> geojson_export = inventory.create_export("geojson")
+        >>> # Wait for all to complete
+        >>> for export in [csv_export, parquet_export, geojson_export]:
+        ...     export.wait_until_completed(in_place=True)
+        >>> # Download to a specific directory
+        >>> output_dir = Path("exports")
+        >>> output_dir.mkdir(exist_ok=True)
+        >>> for export in [csv_export, parquet_export, geojson_export]:
+        ...     export.to_file(output_dir)
+
+        Notes
+        -----
+        - The tree inventory must be in "completed" status before creating an export
+        - Export generation is asynchronous and may take several seconds or minutes depending
+          on the data size
+        - Each format has specific advantages:
+          * CSV: Human-readable, compatible with most software
+          * Parquet: Efficient storage and querying for large datasets
+          * GeoJSON: Preserves spatial information, works with GIS software
+        - The Export object provides methods for monitoring and managing the export
+          process - use get() to check status, wait_until_completed() to wait for
+          completion, and to_file() to download
+        """
         response = _TREE_INVENTORY_API.create_tree_inventory_export(
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
 
     def get_export(self, export_format: str) -> Export:
-        """ """
+        """
+        Retrieve the status of an existing export.
+
+        Fetches the current state of a previously created export in the specified
+        format. This method is commonly used to check if an export has completed
+        and to get the download URL once it's ready.
+
+        Parameters
+        ----------
+        export_format : str
+            The format of the export to retrieve. Must be one of:
+            - "csv": Comma-separated values format
+            - "parquet": Apache Parquet format
+            - "geojson": GeoJSON format
+
+        Returns
+        -------
+        Export
+            An Export object representing the current state of the export.
+
+        Raises
+        ------
+        NotFoundException
+            If no export exists for the specified format.
+        ApiException
+            If there is an error communicating with the API.
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Domain, TreeInventory
+        >>> my_domain = Domain.from_id("domain_id")
+
+        Check export status:
+        >>> inventory = TreeInventory.from_domain(my_domain)
+        >>> export = inventory.create_export("csv")
+        >>> # Check status later
+        >>> export = inventory.get_export("csv")
+        >>> print(export.status)
+        'completed'
+        >>> if export.status == "completed":
+        ...     export.to_file("trees.csv")
+
+        Monitor export until complete:
+        >>> from time import sleep
+        >>> export = inventory.create_export("parquet")
+        >>> export.wait_until_completed(in_place=True)
+        >>> export.to_file("trees.parquet")
+
+        Notes
+        -----
+        - This method only retrieves status; use create_export() to initiate a new export
+        - Export URLs expire after 7 days - you'll need to create a new export after
+          expiration
+        - The Export object's wait_until_completed() method provides a more
+          convenient way to wait for completion
+        - If you don't need the intermediate status checks, using
+          create_export().wait_until_completed() is simpler
+        - Always check the export's status before attempting to download using to_file()
+        """
         response = _TREE_INVENTORY_API.get_tree_inventory_export(
             domain_id=self.domain_id, export_format=export_format
         )
