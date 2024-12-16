@@ -12,10 +12,11 @@ from urllib.request import urlretrieve
 # Internal imports
 from fastfuels_sdk.api import get_client
 from fastfuels_sdk.client_library.models import Export as ExportModel
-from fastfuels_sdk.client_library.api import TreeInventoryApi
+from fastfuels_sdk.client_library.api import TreeInventoryApi, GridsApi
 
 # Initialize API clients
 _TREE_INVENTORY_API = TreeInventoryApi(get_client())
+_GRIDS_API = GridsApi(get_client())
 
 
 class Export(ExportModel):
@@ -67,6 +68,10 @@ class Export(ExportModel):
                 lambda: _TREE_INVENTORY_API.get_tree_inventory_export(
                     domain_id=self.domain_id, export_format=self.format
                 )
+            )
+        elif self.resource == "grids" and self.sub_resource is None:
+            self._api_get_method = lambda: _GRIDS_API.get_grid_export(
+                domain_id=self.domain_id, export_format=self.format
             )
         else:
             raise NotImplementedError(
