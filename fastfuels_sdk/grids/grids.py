@@ -13,16 +13,27 @@ from typing import Optional
 from fastfuels_sdk.api import get_client
 from fastfuels_sdk.domains import Domain
 from fastfuels_sdk.exports import Export
-from fastfuels_sdk.client_library.api import GridsApi
+from fastfuels_sdk.client_library.api import (
+    GridsApi,
+    TreeGridApi,
+    SurfaceGridApi,
+    TopographyGridApi,
+    FeatureGridApi,
+)
 from fastfuels_sdk.client_library.models import (
     Grids as GridsModel,
-    TreeGrid,
-    SurfaceGrid,
-    TopographyGrid,
-    FeatureGrid,
+    TreeGrid as TreeGridModel,
+    SurfaceGrid as SurfaceGridModel,
+    TopographyGrid as TopographyGridModel,
+    FeatureGrid as FeatureGridModel,
+    GridAttributeMetadataResponse,
 )
 
 _GRIDS_API = GridsApi(get_client())
+_TREE_GRID_API = TreeGridApi(get_client())
+_SURFACE_GRID_API = SurfaceGridApi(get_client())
+_TOPOGRAPHY_GRID_API = TopographyGridApi(get_client())
+_FEATURE_GRID_API = FeatureGridApi(get_client())
 
 
 class Grids(GridsModel):
@@ -72,10 +83,10 @@ class Grids(GridsModel):
     """
 
     domain_id: str
-    tree: Optional[TreeGrid]
-    surface: Optional[SurfaceGrid]
-    topography: Optional[TopographyGrid]
-    feature: Optional[FeatureGrid]
+    # tree: Optional[TreeGrid]
+    # surface: Optional[SurfaceGrid]
+    # topography: Optional[TopographyGrid]
+    # feature: Optional[FeatureGrid]
 
     @classmethod
     def from_domain(cls, domain: Domain) -> Grids:
