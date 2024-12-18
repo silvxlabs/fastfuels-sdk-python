@@ -9,6 +9,7 @@ from typing import Optional
 
 # Internal imports
 from fastfuels_sdk.api import get_client
+from fastfuels_sdk.utils import parse_dict_items_to_pydantic_list
 from fastfuels_sdk.domains import Domain
 from fastfuels_sdk.exports import Export
 from fastfuels_sdk.client_library.api import InventoriesApi, TreeInventoryApi
@@ -109,35 +110,6 @@ class Inventories(InventoriesModel):
                 setattr(self, key, value)
             return self
         return Inventories(domain_id=self.domain_id, **response.model_dump())
-
-    @staticmethod
-    def _parse_inventory_items(
-        items,
-        item_class,
-    ):
-        """Parse inventory modifications or treatments into the correct format before sending to the API.
-
-        Parameters
-        ----------
-        items : dict or list[dict] or None
-            Raw items to parse. Each item should be a dictionary containing
-            the required fields for the specified item_class.
-
-        item_class : type
-            Class to parse items into (TreeInventoryModification or TreeInventoryTreatment)
-
-        Returns
-        -------
-        list or None
-            Parsed items in the correct format, or None if input was None
-        """
-        if items is None:
-            return None
-
-        if isinstance(items, dict):
-            items = [items]
-
-        return [item_class.from_dict(item) for item in items]  # type: ignore
 
     def create_tree_inventory(
         self,
@@ -264,10 +236,12 @@ class Inventories(InventoriesModel):
         request_body = CreateTreeInventoryRequest(
             sources=[sources] if isinstance(sources, str) else sources,
             tree_map=tree_map,
-            modifications=self._parse_inventory_items(
+            modifications=parse_dict_items_to_pydantic_list(
                 modifications, TreeInventoryModification
             ),
-            treatments=self._parse_inventory_items(treatments, TreeInventoryTreatment),
+            treatments=parse_dict_items_to_pydantic_list(
+                treatments, TreeInventoryTreatment
+            ),
             feature_masks=(
                 [feature_masks] if isinstance(feature_masks, str) else feature_masks
             ),
