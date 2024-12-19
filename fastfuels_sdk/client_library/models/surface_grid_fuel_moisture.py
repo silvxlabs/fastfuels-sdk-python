@@ -17,24 +17,24 @@ import json
 import pprint
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
 from typing import Any, List, Optional
-from fastfuels_sdk.client_library.models.landfire_surface_grid_source import LandfireSurfaceGridSource
 from fastfuels_sdk.client_library.models.surface_grid_uniform_value import SurfaceGridUniformValue
+from fastfuels_sdk.client_library.models.surface_grid_uniform_value_by_size_class import SurfaceGridUniformValueBySizeClass
 from pydantic import StrictStr, Field
 from typing import Union, List, Set, Optional, Dict
 from typing_extensions import Literal, Self
 
-CREATESURFACEGRIDREQUESTFUELDEPTH_ONE_OF_SCHEMAS = ["LandfireSurfaceGridSource", "SurfaceGridUniformValue"]
+SURFACEGRIDFUELMOISTURE_ONE_OF_SCHEMAS = ["SurfaceGridUniformValue", "SurfaceGridUniformValueBySizeClass"]
 
-class CreateSurfaceGridRequestFuelDepth(BaseModel):
+class SurfaceGridFuelMoisture(BaseModel):
     """
-    CreateSurfaceGridRequestFuelDepth
+    SurfaceGridFuelMoisture
     """
-    # data type: LandfireSurfaceGridSource
-    oneof_schema_1_validator: Optional[LandfireSurfaceGridSource] = None
     # data type: SurfaceGridUniformValue
-    oneof_schema_2_validator: Optional[SurfaceGridUniformValue] = None
-    actual_instance: Optional[Union[LandfireSurfaceGridSource, SurfaceGridUniformValue]] = None
-    one_of_schemas: Set[str] = { "LandfireSurfaceGridSource", "SurfaceGridUniformValue" }
+    oneof_schema_1_validator: Optional[SurfaceGridUniformValue] = None
+    # data type: SurfaceGridUniformValueBySizeClass
+    oneof_schema_2_validator: Optional[SurfaceGridUniformValueBySizeClass] = None
+    actual_instance: Optional[Union[SurfaceGridUniformValue, SurfaceGridUniformValueBySizeClass]] = None
+    one_of_schemas: Set[str] = { "SurfaceGridUniformValue", "SurfaceGridUniformValueBySizeClass" }
 
     model_config = ConfigDict(
         validate_assignment=True,
@@ -60,25 +60,25 @@ class CreateSurfaceGridRequestFuelDepth(BaseModel):
         if v is None:
             return v
 
-        instance = CreateSurfaceGridRequestFuelDepth.model_construct()
+        instance = SurfaceGridFuelMoisture.model_construct()
         error_messages = []
         match = 0
-        # validate data type: LandfireSurfaceGridSource
-        if not isinstance(v, LandfireSurfaceGridSource):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `LandfireSurfaceGridSource`")
-        else:
-            match += 1
         # validate data type: SurfaceGridUniformValue
         if not isinstance(v, SurfaceGridUniformValue):
             error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridUniformValue`")
         else:
             match += 1
+        # validate data type: SurfaceGridUniformValueBySizeClass
+        if not isinstance(v, SurfaceGridUniformValueBySizeClass):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridUniformValueBySizeClass`")
+        else:
+            match += 1
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in CreateSurfaceGridRequestFuelDepth with oneOf schemas: LandfireSurfaceGridSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when setting `actual_instance` in SurfaceGridFuelMoisture with oneOf schemas: SurfaceGridUniformValue, SurfaceGridUniformValueBySizeClass. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in CreateSurfaceGridRequestFuelDepth with oneOf schemas: LandfireSurfaceGridSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting `actual_instance` in SurfaceGridFuelMoisture with oneOf schemas: SurfaceGridUniformValue, SurfaceGridUniformValueBySizeClass. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -96,25 +96,25 @@ class CreateSurfaceGridRequestFuelDepth(BaseModel):
         error_messages = []
         match = 0
 
-        # deserialize data into LandfireSurfaceGridSource
-        try:
-            instance.actual_instance = LandfireSurfaceGridSource.from_json(json_str)
-            match += 1
-        except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
         # deserialize data into SurfaceGridUniformValue
         try:
             instance.actual_instance = SurfaceGridUniformValue.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
+        # deserialize data into SurfaceGridUniformValueBySizeClass
+        try:
+            instance.actual_instance = SurfaceGridUniformValueBySizeClass.from_json(json_str)
+            match += 1
+        except (ValidationError, ValueError) as e:
+            error_messages.append(str(e))
 
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into CreateSurfaceGridRequestFuelDepth with oneOf schemas: LandfireSurfaceGridSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when deserializing the JSON string into SurfaceGridFuelMoisture with oneOf schemas: SurfaceGridUniformValue, SurfaceGridUniformValueBySizeClass. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into CreateSurfaceGridRequestFuelDepth with oneOf schemas: LandfireSurfaceGridSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into SurfaceGridFuelMoisture with oneOf schemas: SurfaceGridUniformValue, SurfaceGridUniformValueBySizeClass. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -128,7 +128,7 @@ class CreateSurfaceGridRequestFuelDepth(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], LandfireSurfaceGridSource, SurfaceGridUniformValue]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], SurfaceGridUniformValue, SurfaceGridUniformValueBySizeClass]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None

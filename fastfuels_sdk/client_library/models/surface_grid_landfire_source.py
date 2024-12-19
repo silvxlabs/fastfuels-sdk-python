@@ -17,21 +17,24 @@ import json
 import pprint
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
 from typing import Any, List, Optional
-from fastfuels_sdk.client_library.models.landfire_fbfm40_source import LandfireFBFM40Source
+from fastfuels_sdk.client_library.models.surface_grid_landfire_fbfm13_source import SurfaceGridLandfireFBFM13Source
+from fastfuels_sdk.client_library.models.surface_grid_landfire_fbfm40_source import SurfaceGridLandfireFBFM40Source
 from pydantic import StrictStr, Field
 from typing import Union, List, Set, Optional, Dict
 from typing_extensions import Literal, Self
 
-LANDFIRESURFACEGRIDSOURCE_ONE_OF_SCHEMAS = ["LandfireFBFM40Source"]
+SURFACEGRIDLANDFIRESOURCE_ONE_OF_SCHEMAS = ["SurfaceGridLandfireFBFM13Source", "SurfaceGridLandfireFBFM40Source"]
 
-class LandfireSurfaceGridSource(BaseModel):
+class SurfaceGridLandfireSource(BaseModel):
     """
-    LandfireSurfaceGridSource
+    SurfaceGridLandfireSource
     """
-    # data type: LandfireFBFM40Source
-    oneof_schema_1_validator: Optional[LandfireFBFM40Source] = None
-    actual_instance: Optional[Union[LandfireFBFM40Source]] = None
-    one_of_schemas: Set[str] = { "LandfireFBFM40Source" }
+    # data type: SurfaceGridLandfireFBFM40Source
+    oneof_schema_1_validator: Optional[SurfaceGridLandfireFBFM40Source] = None
+    # data type: SurfaceGridLandfireFBFM13Source
+    oneof_schema_2_validator: Optional[SurfaceGridLandfireFBFM13Source] = None
+    actual_instance: Optional[Union[SurfaceGridLandfireFBFM13Source, SurfaceGridLandfireFBFM40Source]] = None
+    one_of_schemas: Set[str] = { "SurfaceGridLandfireFBFM13Source", "SurfaceGridLandfireFBFM40Source" }
 
     model_config = ConfigDict(
         validate_assignment=True,
@@ -54,20 +57,25 @@ class LandfireSurfaceGridSource(BaseModel):
 
     @field_validator('actual_instance')
     def actual_instance_must_validate_oneof(cls, v):
-        instance = LandfireSurfaceGridSource.model_construct()
+        instance = SurfaceGridLandfireSource.model_construct()
         error_messages = []
         match = 0
-        # validate data type: LandfireFBFM40Source
-        if not isinstance(v, LandfireFBFM40Source):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `LandfireFBFM40Source`")
+        # validate data type: SurfaceGridLandfireFBFM40Source
+        if not isinstance(v, SurfaceGridLandfireFBFM40Source):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridLandfireFBFM40Source`")
+        else:
+            match += 1
+        # validate data type: SurfaceGridLandfireFBFM13Source
+        if not isinstance(v, SurfaceGridLandfireFBFM13Source):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridLandfireFBFM13Source`")
         else:
             match += 1
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in LandfireSurfaceGridSource with oneOf schemas: LandfireFBFM40Source. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when setting `actual_instance` in SurfaceGridLandfireSource with oneOf schemas: SurfaceGridLandfireFBFM13Source, SurfaceGridLandfireFBFM40Source. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in LandfireSurfaceGridSource with oneOf schemas: LandfireFBFM40Source. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting `actual_instance` in SurfaceGridLandfireSource with oneOf schemas: SurfaceGridLandfireFBFM13Source, SurfaceGridLandfireFBFM40Source. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -82,19 +90,25 @@ class LandfireSurfaceGridSource(BaseModel):
         error_messages = []
         match = 0
 
-        # deserialize data into LandfireFBFM40Source
+        # deserialize data into SurfaceGridLandfireFBFM40Source
         try:
-            instance.actual_instance = LandfireFBFM40Source.from_json(json_str)
+            instance.actual_instance = SurfaceGridLandfireFBFM40Source.from_json(json_str)
+            match += 1
+        except (ValidationError, ValueError) as e:
+            error_messages.append(str(e))
+        # deserialize data into SurfaceGridLandfireFBFM13Source
+        try:
+            instance.actual_instance = SurfaceGridLandfireFBFM13Source.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
 
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into LandfireSurfaceGridSource with oneOf schemas: LandfireFBFM40Source. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when deserializing the JSON string into SurfaceGridLandfireSource with oneOf schemas: SurfaceGridLandfireFBFM13Source, SurfaceGridLandfireFBFM40Source. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into LandfireSurfaceGridSource with oneOf schemas: LandfireFBFM40Source. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into SurfaceGridLandfireSource with oneOf schemas: SurfaceGridLandfireFBFM13Source, SurfaceGridLandfireFBFM40Source. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -108,7 +122,7 @@ class LandfireSurfaceGridSource(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], LandfireFBFM40Source]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], SurfaceGridLandfireFBFM13Source, SurfaceGridLandfireFBFM40Source]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None

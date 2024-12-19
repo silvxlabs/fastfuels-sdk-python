@@ -20,12 +20,13 @@ import json
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
-from fastfuels_sdk.client_library.models.create_surface_grid_request_fbfm import CreateSurfaceGridRequestFBFM
-from fastfuels_sdk.client_library.models.create_surface_grid_request_fuel_depth import CreateSurfaceGridRequestFuelDepth
-from fastfuels_sdk.client_library.models.create_surface_grid_request_fuel_load import CreateSurfaceGridRequestFuelLoad
-from fastfuels_sdk.client_library.models.create_surface_grid_request_fuel_moisture import CreateSurfaceGridRequestFuelMoisture
 from fastfuels_sdk.client_library.models.surface_grid_attribute import SurfaceGridAttribute
+from fastfuels_sdk.client_library.models.surface_grid_fbfm import SurfaceGridFBFM
+from fastfuels_sdk.client_library.models.surface_grid_fuel_depth import SurfaceGridFuelDepth
+from fastfuels_sdk.client_library.models.surface_grid_fuel_load import SurfaceGridFuelLoad
+from fastfuels_sdk.client_library.models.surface_grid_fuel_moisture import SurfaceGridFuelMoisture
 from fastfuels_sdk.client_library.models.surface_grid_modification import SurfaceGridModification
+from fastfuels_sdk.client_library.models.surface_grid_savr import SurfaceGridSAVR
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -34,11 +35,11 @@ class CreateSurfaceGridRequest(BaseModel):
     CreateSurfaceGridRequest
     """ # noqa: E501
     attributes: Annotated[List[SurfaceGridAttribute], Field(min_length=1)] = Field(description="List of attributes to include in the surface grid")
-    fuel_load: Optional[CreateSurfaceGridRequestFuelLoad] = Field(default=None, alias="fuelLoad")
-    fuel_depth: Optional[CreateSurfaceGridRequestFuelDepth] = Field(default=None, alias="fuelDepth")
-    fuel_moisture: Optional[CreateSurfaceGridRequestFuelMoisture] = Field(default=None, alias="fuelMoisture")
-    savr: Optional[CreateSurfaceGridRequestFuelDepth] = Field(default=None, alias="SAVR")
-    fbfm: Optional[CreateSurfaceGridRequestFBFM] = Field(default=None, alias="FBFM")
+    fuel_load: Optional[SurfaceGridFuelLoad] = Field(default=None, alias="fuelLoad")
+    fuel_depth: Optional[SurfaceGridFuelDepth] = Field(default=None, alias="fuelDepth")
+    fuel_moisture: Optional[SurfaceGridFuelMoisture] = Field(default=None, alias="fuelMoisture")
+    savr: Optional[SurfaceGridSAVR] = Field(default=None, alias="SAVR")
+    fbfm: Optional[SurfaceGridFBFM] = Field(default=None, alias="FBFM")
     modifications: Optional[Annotated[List[SurfaceGridModification], Field(max_length=1000)]] = Field(default=None, description="List of modifications to apply to the surface grid")
     __properties: ClassVar[List[str]] = ["attributes", "fuelLoad", "fuelDepth", "fuelMoisture", "SAVR", "FBFM", "modifications"]
 
@@ -141,11 +142,11 @@ class CreateSurfaceGridRequest(BaseModel):
 
         _obj = cls.model_validate({
             "attributes": obj.get("attributes"),
-            "fuelLoad": CreateSurfaceGridRequestFuelLoad.from_dict(obj["fuelLoad"]) if obj.get("fuelLoad") is not None else None,
-            "fuelDepth": CreateSurfaceGridRequestFuelDepth.from_dict(obj["fuelDepth"]) if obj.get("fuelDepth") is not None else None,
-            "fuelMoisture": CreateSurfaceGridRequestFuelMoisture.from_dict(obj["fuelMoisture"]) if obj.get("fuelMoisture") is not None else None,
-            "SAVR": CreateSurfaceGridRequestFuelDepth.from_dict(obj["SAVR"]) if obj.get("SAVR") is not None else None,
-            "FBFM": CreateSurfaceGridRequestFBFM.from_dict(obj["FBFM"]) if obj.get("FBFM") is not None else None,
+            "fuelLoad": SurfaceGridFuelLoad.from_dict(obj["fuelLoad"]) if obj.get("fuelLoad") is not None else None,
+            "fuelDepth": SurfaceGridFuelDepth.from_dict(obj["fuelDepth"]) if obj.get("fuelDepth") is not None else None,
+            "fuelMoisture": SurfaceGridFuelMoisture.from_dict(obj["fuelMoisture"]) if obj.get("fuelMoisture") is not None else None,
+            "SAVR": SurfaceGridSAVR.from_dict(obj["SAVR"]) if obj.get("SAVR") is not None else None,
+            "FBFM": SurfaceGridFBFM.from_dict(obj["FBFM"]) if obj.get("FBFM") is not None else None,
             "modifications": [SurfaceGridModification.from_dict(_item) for _item in obj["modifications"]] if obj.get("modifications") is not None else None
         })
         return _obj

@@ -43,8 +43,7 @@ class TreeInventory(BaseModel):
     created_on: Optional[datetime] = Field(default=None, alias="createdOn")
     modified_on: Optional[datetime] = Field(default=None, alias="modifiedOn")
     checksum: Optional[StrictStr] = None
-    domain_id: Optional[StrictStr] = Field(default=None, alias="domainId")
-    __properties: ClassVar[List[str]] = ["sources", "TreeMap", "modifications", "treatments", "featureMasks", "status", "createdOn", "modifiedOn", "checksum", "domainId"]
+    __properties: ClassVar[List[str]] = ["sources", "TreeMap", "modifications", "treatments", "featureMasks", "status", "createdOn", "modifiedOn", "checksum"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -122,11 +121,6 @@ class TreeInventory(BaseModel):
         if self.checksum is None and "checksum" in self.model_fields_set:
             _dict['checksum'] = None
 
-        # set to None if domain_id (nullable) is None
-        # and model_fields_set contains the field
-        if self.domain_id is None and "domain_id" in self.model_fields_set:
-            _dict['domainId'] = None
-
         return _dict
 
     @classmethod
@@ -147,8 +141,7 @@ class TreeInventory(BaseModel):
             "status": obj.get("status"),
             "createdOn": obj.get("createdOn"),
             "modifiedOn": obj.get("modifiedOn"),
-            "checksum": obj.get("checksum"),
-            "domainId": obj.get("domainId")
+            "checksum": obj.get("checksum")
         })
         return _obj
 

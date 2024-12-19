@@ -23,19 +23,19 @@ from typing_extensions import Annotated
 from fastfuels_sdk.client_library.models.curingliveherbaceous import Curingliveherbaceous
 from fastfuels_sdk.client_library.models.curinglivewoody import Curinglivewoody
 from fastfuels_sdk.client_library.models.feature_type import FeatureType
-from fastfuels_sdk.client_library.models.interpolation_method import InterpolationMethod
+from fastfuels_sdk.client_library.models.surface_grid_interpolation_method import SurfaceGridInterpolationMethod
 from typing import Optional, Set
 from typing_extensions import Self
 
-class LandfireFBFM40FuelLoadSource(BaseModel):
+class SurfaceGridLandfireFBFM40FuelLoadSource(BaseModel):
     """
-    LandfireFBFM40FuelLoadSource
+    SurfaceGridLandfireFBFM40FuelLoadSource
     """ # noqa: E501
     feature_masks: Optional[List[FeatureType]] = Field(default=None, description="List of feature masks to apply to the surface grid attribute", alias="featureMasks")
     source: Optional[StrictStr] = 'LANDFIRE'
     product: Optional[StrictStr] = 'FBFM40'
     version: Optional[StrictStr] = '2022'
-    interpolation_method: Optional[InterpolationMethod] = Field(default=None, alias="interpolationMethod")
+    interpolation_method: Optional[SurfaceGridInterpolationMethod] = Field(default=None, alias="interpolationMethod")
     fraction_one_hour: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=1.0, description="Fraction of fuel load from the 1-hour size class category to include in the total fuel load. Can be greater than 1 to include more than 100% of the fuel load, and must be greater than or equal to 0.", alias="fractionOneHour")
     fraction_ten_hour: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=0.1, description="Fraction of fuel load from the 10-hour size class category to include in the total fuel load. Can be greater than 1 to include more than 100% of the fuel load, and must be greater than or equal to 0.", alias="fractionTenHour")
     fraction_hundred_hour: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=0.0, description="Fraction of fuel load from the 100-hour size class category to include in the total fuel load. Can be greater than 1 to include more than 100% of the fuel load, and must be greater than or equal to 0.", alias="fractionHundredHour")
@@ -93,7 +93,7 @@ class LandfireFBFM40FuelLoadSource(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of LandfireFBFM40FuelLoadSource from a JSON string"""
+        """Create an instance of SurfaceGridLandfireFBFM40FuelLoadSource from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -124,7 +124,7 @@ class LandfireFBFM40FuelLoadSource(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of LandfireFBFM40FuelLoadSource from a dict"""
+        """Create an instance of SurfaceGridLandfireFBFM40FuelLoadSource from a dict"""
         if obj is None:
             return None
 

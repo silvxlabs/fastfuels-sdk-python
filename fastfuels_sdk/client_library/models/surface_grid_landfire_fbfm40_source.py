@@ -20,19 +20,19 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
 from fastfuels_sdk.client_library.models.feature_type import FeatureType
-from fastfuels_sdk.client_library.models.interpolation_method import InterpolationMethod
+from fastfuels_sdk.client_library.models.surface_grid_interpolation_method import SurfaceGridInterpolationMethod
 from typing import Optional, Set
 from typing_extensions import Self
 
-class LandfireFBFM40Source(BaseModel):
+class SurfaceGridLandfireFBFM40Source(BaseModel):
     """
-    LandfireFBFM40Source
+    SurfaceGridLandfireFBFM40Source
     """ # noqa: E501
     feature_masks: Optional[List[FeatureType]] = Field(default=None, description="List of feature masks to apply to the surface grid attribute", alias="featureMasks")
     source: Optional[StrictStr] = 'LANDFIRE'
     product: Optional[StrictStr] = 'FBFM40'
     version: Optional[StrictStr] = '2022'
-    interpolation_method: Optional[InterpolationMethod] = Field(default=None, alias="interpolationMethod")
+    interpolation_method: Optional[SurfaceGridInterpolationMethod] = Field(default=None, alias="interpolationMethod")
     __properties: ClassVar[List[str]] = ["featureMasks", "source", "product", "version", "interpolationMethod"]
 
     @field_validator('source')
@@ -83,7 +83,7 @@ class LandfireFBFM40Source(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of LandfireFBFM40Source from a JSON string"""
+        """Create an instance of SurfaceGridLandfireFBFM40Source from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -108,7 +108,7 @@ class LandfireFBFM40Source(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of LandfireFBFM40Source from a dict"""
+        """Create an instance of SurfaceGridLandfireFBFM40Source from a dict"""
         if obj is None:
             return None
 
