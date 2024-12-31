@@ -7,12 +7,12 @@ in the FastFuels API.
 
 # Core imports
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, List
 
 # Internal imports
 from fastfuels_sdk.api import get_client
-from fastfuels_sdk.domains import Domain
 from fastfuels_sdk.exports import Export
+from fastfuels_sdk.grids.surface_grid import SurfaceGrid
 from fastfuels_sdk.client_library.api import (
     GridsApi,
     TreeGridApi,
@@ -22,11 +22,13 @@ from fastfuels_sdk.client_library.api import (
 )
 from fastfuels_sdk.client_library.models import (
     Grids as GridsModel,
-    TreeGrid as TreeGridModel,
-    SurfaceGrid as SurfaceGridModel,
-    TopographyGrid as TopographyGridModel,
-    FeatureGrid as FeatureGridModel,
-    GridAttributeMetadataResponse,
+    CreateSurfaceGridRequest,
+    SurfaceGridFuelLoad,
+    SurfaceGridFuelDepth,
+    SurfaceGridFuelMoisture,
+    SurfaceGridSAVR,
+    SurfaceGridFBFM,
+    SurfaceGridModification,
 )
 
 _GRIDS_API = GridsApi(get_client())
@@ -59,8 +61,8 @@ class Grids(GridsModel):
 
     Examples
     --------
-    >>> domain = Domain.from_id("abc123")
-    >>> grids = Grids.from_domain(domain)
+    >>> from fastfuels_sdk import Grids
+    >>> grids = Grids.from_domain_id("abc123")
 
     >>> # Access specific grid types
     >>> if grids.tree:
@@ -84,37 +86,27 @@ class Grids(GridsModel):
 
     domain_id: str
     # tree: Optional[TreeGrid]
-    # surface: Optional[SurfaceGrid]
+    surface: Optional[SurfaceGrid]
     # topography: Optional[TopographyGrid]
     # feature: Optional[FeatureGrid]
 
     @classmethod
-    def from_domain(cls, domain: Domain) -> Grids:
+    def from_domain_id(cls, domain_id: str) -> Grids:
         """Retrieve the grids associated with a domain.
 
         Parameters
         ----------
-        domain : Domain
-            The domain whose grids should be retrieved
+        domain_id : str
+            The ID of the domain to retrieve grids for
 
         Returns
         -------
         Grids
-            A Grids object containing available grid data:
-            - tree : TreeGrid, optional
-                3D tree canopy data
-            - surface : SurfaceGrid, optional
-                Surface fuel data
-            - topography : TopographyGrid, optional
-                Elevation and terrain data
-            - feature : FeatureGrid, optional
-                Road, water, and other geographic features
+            The grid data for the domain
 
         Examples
         --------
-        >>> from fastfuels_sdk.domains import Domain
-        >>> domain = Domain.from_id("abc123")
-        >>> grids = Grids.from_domain(domain)
+        >>> grids = Grids.from_domain_id("abc123")
 
         >>> # Check for specific grid types
         >>> if grids.tree:
@@ -122,8 +114,8 @@ class Grids(GridsModel):
         >>> if grids.surface:
         ...     print("Domain has surface grid data")
         """
-        grids_response = _GRIDS_API.get_grids(domain_id=domain.id)
-        return cls(domain_id=domain.id, **grids_response.model_dump())
+        grids_response = _GRIDS_API.get_grids(domain_id=domain_id)
+        return cls(domain_id=domain_id, **grids_response.model_dump())
 
     def get(self, in_place: bool = False) -> Grids:
         """Get the latest grid data for this domain.
@@ -141,8 +133,7 @@ class Grids(GridsModel):
 
         Examples
         --------
-        >>> domain = Domain.from_id("abc123")
-        >>> grids = Grids.from_domain(domain)
+        >>> grids = Grids.from_domain_id("abc123")
 
         >>> # Get fresh data in a new instance
         >>> updated_grids = grids.get()
@@ -158,6 +149,121 @@ class Grids(GridsModel):
             return self
         return Grids(domain_id=self.domain_id, **response.model_dump())
 
+    def create_surface_grid(
+        self,
+        attributes: List[str],
+        fuel_load: Optional[dict] = None,
+        fuel_depth: Optional[dict] = None,
+        fuel_moisture: Optional[dict] = None,
+        savr: Optional[dict] = None,
+        fbfm: Optional[dict] = None,
+        modifications: Optional[dict | list[dict]] = None,
+        in_place: bool = False,
+    ) -> SurfaceGrid:
+        """Create a surface grid for the current domain.
+
+        Creates a surface grid containing various fuel and vegetation attributes within
+        the spatial context of your domain. While this method provides direct creation
+        capability, consider using SurfaceGridBuilder for more complex configurations
+        and better parameter validation.
+
+        Parameters
+        ----------
+        attributes : List[str]
+            List of attributes to include in the grid. Available attributes:
+            - "fuelLoad": Surface fuel loading
+            - "fuelDepth": Depth of surface fuels
+            - "fuelMoisture": Moisture content of fuels
+            - "SAVR": Surface area to volume ratio
+            - "FBFM": Fire Behavior Fuel Model
+
+        fuel_load : dict, optional
+            Configuration for fuel load attribute. See SurfaceGridBuilder for details.
+
+        fuel_depth : dict, optional
+            Configuration for fuel depth attribute. See SurfaceGridBuilder for details.
+
+        fuel_moisture : dict, optional
+            Configuration for fuel moisture content. See SurfaceGridBuilder for details.
+
+        savr : dict, optional
+            Configuration for surface area to volume ratio. See SurfaceGridBuilder for details.
+
+        fbfm : dict, optional
+            Configuration for Fire Behavior Fuel Model. See SurfaceGridBuilder for details.
+
+        modifications : dict or list[dict], optional
+            Rules for modifying grid attributes. See SurfaceGridBuilder for details.
+
+        in_place : bool, optional
+            If True, updates this object's surface grid (self.surface).
+            If False (default), leaves this object unchanged.
+
+        Returns
+        -------
+        SurfaceGrid
+            The newly created surface grid object.
+
+        Notes
+        -----
+        Grid generation happens asynchronously. The returned grid will initially
+        have a "pending" status.
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Grids
+        >>> grids = Grids.from_domain_id("abc123")
+
+        Simple usage with uniform values:
+        >>> grid = grids.create_surface_grid(
+        ...     attributes=["fuelLoad", "fuelMoisture"],
+        ...     fuel_load={"source": "uniform", "value": 0.5},
+        ...     fuel_moisture={"source": "uniform", "value": 0.1}
+        ... )
+
+        See Also
+        --------
+        SurfaceGridBuilder : Helper class for creating complex surface grid configurations
+            with parameter validation and a fluent interface.
+        """
+        request = CreateSurfaceGridRequest(
+            attributes=attributes,  # type: ignore  # Pydantic handles this for us
+            fuel_load=SurfaceGridFuelLoad.from_dict(fuel_load) if fuel_load else None,
+            fuel_depth=(
+                SurfaceGridFuelDepth.from_dict(fuel_depth) if fuel_depth else None
+            ),
+            fuel_moisture=(
+                SurfaceGridFuelMoisture.from_dict(fuel_moisture)
+                if fuel_moisture
+                else None
+            ),
+            savr=SurfaceGridSAVR.from_dict(savr) if savr else None,
+            fbfm=SurfaceGridFBFM.from_dict(fbfm) if fbfm else None,
+            modifications=(
+                SurfaceGridModification.from_dict(modifications)
+                if modifications
+                else None
+            ),
+        )
+
+        response = _SURFACE_GRID_API.create_surface_grid(
+            domain_id=self.domain_id, create_surface_grid_request=request
+        )
+
+        # Create a new SurfaceGrid object with the response data.
+        surface_grid = SurfaceGrid(domain_id=self.domain_id, **response.model_dump())
+        # For some reason we need to explicitly set the attribute attributes of the object. I'm not sure why we need to do this, but the object doesn't serialize correctly otherwise.
+        surface_grid.fuel_load = response.fuel_load
+        surface_grid.fuel_depth = response.fuel_depth
+        surface_grid.fuel_moisture = response.fuel_moisture
+        surface_grid.savr = response.savr
+        surface_grid.fbfm = response.fbfm
+
+        if in_place:
+            self.surface = surface_grid
+
+        return surface_grid
+
     def create_export(self, export_format: str) -> Export:
         """Create an export of the grid data.
 
@@ -171,7 +277,7 @@ class Grids(GridsModel):
         Returns
         -------
         Export
-            Export object for managing the export process.
+            An Export object for managing the export process.
 
         Notes
         -----
@@ -183,8 +289,8 @@ class Grids(GridsModel):
 
         Examples
         --------
-        >>> domain = Domain.from_id("abc123")
-        >>> grids = Grids.from_domain(domain)
+        >>> grids = Grids.from_domain_id("abc123")
+
         >>> export = grids.create_export("QUIC-Fire")
         >>> export.wait_until_completed()
         >>> export.to_file("grid_data.zip")
@@ -207,15 +313,15 @@ class Grids(GridsModel):
         Returns
         -------
         Export
-            Export object containing current status.
+            An Export object containing current status.
 
         Examples
         --------
-        >>> domain = Domain.from_id("abc123")
-        >>> grids = Grids.from_domain(domain)
+        >>> from fastfuels_sdk import Grids
+        >>> grids = Grids.from_domain_id("abc123")
         >>> export = grids.create_export("zarr")
         >>> # Check status later
-        >>> export = grids.get_export("zarr")
+        >>> updated_export = grids.get_export("zarr")
         >>> if export.status == "completed":
         ...     export.to_file("grid_data.zarr")
         """
