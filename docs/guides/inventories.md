@@ -12,10 +12,9 @@ This guide shows you how to work with inventory data using the FastFuels SDK. Yo
 Every inventory in FastFuels belongs to a domain. Start by initializing an Inventories object from your domain:
 
 ```python
-from fastfuels_sdk import Domain, Inventories
+from fastfuels_sdk import Inventories
 
-domain = Domain.from_id("your_domain_id")
-inventories = Inventories.from_domain(domain)
+inventories = Inventories.from_domain_id("your_domain_id")
 ```
 
 Check what inventories currently exist:
