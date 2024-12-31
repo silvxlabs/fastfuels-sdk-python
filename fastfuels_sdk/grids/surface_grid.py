@@ -4,20 +4,12 @@ fastfuels_sdk/grids/surface_grid.py
 
 # Core imports
 from __future__ import annotations
-from typing import List, Optional
 
 # Internal imports
 from fastfuels_sdk.api import get_client
 from fastfuels_sdk.client_library.api import SurfaceGridApi
 from fastfuels_sdk.client_library.models import (
     SurfaceGrid as SurfaceGridModel,
-    CreateSurfaceGridRequest,
-    SurfaceGridModification,
-    SurfaceGridFuelLoad,
-    SurfaceGridFuelDepth,
-    SurfaceGridFuelMoisture,
-    SurfaceGridSAVR,
-    SurfaceGridFBFM,
     Export,
     GridAttributeMetadataResponse,
 )
@@ -31,7 +23,7 @@ class SurfaceGrid(SurfaceGridModel):
     domain_id: str
 
     @classmethod
-    def from_domain(cls, domain_id: str) -> "SurfaceGrid":
+    def from_domain_id(cls, domain_id: str) -> "SurfaceGrid":
         """Retrieve an existing surface grid for a domain.
 
         Parameters
@@ -46,105 +38,12 @@ class SurfaceGrid(SurfaceGridModel):
 
         Examples
         --------
-        >>> domain = Domain.from_id("abc123")
-        >>> grid = SurfaceGrid.from_domain(domain)
+        >>> grid = SurfaceGrid.from_domain_id("abc123")
         >>> print(grid.status)
         'completed'
         """
         response = _SURFACE_GRID_API.get_surface_grid(domain_id=domain_id)
         return cls(domain_id=domain_id, **response.model_dump())
-
-    @classmethod
-    def create(
-        cls,
-        domain_id: str,
-        attributes: List[str],
-        fuel_load: Optional[dict] = None,
-        fuel_depth: Optional[dict] = None,
-        fuel_moisture: Optional[dict] = None,
-        savr: Optional[dict] = None,
-        fbfm: Optional[dict] = None,
-        modifications: Optional[dict | list[dict]] = None,
-    ) -> "SurfaceGrid":
-        """Create a new surface grid.
-
-        Parameters
-        ----------
-        domain_id : str
-            ID of domain to create grid for
-        attributes : List[str]
-            List of attributes to include ("fuelLoad", "fuelDepth", etc.)
-        fuel_load : dict, optional
-            Configuration for fuel load attribute:
-            - Uniform: {"source": "uniform", "value": float}
-            - LANDFIRE: {
-                "source": "LANDFIRE",
-                "product": str,
-                "version": str,
-                "interpolationMethod": str
-              }
-        fuel_moisture : dict, optional
-            Configuration for fuel moisture (uniform only)
-        fbfm : dict, optional
-            Configuration for Fire Behavior Fuel Model
-
-        Examples
-        --------
-        # Create with uniform values
-        >>> grid = SurfaceGrid.create(
-        ...     domain_id="abc123",
-        ...     attributes=["fuelLoad", "fuelMoisture"],
-        ...     fuel_load={"source": "uniform", "value": 0.5},
-        ...     fuel_moisture={"source": "uniform", "value": 0.1}
-        ... )
-
-        # Create with LANDFIRE source
-        >>> grid = SurfaceGrid.create(
-        ...     domain_id="abc123",
-        ...     attributes=["fuelLoad", "FBFM"],
-        ...     fuel_load={
-        ...         "source": "LANDFIRE",
-        ...         "product": "FBFM40",
-        ...         "version": "2022",
-        ...         "interpolationMethod": "nearest"
-        ...     }
-        ... )
-
-        See Also
-        --------
-        SurfaceGridBuilder: Helper object for creating surface grid configurations.
-        """
-        request = CreateSurfaceGridRequest(
-            attributes=attributes,  # type: ignore # pydantic handles this
-            fuel_load=SurfaceGridFuelLoad.from_dict(fuel_load) if fuel_load else None,
-            fuel_depth=(
-                SurfaceGridFuelDepth.from_dict(fuel_depth) if fuel_depth else None
-            ),
-            fuel_moisture=(
-                SurfaceGridFuelMoisture.from_dict(fuel_moisture)
-                if fuel_moisture
-                else None
-            ),
-            savr=SurfaceGridSAVR.from_dict(savr) if savr else None,
-            fbfm=SurfaceGridFBFM.from_dict(fbfm) if fbfm else None,
-            modifications=(
-                SurfaceGridModification.from_dict(modifications)
-                if modifications
-                else None
-            ),
-        )
-
-        response = _SURFACE_GRID_API.create_surface_grid(
-            domain_id=domain_id, create_surface_grid_request=request
-        )
-        return_object = cls(domain_id=domain_id, **response.model_dump())
-        return_object.fuel_load = response.fuel_load
-        return_object.fuel_depth = response.fuel_depth
-        return_object.fuel_moisture = response.fuel_moisture
-        return_object.savr = response.savr
-        return_object.fbfm = response.fbfm
-
-        return return_object
 
     def get(self, in_place: bool = False) -> "SurfaceGrid":
         """Get the latest surface grid data.
@@ -162,8 +61,8 @@ class SurfaceGrid(SurfaceGridModel):
 
         Examples
         --------
-        >>> domain = Domain.from_id("abc123")
-        >>> grid = SurfaceGrid.from_domain(domain)
+        >>> from fastfuels_sdk import SurfaceGrid
+        >>> grid = SurfaceGrid.from_domain_id("abc123")
 
         >>> # Get fresh data in a new instance
         >>> updated_grid = grid.get()
@@ -197,8 +96,8 @@ class SurfaceGrid(SurfaceGridModel):
 
         Examples
         --------
-        >>> domain = Domain.from_id("abc123")
-        >>> grid = SurfaceGrid.from_domain(domain)
+        >>> from fastfuels_sdk import SurfaceGrid
+        >>> grid = SurfaceGrid.from_domain_id("abc123")
         >>> metadata = grid.get_attributes()
         >>> print(metadata.shape)
         [100, 100, 50]
@@ -220,12 +119,12 @@ class SurfaceGrid(SurfaceGridModel):
         Returns
         -------
         Export
-            Export object for managing the export process
+            An Export object for managing the export process
 
         Examples
         --------
-        >>> domain = Domain.from_id("abc123")
-        >>> grid = SurfaceGrid.from_domain(domain)
+        >>> from fastfuels_sdk import SurfaceGrid
+        >>> grid = SurfaceGrid.from_domain_id("abc123")
         >>> export = grid.create_export("zarr")
         >>> export.wait_until_completed()
         >>> export.to_file("grid_data.zarr")
@@ -248,15 +147,15 @@ class SurfaceGrid(SurfaceGridModel):
         Returns
         -------
         Export
-            Export object containing current status
+            An Export object containing current status
 
         Examples
         --------
-        >>> domain = Domain.from_id("abc123")
-        >>> grid = SurfaceGrid.from_domain(domain)
+        >>> from fastfuels_sdk import SurfaceGrid
+        >>> grid = SurfaceGrid.from_domain_id("abc123")
         >>> export = grid.create_export("zarr")
         >>> # Check status later
-        >>> export = grid.get_export("zarr")
+        >>> updated_export = grid.get_export("zarr")
         >>> if export.status == "completed":
         ...     export.to_file("grid_data.zarr")
         """
@@ -277,8 +176,8 @@ class SurfaceGrid(SurfaceGridModel):
 
         Examples
         --------
-        >>> domain = Domain.from_id("abc123")
-        >>> grid = SurfaceGrid.from_domain(domain)
+        >>> from fastfuels_sdk import SurfaceGrid
+        >>> grid = SurfaceGrid.from_domain_id("abc123")
         >>> # Remove grid when no longer needed
         >>> grid.delete()
         >>> # Subsequent operations will raise NotFoundException
