@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import List
 
 # Internal imports
+from fastfuels_sdk.grids.grids import Grids
 from fastfuels_sdk.grids.surface_grid import SurfaceGrid
 from fastfuels_sdk.client_library.models import (
     SurfaceGridAttribute,
@@ -42,6 +43,7 @@ class SurfaceGridBuilder:
 
         Examples
         --------
+        >>> builder = SurfaceGridBuilder("abc123")
         >>> builder.with_uniform_fuel_load(0.5)
         """
         self.config["fuel_load"] = SurfaceGridFuelLoad.from_dict(
@@ -78,8 +80,8 @@ class SurfaceGridBuilder:
         product: str,
         version: str = "2022",
         interpolation_method: str = "nearest",
-        curing_live_herbaceous: float = 1.0,
-        curing_live_woody: float = 1.0,
+        curing_live_herbaceous: float = 0.0,
+        curing_live_woody: float = 0.0,
     ) -> "SurfaceGridBuilder":
         """Configure fuel load from LANDFIRE source.
 
@@ -91,9 +93,14 @@ class SurfaceGridBuilder:
             LANDFIRE version, default "2022"
         interpolation_method : str, optional
             Method for interpolation, default "nearest"
+        curing_live_herbaceous : float, optional
+            Proportion of live herbaceous fuel that is cured, defaults to 0.
+        curing_live_woody : float, optional
+            Proportion of live woody fuel that is cured, defaults to 0.
 
         Examples
         --------
+        >>> builder = SurfaceGridBuilder("abc123")
         >>> builder.with_fuel_load_from_landfire(
         ...     product="FBFM40",
         ...     version="2022",
@@ -124,6 +131,7 @@ class SurfaceGridBuilder:
 
         Examples
         --------
+        >>> builder = SurfaceGridBuilder("abc123")
         >>> builder.with_uniform_fuel_depth(0.3)
         """
         self.config["fuel_depth"] = SurfaceGridFuelDepth.from_dict(
@@ -149,6 +157,15 @@ class SurfaceGridBuilder:
             LANDFIRE version, default "2022"
         interpolation_method : str, optional
             Method for interpolation, default "nearest"
+
+        Examples
+        --------
+        >>> builder = SurfaceGridBuilder("abc123")
+        >>> builder.with_fuel_depth_from_landfire(
+        ...     product="FBFM40",
+        ...     version="2022",
+        ...     interpolation_method="nearest"
+        ... )
         """
         self.config["fuel_depth"] = SurfaceGridLandfireSource.from_dict(
             {
@@ -173,6 +190,7 @@ class SurfaceGridBuilder:
 
         Examples
         --------
+        >>> builder = SurfaceGridBuilder("abc123")
         >>> builder.with_uniform_fuel_moisture(15.0)  # 15%
         """
         self.config["fuel_moisture"] = SurfaceGridFuelMoisture.from_dict(
@@ -204,6 +222,17 @@ class SurfaceGridBuilder:
             Live herbaceous fuel moisture content (%).
         live_woody : float
             Live woody fuel moisture content (%).
+
+        Examples
+        --------
+        >>> builder = SurfaceGridBuilder("abc123")
+        >>> builder.with_uniform_fuel_moisture_by_size_class(
+        ...     one_hour=10.0,
+        ...     ten_hour=15.0,
+        ...     hundred_hour=20.0,
+        ...     live_herbaceous=75.0,
+        ...     live_woody=90.0
+        ... )
         """
         self.config["fuel_moisture"] = SurfaceGridUniformValueBySizeClass.from_dict(
             {
@@ -229,7 +258,8 @@ class SurfaceGridBuilder:
 
         Examples
         --------
-        >>> builder.with_uniform_fbfm("GR2")  # Grass Model 2
+        >>> builder = SurfaceGridBuilder("abc123")
+        >>> builder.with_uniform_fbfm("GR2")
         """
         self.config["fbfm"] = SurfaceGridFBFM.from_dict(
             {"source": "uniform", "value": value}
@@ -257,6 +287,7 @@ class SurfaceGridBuilder:
 
         Examples
         --------
+        >>> builder = SurfaceGridBuilder("abc123")
         >>> builder.with_fbfm_from_landfire(
         ...     product="FBFM40",
         ...     version="2022",
@@ -285,6 +316,7 @@ class SurfaceGridBuilder:
 
         Examples
         --------
+        >>> builder = SurfaceGridBuilder("abc123")
         >>> builder.with_uniform_savr(200.0)
         """
         self.config["savr"] = SurfaceGridSAVR.from_dict(
@@ -350,6 +382,7 @@ class SurfaceGridBuilder:
 
         Examples
         --------
+        >>> builder = SurfaceGridBuilder("abc123")
         >>> builder.with_savr_from_landfire(
         ...     product="FBFM40",
         ...     version="2022",
@@ -394,10 +427,11 @@ class SurfaceGridBuilder:
 
         Examples
         --------
+        >>> builder = SurfaceGridBuilder("abc123")
         >>> builder.with_modification(
         ...     actions={"attribute": "FBFM", "modifier": "replace", "value": "GR2"},
         ...     conditions={"attribute": "FBFM", "operator": "eq", "value": "GR1"}
-        ... )
+        ... )  # Replace all FBFM values that are GR1 with GR2
         """
         if not isinstance(actions, list):
             actions = [actions]
@@ -424,8 +458,7 @@ class SurfaceGridBuilder:
         ...     .with_fbfm_from_landfire("FBFM40")
         ...     .build())
         """
-        return SurfaceGrid.create(
-            domain_id=self.domain_id,
+        return Grids.from_domain_id(self.domain_id).create_surface_grid(
             attributes=list(set(self.attributes)),  # Remove duplicates
             **self.config,
         )
