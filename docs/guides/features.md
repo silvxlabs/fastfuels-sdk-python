@@ -7,11 +7,11 @@ This guide shows you how to work with geographic features (roads and water bodie
 Features are always associated with a domain. To access features:
 
 ```python
-from fastfuels_sdk import Domain, Features
+from fastfuels_sdk import Features
 
-# Get domain and its features
-domain = Domain.from_id("your_domain_id")
-features = Features.from_domain(domain)
+# Get Feature data from an existing domain ID.
+features = Features.from_domain_id("your_domain_id")
+```
 
 # Check what features exist
 if features.road:
@@ -156,11 +156,10 @@ if features.water:
 Here's a complete example showing how to work with both road and water features:
 
 ```python
-from fastfuels_sdk import Domain, Features
+from fastfuels_sdk import Features
 
 # Get domain and features
-domain = Domain.from_id("your_domain_id")
-features = Features.from_domain(domain)
+features = Features.from_domain_id("your_domain_id")
 
 # Create road features and wait for completion
 road = features.create_road_feature_from_osm(in_place=True)
