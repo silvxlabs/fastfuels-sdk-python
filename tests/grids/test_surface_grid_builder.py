@@ -1,17 +1,12 @@
 """
-test_surface_grid.py
-Tests for the SurfaceGrid and SurfaceGridBuilder classes.
+test_surface_grid_builder.py
 """
 
-import re
 import random
-from uuid import uuid4
-
 import pytest
-from fastfuels_sdk.grids import SurfaceGrid, SurfaceGridBuilder
+from fastfuels_sdk import SurfaceGrid, SurfaceGridBuilder
 from fastfuels_sdk.client_library.models import (
     SurfaceGridAttribute,
-    SurfaceGridLandfireSource,
     FBFM40,
 )
 from tests.utils import create_default_domain

@@ -12,245 +12,17 @@ from fastfuels_sdk.client_library.api import SurfaceGridApi
 from fastfuels_sdk.client_library.models import (
     SurfaceGrid as SurfaceGridModel,
     CreateSurfaceGridRequest,
-    SurfaceGridAttribute,
     SurfaceGridModification,
+    SurfaceGridFuelLoad,
+    SurfaceGridFuelDepth,
+    SurfaceGridFuelMoisture,
+    SurfaceGridSAVR,
+    SurfaceGridFBFM,
     Export,
     GridAttributeMetadataResponse,
 )
-from fastfuels_sdk.utils import parse_dict_items_to_pydantic_list
 
 _SURFACE_GRID_API = SurfaceGridApi(get_client())
-
-
-class SurfaceGridBuilder:
-    """Builder for creating surface grids with complex attribute configurations."""
-
-    def __init__(self, domain_id: str):
-        self.domain_id = domain_id
-        self.attributes: List[str] = []
-        self.config = {}
-
-    # Fuel Load Methods
-    def with_uniform_fuel_load(self, value: float) -> "SurfaceGridBuilder":
-        """Set uniform fuel load value.
-
-        Parameters
-        ----------
-        value : float
-            Fuel load value in kg/m²
-
-        Examples
-        --------
-        >>> builder.with_uniform_fuel_load(0.5)
-        """
-        self.attributes.append(SurfaceGridAttribute.FUELLOAD)
-        self.config["fuel_load"] = {"source": "uniform", "value": value}
-        return self
-
-    def with_fuel_load_from_landfire(
-        self, product: str, version: str = "2022", interpolation_method: str = "nearest"
-    ) -> "SurfaceGridBuilder":
-        """Configure fuel load from LANDFIRE source.
-
-        Parameters
-        ----------
-        product : str
-            LANDFIRE product name ("FBFM40" or "FBFM13")
-        version : str, optional
-            LANDFIRE version, default "2022"
-        interpolation_method : str, optional
-            Method for interpolation, default "nearest"
-
-        Examples
-        --------
-        >>> builder.with_fuel_load_from_landfire(
-        ...     product="FBFM40",
-        ...     version="2022",
-        ...     interpolation_method="nearest"
-        ... )
-        """
-        self.attributes.append(SurfaceGridAttribute.FUELLOAD)
-        # TODO: Instantiate the Pydantic model directly
-        self.config["fuel_load"] = {
-            "source": "LANDFIRE",
-            "product": product,
-            "version": version,
-            "interpolation_method": interpolation_method,
-        }
-        return self
-
-    # Fuel Moisture Methods (only supports uniform)
-    def with_uniform_fuel_moisture(self, value: float) -> "SurfaceGridBuilder":
-        """Set uniform fuel moisture value.
-
-        Parameters
-        ----------
-        value : float
-            Fuel moisture value as percentage (0-100)
-
-        Examples
-        --------
-        >>> builder.with_uniform_fuel_moisture(15.0)  # 15%
-        """
-        self.attributes.append("fuelMoisture")
-        self.config["fuelMoisture"] = {"source": "uniform", "value": value}
-        return self
-
-    def with_uniform_fbfm(self, value: int) -> "SurfaceGridBuilder":
-        """Set uniform Fire Behavior Fuel Model.
-
-        Parameters
-        ----------
-        value : int
-            FBFM value (typically 1-13 for A13, 1-40 for SB40)
-
-        Examples
-        --------
-        >>> builder.with_uniform_fbfm(9)  # Anderson Model 9
-        """
-        self.attributes.append("FBFM")
-        self.config["FBFM"] = {"source": "uniform", "value": value}
-        return self
-
-    def with_fbfm_from_landfire(
-        self,
-        product: str = "FBFM40",  # Literal["FBFM40", "FBFM13"],
-        version: str = "2022",
-        interpolation_method: str = "nearest",
-    ) -> "SurfaceGridBuilder":
-        """Configure FBFM from LANDFIRE source.
-
-        Parameters
-        ----------
-        product : str
-            LANDFIRE product to use:
-            - "FBFM40": Scott & Burgan 40 fuel models
-            - "FBFM13": Anderson 13 fuel models
-        version : str, optional
-            LANDFIRE version, default "2022"
-        interpolation_method : str, optional
-            Method for interpolation, default "nearest"
-
-        Examples
-        --------
-        >>> builder.with_fbfm_from_landfire(
-        ...     product="FBFM40",  # Scott & Burgan 40 fuel models
-        ...     version="2022"
-        ... )
-        """
-        self.attributes.append("FBFM")
-        self.config["FBFM"] = {
-            "source": "LANDFIRE",
-            "product": product,
-            "version": version,
-            "interpolationMethod": interpolation_method,
-        }
-        return self
-
-    def with_uniform_savr(self, value: float) -> "SurfaceGridBuilder":
-        """Set uniform Surface Area to Volume Ratio.
-
-        Parameters
-        ----------
-        value : float
-            Surface Area to Volume Ratio in 1/m
-
-        Examples
-        --------
-        >>> builder.with_uniform_savr(2000)  # 2000/m
-        """
-        self.attributes.append("SAVR")
-        self.config["SAVR"] = {"source": "uniform", "value": value}
-        return self
-
-    def with_savr_from_landfire(
-        self, product: str, version: str = "2022", interpolation_method: str = "nearest"
-    ) -> "SurfaceGridBuilder":
-        """Configure SAVR from LANDFIRE source."""
-        self.attributes.append("SAVR")
-        self.config["SAVR"] = {
-            "source": "LANDFIRE",
-            "product": product,
-            "version": version,
-            "interpolationMethod": interpolation_method,
-        }
-        return self
-
-    def with_uniform_fuel_depth(self, value: float) -> "SurfaceGridBuilder":
-        """Set uniform fuel depth value.
-
-        Parameters
-        ----------
-        value : float
-            Fuel depth in meters
-
-        Examples
-        --------
-        >>> builder.with_uniform_fuel_depth(0.3)  # 30cm depth
-        """
-        self.attributes.append("fuelDepth")
-        self.config["fuelDepth"] = {"source": "uniform", "value": value}
-        return self
-
-    def with_fuel_depth_from_landfire(
-        self, product: str, version: str = "2022", interpolation_method: str = "nearest"
-    ) -> "SurfaceGridBuilder":
-        """Configure fuel depth from LANDFIRE source."""
-        self.attributes.append("fuelDepth")
-        self.config["fuelDepth"] = {
-            "source": "LANDFIRE",
-            "product": product,
-            "version": version,
-            "interpolationMethod": interpolation_method,
-        }
-        return self
-
-    def with_modification(
-        self, conditions: dict, attributes: dict
-    ) -> "SurfaceGridBuilder":
-        """Add a modification to the surface grid.
-
-        Parameters
-        ----------
-        conditions : dict
-            Conditions for the modification
-        attributes : dict
-            Attributes to modify
-
-        # TODO: Update examples
-        # Examples
-        # --------
-        # >>> builder.with_modification(
-        # ...     conditions={"slope": {"min": 0, "max": 10}},
-        # ...     attributes={"fuelLoad": 0.6}
-        # ... )
-        """
-        self.config.setdefault("modifications", []).append(
-            {"conditions": conditions, "attributes": attributes}
-        )
-        return self
-
-    def build(self) -> "SurfaceGrid":
-        """Create the surface grid with configured attributes.
-
-        Examples
-        --------
-        >>> grid = (SurfaceGridBuilder("abc123")
-        ...     .with_uniform_fuel_load(0.5)
-        ...     .with_uniform_fuel_moisture(15.0)
-        ...     .with_fbfm_from_landfire("FBFM40")
-        ...     .build())
-        """
-        return SurfaceGrid.create(
-            domain_id=self.domain_id, attributes=self.attributes, **self.config
-        )
-
-    def to_dict(self) -> dict:
-        return {
-            "domain_id": self.domain_id,
-            "attributes": self.attributes,
-            **self.config,
-        }
 
 
 class SurfaceGrid(SurfaceGridModel):
@@ -337,25 +109,42 @@ class SurfaceGrid(SurfaceGridModel):
         ...         "interpolationMethod": "nearest"
         ...     }
         ... )
+
+        See Also
+        --------
+        SurfaceGridBuilder: Helper object for creating surface grid configurations.
         """
         request = CreateSurfaceGridRequest(
             attributes=attributes,  # type: ignore # pydantic handles this
-            fuel_load=fuel_load,
-            fuel_depth=fuel_depth,
-            fuel_moisture=fuel_moisture,
-            savr=savr,
-            fbfm=fbfm,
+            fuel_load=SurfaceGridFuelLoad.from_dict(fuel_load) if fuel_load else None,
+            fuel_depth=(
+                SurfaceGridFuelDepth.from_dict(fuel_depth) if fuel_depth else None
+            ),
+            fuel_moisture=(
+                SurfaceGridFuelMoisture.from_dict(fuel_moisture)
+                if fuel_moisture
+                else None
+            ),
+            savr=SurfaceGridSAVR.from_dict(savr) if savr else None,
+            fbfm=SurfaceGridFBFM.from_dict(fbfm) if fbfm else None,
             modifications=(
-                parse_dict_items_to_pydantic_list(
-                    modifications, SurfaceGridModification
-                )
+                SurfaceGridModification.from_dict(modifications)
+                if modifications
+                else None
             ),
         )
 
         response = _SURFACE_GRID_API.create_surface_grid(
             domain_id=domain_id, create_surface_grid_request=request
         )
-        return cls(domain_id=domain_id, **response.model_dump())
+        return_object = cls(domain_id=domain_id, **response.model_dump())
+        return_object.fuel_load = response.fuel_load
+        return_object.fuel_depth = response.fuel_depth
+        return_object.fuel_moisture = response.fuel_moisture
+        return_object.savr = response.savr
+        return_object.fbfm = response.fbfm
+
+        return return_object
 
     def get(self, in_place: bool = False) -> "SurfaceGrid":
         """Get the latest surface grid data.
