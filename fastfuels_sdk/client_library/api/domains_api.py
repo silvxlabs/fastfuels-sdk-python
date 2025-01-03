@@ -16,11 +16,13 @@ from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
 from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
 
-from pydantic import Field, StrictStr
+from pydantic import Field, StrictStr, field_validator
 from typing import Any, Optional
 from typing_extensions import Annotated
 from fastfuels_sdk.client_library.models.create_domain_request import CreateDomainRequest
 from fastfuels_sdk.client_library.models.domain import Domain
+from fastfuels_sdk.client_library.models.geo_json_feature import GeoJSONFeature
+from fastfuels_sdk.client_library.models.geo_json_style_properties import GeoJSONStyleProperties
 from fastfuels_sdk.client_library.models.list_domain_response import ListDomainResponse
 from fastfuels_sdk.client_library.models.update_domain_request import UpdateDomainRequest
 
@@ -339,7 +341,7 @@ class DomainsApi:
     ) -> None:
         """Delete Domain
 
-        # Delete Domain Endpoint  This endpoint deletes an existing domain resource based on the provided domain ID.  ## Endpoint: `DELETE /domains/{domain_id}`  ### Path Parameters  To delete a specific domain, the following path parameter is required:  - **domain_id**: (string) The unique identifier of the domain to delete.  ### Response  The response does not return any content on a successful deletion and will have a status code of 204 No Content.  ### Example Request  ```http DELETE /domains/1e7d8d3c9f8b4c3ba9e7c3b4f8d7a9c1 ```  ### Example Response  ``` HTTP/1.1 204 No Content ```  ### Important Notes  1. Deleting a domain is a permanent action and cannot be undone. Once a domain is deleted, it is removed from the database and cannot be recovered. 2. Ensure that you have the correct domain ID before making the delete request to avoid accidentally deleting the wrong domain.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while deleting the domain resource.   - **Detail**: \"An error occurred while deleting the domain resource.\"  ### Example Error Response  ```json {   \"detail\": \"Resource not found.\" } ```  ### Example Internal Server Error Response  ```json {   \"detail\": \"An error occurred while deleting the domain resource.\" } ```
+        # Delete Domain Endpoint  This endpoint deletes an existing domain resource based on the provided domain ID.  ## Endpoint: `DELETE /domains/{domainId}`  ### Path Parameters  To delete a specific domain, the following path parameter is required:  - **domainId**: (string) The unique identifier of the domain to delete.  ### Response  The response does not return any content on a successful deletion and will have a status code of 204 No Content.  ### Example Request  ```http DELETE /domains/1e7d8d3c9f8b4c3ba9e7c3b4f8d7a9c1 ```  ### Example Response  ``` HTTP/1.1 204 No Content ```  ### Important Notes  1. Deleting a domain is a permanent action and cannot be undone. Once a domain is deleted, it is removed from the database and cannot be recovered. 2. Ensure that you have the correct domain ID before making the delete request to avoid accidentally deleting the wrong domain.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while deleting the domain resource.   - **Detail**: \"An error occurred while deleting the domain resource.\"  ### Example Error Response  ```json {   \"detail\": \"Resource not found.\" } ```  ### Example Internal Server Error Response  ```json {   \"detail\": \"An error occurred while deleting the domain resource.\" } ```
 
         :param domain_id: (required)
         :type domain_id: str
@@ -407,7 +409,7 @@ class DomainsApi:
     ) -> ApiResponse[None]:
         """Delete Domain
 
-        # Delete Domain Endpoint  This endpoint deletes an existing domain resource based on the provided domain ID.  ## Endpoint: `DELETE /domains/{domain_id}`  ### Path Parameters  To delete a specific domain, the following path parameter is required:  - **domain_id**: (string) The unique identifier of the domain to delete.  ### Response  The response does not return any content on a successful deletion and will have a status code of 204 No Content.  ### Example Request  ```http DELETE /domains/1e7d8d3c9f8b4c3ba9e7c3b4f8d7a9c1 ```  ### Example Response  ``` HTTP/1.1 204 No Content ```  ### Important Notes  1. Deleting a domain is a permanent action and cannot be undone. Once a domain is deleted, it is removed from the database and cannot be recovered. 2. Ensure that you have the correct domain ID before making the delete request to avoid accidentally deleting the wrong domain.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while deleting the domain resource.   - **Detail**: \"An error occurred while deleting the domain resource.\"  ### Example Error Response  ```json {   \"detail\": \"Resource not found.\" } ```  ### Example Internal Server Error Response  ```json {   \"detail\": \"An error occurred while deleting the domain resource.\" } ```
+        # Delete Domain Endpoint  This endpoint deletes an existing domain resource based on the provided domain ID.  ## Endpoint: `DELETE /domains/{domainId}`  ### Path Parameters  To delete a specific domain, the following path parameter is required:  - **domainId**: (string) The unique identifier of the domain to delete.  ### Response  The response does not return any content on a successful deletion and will have a status code of 204 No Content.  ### Example Request  ```http DELETE /domains/1e7d8d3c9f8b4c3ba9e7c3b4f8d7a9c1 ```  ### Example Response  ``` HTTP/1.1 204 No Content ```  ### Important Notes  1. Deleting a domain is a permanent action and cannot be undone. Once a domain is deleted, it is removed from the database and cannot be recovered. 2. Ensure that you have the correct domain ID before making the delete request to avoid accidentally deleting the wrong domain.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while deleting the domain resource.   - **Detail**: \"An error occurred while deleting the domain resource.\"  ### Example Error Response  ```json {   \"detail\": \"Resource not found.\" } ```  ### Example Internal Server Error Response  ```json {   \"detail\": \"An error occurred while deleting the domain resource.\" } ```
 
         :param domain_id: (required)
         :type domain_id: str
@@ -475,7 +477,7 @@ class DomainsApi:
     ) -> RESTResponseType:
         """Delete Domain
 
-        # Delete Domain Endpoint  This endpoint deletes an existing domain resource based on the provided domain ID.  ## Endpoint: `DELETE /domains/{domain_id}`  ### Path Parameters  To delete a specific domain, the following path parameter is required:  - **domain_id**: (string) The unique identifier of the domain to delete.  ### Response  The response does not return any content on a successful deletion and will have a status code of 204 No Content.  ### Example Request  ```http DELETE /domains/1e7d8d3c9f8b4c3ba9e7c3b4f8d7a9c1 ```  ### Example Response  ``` HTTP/1.1 204 No Content ```  ### Important Notes  1. Deleting a domain is a permanent action and cannot be undone. Once a domain is deleted, it is removed from the database and cannot be recovered. 2. Ensure that you have the correct domain ID before making the delete request to avoid accidentally deleting the wrong domain.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while deleting the domain resource.   - **Detail**: \"An error occurred while deleting the domain resource.\"  ### Example Error Response  ```json {   \"detail\": \"Resource not found.\" } ```  ### Example Internal Server Error Response  ```json {   \"detail\": \"An error occurred while deleting the domain resource.\" } ```
+        # Delete Domain Endpoint  This endpoint deletes an existing domain resource based on the provided domain ID.  ## Endpoint: `DELETE /domains/{domainId}`  ### Path Parameters  To delete a specific domain, the following path parameter is required:  - **domainId**: (string) The unique identifier of the domain to delete.  ### Response  The response does not return any content on a successful deletion and will have a status code of 204 No Content.  ### Example Request  ```http DELETE /domains/1e7d8d3c9f8b4c3ba9e7c3b4f8d7a9c1 ```  ### Example Response  ``` HTTP/1.1 204 No Content ```  ### Important Notes  1. Deleting a domain is a permanent action and cannot be undone. Once a domain is deleted, it is removed from the database and cannot be recovered. 2. Ensure that you have the correct domain ID before making the delete request to avoid accidentally deleting the wrong domain.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while deleting the domain resource.   - **Detail**: \"An error occurred while deleting the domain resource.\"  ### Example Error Response  ```json {   \"detail\": \"Resource not found.\" } ```  ### Example Internal Server Error Response  ```json {   \"detail\": \"An error occurred while deleting the domain resource.\" } ```
 
         :param domain_id: (required)
         :type domain_id: str
@@ -545,7 +547,7 @@ class DomainsApi:
 
         # process the path parameters
         if domain_id is not None:
-            _path_params['domain_id'] = domain_id
+            _path_params['domainId'] = domain_id
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -569,7 +571,7 @@ class DomainsApi:
 
         return self.api_client.param_serialize(
             method='DELETE',
-            resource_path='/v1/domains/{domain_id}',
+            resource_path='/v1/domains/{domainId}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -604,7 +606,7 @@ class DomainsApi:
     ) -> Domain:
         """Get Domain
 
-        # Get Domain Endpoint  This endpoint retrieves a specific domain resource based on the provided domain ID.  ## Endpoint: `GET /domains/{domain_id}`  ### Path Parameters  To retrieve a specific domain, the following path parameter is required:  - **domain_id**: (string) The unique identifier of the domain to retrieve.  ### Response  The response returns the details of the requested domain resource, including its metadata and spatial information.  - **id**: (string) A unique identifier for the domain. - **name**: (string) The name of the domain. - **description**: (string) A brief description of the domain. - **createdOn**: (datetime) The date and time the domain was created. - **modifiedOn**: (datetime) The date and time the domain was last modified. - **type**: (string) Always \"FeatureCollection\". - **features**: (array) An array of two Feature objects:   1. The domain feature (padded bounding box):      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the padded spatial extent of the domain.      - **properties**: (object) Additional properties of the domain feature.        - **name**: (string) Will be \"domain\".        - **area**: (float) The area of the domain in square meters.        - **perimeter**: (float) The perimeter of the domain in meters.   2. The input feature:      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the original input geometry.      - **properties**: (object) Additional properties of the input feature.        - **name**: (string) Will be \"input\".        - **area**: (float) The area of the input geometry in square meters.        - **perimeter**: (float) The perimeter of the input geometry in meters. - **horizontalResolution**: (float) The horizontal resolution of the domain in meters. - **verticalResolution**: (float) The vertical resolution of the domain in meters. - **crs**: (GeoJsonCRS) The coordinate reference system of the domain. - **utmAuthorityString**: (string, optional) The UTM authority string if the input was projected to UTM.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while retrieving the domain resource.   - **Detail**: \"An error occurred while getting the domain resource.\"
+        # Get Domain Endpoint  This endpoint retrieves a specific domain resource based on the provided domain ID.  ## Endpoint: `GET /domains/{domainId}`  ### Path Parameters  To retrieve a specific domain, the following path parameter is required:  - **domainId**: (string) The unique identifier of the domain to retrieve.  ### Response  The response returns the details of the requested domain resource, including its metadata and spatial information.  - **id**: (string) A unique identifier for the domain. - **name**: (string) The name of the domain. - **description**: (string) A brief description of the domain. - **createdOn**: (datetime) The date and time the domain was created. - **modifiedOn**: (datetime) The date and time the domain was last modified. - **type**: (string) Always \"FeatureCollection\". - **features**: (array) An array of two Feature objects:   1. The domain feature (padded bounding box):      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the padded spatial extent of the domain.      - **properties**: (object) Additional properties of the domain feature.        - **name**: (string) Will be \"domain\".        - **area**: (float) The area of the domain in square meters.        - **perimeter**: (float) The perimeter of the domain in meters.   2. The input feature:      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the original input geometry.      - **properties**: (object) Additional properties of the input feature.        - **name**: (string) Will be \"input\".        - **area**: (float) The area of the input geometry in square meters.        - **perimeter**: (float) The perimeter of the input geometry in meters. - **horizontalResolution**: (float) The horizontal resolution of the domain in meters. - **verticalResolution**: (float) The vertical resolution of the domain in meters. - **crs**: (GeoJsonCRS) The coordinate reference system of the domain. - **utmAuthorityString**: (string, optional) The UTM authority string if the input was projected to UTM.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while retrieving the domain resource.   - **Detail**: \"An error occurred while getting the domain resource.\"
 
         :param domain_id: (required)
         :type domain_id: str
@@ -672,7 +674,7 @@ class DomainsApi:
     ) -> ApiResponse[Domain]:
         """Get Domain
 
-        # Get Domain Endpoint  This endpoint retrieves a specific domain resource based on the provided domain ID.  ## Endpoint: `GET /domains/{domain_id}`  ### Path Parameters  To retrieve a specific domain, the following path parameter is required:  - **domain_id**: (string) The unique identifier of the domain to retrieve.  ### Response  The response returns the details of the requested domain resource, including its metadata and spatial information.  - **id**: (string) A unique identifier for the domain. - **name**: (string) The name of the domain. - **description**: (string) A brief description of the domain. - **createdOn**: (datetime) The date and time the domain was created. - **modifiedOn**: (datetime) The date and time the domain was last modified. - **type**: (string) Always \"FeatureCollection\". - **features**: (array) An array of two Feature objects:   1. The domain feature (padded bounding box):      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the padded spatial extent of the domain.      - **properties**: (object) Additional properties of the domain feature.        - **name**: (string) Will be \"domain\".        - **area**: (float) The area of the domain in square meters.        - **perimeter**: (float) The perimeter of the domain in meters.   2. The input feature:      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the original input geometry.      - **properties**: (object) Additional properties of the input feature.        - **name**: (string) Will be \"input\".        - **area**: (float) The area of the input geometry in square meters.        - **perimeter**: (float) The perimeter of the input geometry in meters. - **horizontalResolution**: (float) The horizontal resolution of the domain in meters. - **verticalResolution**: (float) The vertical resolution of the domain in meters. - **crs**: (GeoJsonCRS) The coordinate reference system of the domain. - **utmAuthorityString**: (string, optional) The UTM authority string if the input was projected to UTM.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while retrieving the domain resource.   - **Detail**: \"An error occurred while getting the domain resource.\"
+        # Get Domain Endpoint  This endpoint retrieves a specific domain resource based on the provided domain ID.  ## Endpoint: `GET /domains/{domainId}`  ### Path Parameters  To retrieve a specific domain, the following path parameter is required:  - **domainId**: (string) The unique identifier of the domain to retrieve.  ### Response  The response returns the details of the requested domain resource, including its metadata and spatial information.  - **id**: (string) A unique identifier for the domain. - **name**: (string) The name of the domain. - **description**: (string) A brief description of the domain. - **createdOn**: (datetime) The date and time the domain was created. - **modifiedOn**: (datetime) The date and time the domain was last modified. - **type**: (string) Always \"FeatureCollection\". - **features**: (array) An array of two Feature objects:   1. The domain feature (padded bounding box):      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the padded spatial extent of the domain.      - **properties**: (object) Additional properties of the domain feature.        - **name**: (string) Will be \"domain\".        - **area**: (float) The area of the domain in square meters.        - **perimeter**: (float) The perimeter of the domain in meters.   2. The input feature:      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the original input geometry.      - **properties**: (object) Additional properties of the input feature.        - **name**: (string) Will be \"input\".        - **area**: (float) The area of the input geometry in square meters.        - **perimeter**: (float) The perimeter of the input geometry in meters. - **horizontalResolution**: (float) The horizontal resolution of the domain in meters. - **verticalResolution**: (float) The vertical resolution of the domain in meters. - **crs**: (GeoJsonCRS) The coordinate reference system of the domain. - **utmAuthorityString**: (string, optional) The UTM authority string if the input was projected to UTM.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while retrieving the domain resource.   - **Detail**: \"An error occurred while getting the domain resource.\"
 
         :param domain_id: (required)
         :type domain_id: str
@@ -740,7 +742,7 @@ class DomainsApi:
     ) -> RESTResponseType:
         """Get Domain
 
-        # Get Domain Endpoint  This endpoint retrieves a specific domain resource based on the provided domain ID.  ## Endpoint: `GET /domains/{domain_id}`  ### Path Parameters  To retrieve a specific domain, the following path parameter is required:  - **domain_id**: (string) The unique identifier of the domain to retrieve.  ### Response  The response returns the details of the requested domain resource, including its metadata and spatial information.  - **id**: (string) A unique identifier for the domain. - **name**: (string) The name of the domain. - **description**: (string) A brief description of the domain. - **createdOn**: (datetime) The date and time the domain was created. - **modifiedOn**: (datetime) The date and time the domain was last modified. - **type**: (string) Always \"FeatureCollection\". - **features**: (array) An array of two Feature objects:   1. The domain feature (padded bounding box):      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the padded spatial extent of the domain.      - **properties**: (object) Additional properties of the domain feature.        - **name**: (string) Will be \"domain\".        - **area**: (float) The area of the domain in square meters.        - **perimeter**: (float) The perimeter of the domain in meters.   2. The input feature:      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the original input geometry.      - **properties**: (object) Additional properties of the input feature.        - **name**: (string) Will be \"input\".        - **area**: (float) The area of the input geometry in square meters.        - **perimeter**: (float) The perimeter of the input geometry in meters. - **horizontalResolution**: (float) The horizontal resolution of the domain in meters. - **verticalResolution**: (float) The vertical resolution of the domain in meters. - **crs**: (GeoJsonCRS) The coordinate reference system of the domain. - **utmAuthorityString**: (string, optional) The UTM authority string if the input was projected to UTM.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while retrieving the domain resource.   - **Detail**: \"An error occurred while getting the domain resource.\"
+        # Get Domain Endpoint  This endpoint retrieves a specific domain resource based on the provided domain ID.  ## Endpoint: `GET /domains/{domainId}`  ### Path Parameters  To retrieve a specific domain, the following path parameter is required:  - **domainId**: (string) The unique identifier of the domain to retrieve.  ### Response  The response returns the details of the requested domain resource, including its metadata and spatial information.  - **id**: (string) A unique identifier for the domain. - **name**: (string) The name of the domain. - **description**: (string) A brief description of the domain. - **createdOn**: (datetime) The date and time the domain was created. - **modifiedOn**: (datetime) The date and time the domain was last modified. - **type**: (string) Always \"FeatureCollection\". - **features**: (array) An array of two Feature objects:   1. The domain feature (padded bounding box):      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the padded spatial extent of the domain.      - **properties**: (object) Additional properties of the domain feature.        - **name**: (string) Will be \"domain\".        - **area**: (float) The area of the domain in square meters.        - **perimeter**: (float) The perimeter of the domain in meters.   2. The input feature:      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the original input geometry.      - **properties**: (object) Additional properties of the input feature.        - **name**: (string) Will be \"input\".        - **area**: (float) The area of the input geometry in square meters.        - **perimeter**: (float) The perimeter of the input geometry in meters. - **horizontalResolution**: (float) The horizontal resolution of the domain in meters. - **verticalResolution**: (float) The vertical resolution of the domain in meters. - **crs**: (GeoJsonCRS) The coordinate reference system of the domain. - **utmAuthorityString**: (string, optional) The UTM authority string if the input was projected to UTM.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while retrieving the domain resource.   - **Detail**: \"An error occurred while getting the domain resource.\"
 
         :param domain_id: (required)
         :type domain_id: str
@@ -810,7 +812,7 @@ class DomainsApi:
 
         # process the path parameters
         if domain_id is not None:
-            _path_params['domain_id'] = domain_id
+            _path_params['domainId'] = domain_id
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -834,7 +836,7 @@ class DomainsApi:
 
         return self.api_client.param_serialize(
             method='GET',
-            resource_path='/v1/domains/{domain_id}',
+            resource_path='/v1/domains/{domainId}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -1466,7 +1468,7 @@ class DomainsApi:
     ) -> Domain:
         """Update Domain
 
-        # Update Domain Endpoint  This endpoint updates an existing domain resource based on the provided domain ID and request body. Users can modify specific fields of the domain, while other fields remain unchanged.  ## Endpoint: `PATCH /domains/{domain_id}`  ### Path Parameters  To update a specific domain, the following path parameter is required:  - **domain_id**: (string) The unique identifier of the domain to update.  ### Request Body  To update a domain, the request body should include one or more of the following fields:  - **name**: (string, optional) The name of the domain. - **description**: (string, optional) A brief description of the domain. - **tags**: (array of strings, optional) A list of tags associated with the domain.  ### Fields that Can Be Updated  - **name**: The name of the domain. - **description**: A brief description of the domain. - **tags**: The list of tags associated with the domain.  ### Fields that Cannot Be Updated  The following fields cannot be updated. If you wish to change these fields, you need to create a new domain resource with the desired values:  - **id**: The unique identifier for the domain. - **createdOn**: The date and time the domain was created. - **type**: Always \"FeatureCollection\". - **features**: The FeatureCollection containing the domain and input geometries. - **horizontalResolution**: The horizontal resolution of the domain. - **verticalResolution**: The vertical resolution of the domain. - **crs**: The coordinate reference system of the domain. - **utmAuthorityString**: The UTM authority string of the domain.  ### Response  The response returns the updated domain resource with the following fields:  - **id**: (string) A unique identifier for the domain. - **name**: (string) The name of the domain. - **description**: (string) A brief description of the domain. - **createdOn**: (datetime) The date and time the domain was created. - **modifiedOn**: (datetime) The date and time the domain was last modified. - **type**: (string) Always \"FeatureCollection\". - **features**: (array) An array of two Feature objects:   1. The domain feature (padded bounding box):      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the padded spatial extent of the domain.      - **properties**: (object) Additional properties of the domain feature.        - **name**: (string) Will be \"domain\".        - **area**: (float) The area of the domain in square meters.        - **perimeter**: (float) The perimeter of the domain in meters.   2. The input feature:      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the original input geometry.      - **properties**: (object) Additional properties of the input feature.        - **name**: (string) Will be \"input\".        - **area**: (float) The area of the input geometry in square meters.        - **perimeter**: (float) The perimeter of the input geometry in meters. - **horizontalResolution**: (float) The horizontal resolution of the domain. - **verticalResolution**: (float) The vertical resolution of the domain. - **crs**: (GeoJsonCRS) The coordinate reference system of the domain. - **utmAuthorityString**: (string, optional) The UTM authority string if the input was projected to UTM. - **tags**: (array of strings) A list of tags associated with the domain.  ### Important Notes  1. Only the **name**, **description**, and **tags** fields can be updated. If you wish to change any other fields (such as features, horizontalResolution, verticalResolution, crs, etc.), you must create a new domain resource with the desired values. 2. The **modifiedOn** field will be automatically updated to the current date and time whenever any updatable field is changed.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while updating the domain resource.   - **Detail**: \"An error occurred while updating the domain resource.\"
+        # Update Domain Endpoint  This endpoint updates an existing domain resource based on the provided domain ID and request body. Users can modify specific fields of the domain, while other fields remain unchanged.  ## Endpoint: `PATCH /domains/{domainId}`  ### Path Parameters  To update a specific domain, the following path parameter is required:  - **domainId**: (string) The unique identifier of the domain to update.  ### Request Body  To update a domain, the request body should include one or more of the following fields:  - **name**: (string, optional) The name of the domain. - **description**: (string, optional) A brief description of the domain. - **tags**: (array of strings, optional) A list of tags associated with the domain.  ### Fields that Can Be Updated  - **name**: The name of the domain. - **description**: A brief description of the domain. - **tags**: The list of tags associated with the domain.  ### Fields that Cannot Be Updated  The following fields cannot be updated. If you wish to change these fields, you need to create a new domain resource with the desired values:  - **id**: The unique identifier for the domain. - **createdOn**: The date and time the domain was created. - **type**: Always \"FeatureCollection\". - **features**: The FeatureCollection containing the domain and input geometries. - **horizontalResolution**: The horizontal resolution of the domain. - **verticalResolution**: The vertical resolution of the domain. - **crs**: The coordinate reference system of the domain. - **utmAuthorityString**: The UTM authority string of the domain.  ### Response  The response returns the updated domain resource with the following fields:  - **id**: (string) A unique identifier for the domain. - **name**: (string) The name of the domain. - **description**: (string) A brief description of the domain. - **createdOn**: (datetime) The date and time the domain was created. - **modifiedOn**: (datetime) The date and time the domain was last modified. - **type**: (string) Always \"FeatureCollection\". - **features**: (array) An array of two Feature objects:   1. The domain feature (padded bounding box):      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the padded spatial extent of the domain.      - **properties**: (object) Additional properties of the domain feature.        - **name**: (string) Will be \"domain\".        - **area**: (float) The area of the domain in square meters.        - **perimeter**: (float) The perimeter of the domain in meters.   2. The input feature:      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the original input geometry.      - **properties**: (object) Additional properties of the input feature.        - **name**: (string) Will be \"input\".        - **area**: (float) The area of the input geometry in square meters.        - **perimeter**: (float) The perimeter of the input geometry in meters. - **horizontalResolution**: (float) The horizontal resolution of the domain. - **verticalResolution**: (float) The vertical resolution of the domain. - **crs**: (GeoJsonCRS) The coordinate reference system of the domain. - **utmAuthorityString**: (string, optional) The UTM authority string if the input was projected to UTM. - **tags**: (array of strings) A list of tags associated with the domain.  ### Important Notes  1. Only the **name**, **description**, and **tags** fields can be updated. If you wish to change any other fields (such as features, horizontalResolution, verticalResolution, crs, etc.), you must create a new domain resource with the desired values. 2. The **modifiedOn** field will be automatically updated to the current date and time whenever any updatable field is changed.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while updating the domain resource.   - **Detail**: \"An error occurred while updating the domain resource.\"
 
         :param domain_id: (required)
         :type domain_id: str
@@ -1538,7 +1540,7 @@ class DomainsApi:
     ) -> ApiResponse[Domain]:
         """Update Domain
 
-        # Update Domain Endpoint  This endpoint updates an existing domain resource based on the provided domain ID and request body. Users can modify specific fields of the domain, while other fields remain unchanged.  ## Endpoint: `PATCH /domains/{domain_id}`  ### Path Parameters  To update a specific domain, the following path parameter is required:  - **domain_id**: (string) The unique identifier of the domain to update.  ### Request Body  To update a domain, the request body should include one or more of the following fields:  - **name**: (string, optional) The name of the domain. - **description**: (string, optional) A brief description of the domain. - **tags**: (array of strings, optional) A list of tags associated with the domain.  ### Fields that Can Be Updated  - **name**: The name of the domain. - **description**: A brief description of the domain. - **tags**: The list of tags associated with the domain.  ### Fields that Cannot Be Updated  The following fields cannot be updated. If you wish to change these fields, you need to create a new domain resource with the desired values:  - **id**: The unique identifier for the domain. - **createdOn**: The date and time the domain was created. - **type**: Always \"FeatureCollection\". - **features**: The FeatureCollection containing the domain and input geometries. - **horizontalResolution**: The horizontal resolution of the domain. - **verticalResolution**: The vertical resolution of the domain. - **crs**: The coordinate reference system of the domain. - **utmAuthorityString**: The UTM authority string of the domain.  ### Response  The response returns the updated domain resource with the following fields:  - **id**: (string) A unique identifier for the domain. - **name**: (string) The name of the domain. - **description**: (string) A brief description of the domain. - **createdOn**: (datetime) The date and time the domain was created. - **modifiedOn**: (datetime) The date and time the domain was last modified. - **type**: (string) Always \"FeatureCollection\". - **features**: (array) An array of two Feature objects:   1. The domain feature (padded bounding box):      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the padded spatial extent of the domain.      - **properties**: (object) Additional properties of the domain feature.        - **name**: (string) Will be \"domain\".        - **area**: (float) The area of the domain in square meters.        - **perimeter**: (float) The perimeter of the domain in meters.   2. The input feature:      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the original input geometry.      - **properties**: (object) Additional properties of the input feature.        - **name**: (string) Will be \"input\".        - **area**: (float) The area of the input geometry in square meters.        - **perimeter**: (float) The perimeter of the input geometry in meters. - **horizontalResolution**: (float) The horizontal resolution of the domain. - **verticalResolution**: (float) The vertical resolution of the domain. - **crs**: (GeoJsonCRS) The coordinate reference system of the domain. - **utmAuthorityString**: (string, optional) The UTM authority string if the input was projected to UTM. - **tags**: (array of strings) A list of tags associated with the domain.  ### Important Notes  1. Only the **name**, **description**, and **tags** fields can be updated. If you wish to change any other fields (such as features, horizontalResolution, verticalResolution, crs, etc.), you must create a new domain resource with the desired values. 2. The **modifiedOn** field will be automatically updated to the current date and time whenever any updatable field is changed.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while updating the domain resource.   - **Detail**: \"An error occurred while updating the domain resource.\"
+        # Update Domain Endpoint  This endpoint updates an existing domain resource based on the provided domain ID and request body. Users can modify specific fields of the domain, while other fields remain unchanged.  ## Endpoint: `PATCH /domains/{domainId}`  ### Path Parameters  To update a specific domain, the following path parameter is required:  - **domainId**: (string) The unique identifier of the domain to update.  ### Request Body  To update a domain, the request body should include one or more of the following fields:  - **name**: (string, optional) The name of the domain. - **description**: (string, optional) A brief description of the domain. - **tags**: (array of strings, optional) A list of tags associated with the domain.  ### Fields that Can Be Updated  - **name**: The name of the domain. - **description**: A brief description of the domain. - **tags**: The list of tags associated with the domain.  ### Fields that Cannot Be Updated  The following fields cannot be updated. If you wish to change these fields, you need to create a new domain resource with the desired values:  - **id**: The unique identifier for the domain. - **createdOn**: The date and time the domain was created. - **type**: Always \"FeatureCollection\". - **features**: The FeatureCollection containing the domain and input geometries. - **horizontalResolution**: The horizontal resolution of the domain. - **verticalResolution**: The vertical resolution of the domain. - **crs**: The coordinate reference system of the domain. - **utmAuthorityString**: The UTM authority string of the domain.  ### Response  The response returns the updated domain resource with the following fields:  - **id**: (string) A unique identifier for the domain. - **name**: (string) The name of the domain. - **description**: (string) A brief description of the domain. - **createdOn**: (datetime) The date and time the domain was created. - **modifiedOn**: (datetime) The date and time the domain was last modified. - **type**: (string) Always \"FeatureCollection\". - **features**: (array) An array of two Feature objects:   1. The domain feature (padded bounding box):      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the padded spatial extent of the domain.      - **properties**: (object) Additional properties of the domain feature.        - **name**: (string) Will be \"domain\".        - **area**: (float) The area of the domain in square meters.        - **perimeter**: (float) The perimeter of the domain in meters.   2. The input feature:      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the original input geometry.      - **properties**: (object) Additional properties of the input feature.        - **name**: (string) Will be \"input\".        - **area**: (float) The area of the input geometry in square meters.        - **perimeter**: (float) The perimeter of the input geometry in meters. - **horizontalResolution**: (float) The horizontal resolution of the domain. - **verticalResolution**: (float) The vertical resolution of the domain. - **crs**: (GeoJsonCRS) The coordinate reference system of the domain. - **utmAuthorityString**: (string, optional) The UTM authority string if the input was projected to UTM. - **tags**: (array of strings) A list of tags associated with the domain.  ### Important Notes  1. Only the **name**, **description**, and **tags** fields can be updated. If you wish to change any other fields (such as features, horizontalResolution, verticalResolution, crs, etc.), you must create a new domain resource with the desired values. 2. The **modifiedOn** field will be automatically updated to the current date and time whenever any updatable field is changed.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while updating the domain resource.   - **Detail**: \"An error occurred while updating the domain resource.\"
 
         :param domain_id: (required)
         :type domain_id: str
@@ -1610,7 +1612,7 @@ class DomainsApi:
     ) -> RESTResponseType:
         """Update Domain
 
-        # Update Domain Endpoint  This endpoint updates an existing domain resource based on the provided domain ID and request body. Users can modify specific fields of the domain, while other fields remain unchanged.  ## Endpoint: `PATCH /domains/{domain_id}`  ### Path Parameters  To update a specific domain, the following path parameter is required:  - **domain_id**: (string) The unique identifier of the domain to update.  ### Request Body  To update a domain, the request body should include one or more of the following fields:  - **name**: (string, optional) The name of the domain. - **description**: (string, optional) A brief description of the domain. - **tags**: (array of strings, optional) A list of tags associated with the domain.  ### Fields that Can Be Updated  - **name**: The name of the domain. - **description**: A brief description of the domain. - **tags**: The list of tags associated with the domain.  ### Fields that Cannot Be Updated  The following fields cannot be updated. If you wish to change these fields, you need to create a new domain resource with the desired values:  - **id**: The unique identifier for the domain. - **createdOn**: The date and time the domain was created. - **type**: Always \"FeatureCollection\". - **features**: The FeatureCollection containing the domain and input geometries. - **horizontalResolution**: The horizontal resolution of the domain. - **verticalResolution**: The vertical resolution of the domain. - **crs**: The coordinate reference system of the domain. - **utmAuthorityString**: The UTM authority string of the domain.  ### Response  The response returns the updated domain resource with the following fields:  - **id**: (string) A unique identifier for the domain. - **name**: (string) The name of the domain. - **description**: (string) A brief description of the domain. - **createdOn**: (datetime) The date and time the domain was created. - **modifiedOn**: (datetime) The date and time the domain was last modified. - **type**: (string) Always \"FeatureCollection\". - **features**: (array) An array of two Feature objects:   1. The domain feature (padded bounding box):      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the padded spatial extent of the domain.      - **properties**: (object) Additional properties of the domain feature.        - **name**: (string) Will be \"domain\".        - **area**: (float) The area of the domain in square meters.        - **perimeter**: (float) The perimeter of the domain in meters.   2. The input feature:      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the original input geometry.      - **properties**: (object) Additional properties of the input feature.        - **name**: (string) Will be \"input\".        - **area**: (float) The area of the input geometry in square meters.        - **perimeter**: (float) The perimeter of the input geometry in meters. - **horizontalResolution**: (float) The horizontal resolution of the domain. - **verticalResolution**: (float) The vertical resolution of the domain. - **crs**: (GeoJsonCRS) The coordinate reference system of the domain. - **utmAuthorityString**: (string, optional) The UTM authority string if the input was projected to UTM. - **tags**: (array of strings) A list of tags associated with the domain.  ### Important Notes  1. Only the **name**, **description**, and **tags** fields can be updated. If you wish to change any other fields (such as features, horizontalResolution, verticalResolution, crs, etc.), you must create a new domain resource with the desired values. 2. The **modifiedOn** field will be automatically updated to the current date and time whenever any updatable field is changed.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while updating the domain resource.   - **Detail**: \"An error occurred while updating the domain resource.\"
+        # Update Domain Endpoint  This endpoint updates an existing domain resource based on the provided domain ID and request body. Users can modify specific fields of the domain, while other fields remain unchanged.  ## Endpoint: `PATCH /domains/{domainId}`  ### Path Parameters  To update a specific domain, the following path parameter is required:  - **domainId**: (string) The unique identifier of the domain to update.  ### Request Body  To update a domain, the request body should include one or more of the following fields:  - **name**: (string, optional) The name of the domain. - **description**: (string, optional) A brief description of the domain. - **tags**: (array of strings, optional) A list of tags associated with the domain.  ### Fields that Can Be Updated  - **name**: The name of the domain. - **description**: A brief description of the domain. - **tags**: The list of tags associated with the domain.  ### Fields that Cannot Be Updated  The following fields cannot be updated. If you wish to change these fields, you need to create a new domain resource with the desired values:  - **id**: The unique identifier for the domain. - **createdOn**: The date and time the domain was created. - **type**: Always \"FeatureCollection\". - **features**: The FeatureCollection containing the domain and input geometries. - **horizontalResolution**: The horizontal resolution of the domain. - **verticalResolution**: The vertical resolution of the domain. - **crs**: The coordinate reference system of the domain. - **utmAuthorityString**: The UTM authority string of the domain.  ### Response  The response returns the updated domain resource with the following fields:  - **id**: (string) A unique identifier for the domain. - **name**: (string) The name of the domain. - **description**: (string) A brief description of the domain. - **createdOn**: (datetime) The date and time the domain was created. - **modifiedOn**: (datetime) The date and time the domain was last modified. - **type**: (string) Always \"FeatureCollection\". - **features**: (array) An array of two Feature objects:   1. The domain feature (padded bounding box):      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the padded spatial extent of the domain.      - **properties**: (object) Additional properties of the domain feature.        - **name**: (string) Will be \"domain\".        - **area**: (float) The area of the domain in square meters.        - **perimeter**: (float) The perimeter of the domain in meters.   2. The input feature:      - **type**: (string) Will be \"Feature\".      - **geometry**: (GeoJSON) The GeoJSON geometry representing the original input geometry.      - **properties**: (object) Additional properties of the input feature.        - **name**: (string) Will be \"input\".        - **area**: (float) The area of the input geometry in square meters.        - **perimeter**: (float) The perimeter of the input geometry in meters. - **horizontalResolution**: (float) The horizontal resolution of the domain. - **verticalResolution**: (float) The vertical resolution of the domain. - **crs**: (GeoJsonCRS) The coordinate reference system of the domain. - **utmAuthorityString**: (string, optional) The UTM authority string if the input was projected to UTM. - **tags**: (array of strings) A list of tags associated with the domain.  ### Important Notes  1. Only the **name**, **description**, and **tags** fields can be updated. If you wish to change any other fields (such as features, horizontalResolution, verticalResolution, crs, etc.), you must create a new domain resource with the desired values. 2. The **modifiedOn** field will be automatically updated to the current date and time whenever any updatable field is changed.  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found.\" - **500 Internal Server Error**: An error occurred while updating the domain resource.   - **Detail**: \"An error occurred while updating the domain resource.\"
 
         :param domain_id: (required)
         :type domain_id: str
@@ -1684,7 +1686,7 @@ class DomainsApi:
 
         # process the path parameters
         if domain_id is not None:
-            _path_params['domain_id'] = domain_id
+            _path_params['domainId'] = domain_id
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -1723,7 +1725,315 @@ class DomainsApi:
 
         return self.api_client.param_serialize(
             method='PATCH',
-            resource_path='/v1/domains/{domain_id}',
+            resource_path='/v1/domains/{domainId}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def update_feature_style(
+        self,
+        domain_id: StrictStr,
+        feature_name: StrictStr,
+        geo_json_style_properties: GeoJSONStyleProperties,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> GeoJSONFeature:
+        """Update Feature Style
+
+        # Update Feature Style  Updates the style properties of a specific feature in a domain while preserving its geometry. This endpoint allows you to customize the visual appearance of either the domain boundary or input geometry features.  ## Endpoint  ``` PATCH /domains/{domainId}/features/{featureName}/style ```  ## Path Parameters  - `domainId` (string, required)   - The unique identifier of the domain containing the feature to update  - `featureName` (string, required)   - The name of the feature to update   - Must be either \"domain\" or \"input\"     - \"domain\" refers to the padded bounding box feature     - \"input\" refers to the original input geometry feature  ## Request Body  The request body should contain style properties to update. All properties are optional:  ```json {   \"color\": string,        // The stroke color for lines/boundaries   \"fillColor\": string,    // The fill color for polygons   \"weight\": number,       // The width of lines/boundaries   \"opacity\": number,      // The opacity of lines/boundaries (0-1)   \"fillOpacity\": number,  // The opacity of polygon fills (0-1)   \"dashArray\": string     // The dash pattern for lines (e.g., \"5,10,15\") } ```  ## Response  Returns the updated feature with the new style properties. The response includes:  - `type`: Always \"Feature\" - `geometry`: The unchanged GeoJSON geometry of the feature - `properties`: Object containing:   - `name`: The feature name (\"domain\" or \"input\")   - `area`: The area of the feature in square meters   - `perimeter`: The perimeter of the feature in meters   - `style`: The updated style properties  ## Example Request  ```http PATCH /domains/abc123/features/domain/style Content-Type: application/json  {   \"color\": \"#FF0000\",   \"weight\": 3,   \"opacity\": 0.8,   \"fillColor\": \"#FFA500\",   \"fillOpacity\": 0.3 } ```  ## Example Response  ```json {   \"type\": \"Feature\",   \"geometry\": {     \"type\": \"Polygon\",     \"coordinates\": [/* ... */]   },   \"properties\": {     \"name\": \"domain\",     \"area\": 10000.0,     \"perimeter\": 400.0,     \"style\": {       \"color\": \"#FF0000\",       \"weight\": 3,       \"opacity\": 0.8,       \"fillColor\": \"#FFA500\",       \"fillOpacity\": 0.3     }   } } ```  ## Error Responses  - **404 Not Found**   - The specified domain or feature does not exist   - The user does not have access to the specified domain  - **500 Internal Server Error**   - An error occurred while updating the feature style   - Response includes an error message in the detail field  ## Notes  - Style properties are merged with existing styles - only specified properties are updated - Unspecified style properties retain their existing values - The geometry and other feature properties remain unchanged - Style changes are persistent and will be saved to the database
+
+        :param domain_id: (required)
+        :type domain_id: str
+        :param feature_name: (required)
+        :type feature_name: str
+        :param geo_json_style_properties: (required)
+        :type geo_json_style_properties: GeoJSONStyleProperties
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._update_feature_style_serialize(
+            domain_id=domain_id,
+            feature_name=feature_name,
+            geo_json_style_properties=geo_json_style_properties,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "GeoJSONFeature",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def update_feature_style_with_http_info(
+        self,
+        domain_id: StrictStr,
+        feature_name: StrictStr,
+        geo_json_style_properties: GeoJSONStyleProperties,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[GeoJSONFeature]:
+        """Update Feature Style
+
+        # Update Feature Style  Updates the style properties of a specific feature in a domain while preserving its geometry. This endpoint allows you to customize the visual appearance of either the domain boundary or input geometry features.  ## Endpoint  ``` PATCH /domains/{domainId}/features/{featureName}/style ```  ## Path Parameters  - `domainId` (string, required)   - The unique identifier of the domain containing the feature to update  - `featureName` (string, required)   - The name of the feature to update   - Must be either \"domain\" or \"input\"     - \"domain\" refers to the padded bounding box feature     - \"input\" refers to the original input geometry feature  ## Request Body  The request body should contain style properties to update. All properties are optional:  ```json {   \"color\": string,        // The stroke color for lines/boundaries   \"fillColor\": string,    // The fill color for polygons   \"weight\": number,       // The width of lines/boundaries   \"opacity\": number,      // The opacity of lines/boundaries (0-1)   \"fillOpacity\": number,  // The opacity of polygon fills (0-1)   \"dashArray\": string     // The dash pattern for lines (e.g., \"5,10,15\") } ```  ## Response  Returns the updated feature with the new style properties. The response includes:  - `type`: Always \"Feature\" - `geometry`: The unchanged GeoJSON geometry of the feature - `properties`: Object containing:   - `name`: The feature name (\"domain\" or \"input\")   - `area`: The area of the feature in square meters   - `perimeter`: The perimeter of the feature in meters   - `style`: The updated style properties  ## Example Request  ```http PATCH /domains/abc123/features/domain/style Content-Type: application/json  {   \"color\": \"#FF0000\",   \"weight\": 3,   \"opacity\": 0.8,   \"fillColor\": \"#FFA500\",   \"fillOpacity\": 0.3 } ```  ## Example Response  ```json {   \"type\": \"Feature\",   \"geometry\": {     \"type\": \"Polygon\",     \"coordinates\": [/* ... */]   },   \"properties\": {     \"name\": \"domain\",     \"area\": 10000.0,     \"perimeter\": 400.0,     \"style\": {       \"color\": \"#FF0000\",       \"weight\": 3,       \"opacity\": 0.8,       \"fillColor\": \"#FFA500\",       \"fillOpacity\": 0.3     }   } } ```  ## Error Responses  - **404 Not Found**   - The specified domain or feature does not exist   - The user does not have access to the specified domain  - **500 Internal Server Error**   - An error occurred while updating the feature style   - Response includes an error message in the detail field  ## Notes  - Style properties are merged with existing styles - only specified properties are updated - Unspecified style properties retain their existing values - The geometry and other feature properties remain unchanged - Style changes are persistent and will be saved to the database
+
+        :param domain_id: (required)
+        :type domain_id: str
+        :param feature_name: (required)
+        :type feature_name: str
+        :param geo_json_style_properties: (required)
+        :type geo_json_style_properties: GeoJSONStyleProperties
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._update_feature_style_serialize(
+            domain_id=domain_id,
+            feature_name=feature_name,
+            geo_json_style_properties=geo_json_style_properties,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "GeoJSONFeature",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def update_feature_style_without_preload_content(
+        self,
+        domain_id: StrictStr,
+        feature_name: StrictStr,
+        geo_json_style_properties: GeoJSONStyleProperties,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Update Feature Style
+
+        # Update Feature Style  Updates the style properties of a specific feature in a domain while preserving its geometry. This endpoint allows you to customize the visual appearance of either the domain boundary or input geometry features.  ## Endpoint  ``` PATCH /domains/{domainId}/features/{featureName}/style ```  ## Path Parameters  - `domainId` (string, required)   - The unique identifier of the domain containing the feature to update  - `featureName` (string, required)   - The name of the feature to update   - Must be either \"domain\" or \"input\"     - \"domain\" refers to the padded bounding box feature     - \"input\" refers to the original input geometry feature  ## Request Body  The request body should contain style properties to update. All properties are optional:  ```json {   \"color\": string,        // The stroke color for lines/boundaries   \"fillColor\": string,    // The fill color for polygons   \"weight\": number,       // The width of lines/boundaries   \"opacity\": number,      // The opacity of lines/boundaries (0-1)   \"fillOpacity\": number,  // The opacity of polygon fills (0-1)   \"dashArray\": string     // The dash pattern for lines (e.g., \"5,10,15\") } ```  ## Response  Returns the updated feature with the new style properties. The response includes:  - `type`: Always \"Feature\" - `geometry`: The unchanged GeoJSON geometry of the feature - `properties`: Object containing:   - `name`: The feature name (\"domain\" or \"input\")   - `area`: The area of the feature in square meters   - `perimeter`: The perimeter of the feature in meters   - `style`: The updated style properties  ## Example Request  ```http PATCH /domains/abc123/features/domain/style Content-Type: application/json  {   \"color\": \"#FF0000\",   \"weight\": 3,   \"opacity\": 0.8,   \"fillColor\": \"#FFA500\",   \"fillOpacity\": 0.3 } ```  ## Example Response  ```json {   \"type\": \"Feature\",   \"geometry\": {     \"type\": \"Polygon\",     \"coordinates\": [/* ... */]   },   \"properties\": {     \"name\": \"domain\",     \"area\": 10000.0,     \"perimeter\": 400.0,     \"style\": {       \"color\": \"#FF0000\",       \"weight\": 3,       \"opacity\": 0.8,       \"fillColor\": \"#FFA500\",       \"fillOpacity\": 0.3     }   } } ```  ## Error Responses  - **404 Not Found**   - The specified domain or feature does not exist   - The user does not have access to the specified domain  - **500 Internal Server Error**   - An error occurred while updating the feature style   - Response includes an error message in the detail field  ## Notes  - Style properties are merged with existing styles - only specified properties are updated - Unspecified style properties retain their existing values - The geometry and other feature properties remain unchanged - Style changes are persistent and will be saved to the database
+
+        :param domain_id: (required)
+        :type domain_id: str
+        :param feature_name: (required)
+        :type feature_name: str
+        :param geo_json_style_properties: (required)
+        :type geo_json_style_properties: GeoJSONStyleProperties
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._update_feature_style_serialize(
+            domain_id=domain_id,
+            feature_name=feature_name,
+            geo_json_style_properties=geo_json_style_properties,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "GeoJSONFeature",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _update_feature_style_serialize(
+        self,
+        domain_id,
+        feature_name,
+        geo_json_style_properties,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if domain_id is not None:
+            _path_params['domainId'] = domain_id
+        if feature_name is not None:
+            _path_params['featureName'] = feature_name
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if geo_json_style_properties is not None:
+            _body_params = geo_json_style_properties
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'APIKeyHeader', 
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='PATCH',
+            resource_path='/v1/domains/{domainId}/features/{featureName}/style',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,

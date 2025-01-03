@@ -41,10 +41,10 @@ from fastfuels_sdk.client_library.models.export_status import ExportStatus
 from fastfuels_sdk.client_library.models.fbfm40 import FBFM40
 from fastfuels_sdk.client_library.models.feature_grid import FeatureGrid
 from fastfuels_sdk.client_library.models.feature_grid_attribute import FeatureGridAttribute
-from fastfuels_sdk.client_library.models.feature_status import FeatureStatus
 from fastfuels_sdk.client_library.models.feature_type import FeatureType
 from fastfuels_sdk.client_library.models.features import Features
 from fastfuels_sdk.client_library.models.geo_json_feature import GeoJSONFeature
+from fastfuels_sdk.client_library.models.geo_json_style_properties import GeoJSONStyleProperties
 from fastfuels_sdk.client_library.models.geo_json_crs import GeoJsonCRS
 from fastfuels_sdk.client_library.models.geo_json_crs_properties import GeoJsonCRSProperties
 from fastfuels_sdk.client_library.models.geometry import Geometry
