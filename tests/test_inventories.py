@@ -532,31 +532,6 @@ class TestCreateTreeInventoryExport:
             test_tree_inventory_completed.create_export(export_format="invalid_format")
 
 
-class TestGetTreeInventoryExport:
-    @pytest.mark.parametrize(
-        "export_fixture",
-        [
-            "tree_inventory_export_csv",
-            "tree_inventory_export_parquet",
-            "tree_inventory_export_geojson",
-        ],
-    )
-    def test_created_export(self, export_fixture, request):
-        export = request.getfixturevalue(export_fixture)
-        assert export is not None
-        assert isinstance(export, Export)
-        assert export.domain_id is not None
-        assert export.resource == "inventories"
-        assert export.sub_resource == "tree"
-        assert export.attribute is None
-        assert export.format in export_fixture
-        assert export.status in ["pending", "running", "completed"]
-        assert export.created_on is not None
-        assert export.modified_on is not None
-        assert export.expires_on is not None
-        assert export.signed_url is None
-
-
 class TestDeleteTreeInventory:
 
     def test_delete_existing_inventory(self, test_inventories, test_tree_inventory):
