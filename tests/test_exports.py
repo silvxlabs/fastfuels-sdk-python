@@ -24,7 +24,7 @@ class TestTreeInventoryExports:
     @pytest.fixture(scope="class")
     def tree_inventory(self, domain):
         """Creates and completes a tree inventory"""
-        inventories = Inventories.from_domain(domain)
+        inventories = Inventories.from_domain_id(domain.id)
         tree_inventory = inventories.create_tree_inventory(sources="TreeMap")
         tree_inventory.wait_until_completed(in_place=True)
         return tree_inventory
