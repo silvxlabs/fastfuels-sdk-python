@@ -530,7 +530,7 @@ class TreeInventory(TreeInventoryModel):
           for processing to finish
         """
         response = _TREE_INVENTORY_API.get_tree_inventory(domain_id=domain_id)
-        return cls(**response.model_dump())
+        return cls(domain_id=domain_id, **response.model_dump())
 
     def get(self, in_place: bool = False):
         """
@@ -600,7 +600,7 @@ class TreeInventory(TreeInventoryModel):
             for key, value in response.model_dump().items():
                 setattr(self, key, value)
             return self
-        return TreeInventory(**response.model_dump())
+        return TreeInventory(domain_id=self.domain_id, **response.model_dump())
 
     def wait_until_completed(
         self,
