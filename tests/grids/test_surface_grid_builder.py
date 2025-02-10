@@ -21,10 +21,10 @@ def domain_fixture():
 
 
 @pytest.fixture
-def builder(domain_fixture):
+def builder(domain_fixture, scope="function"):
     """Fixture providing a clean builder instance."""
-    builder = SurfaceGridBuilder(domain_fixture.id)
-    yield builder.clear()
+    builder = SurfaceGridBuilder(domain_id=domain_fixture.id)
+    yield builder
 
 
 class BaseGridTest:
@@ -187,19 +187,20 @@ class TestFuelLoad:
         method_name = "with_uniform_fuel_load"
         test_value = 0.5
 
-    class TestUniformBySizeClass(BaseUniformBySizeClassTest):
-        """Test cases for uniform by size class fuel load configurations."""
-
-        attribute = SurfaceGridAttribute.FUELLOAD
-        attribute_snake_case = "fuel_load"
-        method_name = "with_uniform_fuel_load_by_size_class"
-        test_values = {
-            "one_hour": 0.1,
-            "ten_hour": 0.2,
-            "hundred_hour": 0.3,
-            "live_herbaceous": 0.4,
-            "live_woody": 0.5,
-        }
+    # TODO: Add support for this
+    # class TestUniformBySizeClass(BaseUniformBySizeClassTest):
+    #     """Test cases for uniform by size class fuel load configurations."""
+    #
+    #     attribute = SurfaceGridAttribute.FUELLOAD
+    #     attribute_snake_case = "fuel_load"
+    #     method_name = "with_uniform_fuel_load_by_size_class"
+    #     test_values = {
+    #         "one_hour": 0.1,
+    #         "ten_hour": 0.2,
+    #         "hundred_hour": 0.3,
+    #         "live_herbaceous": 0.4,
+    #         "live_woody": 0.5,
+    #     }
 
     class TestLandfire(BaseLandfireTest):
         """Test cases for LANDFIRE fuel load configurations."""

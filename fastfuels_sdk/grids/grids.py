@@ -23,11 +23,11 @@ from fastfuels_sdk.client_library.api import (
 from fastfuels_sdk.client_library.models import (
     Grids as GridsModel,
     CreateSurfaceGridRequest,
-    SurfaceGridFuelLoad,
-    SurfaceGridFuelDepth,
-    SurfaceGridFuelMoisture,
-    SurfaceGridSAVR,
-    SurfaceGridFBFM,
+    SurfaceGridFuelLoadSource,
+    SurfaceGridFuelDepthSource,
+    SurfaceGridFuelMoistureSource,
+    SurfaceGridSAVRSource,
+    SurfaceGridFBFMSource,
     SurfaceGridModification,
 )
 
@@ -115,7 +115,15 @@ class Grids(GridsModel):
         ...     print("Domain has surface grid data")
         """
         grids_response = _GRIDS_API.get_grids(domain_id=domain_id)
-        return cls(domain_id=domain_id, **grids_response.model_dump())
+        response_data = grids_response.model_dump()
+
+        # Convert API models to SDK classes with domain_id
+        if "surface" in response_data and response_data["surface"]:
+            response_data["surface"] = SurfaceGrid(
+                domain_id=domain_id, **response_data["surface"]
+            )
+
+        return cls(domain_id=domain_id, **response_data)
 
     def get(self, in_place: bool = False) -> Grids:
         """Get the latest grid data for this domain.
@@ -142,12 +150,21 @@ class Grids(GridsModel):
         >>> grids.get(in_place=True)
         """
         response = _GRIDS_API.get_grids(domain_id=self.domain_id)
+        response_data = response.model_dump()
+
+        # Convert API models to SDK classes with domain_id
+        if "surface" in response_data and response_data["surface"]:
+            response_data["surface"] = SurfaceGrid(
+                domain_id=self.domain_id, **response_data["surface"]
+            )
+
         if in_place:
             # Update all attributes of current instance
-            for key, value in response.model_dump().items():
+            for key, value in response_data.items():
                 setattr(self, key, value)
             return self
-        return Grids(domain_id=self.domain_id, **response.model_dump())
+
+        return Grids(domain_id=self.domain_id, **response_data)
 
     def create_surface_grid(
         self,
@@ -227,18 +244,20 @@ class Grids(GridsModel):
             with parameter validation and a fluent interface.
         """
         request = CreateSurfaceGridRequest(
-            attributes=attributes,  # type: ignore  # Pydantic handles this for us
-            fuel_load=SurfaceGridFuelLoad.from_dict(fuel_load) if fuel_load else None,
-            fuel_depth=(
-                SurfaceGridFuelDepth.from_dict(fuel_depth) if fuel_depth else None
+            attributes=attributes,  # type: ignore # pydantic handles this for us
+            fuelLoad=(
+                SurfaceGridFuelLoadSource.from_dict(fuel_load) if fuel_load else None
             ),
-            fuel_moisture=(
-                SurfaceGridFuelMoisture.from_dict(fuel_moisture)
+            fuelDepth=(
+                SurfaceGridFuelDepthSource.from_dict(fuel_depth) if fuel_depth else None
+            ),
+            fuelMoisture=(
+                SurfaceGridFuelMoistureSource.from_dict(fuel_moisture)
                 if fuel_moisture
                 else None
             ),
-            savr=SurfaceGridSAVR.from_dict(savr) if savr else None,
-            fbfm=SurfaceGridFBFM.from_dict(fbfm) if fbfm else None,
+            SAVR=SurfaceGridSAVRSource.from_dict(savr) if savr else None,
+            FBFM=SurfaceGridFBFMSource.from_dict(fbfm) if fbfm else None,
             modifications=(
                 SurfaceGridModification.from_dict(modifications)
                 if modifications
@@ -252,7 +271,9 @@ class Grids(GridsModel):
 
         # Create a new SurfaceGrid object with the response data.
         surface_grid = SurfaceGrid(domain_id=self.domain_id, **response.model_dump())
-        # For some reason we need to explicitly set the attribute attributes of the object. I'm not sure why we need to do this, but the object doesn't serialize correctly otherwise.
+
+        # For some reason we need to explicitly set the attribute attributes of the object.
+        # I'm not sure why we need to do this, but the object doesn't serialize correctly otherwise.
         surface_grid.fuel_load = response.fuel_load
         surface_grid.fuel_depth = response.fuel_depth
         surface_grid.fuel_moisture = response.fuel_moisture

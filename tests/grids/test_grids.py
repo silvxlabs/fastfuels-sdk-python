@@ -30,7 +30,7 @@ def test_domain():
 @pytest.fixture(scope="module")
 def test_grids(test_domain):
     """Fixture that creates a test grids object to be used by the tests"""
-    grids = Grids.from_domain(test_domain)
+    grids = Grids.from_domain_id(test_domain)
 
     # Return the grids for use in tests
     yield grids
@@ -41,7 +41,7 @@ class TestGridsFromDomain:
     def test_success(self, test_domain):
         """Test successful retrieval of grids from a domain"""
         # Get grids using domain
-        grids = Grids.from_domain(test_domain)
+        grids = Grids.from_domain_id(test_domain)
 
         # Verify basic structure and domain relationship
         assert grids is not None
@@ -59,7 +59,7 @@ class TestGridsFromDomain:
         bad_test_domain = test_domain.model_copy(deep=True)
         bad_test_domain.id = uuid4().hex
         with pytest.raises(NotFoundException):
-            Grids.from_domain(bad_test_domain)
+            Grids.from_domain_id(bad_test_domain)
 
 
 class TestGetGrids:
@@ -164,7 +164,7 @@ class TestGetGridExport:
     def test_nonexistent_export(self, export_format):
         """Test error handling when export does not exist"""
         new_domain = create_default_domain()
-        new_grid = Grids.from_domain(new_domain)
+        new_grid = Grids.from_domain_id(new_domain)
         with pytest.raises(NotFoundException):
             new_grid.get_export(export_format=export_format)
         new_domain.delete()

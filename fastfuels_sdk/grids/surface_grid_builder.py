@@ -12,13 +12,14 @@ from fastfuels_sdk.grids.surface_grid import SurfaceGrid
 from fastfuels_sdk.client_library.models import (
     SurfaceGridAttribute,
     SurfaceGridModification,
-    SurfaceGridFuelLoad,
-    SurfaceGridFuelDepth,
-    SurfaceGridFuelMoisture,
-    SurfaceGridSAVR,
-    SurfaceGridFBFM,
-    SurfaceGridLandfireSource,
-    SurfaceGridLandfireFuelLoadSource,
+    SurfaceGridFuelLoadSource,
+    SurfaceGridFuelDepthSource,
+    SurfaceGridFuelMoistureSource,
+    SurfaceGridSAVRSource,
+    SurfaceGridFBFMSource,
+    SurfaceGridLandfireFBFM40Source,
+    SurfaceGridLandfireFBFM40SAVRSource,
+    SurfaceGridLandfireFBFM40FuelLoadSource,
     SurfaceGridUniformValueBySizeClass,
     SurfaceGridModificationCondition,
     SurfaceGridModificationAction,
@@ -46,7 +47,7 @@ class SurfaceGridBuilder:
         >>> builder = SurfaceGridBuilder("abc123")
         >>> builder.with_uniform_fuel_load(0.5)
         """
-        self.config["fuel_load"] = SurfaceGridFuelLoad.from_dict(
+        self.config["fuel_load"] = SurfaceGridFuelLoadSource.from_dict(
             {"source": "uniform", "value": value}
         ).to_dict()
         self.attributes.append(SurfaceGridAttribute.FUELLOAD)
@@ -107,7 +108,7 @@ class SurfaceGridBuilder:
         ...     interpolation_method="nearest"
         ... )
         """
-        self.config["fuel_load"] = SurfaceGridLandfireFuelLoadSource.from_dict(
+        self.config["fuel_load"] = SurfaceGridLandfireFBFM40FuelLoadSource.from_dict(
             {
                 "source": "LANDFIRE",
                 "product": product,
@@ -134,7 +135,7 @@ class SurfaceGridBuilder:
         >>> builder = SurfaceGridBuilder("abc123")
         >>> builder.with_uniform_fuel_depth(0.3)
         """
-        self.config["fuel_depth"] = SurfaceGridFuelDepth.from_dict(
+        self.config["fuel_depth"] = SurfaceGridFuelDepthSource.from_dict(
             {"source": "uniform", "value": value}
         ).to_dict()
         self.attributes.append(SurfaceGridAttribute.FUELDEPTH)
@@ -167,7 +168,7 @@ class SurfaceGridBuilder:
         ...     interpolation_method="nearest"
         ... )
         """
-        self.config["fuel_depth"] = SurfaceGridLandfireSource.from_dict(
+        self.config["fuel_depth"] = SurfaceGridLandfireFBFM40Source.from_dict(
             {
                 "source": "LANDFIRE",
                 "product": product,
@@ -193,7 +194,7 @@ class SurfaceGridBuilder:
         >>> builder = SurfaceGridBuilder("abc123")
         >>> builder.with_uniform_fuel_moisture(15.0)  # 15%
         """
-        self.config["fuel_moisture"] = SurfaceGridFuelMoisture.from_dict(
+        self.config["fuel_moisture"] = SurfaceGridFuelMoistureSource.from_dict(
             {"source": "uniform", "value": value}
         ).to_dict()
         self.attributes.append("fuelMoisture")
@@ -261,7 +262,7 @@ class SurfaceGridBuilder:
         >>> builder = SurfaceGridBuilder("abc123")
         >>> builder.with_uniform_fbfm("GR2")
         """
-        self.config["fbfm"] = SurfaceGridFBFM.from_dict(
+        self.config["fbfm"] = SurfaceGridFBFMSource.from_dict(
             {"source": "uniform", "value": value}
         ).to_dict()
         self.attributes.append("FBFM")
@@ -294,7 +295,7 @@ class SurfaceGridBuilder:
         ...     interpolation_method="nearest"
         ... )
         """
-        self.config["fbfm"] = SurfaceGridFBFM.from_dict(
+        self.config["fbfm"] = SurfaceGridFBFMSource.from_dict(
             {
                 "source": "LANDFIRE",
                 "product": product,
@@ -319,7 +320,7 @@ class SurfaceGridBuilder:
         >>> builder = SurfaceGridBuilder("abc123")
         >>> builder.with_uniform_savr(200.0)
         """
-        self.config["savr"] = SurfaceGridSAVR.from_dict(
+        self.config["savr"] = SurfaceGridSAVRSource.from_dict(
             {"source": "uniform", "value": value}
         ).to_dict()
         self.attributes.append("SAVR")
@@ -389,7 +390,7 @@ class SurfaceGridBuilder:
         ...     interpolation_method="nearest"
         ... )
         """
-        self.config["savr"] = SurfaceGridLandfireSource.from_dict(
+        self.config["savr"] = SurfaceGridLandfireFBFM40SAVRSource.from_dict(
             {
                 "source": "LANDFIRE",
                 "product": product,
@@ -458,7 +459,8 @@ class SurfaceGridBuilder:
         ...     .with_fbfm_from_landfire("FBFM40")
         ...     .build())
         """
-        return Grids.from_domain_id(self.domain_id).create_surface_grid(
+        grid = Grids.from_domain_id(self.domain_id)
+        return grid.create_surface_grid(
             attributes=list(set(self.attributes)),  # Remove duplicates
             **self.config,
         )
