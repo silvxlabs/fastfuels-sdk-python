@@ -56,12 +56,47 @@ class SurfaceGridBuilder:
 
     def with_uniform_fuel_load_by_size_class(
         self,
-        one_hour: float,
-        ten_hour: float,
-        hundred_hour: float,
-        live_herbaceous: float,
-        live_woody: float,
+        one_hour: float = None,
+        ten_hour: float = None,
+        hundred_hour: float = None,
+        live_herbaceous: float = None,
+        live_woody: float = None,
+        groups: List[str] = None,
     ) -> "SurfaceGridBuilder":
+        """Set uniform fuel load values by size class.
+
+        Parameters
+        ----------
+        one_hour : float
+            1-hour fuel load value in kg/m².
+        ten_hour : float
+            10-hour fuel load value in kg/m².
+        hundred_hour : float
+            100-hour fuel load value in kg/m².
+        live_herbaceous : float
+            Live herbaceous fuel load value in kg/m².
+        live_woody : float
+            Live woody fuel load value in kg/m².
+        groups : list[str], optional
+            List of fuel load groups to include. Can be: "oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody"
+
+        Examples
+        --------
+        >>> builder = SurfaceGridBuilder("abc123")
+        >>> builder.with_uniform_fuel_load_by_size_class(
+        ...     one_hour=0.5,
+        ...     ten_hour=1.0,
+        ...     hundred_hour=2.0,
+        ...     groups=["oneHour", "tenHour", "hundredHour"]
+        ...
+
+        Notes
+        -----
+        If a size class is not provided, it will be excluded from the configuration.
+
+        If a size class is included in `groups`, but a value is not provided, then the API will raise an error.
+
+        """
         self.config["fuel_load"] = SurfaceGridUniformValueBySizeClass.from_dict(
             {
                 "source": "uniformBySizeClass",
@@ -70,6 +105,7 @@ class SurfaceGridBuilder:
                 "hundredHour": hundred_hour,
                 "liveHerbaceous": live_herbaceous,
                 "liveWoody": live_woody,
+                "groups": groups,
             }
         ).to_dict()
         self.attributes.append(SurfaceGridAttribute.FUELLOAD)
@@ -83,6 +119,7 @@ class SurfaceGridBuilder:
         interpolation_method: str = "nearest",
         curing_live_herbaceous: float = 0.0,
         curing_live_woody: float = 0.0,
+        groups: List[str] = None,
     ) -> "SurfaceGridBuilder":
         """Configure fuel load from LANDFIRE source.
 
@@ -98,6 +135,8 @@ class SurfaceGridBuilder:
             Proportion of live herbaceous fuel that is cured, defaults to 0.
         curing_live_woody : float, optional
             Proportion of live woody fuel that is cured, defaults to 0.
+        groups : list[str], optional
+            List of fuel load groups to include. Can be: "oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody"
 
         Examples
         --------
@@ -116,6 +155,7 @@ class SurfaceGridBuilder:
                 "interpolationMethod": interpolation_method,
                 "curingLiveHerbaceous": curing_live_herbaceous,
                 "curingLiveWoody": curing_live_woody,
+                "groups": groups,
             }
         ).to_dict()
         self.attributes.append(SurfaceGridAttribute.FUELLOAD)
@@ -208,6 +248,7 @@ class SurfaceGridBuilder:
         hundred_hour: float,
         live_herbaceous: float,
         live_woody: float,
+        groups: List[str] = None,
     ) -> "SurfaceGridBuilder":
         """Set uniform fuel moisture values by size class.
 
@@ -223,6 +264,7 @@ class SurfaceGridBuilder:
             Live herbaceous fuel moisture content (%).
         live_woody : float
             Live woody fuel moisture content (%).
+        groups : list[str], optional
 
         Examples
         --------
@@ -232,7 +274,8 @@ class SurfaceGridBuilder:
         ...     ten_hour=15.0,
         ...     hundred_hour=20.0,
         ...     live_herbaceous=75.0,
-        ...     live_woody=90.0
+        ...     live_woody=90.0,
+        ...     groups=["oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody"]
         ... )
         """
         self.config["fuel_moisture"] = SurfaceGridUniformValueBySizeClass.from_dict(
@@ -243,6 +286,7 @@ class SurfaceGridBuilder:
                 "hundredHour": hundred_hour,
                 "liveHerbaceous": live_herbaceous,
                 "liveWoody": live_woody,
+                "groups": groups,
             }
         ).to_dict()
         self.attributes.append("fuelMoisture")
@@ -369,6 +413,7 @@ class SurfaceGridBuilder:
         product: str,
         version: str = "2022",
         interpolation_method: str = "nearest",
+        groups: List[str] = None,
     ) -> "SurfaceGridBuilder":
         """Configure SAVR from LANDFIRE source.
 
@@ -396,6 +441,7 @@ class SurfaceGridBuilder:
                 "product": product,
                 "version": version,
                 "interpolationMethod": interpolation_method,
+                "groups": groups,
             }
         ).to_dict()
         self.attributes.append("SAVR")
@@ -453,7 +499,7 @@ class SurfaceGridBuilder:
 
         Examples
         --------
-        >>> grid = (SurfaceGridBuilder("abc123")
+        >>> surface_grid = (SurfaceGridBuilder("abc123")
         ...     .with_uniform_fuel_load(0.5)
         ...     .with_uniform_fuel_moisture(15.0)
         ...     .with_fbfm_from_landfire("FBFM40")

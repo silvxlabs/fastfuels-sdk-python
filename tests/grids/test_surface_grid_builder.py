@@ -85,6 +85,7 @@ class BaseUniformBySizeClassTest:
     attribute_snake_case: str
     method_name: str
     test_values: dict
+    test_groups: list[str] = None
 
     def test_uniform_by_size_class(self, builder):
         method = getattr(builder, self.method_name)
@@ -99,6 +100,7 @@ class BaseUniformBySizeClassTest:
         assert config["hundredHour"] == self.test_values["hundred_hour"]
         assert config["liveHerbaceous"] == self.test_values["live_herbaceous"]
         assert config["liveWoody"] == self.test_values["live_woody"]
+        assert config["groups"] == self.test_values["groups"]
 
         surface_grid = result.build()
         attribute_dict = getattr(surface_grid, self.attribute_snake_case).to_dict()
@@ -111,6 +113,10 @@ class BaseUniformBySizeClassTest:
         assert attribute_dict["hundredHour"] == self.test_values["hundred_hour"]
         assert attribute_dict["liveHerbaceous"] == self.test_values["live_herbaceous"]
         assert attribute_dict["liveWoody"] == self.test_values["live_woody"]
+        if self.test_groups:
+            assert sorted(
+                [enum_val.value for enum_val in attribute_dict["groups"]]
+            ) == sorted(self.test_values["groups"])
 
 
 class BaseLandfireTest:
@@ -122,14 +128,7 @@ class BaseLandfireTest:
     test_products: list[str] = ["FBFM40"]
     test_versions: list[str] = ["2022"]
     test_interpolations: list[str] = ["nearest", "linear", "cubic", "zipper"]
-
-    def test_landfire_source(self, builder, product, version, interpolation):
-        method = getattr(builder, self.method_name)
-        result = method(
-            product=product, version=version, interpolation_method=interpolation
-        )
-
-        self._verify_landfire_config(result, product, version, interpolation)
+    test_groups: list[str] = None
 
     @classmethod
     def pytest_generate_tests(cls, metafunc):
@@ -139,6 +138,20 @@ class BaseLandfireTest:
             metafunc.parametrize("version", cls.test_versions)
         if "interpolation" in metafunc.fixturenames:
             metafunc.parametrize("interpolation", cls.test_interpolations)
+
+    def test_landfire_source(self, builder, product, version, interpolation):
+        method = getattr(builder, self.method_name)
+        try:
+            result = method(
+                product=product,
+                version=version,
+                interpolation_method=interpolation,
+                groups=self.test_groups,
+            )
+        except TypeError:
+            result = method(product, version, interpolation)
+
+        self._verify_landfire_config(result, product, version, interpolation)
 
     def test_invalid_product(self, builder):
         method = getattr(builder, self.method_name)
@@ -158,6 +171,18 @@ class BaseLandfireTest:
             method(self.test_products[0], self.test_versions[0], "invalid")
             builder.build()
 
+    @pytest.mark.skipif(test_groups is None, reason="No groups defined")
+    def test_invalid_group(self, builder):
+        method = getattr(builder, self.method_name)
+        with pytest.raises(ValueError):
+            method(
+                self.test_products[0],
+                self.test_versions[0],
+                self.test_interpolations[0],
+                ["invalid"],
+            )
+            builder.build()
+
     def _verify_landfire_config(self, result, product, version, interpolation):
         assert result.config[self.attribute_snake_case]["source"] == "LANDFIRE"
         assert result.config[self.attribute_snake_case]["product"] == product
@@ -174,6 +199,10 @@ class BaseLandfireTest:
         assert attribute_dict["product"] == product
         assert attribute_dict["version"] == version
         assert attribute_dict["interpolationMethod"] == interpolation
+        if self.test_groups:
+            assert sorted(
+                [enum_val.value for enum_val in attribute_dict["groups"]]
+            ) == sorted(self.test_groups)
 
 
 class TestFuelLoad:
@@ -211,6 +240,13 @@ class TestFuelLoad:
         test_products = ["FBFM40"]
         test_versions = ["2022"]
         test_interpolations = ["nearest", "linear", "cubic", "zipper"]
+        test_groups = [
+            "oneHour",
+            "tenHour",
+            "hundredHour",
+            "liveHerbaceous",
+            "liveWoody",
+        ]
 
 
 class TestFuelDepth:
@@ -233,6 +269,7 @@ class TestFuelDepth:
         test_products = ["FBFM40"]
         test_versions = ["2022"]
         test_interpolations = ["nearest", "linear", "cubic", "zipper"]
+        test_groups = None
 
 
 class TestFuelMoisture:
@@ -258,6 +295,13 @@ class TestFuelMoisture:
             "hundred_hour": 0.3,
             "live_herbaceous": 0.4,
             "live_woody": 0.5,
+            "groups": [
+                "oneHour",
+                "tenHour",
+                "hundredHour",
+                "liveHerbaceous",
+                "liveWoody",
+            ],
         }
 
 
@@ -291,6 +335,7 @@ class TestFBFM:
             "nearest",
             "zipper",
         ]  # Note: FBFM only supports nearest and zipper
+        test_groups = None
 
 
 class TestSAVR:
