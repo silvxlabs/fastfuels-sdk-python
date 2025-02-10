@@ -13,6 +13,7 @@ from typing import Optional, List
 from fastfuels_sdk.api import get_client
 from fastfuels_sdk.exports import Export
 from fastfuels_sdk.grids.surface_grid import SurfaceGrid
+from fastfuels_sdk.grids.topography_grid import TopographyGrid
 from fastfuels_sdk.client_library.api import (
     GridsApi,
     TreeGridApi,
@@ -29,6 +30,10 @@ from fastfuels_sdk.client_library.models import (
     SurfaceGridSAVRSource,
     SurfaceGridFBFMSource,
     SurfaceGridModification,
+    CreateTopographyGridRequest,
+    TopographyGridElevationSource,
+    TopographyGridSlopeSource,
+    TopographyGridAspectSource,
 )
 
 _GRIDS_API = GridsApi(get_client())
@@ -87,7 +92,7 @@ class Grids(GridsModel):
     domain_id: str
     # tree: Optional[TreeGrid]
     surface: Optional[SurfaceGrid]
-    # topography: Optional[TopographyGrid]
+    topography: Optional[TopographyGrid]
     # feature: Optional[FeatureGrid]
 
     @classmethod
@@ -116,12 +121,7 @@ class Grids(GridsModel):
         """
         grids_response = _GRIDS_API.get_grids(domain_id=domain_id)
         response_data = grids_response.model_dump()
-
-        # Convert API models to SDK classes with domain_id
-        if "surface" in response_data and response_data["surface"]:
-            response_data["surface"] = SurfaceGrid(
-                domain_id=domain_id, **response_data["surface"]
-            )
+        response_data = _convert_api_models_to_sdk_classes(domain_id, response_data)
 
         return cls(domain_id=domain_id, **response_data)
 
@@ -151,12 +151,9 @@ class Grids(GridsModel):
         """
         response = _GRIDS_API.get_grids(domain_id=self.domain_id)
         response_data = response.model_dump()
-
-        # Convert API models to SDK classes with domain_id
-        if "surface" in response_data and response_data["surface"]:
-            response_data["surface"] = SurfaceGrid(
-                domain_id=self.domain_id, **response_data["surface"]
-            )
+        response_data = _convert_api_models_to_sdk_classes(
+            self.domain_id, response_data
+        )
 
         if in_place:
             # Update all attributes of current instance
@@ -285,6 +282,137 @@ class Grids(GridsModel):
 
         return surface_grid
 
+    def create_topography_grid(
+        self,
+        attributes: List[str],
+        elevation: Optional[dict] = None,
+        slope: Optional[dict] = None,
+        aspect: Optional[dict] = None,
+        in_place: bool = False,
+    ) -> TopographyGrid:
+        """Create a topography grid for the current domain.
+
+        Creates a topography grid containing elevation, slope, and/or aspect data within
+        the spatial context of your domain.
+
+        Parameters
+        ----------
+        attributes : List[str]
+            List of attributes to include in the grid. Available attributes:
+            - "elevation": Terrain elevation above sea level
+            - "slope": Slope of terrain surface
+            - "aspect": Direction the slope faces
+
+        elevation : dict, optional
+            Configuration for elevation attribute. Sources available:
+            - 3DEP (default):
+                {
+                    "source": "3DEP",
+                    "interpolationMethod": "cubic"  # or "nearest", "linear"
+                }
+            - LANDFIRE:
+                {
+                    "source": "LANDFIRE",
+                    "version": "2020",
+                    "interpolationMethod": "cubic"  # or "nearest", "linear", "zipper"
+                }
+            - Uniform:
+                {
+                    "source": "uniform",
+                    "value": float  # elevation in meters
+                }
+
+        slope : dict, optional
+            Configuration for slope attribute. Sources available:
+            - 3DEP (default):
+                {
+                    "source": "3DEP",
+                    "interpolationMethod": "cubic"  # or "nearest", "linear"
+                }
+            - LANDFIRE:
+                {
+                    "source": "LANDFIRE",
+                    "version": "2020",
+                    "interpolationMethod": "cubic"  # or "nearest", "linear", "zipper"
+                }
+
+        aspect : dict, optional
+            Configuration for aspect attribute. Sources available:
+            - 3DEP (default):
+                {
+                    "source": "3DEP",
+                    "interpolationMethod": "nearest"
+                }
+            - LANDFIRE:
+                {
+                    "source": "LANDFIRE",
+                    "version": "2020",
+                    "interpolationMethod": "nearest"
+                }
+
+        in_place : bool, optional
+            If True, updates this object's topography grid (self.topography).
+            If False (default), leaves this object unchanged.
+
+        Returns
+        -------
+        TopographyGrid
+            The newly created topography grid object.
+
+        Notes
+        -----
+        Grid generation happens asynchronously. The returned grid will initially
+        have a "pending" status.
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Grids
+        >>> grids = Grids.from_domain_id("abc123")
+
+        Simple usage with default 3DEP source:
+        >>> grid = grids.create_topography_grid(
+        ...     attributes=["elevation", "slope"]
+        ... )
+
+        Using multiple data sources:
+        >>> grid = grids.create_topography_grid(
+        ...     attributes=["elevation", "slope", "aspect"],
+        ...     elevation={
+        ...         "source": "LANDFIRE",
+        ...         "version": "2020",
+        ...         "interpolationMethod": "cubic"
+        ...     },
+        ...     slope={
+        ...         "source": "3DEP",
+        ...         "interpolationMethod": "cubic"
+        ...     }
+        ... )
+        """
+        request = CreateTopographyGridRequest(
+            attributes=attributes,  # type: ignore # pydantic handles this for us
+            elevation=(
+                TopographyGridElevationSource.from_dict(elevation)
+                if elevation
+                else None
+            ),
+            slope=(TopographyGridSlopeSource.from_dict(slope) if slope else None),
+            aspect=(TopographyGridAspectSource.from_dict(aspect) if aspect else None),
+        )
+
+        response = _TOPOGRAPHY_GRID_API.create_topography_grid(
+            domain_id=self.domain_id, create_topography_grid_request=request
+        )
+
+        # Create a new TopographyGrid object with the response data
+        topography_grid = TopographyGrid(
+            domain_id=self.domain_id, **response.model_dump()
+        )
+
+        if in_place:
+            self.topography = topography_grid
+
+        return topography_grid
+
     def create_export(self, export_format: str) -> Export:
         """Create an export of the grid data.
 
@@ -350,3 +478,16 @@ class Grids(GridsModel):
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
+
+
+def _convert_api_models_to_sdk_classes(domain_id, response_data: dict) -> dict:
+    """Convert API models to SDK classes with domain_id."""
+    if "surface" in response_data and response_data["surface"]:
+        response_data["surface"] = SurfaceGrid(
+            domain_id=domain_id, **response_data["surface"]
+        )
+    if "topography" in response_data and response_data["topography"]:
+        response_data["topography"] = TopographyGrid(
+            domain_id=domain_id, **response_data["topography"]
+        )
+    return response_data

@@ -1,7 +1,15 @@
 from fastfuels_sdk.domains import Domain, list_domains
 from fastfuels_sdk.inventories import Inventories, TreeInventory
 from fastfuels_sdk.features import Features, RoadFeature, WaterFeature
-from fastfuels_sdk.grids import Grids, SurfaceGrid, SurfaceGridBuilder, TreeGrid
+from fastfuels_sdk.grids import (
+    Grids,
+    SurfaceGrid,
+    SurfaceGridBuilder,
+    TreeGrid,
+    TopographyGrid,
+    TopographyGridBuilder,
+)
+from fastfuels_sdk.exports import Export
 
 
 __all__ = [
@@ -16,4 +24,7 @@ __all__ = [
     "SurfaceGrid",
     "SurfaceGridBuilder",
     "TreeGrid",
+    "TopographyGrid",
+    "TopographyGridBuilder",
+    "Export",
 ]

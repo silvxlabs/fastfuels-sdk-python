@@ -56,10 +56,10 @@ def domain_fixture_completed():
 
 
 @pytest.fixture(scope="module")
-def surface_grid_fixture_completed(domain_fixture):
+def surface_grid_fixture_completed(domain_fixture_completed):
     """Fixture that creates a test surface grid to be used by the tests"""
     surface_grid = (
-        SurfaceGridBuilder(domain_id=domain_fixture.id)
+        SurfaceGridBuilder(domain_id=domain_fixture_completed.id)
         .with_uniform_fuel_load(value=1.0)
         .with_uniform_fuel_moisture(value=15)
         .with_uniform_fuel_depth(value=1.0)
