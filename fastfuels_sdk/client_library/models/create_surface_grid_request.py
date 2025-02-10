@@ -23,7 +23,7 @@ from typing_extensions import Annotated
 from fastfuels_sdk.client_library.models.surface_grid_attribute import SurfaceGridAttribute
 from fastfuels_sdk.client_library.models.surface_grid_fbfm_source import SurfaceGridFBFMSource
 from fastfuels_sdk.client_library.models.surface_grid_fuel_depth_source import SurfaceGridFuelDepthSource
-from fastfuels_sdk.client_library.models.surface_grid_fuel_load import SurfaceGridFuelLoad
+from fastfuels_sdk.client_library.models.surface_grid_fuel_load_source import SurfaceGridFuelLoadSource
 from fastfuels_sdk.client_library.models.surface_grid_fuel_moisture_source import SurfaceGridFuelMoistureSource
 from fastfuels_sdk.client_library.models.surface_grid_modification import SurfaceGridModification
 from fastfuels_sdk.client_library.models.surface_grid_savr_source import SurfaceGridSAVRSource
@@ -35,7 +35,7 @@ class CreateSurfaceGridRequest(BaseModel):
     CreateSurfaceGridRequest
     """ # noqa: E501
     attributes: Annotated[List[SurfaceGridAttribute], Field(min_length=1)] = Field(description="List of attributes to include in the surface grid")
-    fuel_load: Optional[SurfaceGridFuelLoad] = Field(default=None, alias="fuelLoad")
+    fuel_load: Optional[SurfaceGridFuelLoadSource] = Field(default=None, alias="fuelLoad")
     fuel_depth: Optional[SurfaceGridFuelDepthSource] = Field(default=None, alias="fuelDepth")
     fuel_moisture: Optional[SurfaceGridFuelMoistureSource] = Field(default=None, alias="fuelMoisture")
     savr: Optional[SurfaceGridSAVRSource] = Field(default=None, alias="SAVR")
@@ -142,7 +142,7 @@ class CreateSurfaceGridRequest(BaseModel):
 
         _obj = cls.model_validate({
             "attributes": obj.get("attributes"),
-            "fuelLoad": SurfaceGridFuelLoad.from_dict(obj["fuelLoad"]) if obj.get("fuelLoad") is not None else None,
+            "fuelLoad": SurfaceGridFuelLoadSource.from_dict(obj["fuelLoad"]) if obj.get("fuelLoad") is not None else None,
             "fuelDepth": SurfaceGridFuelDepthSource.from_dict(obj["fuelDepth"]) if obj.get("fuelDepth") is not None else None,
             "fuelMoisture": SurfaceGridFuelMoistureSource.from_dict(obj["fuelMoisture"]) if obj.get("fuelMoisture") is not None else None,
             "SAVR": SurfaceGridSAVRSource.from_dict(obj["SAVR"]) if obj.get("SAVR") is not None else None,
