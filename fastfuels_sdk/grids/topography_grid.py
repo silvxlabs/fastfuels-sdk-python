@@ -247,10 +247,8 @@ class TopographyGrid(TopographyGridModel):
         >>> from fastfuels_sdk import TopographyGrid
         >>> grid = TopographyGrid.from_domain_id("abc123")
         >>> export = grid.create_export("zarr")
-        >>> # Check status later
-        >>> updated_export = grid.get_export("zarr")
-        >>> if export.status == "completed":
-        ...     export.to_file("grid_data.zarr")
+        >>> export.wait_until_completed()
+        >>> export.to_file("grid_data.zarr")
         """
         response = _TOPOGRAPHY_GRID_API.get_topography_grid_export(
             domain_id=self.domain_id, export_format=export_format
