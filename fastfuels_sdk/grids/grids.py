@@ -95,7 +95,7 @@ class Grids(GridsModel):
     """
 
     domain_id: str
-    # tree: Optional[TreeGrid]
+    tree: Optional[TreeGrid]
     surface: Optional[SurfaceGrid]
     topography: Optional[TopographyGrid]
     # feature: Optional[FeatureGrid]
@@ -617,4 +617,6 @@ def _convert_api_models_to_sdk_classes(domain_id, response_data: dict) -> dict:
         response_data["topography"] = TopographyGrid(
             domain_id=domain_id, **response_data["topography"]
         )
+    if "tree" in response_data and response_data["tree"]:
+        response_data["tree"] = TreeGrid(domain_id=domain_id, **response_data["tree"])
     return response_data
