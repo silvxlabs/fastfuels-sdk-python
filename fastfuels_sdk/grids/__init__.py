@@ -1,10 +1,12 @@
+# Main Grids class
 from fastfuels_sdk.grids.grids import Grids
 
+# Subresource Grids classes
 from fastfuels_sdk.grids.tree_grid import TreeGrid
 from fastfuels_sdk.grids.surface_grid import SurfaceGrid
-from fastfuels_sdk.grids.surface_grid_builder import SurfaceGridBuilder
 from fastfuels_sdk.grids.topography_grid import TopographyGrid
-from fastfuels_sdk.grids.topography_grid_builder import TopographyGridBuilder
 
-# from fastfuels_sdk.grids.topography_grid import TopographyGrid
-# from fastfuels_sdk.grids.feature_grid import FeatureGrid
+# Builder classes
+from fastfuels_sdk.grids.tree_grid_builder import TreeGridBuilder
+from fastfuels_sdk.grids.surface_grid_builder import SurfaceGridBuilder
+from fastfuels_sdk.grids.topography_grid_builder import TopographyGridBuilder

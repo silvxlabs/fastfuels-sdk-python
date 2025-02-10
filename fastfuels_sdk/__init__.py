@@ -6,6 +6,7 @@ from fastfuels_sdk.grids import (
     SurfaceGrid,
     SurfaceGridBuilder,
     TreeGrid,
+    TreeGridBuilder,
     TopographyGrid,
     TopographyGridBuilder,
 )
@@ -24,6 +25,7 @@ __all__ = [
     "SurfaceGrid",
     "SurfaceGridBuilder",
     "TreeGrid",
+    "TreeGridBuilder",
     "TopographyGrid",
     "TopographyGridBuilder",
     "Export",

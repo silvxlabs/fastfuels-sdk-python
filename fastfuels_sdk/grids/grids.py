@@ -12,6 +12,7 @@ from typing import Optional, List
 # Internal imports
 from fastfuels_sdk.api import get_client
 from fastfuels_sdk.exports import Export
+from fastfuels_sdk.grids.tree_grid import TreeGrid
 from fastfuels_sdk.grids.surface_grid import SurfaceGrid
 from fastfuels_sdk.grids.topography_grid import TopographyGrid
 from fastfuels_sdk.client_library.api import (
@@ -34,6 +35,10 @@ from fastfuels_sdk.client_library.models import (
     TopographyGridElevationSource,
     TopographyGridSlopeSource,
     TopographyGridAspectSource,
+    CreateTreeGridRequest,
+    TreeGridUniformValue,
+    TreeGridSPCDSource,
+    TreeGridBulkDensitySource,
 )
 
 _GRIDS_API = GridsApi(get_client())
@@ -412,6 +417,128 @@ class Grids(GridsModel):
             self.topography = topography_grid
 
         return topography_grid
+
+    def create_tree_grid(
+        self,
+        attributes: List[str],
+        bulk_density: Optional[dict] = None,
+        spcd: Optional[dict] = None,
+        fuel_moisture: Optional[dict] = None,
+        in_place: bool = False,
+    ) -> TreeGrid:
+        """Create a tree grid for the current domain.
+
+        Creates a tree grid containing canopy bulk density, species codes, and/or fuel moisture
+        data within the spatial context of your domain. While this method provides direct creation
+        capability, consider using TreeGridBuilder for more complex configurations and better
+        parameter validation.
+
+        Parameters
+        ----------
+        attributes : List[str]
+            List of attributes to include in the grid. Available attributes:
+            - "bulkDensity": Canopy bulk density
+            - "SPCD": Species code
+            - "fuelMoisture": Moisture content
+
+        bulk_density : dict, optional
+            Configuration for bulk density attribute. Sources available:
+            - Inventory:
+                {
+                    "source": "inventory"
+                }
+            - Uniform:
+                {
+                    "source": "uniform",
+                    "value": float  # bulk density in kg/m³
+                }
+
+        spcd : dict, optional
+            Configuration for species code attribute. Sources available:
+            - Inventory:
+                {
+                    "source": "inventory"
+                }
+            - Uniform:
+                {
+                    "source": "uniform",
+                    "value": str  # species code
+                }
+
+        fuel_moisture : dict, optional
+            Configuration for fuel moisture content. Only supports uniform values:
+            {
+                "source": "uniform",
+                "value": float  # moisture content in %
+            }
+
+        in_place : bool, optional
+            If True, updates this object's tree grid (self.tree).
+            If False (default), leaves this object unchanged.
+
+        Returns
+        -------
+        TreeGrid
+            The newly created tree grid object.
+
+        Notes
+        -----
+        Grid generation happens asynchronously. The returned grid will initially
+        have a "pending" status.
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Grids
+        >>> grids = Grids.from_domain_id("abc123")
+
+        Simple usage with uniform values:
+        >>> grid = grids.create_tree_grid(
+        ...     attributes=["bulkDensity", "fuelMoisture"],
+        ...     bulk_density={"source": "uniform", "value": 0.5},
+        ...     fuel_moisture={"source": "uniform", "value": 15.0}
+        ... )
+
+        Using inventory data:
+        >>> grid = grids.create_tree_grid(
+        ...     attributes=["bulkDensity", "SPCD"],
+        ...     bulk_density={"source": "inventory"},
+        ...     spcd={"source": "inventory"}
+        ... )
+
+        See Also
+        --------
+        TreeGridBuilder : Helper class for creating complex tree grid configurations
+            with parameter validation and a fluent interface.
+        """
+        request = CreateTreeGridRequest(
+            attributes=attributes,  # type: ignore # pydantic handles this for us
+            bulkDensity=(
+                TreeGridBulkDensitySource.from_dict(bulk_density)
+                if bulk_density
+                else None
+            ),
+            SPCD=(TreeGridSPCDSource.from_dict(spcd) if spcd else None),
+            fuelMoisture=(
+                TreeGridUniformValue.from_dict(fuel_moisture) if fuel_moisture else None
+            ),
+        )
+
+        response = _TREE_GRID_API.create_tree_grid(
+            domain_id=self.domain_id, create_tree_grid_request=request
+        )
+
+        # Create a new TreeGrid object with the response data
+        tree_grid = TreeGrid(domain_id=self.domain_id, **response.model_dump())
+
+        # For consistency with surface grid, explicitly set the attributes
+        tree_grid.bulk_density = response.bulk_density
+        tree_grid.spcd = response.spcd
+        tree_grid.fuel_moisture = response.fuel_moisture
+
+        if in_place:
+            self.tree = tree_grid
+
+        return tree_grid
 
     def create_export(self, export_format: str) -> Export:
         """Create an export of the grid data.

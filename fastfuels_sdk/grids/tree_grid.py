@@ -4,58 +4,21 @@ fastfuels_sdk/grids/tree_grid.py
 
 # Core imports
 from __future__ import annotations
-from typing import List
 
 # Internal imports
 from fastfuels_sdk.api import get_client
+from fastfuels_sdk.exports import Export
 from fastfuels_sdk.client_library.api import TreeGridApi
 from fastfuels_sdk.client_library.models import (
     TreeGrid as TreeGridModel,
     GridAttributeMetadataResponse,
-    Export,
 )
 
 _TREE_GRID_API = TreeGridApi(get_client())
 
 
 class TreeGrid(TreeGridModel):
-    """3D gridded tree data within a domain's spatial boundaries.
-
-    Represents tree grid data extracted from various sources and organized into a
-    three-dimensional grid structure. Tree grids include information about attributes
-    like bulk density, fuel moisture, and species codes at each grid point.
-
-    Attributes
-    ----------
-    domain_id : str
-        ID of the domain this grid belongs to
-    attributes : List[TreeGridAttribute], optional
-        Grid attributes (bulk_density, fuel_moisture, SPCD)
-    status : str, optional
-        Current processing status ("pending", "running", "completed")
-    created_on : datetime, optional
-        When this grid was created
-    modified_on : datetime, optional
-        When this grid was last modified
-    checksum : str, optional
-        Unique identifier for this version of the grid
-    tree_inventory_checksum : str, optional
-        Checksum of tree inventory used to generate grid
-
-    Examples
-    --------
-    Get existing tree grid:
-    >>> domain = Domain.from_id("abc123")
-    >>> grids = Grids.from_domain(domain)
-    >>> if grids.tree:
-    ...     tree_grid = grids.tree
-
-    Create new tree grid:
-    >>> attributes = ["bulkDensity", "fuelMoisture"]
-    >>> tree_grid = grids.create_tree_grid(attributes=attributes)
-    >>> print(tree_grid.status)
-    'pending'
-    """
+    """Tree grid data within a domain's spatial boundaries."""
 
     domain_id: str
 
@@ -65,8 +28,8 @@ class TreeGrid(TreeGridModel):
 
         Parameters
         ----------
-        domain : Domain
-            The domain whose tree grid should be retrieved
+        domain_id : str
+            ID of the domain to retrieve tree grid for
 
         Returns
         -------
@@ -75,8 +38,7 @@ class TreeGrid(TreeGridModel):
 
         Examples
         --------
-        >>> domain = Domain.from_id("abc123")
-        >>> tree_grid = TreeGrid.from_domain(domain)
+        >>> tree_grid = TreeGrid.from_domain_id("abc123")
         >>> tree_grid.status
         'completed'
         """
@@ -99,9 +61,8 @@ class TreeGrid(TreeGridModel):
 
         Examples
         --------
-        >>> from fastfuels_sdk import Domain, TreeGrid
-        >>> domain = Domain.from_id("abc123")
-        >>> tree_grid = TreeGrid.from_domain(domain)
+        >>> from fastfuels_sdk import TreeGrid
+        >>> tree_grid = TreeGrid.from_domain_id("abc123")
         >>>
         >>> # Get fresh data in a new instance
         >>> updated_grid = tree_grid.get()
@@ -116,6 +77,86 @@ class TreeGrid(TreeGridModel):
                 setattr(self, key, value)
             return self
         return TreeGrid(domain_id=self.domain_id, **response.model_dump())
+
+    def wait_until_completed(
+        self,
+        step: float = 5,
+        timeout: float = 600,
+        in_place: bool = True,
+        verbose: bool = False,
+    ) -> "TreeGrid":
+        """Wait for the tree grid processing to complete.
+
+        Tree grids are processed asynchronously and may take between several seconds to
+        minutes to complete depending on domain size and complexity. This method polls the API at
+        regular intervals until the grid reaches a 'completed' status or the timeout is reached.
+
+        Parameters
+        ----------
+        step : float, optional
+            Number of seconds to wait between status checks. Default is 5 seconds.
+            Use larger values to reduce API calls, smaller values for more frequent updates.
+        timeout : float, optional
+            Maximum number of seconds to wait for completion. Default is 600 seconds
+            (10 minutes). If the timeout is reached before completion, raises a TimeoutError.
+        in_place : bool, optional
+            If True (default), updates the current TreeGrid instance with new data at
+            each check. If False, leaves the current instance unchanged and returns a new
+            instance when complete.
+        verbose : bool, optional
+            If True, prints status updates at each check. Default is False.
+
+        Returns
+        -------
+        TreeGrid
+            Either the current TreeGrid instance (if in_place=True) or a new
+            TreeGrid instance (if in_place=False) with the completed grid data.
+
+        Raises
+        ------
+        TimeoutError
+            If the tree grid does not complete within the specified timeout.
+        NotFoundException
+            If the tree grid or domain no longer exists.
+        ApiException
+            If there is an error communicating with the API.
+
+        Examples
+        --------
+        Basic usage with default parameters:
+        from fastfuels_sdk import TreeGrid
+        >>> grid = TreeGrid.from_domain_id("abc123")
+        >>> completed = grid.wait_until_completed()
+        >>> print(completed.status)
+        'completed'
+
+        With progress updates:
+        >>> completed = grid.wait_until_completed(
+        ...     step=10,
+        ...     timeout=1200,
+        ...     verbose=True
+        ... )
+        Tree grid has status `pending` (10.00s)
+        Tree grid has status `running` (20.00s)
+        Tree grid has status `completed` (30.00s)
+        """
+        from time import sleep
+
+        elapsed_time = 0
+        tree_grid = self.get(in_place=in_place if in_place else False)
+
+        while tree_grid.status != "completed":
+            if elapsed_time >= timeout:
+                raise TimeoutError("Timed out waiting for tree grid to finish.")
+            sleep(step)
+            elapsed_time += step
+            tree_grid = self.get(in_place=in_place if in_place else False)
+            if verbose:
+                print(
+                    f"Tree grid has status `{tree_grid.status}` ({elapsed_time:.2f}s)"
+                )
+
+        return tree_grid
 
     def get_attributes(self) -> GridAttributeMetadataResponse:
         """Get metadata about grid attributes.
@@ -135,8 +176,8 @@ class TreeGrid(TreeGridModel):
 
         Examples
         --------
-        >>> domain = Domain.from_id("abc123")
-        >>> tree_grid = TreeGrid.from_domain(domain)
+        >>> from fastfuels_sdk import TreeGrid
+        >>> tree_grid = TreeGrid.from_domain_id("abc123")
         >>> metadata = tree_grid.get_attributes()
         >>> print(metadata.shape)
         [100, 100, 50]
@@ -155,13 +196,13 @@ class TreeGrid(TreeGridModel):
         Returns
         -------
         Export
-            Export object for managing the export process
+            An Export object for managing the export process
 
 
         Examples
         --------
-        >>> domain = Domain.from_id("abc123")
-        >>> tree_grid = TreeGrid.from_domain(domain)
+        >>> from fastfuels_sdk import TreeGrid
+        >>> tree_grid = TreeGrid.from_domain_id("abc123")
         >>> export = tree_grid.create_export("zarr")
         >>> export.wait_until_completed()
         >>> export.to_file("grid_data.zarr")
@@ -179,22 +220,19 @@ class TreeGrid(TreeGridModel):
         export_format : str
             Format of the export to check. Must be one of:
             - "zarr": Compressed array format
-            - "QUIC-Fire": Input files for QUIC-Fire model
 
         Returns
         -------
         Export
-            Export object containing current status
+            An Export object containing current status
 
         Examples
         --------
-        >>> domain = Domain.from_id("abc123")
-        >>> tree_grid = TreeGrid.from_domain(domain)
+        >>> from fastfuels_sdk import TreeGrid
+        >>> tree_grid = TreeGrid.from_domain_id("abc123")
         >>> export = tree_grid.create_export("zarr")
-        >>> # Check status later
-        >>> export = tree_grid.get_export("zarr")
-        >>> if export.status == "completed":
-        ...     export.to_file("grid_data.zarr")
+        >>> export.wait_until_completed()
+        >>> export.to_file("grid_data.zarr")
         """
         response = _TREE_GRID_API.get_tree_grid_export(
             domain_id=self.domain_id, export_format=export_format
@@ -213,8 +251,8 @@ class TreeGrid(TreeGridModel):
 
         Examples
         --------
-        >>> domain = Domain.from_id("abc123")
-        >>> tree_grid = TreeGrid.from_domain(domain)
+        >>> from fastfuels_sdk import TreeGrid
+        >>> tree_grid = TreeGrid.from_domain_id("abc123")
         >>> # Remove grid when no longer needed
         >>> tree_grid.delete()
         >>> # Subsequent operations will raise NotFoundException
