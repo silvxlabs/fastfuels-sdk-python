@@ -34,21 +34,25 @@ class SurfaceGridBuilder:
         self.attributes: List[str] = []
         self.config = {}
 
-    def with_uniform_fuel_load(self, value: float) -> "SurfaceGridBuilder":
+    def with_uniform_fuel_load(
+        self, value: float, feature_masks: list[str] = None
+    ) -> "SurfaceGridBuilder":
         """Set uniform fuel load value.
 
         Parameters
         ----------
         value : float
             Fuel load value in kg/m²
+        feature_masks : list[str], optional
+            List of feature masks to apply to the surface grid attribute. Can be "road" or "water". Note that including these masks requires a feature grid with the appropriate attributes to have a "completed" status.
 
         Examples
         --------
         >>> builder = SurfaceGridBuilder("abc123")
-        >>> builder.with_uniform_fuel_load(0.5)
+        >>> builder.with_uniform_fuel_load(value=0.5, feature_masks=["road", "water"])
         """
         self.config["fuel_load"] = SurfaceGridFuelLoadSource.from_dict(
-            {"source": "uniform", "value": value}
+            {"source": "uniform", "value": value, "featureMasks": feature_masks}
         ).to_dict()
         self.attributes.append(SurfaceGridAttribute.FUELLOAD)
 
@@ -62,6 +66,7 @@ class SurfaceGridBuilder:
         live_herbaceous: float = None,
         live_woody: float = None,
         groups: List[str] = None,
+        feature_masks: list[str] = None,
     ) -> "SurfaceGridBuilder":
         """Set uniform fuel load values by size class.
 
@@ -79,6 +84,8 @@ class SurfaceGridBuilder:
             Live woody fuel load value in kg/m².
         groups : list[str], optional
             List of fuel load groups to include. Can be: "oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody"
+        feature_masks : list[str], optional
+            List of feature masks to apply to the surface grid attribute. Can be "road" or "water". Note that including these masks requires a feature grid with the appropriate attributes to have a "completed" status.
 
         Examples
         --------
@@ -87,8 +94,9 @@ class SurfaceGridBuilder:
         ...     one_hour=0.5,
         ...     ten_hour=1.0,
         ...     hundred_hour=2.0,
-        ...     groups=["oneHour", "tenHour", "hundredHour"]
-        ...
+        ...     groups=["oneHour", "tenHour", "hundredHour"],
+        ...     feature_masks=["road", "water"]
+        ... )
 
         Notes
         -----
@@ -106,6 +114,7 @@ class SurfaceGridBuilder:
                 "liveHerbaceous": live_herbaceous,
                 "liveWoody": live_woody,
                 "groups": groups,
+                "featureMasks": feature_masks,
             }
         ).to_dict()
         self.attributes.append(SurfaceGridAttribute.FUELLOAD)
@@ -120,6 +129,8 @@ class SurfaceGridBuilder:
         curing_live_herbaceous: float = 0.0,
         curing_live_woody: float = 0.0,
         groups: List[str] = None,
+        feature_masks: list[str] = None,
+        remove_non_burnable: list[str] = None,
     ) -> "SurfaceGridBuilder":
         """Configure fuel load from LANDFIRE source.
 
@@ -137,6 +148,10 @@ class SurfaceGridBuilder:
             Proportion of live woody fuel that is cured, defaults to 0.
         groups : list[str], optional
             List of fuel load groups to include. Can be: "oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody"
+        feature_masks : list[str], optional
+            List of feature masks to apply to the surface grid attribute. Can be "road" or "water". Note that including these masks requires a feature grid with the appropriate attributes to have a "completed" status.
+        remove_non_burnable : list[str], optional
+            List of non-burnable fuel models to remove. This option is often used in conjunction with feature_masks to improve the resolution of landscape features. Can be: "NB1", "NB2", "NB3", "NB8", "NB9"
 
         Examples
         --------
@@ -144,7 +159,12 @@ class SurfaceGridBuilder:
         >>> builder.with_fuel_load_from_landfire(
         ...     product="FBFM40",
         ...     version="2022",
-        ...     interpolation_method="nearest"
+        ...     interpolation_method="nearest",
+        ...     curing_live_herbaceous=0.25,
+        ...     curing_live_woody=0.1,
+        ...     groups=["oneHour", "tenHour", "hundredHour"],
+        ...     feature_masks=["road", "water"],
+        ...     remove_non_burnable=["NB1", "NB2"]
         ... )
         """
         self.config["fuel_load"] = SurfaceGridLandfireFBFM40FuelLoadSource.from_dict(
@@ -156,27 +176,35 @@ class SurfaceGridBuilder:
                 "curingLiveHerbaceous": curing_live_herbaceous,
                 "curingLiveWoody": curing_live_woody,
                 "groups": groups,
+                "featureMasks": feature_masks,
+                "removeNonBurnable": remove_non_burnable,
             }
         ).to_dict()
         self.attributes.append(SurfaceGridAttribute.FUELLOAD)
 
         return self
 
-    def with_uniform_fuel_depth(self, value: float) -> "SurfaceGridBuilder":
+    def with_uniform_fuel_depth(
+        self,
+        value: float,
+        feature_masks: list[str] = None,
+    ) -> "SurfaceGridBuilder":
         """Set uniform fuel depth value.
 
         Parameters
         ----------
         value : float
             Fuel depth in meters
+        feature_masks : list[str], optional
+            List of feature masks to apply to the surface grid attribute. Can be "road" or "water". Note that including these masks requires a feature grid with the appropriate attributes to have a "completed" status.
 
         Examples
         --------
         >>> builder = SurfaceGridBuilder("abc123")
-        >>> builder.with_uniform_fuel_depth(0.3)
+        >>> builder.with_uniform_fuel_depth(value=0.3, feature_masks=["road", "water"])
         """
         self.config["fuel_depth"] = SurfaceGridFuelDepthSource.from_dict(
-            {"source": "uniform", "value": value}
+            {"source": "uniform", "value": value, "featureMasks": feature_masks}
         ).to_dict()
         self.attributes.append(SurfaceGridAttribute.FUELDEPTH)
 
@@ -187,6 +215,8 @@ class SurfaceGridBuilder:
         product: str,
         version: str = "2022",
         interpolation_method: str = "nearest",
+        feature_masks: list[str] = None,
+        remove_non_burnable: list[str] = None,
     ) -> "SurfaceGridBuilder":
         """Configure fuel depth from LANDFIRE source.
 
@@ -198,6 +228,10 @@ class SurfaceGridBuilder:
             LANDFIRE version, default "2022"
         interpolation_method : str, optional
             Method for interpolation, default "nearest"
+        feature_masks : list[str], optional
+            List of feature masks to apply to the surface grid attribute. Can be "road" or "water". Note that including these masks requires a feature grid with the appropriate attributes to have a "completed" status.
+        remove_non_burnable : list[str], optional
+            List of non-burnable fuel models to remove. This option is often used in conjunction with feature_masks to improve the resolution of landscape features. Can be: "NB1", "NB2", "NB3", "NB8", "NB9"
 
         Examples
         --------
@@ -205,7 +239,9 @@ class SurfaceGridBuilder:
         >>> builder.with_fuel_depth_from_landfire(
         ...     product="FBFM40",
         ...     version="2022",
-        ...     interpolation_method="nearest"
+        ...     interpolation_method="nearest",
+        ...     feature_masks=["road", "water"],
+        ...     remove_non_burnable=["NB1", "NB2"]
         ... )
         """
         self.config["fuel_depth"] = SurfaceGridLandfireFBFM40Source.from_dict(
@@ -214,6 +250,8 @@ class SurfaceGridBuilder:
                 "product": product,
                 "version": version,
                 "interpolationMethod": interpolation_method,
+                "featureMasks": feature_masks,
+                "removeNonBurnable": remove_non_burnable,
             }
         ).to_dict()
         self.attributes.append(SurfaceGridAttribute.FUELDEPTH)
@@ -221,21 +259,30 @@ class SurfaceGridBuilder:
         return self
 
     # Fuel Moisture Methods (only supports uniform)
-    def with_uniform_fuel_moisture(self, value: float) -> "SurfaceGridBuilder":
+    def with_uniform_fuel_moisture(
+        self,
+        value: float,
+        feature_masks: list[str] = None,
+    ) -> "SurfaceGridBuilder":
         """Set uniform fuel moisture value.
 
         Parameters
         ----------
         value : float
             Fuel moisture value (%).
+        feature_masks : list[str], optional
+            List of feature masks to apply to the surface grid attribute. Can be "road" or "water". Note that including these masks requires a feature grid with the appropriate attributes to have a "completed" status.
 
         Examples
         --------
         >>> builder = SurfaceGridBuilder("abc123")
-        >>> builder.with_uniform_fuel_moisture(15.0)  # 15%
+        >>> builder.with_uniform_fuel_moisture(
+        ...     value=15.0,  # 15%
+        ...     feature_masks=["road", "water"]
+        ... )
         """
         self.config["fuel_moisture"] = SurfaceGridFuelMoistureSource.from_dict(
-            {"source": "uniform", "value": value}
+            {"source": "uniform", "value": value, "featureMasks": feature_masks}
         ).to_dict()
         self.attributes.append("fuelMoisture")
 
@@ -249,6 +296,7 @@ class SurfaceGridBuilder:
         live_herbaceous: float,
         live_woody: float,
         groups: List[str] = None,
+        feature_masks: list[str] = None,
     ) -> "SurfaceGridBuilder":
         """Set uniform fuel moisture values by size class.
 
@@ -265,6 +313,9 @@ class SurfaceGridBuilder:
         live_woody : float
             Live woody fuel moisture content (%).
         groups : list[str], optional
+            List of fuel moisture groups to include. Can be: "oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody"
+        feature_masks : list[str], optional
+            List of feature masks to apply to the surface grid attribute. Can be "road" or "water". Note that including these masks requires a feature grid with the appropriate attributes to have a "completed" status.
 
         Examples
         --------
@@ -275,7 +326,8 @@ class SurfaceGridBuilder:
         ...     hundred_hour=20.0,
         ...     live_herbaceous=75.0,
         ...     live_woody=90.0,
-        ...     groups=["oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody"]
+        ...     groups=["oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody"],
+        ...     feature_masks=["road", "water"]
         ... )
         """
         self.config["fuel_moisture"] = SurfaceGridUniformValueBySizeClass.from_dict(
@@ -287,19 +339,26 @@ class SurfaceGridBuilder:
                 "liveHerbaceous": live_herbaceous,
                 "liveWoody": live_woody,
                 "groups": groups,
+                "featureMasks": feature_masks,
             }
         ).to_dict()
         self.attributes.append("fuelMoisture")
 
         return self
 
-    def with_uniform_fbfm(self, value: str) -> "SurfaceGridBuilder":
+    def with_uniform_fbfm(
+        self,
+        value: str,
+        feature_masks: list[str] = None,
+    ) -> "SurfaceGridBuilder":
         """Set uniform Fire Behavior Fuel Model.
 
         Parameters
         ----------
         value : str
             FBFM value (e.g. "9", "GR2")
+        feature_masks : list[str], optional
+            List of feature masks to apply to the surface grid attribute. Can be "road" or "water". Note that including these masks requires a feature grid with the appropriate attributes to have a "completed" status.
 
         Examples
         --------
@@ -307,7 +366,7 @@ class SurfaceGridBuilder:
         >>> builder.with_uniform_fbfm("GR2")
         """
         self.config["fbfm"] = SurfaceGridFBFMSource.from_dict(
-            {"source": "uniform", "value": value}
+            {"source": "uniform", "value": value, "featureMasks": feature_masks}
         ).to_dict()
         self.attributes.append("FBFM")
 
@@ -318,6 +377,8 @@ class SurfaceGridBuilder:
         product: str,
         version: str = "2022",
         interpolation_method: str = "nearest",
+        feature_masks: list[str] = None,
+        remove_non_burnable: list[str] = None,
     ) -> "SurfaceGridBuilder":
         """Configure FBFM from LANDFIRE source.
 
@@ -329,6 +390,10 @@ class SurfaceGridBuilder:
             LANDFIRE version, default "2022"
         interpolation_method : str, optional
             Method for interpolation, default "nearest"
+        feature_masks : list[str], optional
+            List of feature masks to apply to the surface grid attribute. Can be "road" or "water". Note that including these masks requires a feature grid with the appropriate attributes to have a "completed" status.
+        remove_non_burnable : list[str], optional
+            List of non-burnable fuel models to remove. This option is often used in conjunction with feature_masks to improve the resolution of landscape features. Can be: "NB1", "NB2", "NB3", "NB8", "NB9"
 
         Examples
         --------
@@ -336,7 +401,9 @@ class SurfaceGridBuilder:
         >>> builder.with_fbfm_from_landfire(
         ...     product="FBFM40",
         ...     version="2022",
-        ...     interpolation_method="nearest"
+        ...     interpolation_method="nearest",
+        ...     feature_masks=["road", "water"],
+        ...     remove_non_burnable=["NB1", "NB2"]
         ... )
         """
         self.config["fbfm"] = SurfaceGridFBFMSource.from_dict(
@@ -345,27 +412,38 @@ class SurfaceGridBuilder:
                 "product": product,
                 "version": version,
                 "interpolationMethod": interpolation_method,
+                "featureMasks": feature_masks,
+                "removeNonBurnable": remove_non_burnable,
             }
         ).to_dict()
         self.attributes.append("FBFM")
 
         return self
 
-    def with_uniform_savr(self, value: float) -> "SurfaceGridBuilder":
+    def with_uniform_savr(
+        self,
+        value: float,
+        feature_masks: list[str] = None,
+    ) -> "SurfaceGridBuilder":
         """Set uniform Surface Area to Volume Ratio (SAVR).
 
         Parameters
         ----------
         value : float
             SAVR value in m²/m³
+        feature_masks : list[str], optional
+            List of feature masks to apply to the surface grid attribute. Can be "road" or "water". Note that including these masks requires a feature grid with the appropriate attributes to have a "completed" status.
 
         Examples
         --------
         >>> builder = SurfaceGridBuilder("abc123")
-        >>> builder.with_uniform_savr(200.0)
+        >>> builder.with_uniform_savr(
+        ...     value=9000, # m²/m³
+        ...     feature_masks=["road", "water"]
+        ... )
         """
         self.config["savr"] = SurfaceGridSAVRSource.from_dict(
-            {"source": "uniform", "value": value}
+            {"source": "uniform", "value": value, "featureMasks": feature_masks}
         ).to_dict()
         self.attributes.append("SAVR")
 
@@ -414,6 +492,8 @@ class SurfaceGridBuilder:
         version: str = "2022",
         interpolation_method: str = "nearest",
         groups: List[str] = None,
+        feature_masks: list[str] = None,
+        remove_non_burnable: list[str] = None,
     ) -> "SurfaceGridBuilder":
         """Configure SAVR from LANDFIRE source.
 
@@ -425,6 +505,12 @@ class SurfaceGridBuilder:
             LANDFIRE version, default "2022"
         interpolation_method : str, optional
             Method for interpolation, default "nearest"
+        groups : list[str], optional
+            List of SAVR groups to include. Can be: "oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody"
+        feature_masks : list[str], optional
+            List of feature masks to apply to the surface grid attribute. Can be "road" or "water". Note that including these masks requires a feature grid with the appropriate attributes to have a "completed" status.
+        remove_non_burnable : list[str], optional
+            List of non-burnable fuel models to remove. This option is often used in conjunction with feature_masks to improve the resolution of landscape features. Can be: "NB1", "NB2", "NB3", "NB8", "NB9"
 
         Examples
         --------
@@ -432,7 +518,10 @@ class SurfaceGridBuilder:
         >>> builder.with_savr_from_landfire(
         ...     product="FBFM40",
         ...     version="2022",
-        ...     interpolation_method="nearest"
+        ...     interpolation_method="nearest",
+        ...     groups=["oneHour", "tenHour", "hundredHour"],
+        ...     feature_masks=["road", "water"],
+        ...     remove_non_burnable=["NB1", "NB2"]
         ... )
         """
         self.config["savr"] = SurfaceGridLandfireFBFM40SAVRSource.from_dict(
@@ -442,6 +531,8 @@ class SurfaceGridBuilder:
                 "version": version,
                 "interpolationMethod": interpolation_method,
                 "groups": groups,
+                "featureMasks": feature_masks,
+                "removeNonBurnable": remove_non_burnable,
             }
         ).to_dict()
         self.attributes.append("SAVR")

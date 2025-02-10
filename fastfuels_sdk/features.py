@@ -1,3 +1,7 @@
+"""
+fastfuels_sdk/features.py
+"""
+
 # Core imports
 from __future__ import annotations
 from time import sleep
