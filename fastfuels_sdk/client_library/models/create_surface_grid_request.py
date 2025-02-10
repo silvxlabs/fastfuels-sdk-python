@@ -21,12 +21,12 @@ from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
 from fastfuels_sdk.client_library.models.surface_grid_attribute import SurfaceGridAttribute
-from fastfuels_sdk.client_library.models.surface_grid_fbfm import SurfaceGridFBFM
-from fastfuels_sdk.client_library.models.surface_grid_fuel_depth import SurfaceGridFuelDepth
+from fastfuels_sdk.client_library.models.surface_grid_fbfm_source import SurfaceGridFBFMSource
+from fastfuels_sdk.client_library.models.surface_grid_fuel_depth_source import SurfaceGridFuelDepthSource
 from fastfuels_sdk.client_library.models.surface_grid_fuel_load import SurfaceGridFuelLoad
-from fastfuels_sdk.client_library.models.surface_grid_fuel_moisture import SurfaceGridFuelMoisture
+from fastfuels_sdk.client_library.models.surface_grid_fuel_moisture_source import SurfaceGridFuelMoistureSource
 from fastfuels_sdk.client_library.models.surface_grid_modification import SurfaceGridModification
-from fastfuels_sdk.client_library.models.surface_grid_savr import SurfaceGridSAVR
+from fastfuels_sdk.client_library.models.surface_grid_savr_source import SurfaceGridSAVRSource
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -36,10 +36,10 @@ class CreateSurfaceGridRequest(BaseModel):
     """ # noqa: E501
     attributes: Annotated[List[SurfaceGridAttribute], Field(min_length=1)] = Field(description="List of attributes to include in the surface grid")
     fuel_load: Optional[SurfaceGridFuelLoad] = Field(default=None, alias="fuelLoad")
-    fuel_depth: Optional[SurfaceGridFuelDepth] = Field(default=None, alias="fuelDepth")
-    fuel_moisture: Optional[SurfaceGridFuelMoisture] = Field(default=None, alias="fuelMoisture")
-    savr: Optional[SurfaceGridSAVR] = Field(default=None, alias="SAVR")
-    fbfm: Optional[SurfaceGridFBFM] = Field(default=None, alias="FBFM")
+    fuel_depth: Optional[SurfaceGridFuelDepthSource] = Field(default=None, alias="fuelDepth")
+    fuel_moisture: Optional[SurfaceGridFuelMoistureSource] = Field(default=None, alias="fuelMoisture")
+    savr: Optional[SurfaceGridSAVRSource] = Field(default=None, alias="SAVR")
+    fbfm: Optional[SurfaceGridFBFMSource] = Field(default=None, alias="FBFM")
     modifications: Optional[Annotated[List[SurfaceGridModification], Field(max_length=1000)]] = Field(default=None, description="List of modifications to apply to the surface grid")
     __properties: ClassVar[List[str]] = ["attributes", "fuelLoad", "fuelDepth", "fuelMoisture", "SAVR", "FBFM", "modifications"]
 
@@ -143,10 +143,10 @@ class CreateSurfaceGridRequest(BaseModel):
         _obj = cls.model_validate({
             "attributes": obj.get("attributes"),
             "fuelLoad": SurfaceGridFuelLoad.from_dict(obj["fuelLoad"]) if obj.get("fuelLoad") is not None else None,
-            "fuelDepth": SurfaceGridFuelDepth.from_dict(obj["fuelDepth"]) if obj.get("fuelDepth") is not None else None,
-            "fuelMoisture": SurfaceGridFuelMoisture.from_dict(obj["fuelMoisture"]) if obj.get("fuelMoisture") is not None else None,
-            "SAVR": SurfaceGridSAVR.from_dict(obj["SAVR"]) if obj.get("SAVR") is not None else None,
-            "FBFM": SurfaceGridFBFM.from_dict(obj["FBFM"]) if obj.get("FBFM") is not None else None,
+            "fuelDepth": SurfaceGridFuelDepthSource.from_dict(obj["fuelDepth"]) if obj.get("fuelDepth") is not None else None,
+            "fuelMoisture": SurfaceGridFuelMoistureSource.from_dict(obj["fuelMoisture"]) if obj.get("fuelMoisture") is not None else None,
+            "SAVR": SurfaceGridSAVRSource.from_dict(obj["SAVR"]) if obj.get("SAVR") is not None else None,
+            "FBFM": SurfaceGridFBFMSource.from_dict(obj["FBFM"]) if obj.get("FBFM") is not None else None,
             "modifications": [SurfaceGridModification.from_dict(_item) for _item in obj["modifications"]] if obj.get("modifications") is not None else None
         })
         return _obj

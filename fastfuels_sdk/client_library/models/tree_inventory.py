@@ -24,7 +24,7 @@ from typing_extensions import Annotated
 from fastfuels_sdk.client_library.models.feature_type import FeatureType
 from fastfuels_sdk.client_library.models.job_status import JobStatus
 from fastfuels_sdk.client_library.models.tree_inventory_modification import TreeInventoryModification
-from fastfuels_sdk.client_library.models.tree_inventory_source import TreeInventorySource
+from fastfuels_sdk.client_library.models.tree_inventory_sources_inner import TreeInventorySourcesInner
 from fastfuels_sdk.client_library.models.tree_inventory_treatment import TreeInventoryTreatment
 from fastfuels_sdk.client_library.models.tree_map_source import TreeMapSource
 from typing import Optional, Set
@@ -34,7 +34,7 @@ class TreeInventory(BaseModel):
     """
     TreeInventory
     """ # noqa: E501
-    sources: Annotated[List[TreeInventorySource], Field(min_length=1, max_length=1)] = Field(description="The data sources used to build the tree inventory. Currently, only one data source at a time is supported.")
+    sources: List[TreeInventorySourcesInner]
     tree_map: Optional[TreeMapSource] = Field(default=None, alias="TreeMap")
     modifications: Optional[Annotated[List[TreeInventoryModification], Field(max_length=1000)]] = Field(default=None, description="List of modifications to apply to the tree inventory data")
     treatments: Optional[Annotated[List[TreeInventoryTreatment], Field(max_length=1000)]] = Field(default=None, description="List of silvicultural treatments to apply.")
@@ -84,6 +84,13 @@ class TreeInventory(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of each item in sources (list)
+        _items = []
+        if self.sources:
+            for _item_sources in self.sources:
+                if _item_sources:
+                    _items.append(_item_sources.to_dict())
+            _dict['sources'] = _items
         # override the default output from pydantic by calling `to_dict()` of tree_map
         if self.tree_map:
             _dict['TreeMap'] = self.tree_map.to_dict()
@@ -133,7 +140,7 @@ class TreeInventory(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "sources": obj.get("sources"),
+            "sources": [TreeInventorySourcesInner.from_dict(_item) for _item in obj["sources"]] if obj.get("sources") is not None else None,
             "TreeMap": TreeMapSource.from_dict(obj["TreeMap"]) if obj.get("TreeMap") is not None else None,
             "modifications": [TreeInventoryModification.from_dict(_item) for _item in obj["modifications"]] if obj.get("modifications") is not None else None,
             "treatments": [TreeInventoryTreatment.from_dict(_item) for _item in obj["treatments"]] if obj.get("treatments") is not None else None,

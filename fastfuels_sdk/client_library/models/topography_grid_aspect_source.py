@@ -17,24 +17,24 @@ import json
 import pprint
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
 from typing import Any, List, Optional
-from fastfuels_sdk.client_library.models.surface_grid_uniform_value import SurfaceGridUniformValue
-from fastfuels_sdk.client_library.models.surface_grid_uniform_value_by_size_class import SurfaceGridUniformValueBySizeClass
+from fastfuels_sdk.client_library.models.topography_grid3_dep_source_aspect import TopographyGrid3DEPSourceAspect
+from fastfuels_sdk.client_library.models.topography_grid_landfire_source_aspect import TopographyGridLandfireSourceAspect
 from pydantic import StrictStr, Field
 from typing import Union, List, Set, Optional, Dict
 from typing_extensions import Literal, Self
 
-SURFACEGRIDFUELMOISTURE_ONE_OF_SCHEMAS = ["SurfaceGridUniformValue", "SurfaceGridUniformValueBySizeClass"]
+TOPOGRAPHYGRIDASPECTSOURCE_ONE_OF_SCHEMAS = ["TopographyGrid3DEPSourceAspect", "TopographyGridLandfireSourceAspect"]
 
-class SurfaceGridFuelMoisture(BaseModel):
+class TopographyGridAspectSource(BaseModel):
     """
-    SurfaceGridFuelMoisture
+    TopographyGridAspectSource
     """
-    # data type: SurfaceGridUniformValue
-    oneof_schema_1_validator: Optional[SurfaceGridUniformValue] = None
-    # data type: SurfaceGridUniformValueBySizeClass
-    oneof_schema_2_validator: Optional[SurfaceGridUniformValueBySizeClass] = None
-    actual_instance: Optional[Union[SurfaceGridUniformValue, SurfaceGridUniformValueBySizeClass]] = None
-    one_of_schemas: Set[str] = { "SurfaceGridUniformValue", "SurfaceGridUniformValueBySizeClass" }
+    # data type: TopographyGrid3DEPSourceAspect
+    oneof_schema_1_validator: Optional[TopographyGrid3DEPSourceAspect] = None
+    # data type: TopographyGridLandfireSourceAspect
+    oneof_schema_2_validator: Optional[TopographyGridLandfireSourceAspect] = None
+    actual_instance: Optional[Union[TopographyGrid3DEPSourceAspect, TopographyGridLandfireSourceAspect]] = None
+    one_of_schemas: Set[str] = { "TopographyGrid3DEPSourceAspect", "TopographyGridLandfireSourceAspect" }
 
     model_config = ConfigDict(
         validate_assignment=True,
@@ -60,25 +60,25 @@ class SurfaceGridFuelMoisture(BaseModel):
         if v is None:
             return v
 
-        instance = SurfaceGridFuelMoisture.model_construct()
+        instance = TopographyGridAspectSource.model_construct()
         error_messages = []
         match = 0
-        # validate data type: SurfaceGridUniformValue
-        if not isinstance(v, SurfaceGridUniformValue):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridUniformValue`")
+        # validate data type: TopographyGrid3DEPSourceAspect
+        if not isinstance(v, TopographyGrid3DEPSourceAspect):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `TopographyGrid3DEPSourceAspect`")
         else:
             match += 1
-        # validate data type: SurfaceGridUniformValueBySizeClass
-        if not isinstance(v, SurfaceGridUniformValueBySizeClass):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridUniformValueBySizeClass`")
+        # validate data type: TopographyGridLandfireSourceAspect
+        if not isinstance(v, TopographyGridLandfireSourceAspect):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `TopographyGridLandfireSourceAspect`")
         else:
             match += 1
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in SurfaceGridFuelMoisture with oneOf schemas: SurfaceGridUniformValue, SurfaceGridUniformValueBySizeClass. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when setting `actual_instance` in TopographyGridAspectSource with oneOf schemas: TopographyGrid3DEPSourceAspect, TopographyGridLandfireSourceAspect. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in SurfaceGridFuelMoisture with oneOf schemas: SurfaceGridUniformValue, SurfaceGridUniformValueBySizeClass. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting `actual_instance` in TopographyGridAspectSource with oneOf schemas: TopographyGrid3DEPSourceAspect, TopographyGridLandfireSourceAspect. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -96,25 +96,25 @@ class SurfaceGridFuelMoisture(BaseModel):
         error_messages = []
         match = 0
 
-        # deserialize data into SurfaceGridUniformValue
+        # deserialize data into TopographyGrid3DEPSourceAspect
         try:
-            instance.actual_instance = SurfaceGridUniformValue.from_json(json_str)
+            instance.actual_instance = TopographyGrid3DEPSourceAspect.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into SurfaceGridUniformValueBySizeClass
+        # deserialize data into TopographyGridLandfireSourceAspect
         try:
-            instance.actual_instance = SurfaceGridUniformValueBySizeClass.from_json(json_str)
+            instance.actual_instance = TopographyGridLandfireSourceAspect.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
 
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into SurfaceGridFuelMoisture with oneOf schemas: SurfaceGridUniformValue, SurfaceGridUniformValueBySizeClass. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when deserializing the JSON string into TopographyGridAspectSource with oneOf schemas: TopographyGrid3DEPSourceAspect, TopographyGridLandfireSourceAspect. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into SurfaceGridFuelMoisture with oneOf schemas: SurfaceGridUniformValue, SurfaceGridUniformValueBySizeClass. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into TopographyGridAspectSource with oneOf schemas: TopographyGrid3DEPSourceAspect, TopographyGridLandfireSourceAspect. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -128,7 +128,7 @@ class SurfaceGridFuelMoisture(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], SurfaceGridUniformValue, SurfaceGridUniformValueBySizeClass]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], TopographyGrid3DEPSourceAspect, TopographyGridLandfireSourceAspect]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None

@@ -20,10 +20,11 @@ import json
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from fastfuels_sdk.client_library.models.create_tree_grid_request_bulk_density import CreateTreeGridRequestBulkDensity
-from fastfuels_sdk.client_library.models.create_tree_grid_request_fuel_moisture import CreateTreeGridRequestFuelMoisture
 from fastfuels_sdk.client_library.models.job_status import JobStatus
 from fastfuels_sdk.client_library.models.tree_grid_attribute import TreeGridAttribute
+from fastfuels_sdk.client_library.models.tree_grid_bulk_density_source import TreeGridBulkDensitySource
+from fastfuels_sdk.client_library.models.tree_grid_spcd_source import TreeGridSPCDSource
+from fastfuels_sdk.client_library.models.tree_grid_uniform_value import TreeGridUniformValue
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -32,9 +33,9 @@ class TreeGrid(BaseModel):
     TreeGrid
     """ # noqa: E501
     attributes: Optional[List[TreeGridAttribute]] = Field(default=None, description="List of attributes to include in the tree grid. Each attribute is a separate layer in the grid. Attributes present in the list will be assigned default values unless an additional field is provided.")
-    bulk_density: Optional[CreateTreeGridRequestBulkDensity] = Field(default=None, alias="bulkDensity")
-    fuel_moisture: Optional[CreateTreeGridRequestFuelMoisture] = Field(default=None, alias="fuelMoisture")
-    spcd: Optional[CreateTreeGridRequestBulkDensity] = Field(default=None, alias="SPCD")
+    bulk_density: Optional[TreeGridBulkDensitySource] = Field(default=None, alias="bulkDensity")
+    fuel_moisture: Optional[TreeGridUniformValue] = Field(default=None, alias="fuelMoisture")
+    spcd: Optional[TreeGridSPCDSource] = Field(default=None, alias="SPCD")
     status: Optional[JobStatus] = None
     created_on: Optional[datetime] = Field(default=None, alias="createdOn")
     modified_on: Optional[datetime] = Field(default=None, alias="modifiedOn")
@@ -138,9 +139,9 @@ class TreeGrid(BaseModel):
 
         _obj = cls.model_validate({
             "attributes": obj.get("attributes"),
-            "bulkDensity": CreateTreeGridRequestBulkDensity.from_dict(obj["bulkDensity"]) if obj.get("bulkDensity") is not None else None,
-            "fuelMoisture": CreateTreeGridRequestFuelMoisture.from_dict(obj["fuelMoisture"]) if obj.get("fuelMoisture") is not None else None,
-            "SPCD": CreateTreeGridRequestBulkDensity.from_dict(obj["SPCD"]) if obj.get("SPCD") is not None else None,
+            "bulkDensity": TreeGridBulkDensitySource.from_dict(obj["bulkDensity"]) if obj.get("bulkDensity") is not None else None,
+            "fuelMoisture": TreeGridUniformValue.from_dict(obj["fuelMoisture"]) if obj.get("fuelMoisture") is not None else None,
+            "SPCD": TreeGridSPCDSource.from_dict(obj["SPCD"]) if obj.get("SPCD") is not None else None,
             "status": obj.get("status"),
             "createdOn": obj.get("createdOn"),
             "modifiedOn": obj.get("modifiedOn"),

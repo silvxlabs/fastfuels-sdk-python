@@ -20,10 +20,9 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing_extensions import Annotated
-from fastfuels_sdk.client_library.models.curingliveherbaceous import Curingliveherbaceous
-from fastfuels_sdk.client_library.models.curinglivewoody import Curinglivewoody
 from fastfuels_sdk.client_library.models.feature_type import FeatureType
 from fastfuels_sdk.client_library.models.surface_grid_interpolation_method import SurfaceGridInterpolationMethod
+from fastfuels_sdk.client_library.models.surface_grid_landfire_fbfm40_group import SurfaceGridLandfireFBFM40Group
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -34,16 +33,13 @@ class SurfaceGridLandfireFBFM40FuelLoadSource(BaseModel):
     feature_masks: Optional[List[FeatureType]] = Field(default=None, description="List of feature masks to apply to the surface grid attribute", alias="featureMasks")
     source: Optional[StrictStr] = 'LANDFIRE'
     product: Optional[StrictStr] = 'FBFM40'
-    version: Optional[StrictStr] = '2022'
-    interpolation_method: Optional[SurfaceGridInterpolationMethod] = Field(default=None, alias="interpolationMethod")
-    fraction_one_hour: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=1.0, description="Fraction of fuel load from the 1-hour size class category to include in the total fuel load. Can be greater than 1 to include more than 100% of the fuel load, and must be greater than or equal to 0.", alias="fractionOneHour")
-    fraction_ten_hour: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=0.1, description="Fraction of fuel load from the 10-hour size class category to include in the total fuel load. Can be greater than 1 to include more than 100% of the fuel load, and must be greater than or equal to 0.", alias="fractionTenHour")
-    fraction_hundred_hour: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=0.0, description="Fraction of fuel load from the 100-hour size class category to include in the total fuel load. Can be greater than 1 to include more than 100% of the fuel load, and must be greater than or equal to 0.", alias="fractionHundredHour")
-    fraction_live_herbaceous: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=0.0, description="Fraction of fuel load from the live herbaceous category to include in the total fuel load. Can be greater than 1 to include more than 100% of the fuel load, and must be greater than or equal to 0.", alias="fractionLiveHerbaceous")
-    fraction_live_woody: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=0.0, description="Fraction of fuel load from the live woody category to include in the total fuel load. Can be greater than 1 to include more than 100% of the fuel load, and must be greater than or equal to 0.", alias="fractionLiveWoody")
-    curing_live_herbaceous: Optional[Curingliveherbaceous] = Field(default=None, alias="curingLiveHerbaceous")
-    curing_live_woody: Optional[Curinglivewoody] = Field(default=None, alias="curingLiveWoody")
-    __properties: ClassVar[List[str]] = ["featureMasks", "source", "product", "version", "interpolationMethod", "fractionOneHour", "fractionTenHour", "fractionHundredHour", "fractionLiveHerbaceous", "fractionLiveWoody", "curingLiveHerbaceous", "curingLiveWoody"]
+    version: Optional[StrictStr] = Field(default='2022', description="Version of the LANDFIRE data to use for the surface grid attribute.")
+    interpolation_method: Optional[SurfaceGridInterpolationMethod] = Field(default=None, description="Interpolation method to use when resampling the LANDFIRE data to the desired surface grid resolution.", alias="interpolationMethod")
+    remove_non_burnable: Optional[List[StrictStr]] = Field(default=None, alias="removeNonBurnable")
+    curing_live_herbaceous: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=0.25, description="Proportion of live herbaceous fuel that is cured.", alias="curingLiveHerbaceous")
+    curing_live_woody: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=0.1, description="Proportion of live woody fuel that is cured.", alias="curingLiveWoody")
+    groups: Optional[List[SurfaceGridLandfireFBFM40Group]] = None
+    __properties: ClassVar[List[str]] = ["featureMasks", "source", "product", "version", "interpolationMethod", "removeNonBurnable", "curingLiveHerbaceous", "curingLiveWoody", "groups"]
 
     @field_validator('source')
     def source_validate_enum(cls, value):
@@ -73,6 +69,17 @@ class SurfaceGridLandfireFBFM40FuelLoadSource(BaseModel):
 
         if value not in set(['2022']):
             raise ValueError("must be one of enum values ('2022')")
+        return value
+
+    @field_validator('remove_non_burnable')
+    def remove_non_burnable_validate_enum(cls, value):
+        """Validates the enum"""
+        if value is None:
+            return value
+
+        for i in value:
+            if i not in set(['NB1', 'NB2', 'NB3', 'NB8', 'NB9']):
+                raise ValueError("each list item must be one of ('NB1', 'NB2', 'NB3', 'NB8', 'NB9')")
         return value
 
     model_config = ConfigDict(
@@ -114,12 +121,16 @@ class SurfaceGridLandfireFBFM40FuelLoadSource(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of curing_live_herbaceous
-        if self.curing_live_herbaceous:
-            _dict['curingLiveHerbaceous'] = self.curing_live_herbaceous.to_dict()
-        # override the default output from pydantic by calling `to_dict()` of curing_live_woody
-        if self.curing_live_woody:
-            _dict['curingLiveWoody'] = self.curing_live_woody.to_dict()
+        # set to None if remove_non_burnable (nullable) is None
+        # and model_fields_set contains the field
+        if self.remove_non_burnable is None and "remove_non_burnable" in self.model_fields_set:
+            _dict['removeNonBurnable'] = None
+
+        # set to None if groups (nullable) is None
+        # and model_fields_set contains the field
+        if self.groups is None and "groups" in self.model_fields_set:
+            _dict['groups'] = None
+
         return _dict
 
     @classmethod
@@ -137,13 +148,10 @@ class SurfaceGridLandfireFBFM40FuelLoadSource(BaseModel):
             "product": obj.get("product") if obj.get("product") is not None else 'FBFM40',
             "version": obj.get("version") if obj.get("version") is not None else '2022',
             "interpolationMethod": obj.get("interpolationMethod"),
-            "fractionOneHour": obj.get("fractionOneHour") if obj.get("fractionOneHour") is not None else 1.0,
-            "fractionTenHour": obj.get("fractionTenHour") if obj.get("fractionTenHour") is not None else 0.1,
-            "fractionHundredHour": obj.get("fractionHundredHour") if obj.get("fractionHundredHour") is not None else 0.0,
-            "fractionLiveHerbaceous": obj.get("fractionLiveHerbaceous") if obj.get("fractionLiveHerbaceous") is not None else 0.0,
-            "fractionLiveWoody": obj.get("fractionLiveWoody") if obj.get("fractionLiveWoody") is not None else 0.0,
-            "curingLiveHerbaceous": Curingliveherbaceous.from_dict(obj["curingLiveHerbaceous"]) if obj.get("curingLiveHerbaceous") is not None else None,
-            "curingLiveWoody": Curinglivewoody.from_dict(obj["curingLiveWoody"]) if obj.get("curingLiveWoody") is not None else None
+            "removeNonBurnable": obj.get("removeNonBurnable"),
+            "curingLiveHerbaceous": obj.get("curingLiveHerbaceous") if obj.get("curingLiveHerbaceous") is not None else 0.25,
+            "curingLiveWoody": obj.get("curingLiveWoody") if obj.get("curingLiveWoody") is not None else 0.1,
+            "groups": obj.get("groups")
         })
         return _obj
 

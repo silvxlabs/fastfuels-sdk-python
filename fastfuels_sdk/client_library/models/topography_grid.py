@@ -20,11 +20,11 @@ import json
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from fastfuels_sdk.client_library.models.elevation import Elevation
 from fastfuels_sdk.client_library.models.job_status import JobStatus
-from fastfuels_sdk.client_library.models.landfire_topography_grid_source import LandfireTopographyGridSource
-from fastfuels_sdk.client_library.models.landfire_topography_grid_source_aspect import LandfireTopographyGridSourceAspect
+from fastfuels_sdk.client_library.models.topography_grid_aspect_source import TopographyGridAspectSource
 from fastfuels_sdk.client_library.models.topography_grid_attribute import TopographyGridAttribute
+from fastfuels_sdk.client_library.models.topography_grid_elevation_source import TopographyGridElevationSource
+from fastfuels_sdk.client_library.models.topography_grid_slope_source import TopographyGridSlopeSource
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -33,9 +33,9 @@ class TopographyGrid(BaseModel):
     TopographyGrid
     """ # noqa: E501
     attributes: Optional[List[TopographyGridAttribute]] = None
-    elevation: Optional[Elevation] = None
-    aspect: Optional[LandfireTopographyGridSourceAspect] = None
-    slope: Optional[LandfireTopographyGridSource] = None
+    elevation: Optional[TopographyGridElevationSource] = None
+    aspect: Optional[TopographyGridAspectSource] = None
+    slope: Optional[TopographyGridSlopeSource] = None
     status: Optional[JobStatus] = None
     created_on: Optional[datetime] = Field(default=None, alias="createdOn")
     modified_on: Optional[datetime] = Field(default=None, alias="modifiedOn")
@@ -143,9 +143,9 @@ class TopographyGrid(BaseModel):
 
         _obj = cls.model_validate({
             "attributes": obj.get("attributes"),
-            "elevation": Elevation.from_dict(obj["elevation"]) if obj.get("elevation") is not None else None,
-            "aspect": LandfireTopographyGridSourceAspect.from_dict(obj["aspect"]) if obj.get("aspect") is not None else None,
-            "slope": LandfireTopographyGridSource.from_dict(obj["slope"]) if obj.get("slope") is not None else None,
+            "elevation": TopographyGridElevationSource.from_dict(obj["elevation"]) if obj.get("elevation") is not None else None,
+            "aspect": TopographyGridAspectSource.from_dict(obj["aspect"]) if obj.get("aspect") is not None else None,
+            "slope": TopographyGridSlopeSource.from_dict(obj["slope"]) if obj.get("slope") is not None else None,
             "status": obj.get("status"),
             "createdOn": obj.get("createdOn"),
             "modifiedOn": obj.get("modifiedOn"),

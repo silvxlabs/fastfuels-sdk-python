@@ -19,22 +19,17 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from fastfuels_sdk.client_library.models.feature_type import FeatureType
-from fastfuels_sdk.client_library.models.surface_grid_interpolation_method import SurfaceGridInterpolationMethod
 from typing import Optional, Set
 from typing_extensions import Self
 
-class SurfaceGridLandfireFBFM40Source(BaseModel):
+class TopographyGridLandfireSourceAspect(BaseModel):
     """
-    SurfaceGridLandfireFBFM40Source
+    TopographyGridLandfireSourceAspect
     """ # noqa: E501
-    feature_masks: Optional[List[FeatureType]] = Field(default=None, description="List of feature masks to apply to the surface grid attribute", alias="featureMasks")
     source: Optional[StrictStr] = 'LANDFIRE'
-    product: Optional[StrictStr] = 'FBFM40'
-    version: Optional[StrictStr] = Field(default='2022', description="Version of the LANDFIRE data to use for the surface grid attribute.")
-    interpolation_method: Optional[SurfaceGridInterpolationMethod] = Field(default=None, description="Interpolation method to use when resampling the LANDFIRE data to the desired surface grid resolution.", alias="interpolationMethod")
-    remove_non_burnable: Optional[List[StrictStr]] = Field(default=None, alias="removeNonBurnable")
-    __properties: ClassVar[List[str]] = ["featureMasks", "source", "product", "version", "interpolationMethod", "removeNonBurnable"]
+    version: Optional[StrictStr] = '2020'
+    interpolation_method: Optional[StrictStr] = Field(default='nearest', alias="interpolationMethod")
+    __properties: ClassVar[List[str]] = ["source", "version", "interpolationMethod"]
 
     @field_validator('source')
     def source_validate_enum(cls, value):
@@ -46,35 +41,24 @@ class SurfaceGridLandfireFBFM40Source(BaseModel):
             raise ValueError("must be one of enum values ('LANDFIRE')")
         return value
 
-    @field_validator('product')
-    def product_validate_enum(cls, value):
-        """Validates the enum"""
-        if value is None:
-            return value
-
-        if value not in set(['FBFM40']):
-            raise ValueError("must be one of enum values ('FBFM40')")
-        return value
-
     @field_validator('version')
     def version_validate_enum(cls, value):
         """Validates the enum"""
         if value is None:
             return value
 
-        if value not in set(['2022']):
-            raise ValueError("must be one of enum values ('2022')")
+        if value not in set(['2020']):
+            raise ValueError("must be one of enum values ('2020')")
         return value
 
-    @field_validator('remove_non_burnable')
-    def remove_non_burnable_validate_enum(cls, value):
+    @field_validator('interpolation_method')
+    def interpolation_method_validate_enum(cls, value):
         """Validates the enum"""
         if value is None:
             return value
 
-        for i in value:
-            if i not in set(['NB1', 'NB2', 'NB3', 'NB8', 'NB9']):
-                raise ValueError("each list item must be one of ('NB1', 'NB2', 'NB3', 'NB8', 'NB9')")
+        if value not in set(['nearest']):
+            raise ValueError("must be one of enum values ('nearest')")
         return value
 
     model_config = ConfigDict(
@@ -95,7 +79,7 @@ class SurfaceGridLandfireFBFM40Source(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of SurfaceGridLandfireFBFM40Source from a JSON string"""
+        """Create an instance of TopographyGridLandfireSourceAspect from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -116,16 +100,11 @@ class SurfaceGridLandfireFBFM40Source(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if remove_non_burnable (nullable) is None
-        # and model_fields_set contains the field
-        if self.remove_non_burnable is None and "remove_non_burnable" in self.model_fields_set:
-            _dict['removeNonBurnable'] = None
-
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of SurfaceGridLandfireFBFM40Source from a dict"""
+        """Create an instance of TopographyGridLandfireSourceAspect from a dict"""
         if obj is None:
             return None
 
@@ -133,12 +112,9 @@ class SurfaceGridLandfireFBFM40Source(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "featureMasks": obj.get("featureMasks"),
             "source": obj.get("source") if obj.get("source") is not None else 'LANDFIRE',
-            "product": obj.get("product") if obj.get("product") is not None else 'FBFM40',
-            "version": obj.get("version") if obj.get("version") is not None else '2022',
-            "interpolationMethod": obj.get("interpolationMethod"),
-            "removeNonBurnable": obj.get("removeNonBurnable")
+            "version": obj.get("version") if obj.get("version") is not None else '2020',
+            "interpolationMethod": obj.get("interpolationMethod") if obj.get("interpolationMethod") is not None else 'nearest'
         })
         return _obj
 

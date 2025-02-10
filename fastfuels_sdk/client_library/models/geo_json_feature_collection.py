@@ -17,21 +17,30 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from fastfuels_sdk.client_library.models.tree_map_source_canopy_height_map_configuration import TreeMapSourceCanopyHeightMapConfiguration
-from fastfuels_sdk.client_library.models.tree_map_version import TreeMapVersion
+from typing_extensions import Annotated
+from fastfuels_sdk.client_library.models.geo_json_feature import GeoJSONFeature
 from typing import Optional, Set
 from typing_extensions import Self
 
-class TreeMapSource(BaseModel):
+class GeoJSONFeatureCollection(BaseModel):
     """
-    TreeMapSource
+    A GeoJSON FeatureCollection object.
     """ # noqa: E501
-    version: Optional[TreeMapVersion] = None
-    seed: Optional[StrictInt] = None
-    canopy_height_map_configuration: Optional[TreeMapSourceCanopyHeightMapConfiguration] = Field(default=None, alias="canopyHeightMapConfiguration")
-    __properties: ClassVar[List[str]] = ["version", "seed", "canopyHeightMapConfiguration"]
+    type: Optional[StrictStr] = 'FeatureCollection'
+    features: Annotated[List[GeoJSONFeature], Field(min_length=1)]
+    __properties: ClassVar[List[str]] = ["type", "features"]
+
+    @field_validator('type')
+    def type_validate_enum(cls, value):
+        """Validates the enum"""
+        if value is None:
+            return value
+
+        if value not in set(['FeatureCollection']):
+            raise ValueError("must be one of enum values ('FeatureCollection')")
+        return value
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -51,7 +60,7 @@ class TreeMapSource(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of TreeMapSource from a JSON string"""
+        """Create an instance of GeoJSONFeatureCollection from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,19 +81,18 @@ class TreeMapSource(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of canopy_height_map_configuration
-        if self.canopy_height_map_configuration:
-            _dict['canopyHeightMapConfiguration'] = self.canopy_height_map_configuration.to_dict()
-        # set to None if canopy_height_map_configuration (nullable) is None
-        # and model_fields_set contains the field
-        if self.canopy_height_map_configuration is None and "canopy_height_map_configuration" in self.model_fields_set:
-            _dict['canopyHeightMapConfiguration'] = None
-
+        # override the default output from pydantic by calling `to_dict()` of each item in features (list)
+        _items = []
+        if self.features:
+            for _item_features in self.features:
+                if _item_features:
+                    _items.append(_item_features.to_dict())
+            _dict['features'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of TreeMapSource from a dict"""
+        """Create an instance of GeoJSONFeatureCollection from a dict"""
         if obj is None:
             return None
 
@@ -92,9 +100,8 @@ class TreeMapSource(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "version": obj.get("version"),
-            "seed": obj.get("seed"),
-            "canopyHeightMapConfiguration": TreeMapSourceCanopyHeightMapConfiguration.from_dict(obj["canopyHeightMapConfiguration"]) if obj.get("canopyHeightMapConfiguration") is not None else None
+            "type": obj.get("type") if obj.get("type") is not None else 'FeatureCollection',
+            "features": [GeoJSONFeature.from_dict(_item) for _item in obj["features"]] if obj.get("features") is not None else None
         })
         return _obj
 

@@ -17,24 +17,24 @@ import json
 import pprint
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
 from typing import Any, List, Optional
-from fastfuels_sdk.client_library.models.surface_grid_landfire_source import SurfaceGridLandfireSource
-from fastfuels_sdk.client_library.models.surface_grid_uniform_value import SurfaceGridUniformValue
+from fastfuels_sdk.client_library.models.tree_grid_inventory_source import TreeGridInventorySource
+from fastfuels_sdk.client_library.models.tree_grid_uniform_value import TreeGridUniformValue
 from pydantic import StrictStr, Field
 from typing import Union, List, Set, Optional, Dict
 from typing_extensions import Literal, Self
 
-SURFACEGRIDSAVR_ONE_OF_SCHEMAS = ["SurfaceGridLandfireSource", "SurfaceGridUniformValue"]
+TREEGRIDSPCDSOURCE_ONE_OF_SCHEMAS = ["TreeGridInventorySource", "TreeGridUniformValue"]
 
-class SurfaceGridSAVR(BaseModel):
+class TreeGridSPCDSource(BaseModel):
     """
-    SurfaceGridSAVR
+    TreeGridSPCDSource
     """
-    # data type: SurfaceGridLandfireSource
-    oneof_schema_1_validator: Optional[SurfaceGridLandfireSource] = None
-    # data type: SurfaceGridUniformValue
-    oneof_schema_2_validator: Optional[SurfaceGridUniformValue] = None
-    actual_instance: Optional[Union[SurfaceGridLandfireSource, SurfaceGridUniformValue]] = None
-    one_of_schemas: Set[str] = { "SurfaceGridLandfireSource", "SurfaceGridUniformValue" }
+    # data type: TreeGridInventorySource
+    oneof_schema_1_validator: Optional[TreeGridInventorySource] = None
+    # data type: TreeGridUniformValue
+    oneof_schema_2_validator: Optional[TreeGridUniformValue] = None
+    actual_instance: Optional[Union[TreeGridInventorySource, TreeGridUniformValue]] = None
+    one_of_schemas: Set[str] = { "TreeGridInventorySource", "TreeGridUniformValue" }
 
     model_config = ConfigDict(
         validate_assignment=True,
@@ -60,25 +60,25 @@ class SurfaceGridSAVR(BaseModel):
         if v is None:
             return v
 
-        instance = SurfaceGridSAVR.model_construct()
+        instance = TreeGridSPCDSource.model_construct()
         error_messages = []
         match = 0
-        # validate data type: SurfaceGridLandfireSource
-        if not isinstance(v, SurfaceGridLandfireSource):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridLandfireSource`")
+        # validate data type: TreeGridInventorySource
+        if not isinstance(v, TreeGridInventorySource):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `TreeGridInventorySource`")
         else:
             match += 1
-        # validate data type: SurfaceGridUniformValue
-        if not isinstance(v, SurfaceGridUniformValue):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridUniformValue`")
+        # validate data type: TreeGridUniformValue
+        if not isinstance(v, TreeGridUniformValue):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `TreeGridUniformValue`")
         else:
             match += 1
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in SurfaceGridSAVR with oneOf schemas: SurfaceGridLandfireSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when setting `actual_instance` in TreeGridSPCDSource with oneOf schemas: TreeGridInventorySource, TreeGridUniformValue. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in SurfaceGridSAVR with oneOf schemas: SurfaceGridLandfireSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting `actual_instance` in TreeGridSPCDSource with oneOf schemas: TreeGridInventorySource, TreeGridUniformValue. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -96,25 +96,25 @@ class SurfaceGridSAVR(BaseModel):
         error_messages = []
         match = 0
 
-        # deserialize data into SurfaceGridLandfireSource
+        # deserialize data into TreeGridInventorySource
         try:
-            instance.actual_instance = SurfaceGridLandfireSource.from_json(json_str)
+            instance.actual_instance = TreeGridInventorySource.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into SurfaceGridUniformValue
+        # deserialize data into TreeGridUniformValue
         try:
-            instance.actual_instance = SurfaceGridUniformValue.from_json(json_str)
+            instance.actual_instance = TreeGridUniformValue.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
 
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into SurfaceGridSAVR with oneOf schemas: SurfaceGridLandfireSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when deserializing the JSON string into TreeGridSPCDSource with oneOf schemas: TreeGridInventorySource, TreeGridUniformValue. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into SurfaceGridSAVR with oneOf schemas: SurfaceGridLandfireSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into TreeGridSPCDSource with oneOf schemas: TreeGridInventorySource, TreeGridUniformValue. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -128,7 +128,7 @@ class SurfaceGridSAVR(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], SurfaceGridLandfireSource, SurfaceGridUniformValue]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], TreeGridInventorySource, TreeGridUniformValue]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None

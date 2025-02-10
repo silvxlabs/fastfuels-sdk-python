@@ -19,10 +19,10 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
-from fastfuels_sdk.client_library.models.elevation import Elevation
-from fastfuels_sdk.client_library.models.landfire_topography_grid_source import LandfireTopographyGridSource
-from fastfuels_sdk.client_library.models.landfire_topography_grid_source_aspect import LandfireTopographyGridSourceAspect
+from fastfuels_sdk.client_library.models.topography_grid_aspect_source import TopographyGridAspectSource
 from fastfuels_sdk.client_library.models.topography_grid_attribute import TopographyGridAttribute
+from fastfuels_sdk.client_library.models.topography_grid_elevation_source import TopographyGridElevationSource
+from fastfuels_sdk.client_library.models.topography_grid_slope_source import TopographyGridSlopeSource
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -31,9 +31,9 @@ class CreateTopographyGridRequest(BaseModel):
     CreateTopographyGridRequest
     """ # noqa: E501
     attributes: List[TopographyGridAttribute] = Field(description="List of attributes to include in the surface grid")
-    elevation: Optional[Elevation] = None
-    aspect: Optional[LandfireTopographyGridSourceAspect] = None
-    slope: Optional[LandfireTopographyGridSource] = None
+    elevation: Optional[TopographyGridElevationSource] = None
+    aspect: Optional[TopographyGridAspectSource] = None
+    slope: Optional[TopographyGridSlopeSource] = None
     __properties: ClassVar[List[str]] = ["attributes", "elevation", "aspect", "slope"]
 
     model_config = ConfigDict(
@@ -112,9 +112,9 @@ class CreateTopographyGridRequest(BaseModel):
 
         _obj = cls.model_validate({
             "attributes": obj.get("attributes"),
-            "elevation": Elevation.from_dict(obj["elevation"]) if obj.get("elevation") is not None else None,
-            "aspect": LandfireTopographyGridSourceAspect.from_dict(obj["aspect"]) if obj.get("aspect") is not None else None,
-            "slope": LandfireTopographyGridSource.from_dict(obj["slope"]) if obj.get("slope") is not None else None
+            "elevation": TopographyGridElevationSource.from_dict(obj["elevation"]) if obj.get("elevation") is not None else None,
+            "aspect": TopographyGridAspectSource.from_dict(obj["aspect"]) if obj.get("aspect") is not None else None,
+            "slope": TopographyGridSlopeSource.from_dict(obj["slope"]) if obj.get("slope") is not None else None
         })
         return _obj
 

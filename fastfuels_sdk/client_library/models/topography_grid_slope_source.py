@@ -17,24 +17,24 @@ import json
 import pprint
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
 from typing import Any, List, Optional
-from fastfuels_sdk.client_library.models.surface_grid_landfire_fbfm13_source import SurfaceGridLandfireFBFM13Source
-from fastfuels_sdk.client_library.models.surface_grid_landfire_fbfm40_fuel_load_source import SurfaceGridLandfireFBFM40FuelLoadSource
+from fastfuels_sdk.client_library.models.topography_grid3_dep_source import TopographyGrid3DEPSource
+from fastfuels_sdk.client_library.models.topography_grid_landfire_source import TopographyGridLandfireSource
 from pydantic import StrictStr, Field
 from typing import Union, List, Set, Optional, Dict
 from typing_extensions import Literal, Self
 
-SURFACEGRIDLANDFIREFUELLOADSOURCE_ONE_OF_SCHEMAS = ["SurfaceGridLandfireFBFM13Source", "SurfaceGridLandfireFBFM40FuelLoadSource"]
+TOPOGRAPHYGRIDSLOPESOURCE_ONE_OF_SCHEMAS = ["TopographyGrid3DEPSource", "TopographyGridLandfireSource"]
 
-class SurfaceGridLandfireFuelLoadSource(BaseModel):
+class TopographyGridSlopeSource(BaseModel):
     """
-    SurfaceGridLandfireFuelLoadSource
+    TopographyGridSlopeSource
     """
-    # data type: SurfaceGridLandfireFBFM40FuelLoadSource
-    oneof_schema_1_validator: Optional[SurfaceGridLandfireFBFM40FuelLoadSource] = None
-    # data type: SurfaceGridLandfireFBFM13Source
-    oneof_schema_2_validator: Optional[SurfaceGridLandfireFBFM13Source] = None
-    actual_instance: Optional[Union[SurfaceGridLandfireFBFM13Source, SurfaceGridLandfireFBFM40FuelLoadSource]] = None
-    one_of_schemas: Set[str] = { "SurfaceGridLandfireFBFM13Source", "SurfaceGridLandfireFBFM40FuelLoadSource" }
+    # data type: TopographyGrid3DEPSource
+    oneof_schema_1_validator: Optional[TopographyGrid3DEPSource] = None
+    # data type: TopographyGridLandfireSource
+    oneof_schema_2_validator: Optional[TopographyGridLandfireSource] = None
+    actual_instance: Optional[Union[TopographyGrid3DEPSource, TopographyGridLandfireSource]] = None
+    one_of_schemas: Set[str] = { "TopographyGrid3DEPSource", "TopographyGridLandfireSource" }
 
     model_config = ConfigDict(
         validate_assignment=True,
@@ -57,25 +57,28 @@ class SurfaceGridLandfireFuelLoadSource(BaseModel):
 
     @field_validator('actual_instance')
     def actual_instance_must_validate_oneof(cls, v):
-        instance = SurfaceGridLandfireFuelLoadSource.model_construct()
+        if v is None:
+            return v
+
+        instance = TopographyGridSlopeSource.model_construct()
         error_messages = []
         match = 0
-        # validate data type: SurfaceGridLandfireFBFM40FuelLoadSource
-        if not isinstance(v, SurfaceGridLandfireFBFM40FuelLoadSource):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridLandfireFBFM40FuelLoadSource`")
+        # validate data type: TopographyGrid3DEPSource
+        if not isinstance(v, TopographyGrid3DEPSource):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `TopographyGrid3DEPSource`")
         else:
             match += 1
-        # validate data type: SurfaceGridLandfireFBFM13Source
-        if not isinstance(v, SurfaceGridLandfireFBFM13Source):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridLandfireFBFM13Source`")
+        # validate data type: TopographyGridLandfireSource
+        if not isinstance(v, TopographyGridLandfireSource):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `TopographyGridLandfireSource`")
         else:
             match += 1
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in SurfaceGridLandfireFuelLoadSource with oneOf schemas: SurfaceGridLandfireFBFM13Source, SurfaceGridLandfireFBFM40FuelLoadSource. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when setting `actual_instance` in TopographyGridSlopeSource with oneOf schemas: TopographyGrid3DEPSource, TopographyGridLandfireSource. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in SurfaceGridLandfireFuelLoadSource with oneOf schemas: SurfaceGridLandfireFBFM13Source, SurfaceGridLandfireFBFM40FuelLoadSource. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting `actual_instance` in TopographyGridSlopeSource with oneOf schemas: TopographyGrid3DEPSource, TopographyGridLandfireSource. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -84,31 +87,34 @@ class SurfaceGridLandfireFuelLoadSource(BaseModel):
         return cls.from_json(json.dumps(obj))
 
     @classmethod
-    def from_json(cls, json_str: str) -> Self:
+    def from_json(cls, json_str: Optional[str]) -> Self:
         """Returns the object represented by the json string"""
         instance = cls.model_construct()
+        if json_str is None:
+            return instance
+
         error_messages = []
         match = 0
 
-        # deserialize data into SurfaceGridLandfireFBFM40FuelLoadSource
+        # deserialize data into TopographyGrid3DEPSource
         try:
-            instance.actual_instance = SurfaceGridLandfireFBFM40FuelLoadSource.from_json(json_str)
+            instance.actual_instance = TopographyGrid3DEPSource.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into SurfaceGridLandfireFBFM13Source
+        # deserialize data into TopographyGridLandfireSource
         try:
-            instance.actual_instance = SurfaceGridLandfireFBFM13Source.from_json(json_str)
+            instance.actual_instance = TopographyGridLandfireSource.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
 
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into SurfaceGridLandfireFuelLoadSource with oneOf schemas: SurfaceGridLandfireFBFM13Source, SurfaceGridLandfireFBFM40FuelLoadSource. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when deserializing the JSON string into TopographyGridSlopeSource with oneOf schemas: TopographyGrid3DEPSource, TopographyGridLandfireSource. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into SurfaceGridLandfireFuelLoadSource with oneOf schemas: SurfaceGridLandfireFBFM13Source, SurfaceGridLandfireFBFM40FuelLoadSource. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into TopographyGridSlopeSource with oneOf schemas: TopographyGrid3DEPSource, TopographyGridLandfireSource. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -122,7 +128,7 @@ class SurfaceGridLandfireFuelLoadSource(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], SurfaceGridLandfireFBFM13Source, SurfaceGridLandfireFBFM40FuelLoadSource]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], TopographyGrid3DEPSource, TopographyGridLandfireSource]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None

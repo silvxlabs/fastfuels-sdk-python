@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing_extensions import Annotated
 from fastfuels_sdk.client_library.models.feature_type import FeatureType
+from fastfuels_sdk.client_library.models.surface_grid_landfire_fbfm40_group import SurfaceGridLandfireFBFM40Group
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -30,12 +31,13 @@ class SurfaceGridUniformValueBySizeClass(BaseModel):
     """ # noqa: E501
     feature_masks: Optional[List[FeatureType]] = Field(default=None, description="List of feature masks to apply to the surface grid attribute", alias="featureMasks")
     source: Optional[StrictStr] = 'uniformBySizeClass'
-    one_hour: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]] = Field(alias="oneHour")
-    ten_hour: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]] = Field(alias="tenHour")
-    hundred_hour: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]] = Field(alias="hundredHour")
-    live_herbaceous: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]] = Field(alias="liveHerbaceous")
-    live_woody: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]] = Field(alias="liveWoody")
-    __properties: ClassVar[List[str]] = ["featureMasks", "source", "oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody"]
+    one_hour: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=None, alias="oneHour")
+    ten_hour: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=None, alias="tenHour")
+    hundred_hour: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=None, alias="hundredHour")
+    live_herbaceous: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=None, alias="liveHerbaceous")
+    live_woody: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=None, alias="liveWoody")
+    groups: Optional[List[SurfaceGridLandfireFBFM40Group]] = None
+    __properties: ClassVar[List[str]] = ["featureMasks", "source", "oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody", "groups"]
 
     @field_validator('source')
     def source_validate_enum(cls, value):
@@ -86,6 +88,36 @@ class SurfaceGridUniformValueBySizeClass(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if one_hour (nullable) is None
+        # and model_fields_set contains the field
+        if self.one_hour is None and "one_hour" in self.model_fields_set:
+            _dict['oneHour'] = None
+
+        # set to None if ten_hour (nullable) is None
+        # and model_fields_set contains the field
+        if self.ten_hour is None and "ten_hour" in self.model_fields_set:
+            _dict['tenHour'] = None
+
+        # set to None if hundred_hour (nullable) is None
+        # and model_fields_set contains the field
+        if self.hundred_hour is None and "hundred_hour" in self.model_fields_set:
+            _dict['hundredHour'] = None
+
+        # set to None if live_herbaceous (nullable) is None
+        # and model_fields_set contains the field
+        if self.live_herbaceous is None and "live_herbaceous" in self.model_fields_set:
+            _dict['liveHerbaceous'] = None
+
+        # set to None if live_woody (nullable) is None
+        # and model_fields_set contains the field
+        if self.live_woody is None and "live_woody" in self.model_fields_set:
+            _dict['liveWoody'] = None
+
+        # set to None if groups (nullable) is None
+        # and model_fields_set contains the field
+        if self.groups is None and "groups" in self.model_fields_set:
+            _dict['groups'] = None
+
         return _dict
 
     @classmethod
@@ -104,7 +136,8 @@ class SurfaceGridUniformValueBySizeClass(BaseModel):
             "tenHour": obj.get("tenHour"),
             "hundredHour": obj.get("hundredHour"),
             "liveHerbaceous": obj.get("liveHerbaceous"),
-            "liveWoody": obj.get("liveWoody")
+            "liveWoody": obj.get("liveWoody"),
+            "groups": obj.get("groups")
         })
         return _obj
 

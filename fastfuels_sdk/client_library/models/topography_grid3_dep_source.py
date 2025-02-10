@@ -17,21 +17,38 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from fastfuels_sdk.client_library.models.tree_map_source_canopy_height_map_configuration import TreeMapSourceCanopyHeightMapConfiguration
-from fastfuels_sdk.client_library.models.tree_map_version import TreeMapVersion
 from typing import Optional, Set
 from typing_extensions import Self
 
-class TreeMapSource(BaseModel):
+class TopographyGrid3DEPSource(BaseModel):
     """
-    TreeMapSource
+    TopographyGrid3DEPSource
     """ # noqa: E501
-    version: Optional[TreeMapVersion] = None
-    seed: Optional[StrictInt] = None
-    canopy_height_map_configuration: Optional[TreeMapSourceCanopyHeightMapConfiguration] = Field(default=None, alias="canopyHeightMapConfiguration")
-    __properties: ClassVar[List[str]] = ["version", "seed", "canopyHeightMapConfiguration"]
+    source: Optional[StrictStr] = '3DEP'
+    interpolation_method: Optional[StrictStr] = Field(default='linear', alias="interpolationMethod")
+    __properties: ClassVar[List[str]] = ["source", "interpolationMethod"]
+
+    @field_validator('source')
+    def source_validate_enum(cls, value):
+        """Validates the enum"""
+        if value is None:
+            return value
+
+        if value not in set(['3DEP']):
+            raise ValueError("must be one of enum values ('3DEP')")
+        return value
+
+    @field_validator('interpolation_method')
+    def interpolation_method_validate_enum(cls, value):
+        """Validates the enum"""
+        if value is None:
+            return value
+
+        if value not in set(['nearest', 'linear', 'cubic']):
+            raise ValueError("must be one of enum values ('nearest', 'linear', 'cubic')")
+        return value
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -51,7 +68,7 @@ class TreeMapSource(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of TreeMapSource from a JSON string"""
+        """Create an instance of TopographyGrid3DEPSource from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,19 +89,11 @@ class TreeMapSource(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of canopy_height_map_configuration
-        if self.canopy_height_map_configuration:
-            _dict['canopyHeightMapConfiguration'] = self.canopy_height_map_configuration.to_dict()
-        # set to None if canopy_height_map_configuration (nullable) is None
-        # and model_fields_set contains the field
-        if self.canopy_height_map_configuration is None and "canopy_height_map_configuration" in self.model_fields_set:
-            _dict['canopyHeightMapConfiguration'] = None
-
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of TreeMapSource from a dict"""
+        """Create an instance of TopographyGrid3DEPSource from a dict"""
         if obj is None:
             return None
 
@@ -92,9 +101,8 @@ class TreeMapSource(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "version": obj.get("version"),
-            "seed": obj.get("seed"),
-            "canopyHeightMapConfiguration": TreeMapSourceCanopyHeightMapConfiguration.from_dict(obj["canopyHeightMapConfiguration"]) if obj.get("canopyHeightMapConfiguration") is not None else None
+            "source": obj.get("source") if obj.get("source") is not None else '3DEP',
+            "interpolationMethod": obj.get("interpolationMethod") if obj.get("interpolationMethod") is not None else 'linear'
         })
         return _obj
 

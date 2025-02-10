@@ -19,18 +19,16 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from fastfuels_sdk.client_library.models.interpolation_method import InterpolationMethod
 from typing import Optional, Set
 from typing_extensions import Self
 
-class LandfireTopographyGridSource(BaseModel):
+class TopographyGrid3DEPSourceAspect(BaseModel):
     """
-    LandfireTopographyGridSource
+    TopographyGrid3DEPSourceAspect
     """ # noqa: E501
-    source: Optional[StrictStr] = 'LANDFIRE'
-    version: Optional[StrictStr] = '2020'
-    interpolation_method: Optional[InterpolationMethod] = Field(default=None, alias="interpolationMethod")
-    __properties: ClassVar[List[str]] = ["source", "version", "interpolationMethod"]
+    source: Optional[StrictStr] = '3DEP'
+    interpolation_method: Optional[StrictStr] = Field(default='nearest', alias="interpolationMethod")
+    __properties: ClassVar[List[str]] = ["source", "interpolationMethod"]
 
     @field_validator('source')
     def source_validate_enum(cls, value):
@@ -38,18 +36,18 @@ class LandfireTopographyGridSource(BaseModel):
         if value is None:
             return value
 
-        if value not in set(['LANDFIRE']):
-            raise ValueError("must be one of enum values ('LANDFIRE')")
+        if value not in set(['3DEP']):
+            raise ValueError("must be one of enum values ('3DEP')")
         return value
 
-    @field_validator('version')
-    def version_validate_enum(cls, value):
+    @field_validator('interpolation_method')
+    def interpolation_method_validate_enum(cls, value):
         """Validates the enum"""
         if value is None:
             return value
 
-        if value not in set(['2020']):
-            raise ValueError("must be one of enum values ('2020')")
+        if value not in set(['nearest']):
+            raise ValueError("must be one of enum values ('nearest')")
         return value
 
     model_config = ConfigDict(
@@ -70,7 +68,7 @@ class LandfireTopographyGridSource(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of LandfireTopographyGridSource from a JSON string"""
+        """Create an instance of TopographyGrid3DEPSourceAspect from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -95,7 +93,7 @@ class LandfireTopographyGridSource(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of LandfireTopographyGridSource from a dict"""
+        """Create an instance of TopographyGrid3DEPSourceAspect from a dict"""
         if obj is None:
             return None
 
@@ -103,9 +101,8 @@ class LandfireTopographyGridSource(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "source": obj.get("source") if obj.get("source") is not None else 'LANDFIRE',
-            "version": obj.get("version") if obj.get("version") is not None else '2020',
-            "interpolationMethod": obj.get("interpolationMethod")
+            "source": obj.get("source") if obj.get("source") is not None else '3DEP',
+            "interpolationMethod": obj.get("interpolationMethod") if obj.get("interpolationMethod") is not None else 'nearest'
         })
         return _obj
 
