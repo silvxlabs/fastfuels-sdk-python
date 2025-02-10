@@ -13,6 +13,7 @@ from typing import Optional, List
 from fastfuels_sdk.api import get_client
 from fastfuels_sdk.exports import Export
 from fastfuels_sdk.grids.tree_grid import TreeGrid
+from fastfuels_sdk.grids.feature_grid import FeatureGrid
 from fastfuels_sdk.grids.surface_grid import SurfaceGrid
 from fastfuels_sdk.grids.topography_grid import TopographyGrid
 from fastfuels_sdk.client_library.api import (
@@ -39,6 +40,7 @@ from fastfuels_sdk.client_library.models import (
     TreeGridUniformValue,
     TreeGridSPCDSource,
     TreeGridBulkDensitySource,
+    CreateFeatureGridRequest,
 )
 
 _GRIDS_API = GridsApi(get_client())
@@ -98,7 +100,7 @@ class Grids(GridsModel):
     tree: Optional[TreeGrid]
     surface: Optional[SurfaceGrid]
     topography: Optional[TopographyGrid]
-    # feature: Optional[FeatureGrid]
+    feature: Optional[FeatureGrid]
 
     @classmethod
     def from_domain_id(cls, domain_id: str) -> Grids:
@@ -540,6 +542,72 @@ class Grids(GridsModel):
 
         return tree_grid
 
+    def create_feature_grid(
+        self,
+        attributes: List[str],
+        in_place: bool = False,
+    ) -> FeatureGrid:
+        """Create a feature grid for the current domain.
+
+        Creates a feature grid containing various geographic features within the spatial
+        context of your domain. Feature grids represent spatial data related to various
+        features such as roads, water bodies, and other geographic elements.
+
+        **Feature resources must have a "completed" status before they can be included as attributes to a feature grid.**
+
+        Parameters
+        ----------
+        attributes : List[str]
+            List of feature types to rasterize in the grid. Available attributes
+            depend on the specific geographic features in your domain area.
+
+        in_place : bool, optional
+            If True, updates this object's feature grid (self.feature).
+            If False (default), leaves this object unchanged.
+
+        Returns
+        -------
+        FeatureGrid
+            The newly created feature grid object.
+
+        Notes
+        -----
+        Grid generation happens asynchronously. The returned grid will initially
+        have a "pending" status.
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Grids
+        >>> grids = Grids.from_domain_id("abc123")
+
+        Simple usage with specific feature types:
+        >>> grid = grids.create_feature_grid(
+        ...     attributes=["roads", "water_bodies"]
+        ... )
+
+        Create and wait for completion:
+        >>> grid = grids.create_feature_grid(
+        ...     attributes=["roads", "water_bodies"],
+        ...     in_place=True
+        ... )
+        >>> grid.wait_until_completed()
+        """
+        request = CreateFeatureGridRequest(
+            attributes=attributes,  # type: ignore # pydantic handles this for us
+        )
+
+        response = _FEATURE_GRID_API.create_feature_grid(
+            domain_id=self.domain_id, create_feature_grid_request=request
+        )
+
+        # Create a new FeatureGrid object with the response data
+        feature_grid = FeatureGrid(domain_id=self.domain_id, **response.model_dump())
+
+        if in_place:
+            self.feature = feature_grid
+
+        return feature_grid
+
     def create_export(self, export_format: str) -> Export:
         """Create an export of the grid data.
 
@@ -619,4 +687,8 @@ def _convert_api_models_to_sdk_classes(domain_id, response_data: dict) -> dict:
         )
     if "tree" in response_data and response_data["tree"]:
         response_data["tree"] = TreeGrid(domain_id=domain_id, **response_data["tree"])
+    if "feature" in response_data and response_data["feature"]:
+        response_data["feature"] = FeatureGrid(
+            domain_id=domain_id, **response_data["feature"]
+        )
     return response_data

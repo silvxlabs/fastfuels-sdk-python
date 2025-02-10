@@ -99,7 +99,11 @@ class Features(FeaturesModel):
         Features.get : Refresh feature data
         """
         features_response = _FEATURES_API.get_features(domain_id=domain_id)
-        return cls(domain_id=domain_id, **features_response.model_dump())
+        response_data = _convert_api_models_to_sdk_classes(
+            domain_id, features_response.model_dump()
+        )
+
+        return cls(domain_id=domain_id, **response_data)
 
     def get(self, in_place: bool = False) -> Features:
         """Get the latest feature data for this domain.
@@ -131,16 +135,9 @@ class Features(FeaturesModel):
         """
         response = _FEATURES_API.get_features(domain_id=self.domain_id)
         response_data = response.model_dump()
-
-        # Convert API models to SDK classes with domain_id
-        if "road" in response_data and response_data["road"]:
-            response_data["road"] = RoadFeature(
-                domain_id=self.domain_id, **response_data["road"]
-            )
-        if "water" in response_data and response_data["water"]:
-            response_data["water"] = WaterFeature(
-                domain_id=self.domain_id, **response_data["water"]
-            )
+        response_data = _convert_api_models_to_sdk_classes(
+            self.domain_id, response_data
+        )
 
         if in_place:
             # Update all attributes of current instance
@@ -625,3 +622,17 @@ class WaterFeature(WaterFeatureModel):
         """
         _WATER_FEATURE_API.delete_water_feature(domain_id=self.domain_id)
         return None
+
+
+def _convert_api_models_to_sdk_classes(domain_id, response_data: dict) -> dict:
+    """Convert API models to SDK classes with domain_id."""
+    if "road" in response_data and response_data["road"]:
+        response_data["road"] = RoadFeature(
+            domain_id=domain_id, **response_data["road"]
+        )
+    if "water" in response_data and response_data["water"]:
+        response_data["water"] = WaterFeature(
+            domain_id=domain_id, **response_data["water"]
+        )
+
+    return response_data

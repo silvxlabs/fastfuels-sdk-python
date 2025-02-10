@@ -9,6 +9,7 @@ from fastfuels_sdk.grids import (
     TreeGridBuilder,
     TopographyGrid,
     TopographyGridBuilder,
+    FeatureGrid,
 )
 from fastfuels_sdk.exports import Export
 
@@ -28,5 +29,6 @@ __all__ = [
     "TreeGridBuilder",
     "TopographyGrid",
     "TopographyGridBuilder",
+    "FeatureGrid",
     "Export",
 ]
