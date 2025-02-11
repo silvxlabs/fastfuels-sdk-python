@@ -18,22 +18,23 @@ from enum import Enum
 from typing_extensions import Self
 
 
-class InterpolationMethod(str, Enum):
+class SurfaceGridLandfireFBFM40Group(str, Enum):
     """
-    InterpolationMethod
+    The size class groups available for the FBFM40 fuel model.
     """
 
     """
     allowed enum values
     """
-    NEAREST = 'nearest'
-    LINEAR = 'linear'
-    CUBIC = 'cubic'
-    ZIPPER = 'zipper'
+    ONEHOUR = 'oneHour'
+    TENHOUR = 'tenHour'
+    HUNDREDHOUR = 'hundredHour'
+    LIVEHERBACEOUS = 'liveHerbaceous'
+    LIVEWOODY = 'liveWoody'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of InterpolationMethod from a JSON string"""
+        """Create an instance of SurfaceGridLandfireFBFM40Group from a JSON string"""
         return cls(json.loads(json_str))
 
 

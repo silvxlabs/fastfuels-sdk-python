@@ -18,24 +18,17 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List, Optional, Union
-from typing_extensions import Annotated
-from fastfuels_sdk.client_library.models.feature_type import FeatureType
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class UniformFBFM40SizeClassValue(BaseModel):
+class TopographyGrid3DEPSourceAspect(BaseModel):
     """
-    UniformFBFM40SizeClassValue
+    TopographyGrid3DEPSourceAspect
     """ # noqa: E501
-    feature_masks: Optional[List[FeatureType]] = Field(default=None, description="List of feature masks to apply to the surface grid attribute", alias="featureMasks")
-    source: Optional[StrictStr] = 'uniformByFBFM40SizeClass'
-    one_hour: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]] = Field(alias="oneHour")
-    ten_hour: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]] = Field(alias="tenHour")
-    hundred_hour: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]] = Field(alias="hundredHour")
-    live_herbaceous: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]] = Field(alias="liveHerbaceous")
-    live_woody: Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]] = Field(alias="liveWoody")
-    __properties: ClassVar[List[str]] = ["featureMasks", "source", "oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody"]
+    source: Optional[StrictStr] = '3DEP'
+    interpolation_method: Optional[StrictStr] = Field(default='nearest', alias="interpolationMethod")
+    __properties: ClassVar[List[str]] = ["source", "interpolationMethod"]
 
     @field_validator('source')
     def source_validate_enum(cls, value):
@@ -43,8 +36,18 @@ class UniformFBFM40SizeClassValue(BaseModel):
         if value is None:
             return value
 
-        if value not in set(['uniformByFBFM40SizeClass']):
-            raise ValueError("must be one of enum values ('uniformByFBFM40SizeClass')")
+        if value not in set(['3DEP']):
+            raise ValueError("must be one of enum values ('3DEP')")
+        return value
+
+    @field_validator('interpolation_method')
+    def interpolation_method_validate_enum(cls, value):
+        """Validates the enum"""
+        if value is None:
+            return value
+
+        if value not in set(['nearest']):
+            raise ValueError("must be one of enum values ('nearest')")
         return value
 
     model_config = ConfigDict(
@@ -65,7 +68,7 @@ class UniformFBFM40SizeClassValue(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of UniformFBFM40SizeClassValue from a JSON string"""
+        """Create an instance of TopographyGrid3DEPSourceAspect from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -90,7 +93,7 @@ class UniformFBFM40SizeClassValue(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of UniformFBFM40SizeClassValue from a dict"""
+        """Create an instance of TopographyGrid3DEPSourceAspect from a dict"""
         if obj is None:
             return None
 
@@ -98,13 +101,8 @@ class UniformFBFM40SizeClassValue(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "featureMasks": obj.get("featureMasks"),
-            "source": obj.get("source") if obj.get("source") is not None else 'uniformByFBFM40SizeClass',
-            "oneHour": obj.get("oneHour"),
-            "tenHour": obj.get("tenHour"),
-            "hundredHour": obj.get("hundredHour"),
-            "liveHerbaceous": obj.get("liveHerbaceous"),
-            "liveWoody": obj.get("liveWoody")
+            "source": obj.get("source") if obj.get("source") is not None else '3DEP',
+            "interpolationMethod": obj.get("interpolationMethod") if obj.get("interpolationMethod") is not None else 'nearest'
         })
         return _obj
 

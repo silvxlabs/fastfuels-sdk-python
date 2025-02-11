@@ -1,8 +1,3 @@
----
-title: How to Work with FastFuels Inventory Data
-description: Learn how to create, manage, and export inventory data using the FastFuels SDK
----
-
 # How to Work with FastFuels Inventory Data
 
 This guide shows you how to work with inventory data using the FastFuels SDK. You'll learn how to create and manage different types of inventories, with a focus on tree inventories which are currently the main type available. The patterns shown here will apply to other inventory types (such as shrub, log, or grass inventories) as they become available.
@@ -12,10 +7,9 @@ This guide shows you how to work with inventory data using the FastFuels SDK. Yo
 Every inventory in FastFuels belongs to a domain. Start by initializing an Inventories object from your domain:
 
 ```python
-from fastfuels_sdk import Domain, Inventories
+from fastfuels_sdk import Inventories
 
-domain = Domain.from_id("your_domain_id")
-inventories = Inventories.from_domain(domain)
+inventories = Inventories.from_domain_id("your_domain_id")
 ```
 
 Check what inventories currently exist:

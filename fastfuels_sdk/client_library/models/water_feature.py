@@ -20,7 +20,7 @@ import json
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from fastfuels_sdk.client_library.models.feature_status import FeatureStatus
+from fastfuels_sdk.client_library.models.job_status import JobStatus
 from fastfuels_sdk.client_library.models.water_feature_source import WaterFeatureSource
 from typing import Optional, Set
 from typing_extensions import Self
@@ -30,7 +30,7 @@ class WaterFeature(BaseModel):
     WaterFeature
     """ # noqa: E501
     sources: List[WaterFeatureSource] = Field(description="List of sources of road features")
-    status: Optional[FeatureStatus] = None
+    status: Optional[JobStatus] = None
     created_on: Optional[datetime] = Field(default=None, alias="createdOn")
     modified_on: Optional[datetime] = Field(default=None, alias="modifiedOn")
     checksum: Optional[StrictStr] = None
@@ -75,6 +75,11 @@ class WaterFeature(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if status (nullable) is None
+        # and model_fields_set contains the field
+        if self.status is None and "status" in self.model_fields_set:
+            _dict['status'] = None
+
         # set to None if created_on (nullable) is None
         # and model_fields_set contains the field
         if self.created_on is None and "created_on" in self.model_fields_set:

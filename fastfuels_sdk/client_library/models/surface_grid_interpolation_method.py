@@ -18,22 +18,22 @@ from enum import Enum
 from typing_extensions import Self
 
 
-class FeatureStatus(str, Enum):
+class SurfaceGridInterpolationMethod(str, Enum):
     """
-    FeatureStatus
+    SurfaceGridInterpolationMethod
     """
 
     """
     allowed enum values
     """
-    PENDING = 'pending'
-    RUNNING = 'running'
-    COMPLETED = 'completed'
-    FAILED = 'failed'
+    NEAREST = 'nearest'
+    LINEAR = 'linear'
+    CUBIC = 'cubic'
+    ZIPPER = 'zipper'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of FeatureStatus from a JSON string"""
+        """Create an instance of SurfaceGridInterpolationMethod from a JSON string"""
         return cls(json.loads(json_str))
 
 

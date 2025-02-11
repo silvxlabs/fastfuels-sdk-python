@@ -17,24 +17,21 @@ import json
 import pprint
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
 from typing import Any, List, Optional
-from fastfuels_sdk.client_library.models.landfire_surface_grid_source import LandfireSurfaceGridSource
-from fastfuels_sdk.client_library.models.surface_grid_uniform_value import SurfaceGridUniformValue
+from fastfuels_sdk.client_library.models.meta_canopy_height_map_source import MetaCanopyHeightMapSource
 from pydantic import StrictStr, Field
 from typing import Union, List, Set, Optional, Dict
 from typing_extensions import Literal, Self
 
-CREATESURFACEGRIDREQUESTFUELDEPTH_ONE_OF_SCHEMAS = ["LandfireSurfaceGridSource", "SurfaceGridUniformValue"]
+TREEMAPSOURCECANOPYHEIGHTMAPCONFIGURATION_ONE_OF_SCHEMAS = ["MetaCanopyHeightMapSource"]
 
-class CreateSurfaceGridRequestFuelDepth(BaseModel):
+class TreeMapSourceCanopyHeightMapConfiguration(BaseModel):
     """
-    CreateSurfaceGridRequestFuelDepth
+    TreeMapSourceCanopyHeightMapConfiguration
     """
-    # data type: LandfireSurfaceGridSource
-    oneof_schema_1_validator: Optional[LandfireSurfaceGridSource] = None
-    # data type: SurfaceGridUniformValue
-    oneof_schema_2_validator: Optional[SurfaceGridUniformValue] = None
-    actual_instance: Optional[Union[LandfireSurfaceGridSource, SurfaceGridUniformValue]] = None
-    one_of_schemas: Set[str] = { "LandfireSurfaceGridSource", "SurfaceGridUniformValue" }
+    # data type: MetaCanopyHeightMapSource
+    oneof_schema_1_validator: Optional[MetaCanopyHeightMapSource] = None
+    actual_instance: Optional[Union[MetaCanopyHeightMapSource]] = None
+    one_of_schemas: Set[str] = { "MetaCanopyHeightMapSource" }
 
     model_config = ConfigDict(
         validate_assignment=True,
@@ -60,25 +57,20 @@ class CreateSurfaceGridRequestFuelDepth(BaseModel):
         if v is None:
             return v
 
-        instance = CreateSurfaceGridRequestFuelDepth.model_construct()
+        instance = TreeMapSourceCanopyHeightMapConfiguration.model_construct()
         error_messages = []
         match = 0
-        # validate data type: LandfireSurfaceGridSource
-        if not isinstance(v, LandfireSurfaceGridSource):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `LandfireSurfaceGridSource`")
-        else:
-            match += 1
-        # validate data type: SurfaceGridUniformValue
-        if not isinstance(v, SurfaceGridUniformValue):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridUniformValue`")
+        # validate data type: MetaCanopyHeightMapSource
+        if not isinstance(v, MetaCanopyHeightMapSource):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `MetaCanopyHeightMapSource`")
         else:
             match += 1
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in CreateSurfaceGridRequestFuelDepth with oneOf schemas: LandfireSurfaceGridSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when setting `actual_instance` in TreeMapSourceCanopyHeightMapConfiguration with oneOf schemas: MetaCanopyHeightMapSource. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in CreateSurfaceGridRequestFuelDepth with oneOf schemas: LandfireSurfaceGridSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting `actual_instance` in TreeMapSourceCanopyHeightMapConfiguration with oneOf schemas: MetaCanopyHeightMapSource. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -96,25 +88,19 @@ class CreateSurfaceGridRequestFuelDepth(BaseModel):
         error_messages = []
         match = 0
 
-        # deserialize data into LandfireSurfaceGridSource
+        # deserialize data into MetaCanopyHeightMapSource
         try:
-            instance.actual_instance = LandfireSurfaceGridSource.from_json(json_str)
-            match += 1
-        except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
-        # deserialize data into SurfaceGridUniformValue
-        try:
-            instance.actual_instance = SurfaceGridUniformValue.from_json(json_str)
+            instance.actual_instance = MetaCanopyHeightMapSource.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
 
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into CreateSurfaceGridRequestFuelDepth with oneOf schemas: LandfireSurfaceGridSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when deserializing the JSON string into TreeMapSourceCanopyHeightMapConfiguration with oneOf schemas: MetaCanopyHeightMapSource. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into CreateSurfaceGridRequestFuelDepth with oneOf schemas: LandfireSurfaceGridSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into TreeMapSourceCanopyHeightMapConfiguration with oneOf schemas: MetaCanopyHeightMapSource. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -128,7 +114,7 @@ class CreateSurfaceGridRequestFuelDepth(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], LandfireSurfaceGridSource, SurfaceGridUniformValue]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], MetaCanopyHeightMapSource]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None

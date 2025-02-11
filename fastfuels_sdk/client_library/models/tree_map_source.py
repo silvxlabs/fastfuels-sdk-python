@@ -17,8 +17,9 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictInt
 from typing import Any, ClassVar, Dict, List, Optional
+from fastfuels_sdk.client_library.models.tree_map_source_canopy_height_map_configuration import TreeMapSourceCanopyHeightMapConfiguration
 from fastfuels_sdk.client_library.models.tree_map_version import TreeMapVersion
 from typing import Optional, Set
 from typing_extensions import Self
@@ -29,7 +30,8 @@ class TreeMapSource(BaseModel):
     """ # noqa: E501
     version: Optional[TreeMapVersion] = None
     seed: Optional[StrictInt] = None
-    __properties: ClassVar[List[str]] = ["version", "seed"]
+    canopy_height_map_configuration: Optional[TreeMapSourceCanopyHeightMapConfiguration] = Field(default=None, alias="canopyHeightMapConfiguration")
+    __properties: ClassVar[List[str]] = ["version", "seed", "canopyHeightMapConfiguration"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -70,6 +72,14 @@ class TreeMapSource(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of canopy_height_map_configuration
+        if self.canopy_height_map_configuration:
+            _dict['canopyHeightMapConfiguration'] = self.canopy_height_map_configuration.to_dict()
+        # set to None if canopy_height_map_configuration (nullable) is None
+        # and model_fields_set contains the field
+        if self.canopy_height_map_configuration is None and "canopy_height_map_configuration" in self.model_fields_set:
+            _dict['canopyHeightMapConfiguration'] = None
+
         return _dict
 
     @classmethod
@@ -83,7 +93,8 @@ class TreeMapSource(BaseModel):
 
         _obj = cls.model_validate({
             "version": obj.get("version"),
-            "seed": obj.get("seed")
+            "seed": obj.get("seed"),
+            "canopyHeightMapConfiguration": TreeMapSourceCanopyHeightMapConfiguration.from_dict(obj["canopyHeightMapConfiguration"]) if obj.get("canopyHeightMapConfiguration") is not None else None
         })
         return _obj
 

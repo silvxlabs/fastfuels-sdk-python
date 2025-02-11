@@ -17,48 +17,25 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
+from pydantic import BaseModel, ConfigDict, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class LandfireTopographyGridSourceAspect(BaseModel):
+class MetaCanopyHeightMapSource(BaseModel):
     """
-    LandfireTopographyGridSourceAspect
+    MetaCanopyHeightMapSource
     """ # noqa: E501
-    source: Optional[StrictStr] = 'LANDFIRE'
-    version: Optional[StrictStr] = '2020'
-    interpolation_method: Optional[StrictStr] = Field(default='nearest', alias="interpolationMethod")
-    __properties: ClassVar[List[str]] = ["source", "version", "interpolationMethod"]
+    source: StrictStr
+    license: Optional[StrictStr] = None
+    citation: Optional[StrictStr] = None
+    __properties: ClassVar[List[str]] = ["source", "license", "citation"]
 
     @field_validator('source')
     def source_validate_enum(cls, value):
         """Validates the enum"""
-        if value is None:
-            return value
-
-        if value not in set(['LANDFIRE']):
-            raise ValueError("must be one of enum values ('LANDFIRE')")
-        return value
-
-    @field_validator('version')
-    def version_validate_enum(cls, value):
-        """Validates the enum"""
-        if value is None:
-            return value
-
-        if value not in set(['2020']):
-            raise ValueError("must be one of enum values ('2020')")
-        return value
-
-    @field_validator('interpolation_method')
-    def interpolation_method_validate_enum(cls, value):
-        """Validates the enum"""
-        if value is None:
-            return value
-
-        if value not in set(['nearest']):
-            raise ValueError("must be one of enum values ('nearest')")
+        if value not in set(['Meta2024']):
+            raise ValueError("must be one of enum values ('Meta2024')")
         return value
 
     model_config = ConfigDict(
@@ -79,7 +56,7 @@ class LandfireTopographyGridSourceAspect(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of LandfireTopographyGridSourceAspect from a JSON string"""
+        """Create an instance of MetaCanopyHeightMapSource from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -100,11 +77,21 @@ class LandfireTopographyGridSourceAspect(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if license (nullable) is None
+        # and model_fields_set contains the field
+        if self.license is None and "license" in self.model_fields_set:
+            _dict['license'] = None
+
+        # set to None if citation (nullable) is None
+        # and model_fields_set contains the field
+        if self.citation is None and "citation" in self.model_fields_set:
+            _dict['citation'] = None
+
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of LandfireTopographyGridSourceAspect from a dict"""
+        """Create an instance of MetaCanopyHeightMapSource from a dict"""
         if obj is None:
             return None
 
@@ -112,9 +99,9 @@ class LandfireTopographyGridSourceAspect(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "source": obj.get("source") if obj.get("source") is not None else 'LANDFIRE',
-            "version": obj.get("version") if obj.get("version") is not None else '2020',
-            "interpolationMethod": obj.get("interpolationMethod") if obj.get("interpolationMethod") is not None else 'nearest'
+            "source": obj.get("source"),
+            "license": obj.get("license"),
+            "citation": obj.get("citation")
         })
         return _obj
 

@@ -20,20 +20,23 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
 from fastfuels_sdk.client_library.models.feature_type import FeatureType
-from fastfuels_sdk.client_library.models.interpolation_method import InterpolationMethod
+from fastfuels_sdk.client_library.models.surface_grid_interpolation_method import SurfaceGridInterpolationMethod
+from fastfuels_sdk.client_library.models.surface_grid_landfire_fbfm40_group import SurfaceGridLandfireFBFM40Group
 from typing import Optional, Set
 from typing_extensions import Self
 
-class LandfireFBFM40Source(BaseModel):
+class SurfaceGridLandfireFBFM40SAVRSource(BaseModel):
     """
-    LandfireFBFM40Source
+    SurfaceGridLandfireFBFM40SAVRSource
     """ # noqa: E501
     feature_masks: Optional[List[FeatureType]] = Field(default=None, description="List of feature masks to apply to the surface grid attribute", alias="featureMasks")
     source: Optional[StrictStr] = 'LANDFIRE'
     product: Optional[StrictStr] = 'FBFM40'
-    version: Optional[StrictStr] = '2022'
-    interpolation_method: Optional[InterpolationMethod] = Field(default=None, alias="interpolationMethod")
-    __properties: ClassVar[List[str]] = ["featureMasks", "source", "product", "version", "interpolationMethod"]
+    version: Optional[StrictStr] = Field(default='2022', description="Version of the LANDFIRE data to use for the surface grid attribute.")
+    interpolation_method: Optional[SurfaceGridInterpolationMethod] = Field(default=None, description="Interpolation method to use when resampling the LANDFIRE data to the desired surface grid resolution.", alias="interpolationMethod")
+    remove_non_burnable: Optional[List[StrictStr]] = Field(default=None, alias="removeNonBurnable")
+    groups: Optional[List[SurfaceGridLandfireFBFM40Group]] = None
+    __properties: ClassVar[List[str]] = ["featureMasks", "source", "product", "version", "interpolationMethod", "removeNonBurnable", "groups"]
 
     @field_validator('source')
     def source_validate_enum(cls, value):
@@ -65,6 +68,17 @@ class LandfireFBFM40Source(BaseModel):
             raise ValueError("must be one of enum values ('2022')")
         return value
 
+    @field_validator('remove_non_burnable')
+    def remove_non_burnable_validate_enum(cls, value):
+        """Validates the enum"""
+        if value is None:
+            return value
+
+        for i in value:
+            if i not in set(['NB1', 'NB2', 'NB3', 'NB8', 'NB9']):
+                raise ValueError("each list item must be one of ('NB1', 'NB2', 'NB3', 'NB8', 'NB9')")
+        return value
+
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
@@ -83,7 +97,7 @@ class LandfireFBFM40Source(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of LandfireFBFM40Source from a JSON string"""
+        """Create an instance of SurfaceGridLandfireFBFM40SAVRSource from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -104,11 +118,21 @@ class LandfireFBFM40Source(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if remove_non_burnable (nullable) is None
+        # and model_fields_set contains the field
+        if self.remove_non_burnable is None and "remove_non_burnable" in self.model_fields_set:
+            _dict['removeNonBurnable'] = None
+
+        # set to None if groups (nullable) is None
+        # and model_fields_set contains the field
+        if self.groups is None and "groups" in self.model_fields_set:
+            _dict['groups'] = None
+
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of LandfireFBFM40Source from a dict"""
+        """Create an instance of SurfaceGridLandfireFBFM40SAVRSource from a dict"""
         if obj is None:
             return None
 
@@ -120,7 +144,9 @@ class LandfireFBFM40Source(BaseModel):
             "source": obj.get("source") if obj.get("source") is not None else 'LANDFIRE',
             "product": obj.get("product") if obj.get("product") is not None else 'FBFM40',
             "version": obj.get("version") if obj.get("version") is not None else '2022',
-            "interpolationMethod": obj.get("interpolationMethod")
+            "interpolationMethod": obj.get("interpolationMethod"),
+            "removeNonBurnable": obj.get("removeNonBurnable"),
+            "groups": obj.get("groups")
         })
         return _obj
 

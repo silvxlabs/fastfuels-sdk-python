@@ -17,27 +17,24 @@ import json
 import pprint
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
 from typing import Any, List, Optional
-from fastfuels_sdk.client_library.models.landfire_surface_grid_fuel_load_source import LandfireSurfaceGridFuelLoadSource
+from fastfuels_sdk.client_library.models.surface_grid_landfire_fbfm40_fuel_load_source import SurfaceGridLandfireFBFM40FuelLoadSource
 from fastfuels_sdk.client_library.models.surface_grid_uniform_value import SurfaceGridUniformValue
-from fastfuels_sdk.client_library.models.uniform_fbfm40_size_class_value import UniformFBFM40SizeClassValue
 from pydantic import StrictStr, Field
 from typing import Union, List, Set, Optional, Dict
 from typing_extensions import Literal, Self
 
-CREATESURFACEGRIDREQUESTFUELLOAD_ONE_OF_SCHEMAS = ["LandfireSurfaceGridFuelLoadSource", "SurfaceGridUniformValue", "UniformFBFM40SizeClassValue"]
+SURFACEGRIDFUELLOADSOURCE_ONE_OF_SCHEMAS = ["SurfaceGridLandfireFBFM40FuelLoadSource", "SurfaceGridUniformValue"]
 
-class CreateSurfaceGridRequestFuelLoad(BaseModel):
+class SurfaceGridFuelLoadSource(BaseModel):
     """
-    CreateSurfaceGridRequestFuelLoad
+    SurfaceGridFuelLoadSource
     """
-    # data type: LandfireSurfaceGridFuelLoadSource
-    oneof_schema_1_validator: Optional[LandfireSurfaceGridFuelLoadSource] = None
+    # data type: SurfaceGridLandfireFBFM40FuelLoadSource
+    oneof_schema_1_validator: Optional[SurfaceGridLandfireFBFM40FuelLoadSource] = None
     # data type: SurfaceGridUniformValue
     oneof_schema_2_validator: Optional[SurfaceGridUniformValue] = None
-    # data type: UniformFBFM40SizeClassValue
-    oneof_schema_3_validator: Optional[UniformFBFM40SizeClassValue] = None
-    actual_instance: Optional[Union[LandfireSurfaceGridFuelLoadSource, SurfaceGridUniformValue, UniformFBFM40SizeClassValue]] = None
-    one_of_schemas: Set[str] = { "LandfireSurfaceGridFuelLoadSource", "SurfaceGridUniformValue", "UniformFBFM40SizeClassValue" }
+    actual_instance: Optional[Union[SurfaceGridLandfireFBFM40FuelLoadSource, SurfaceGridUniformValue]] = None
+    one_of_schemas: Set[str] = { "SurfaceGridLandfireFBFM40FuelLoadSource", "SurfaceGridUniformValue" }
 
     model_config = ConfigDict(
         validate_assignment=True,
@@ -63,12 +60,12 @@ class CreateSurfaceGridRequestFuelLoad(BaseModel):
         if v is None:
             return v
 
-        instance = CreateSurfaceGridRequestFuelLoad.model_construct()
+        instance = SurfaceGridFuelLoadSource.model_construct()
         error_messages = []
         match = 0
-        # validate data type: LandfireSurfaceGridFuelLoadSource
-        if not isinstance(v, LandfireSurfaceGridFuelLoadSource):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `LandfireSurfaceGridFuelLoadSource`")
+        # validate data type: SurfaceGridLandfireFBFM40FuelLoadSource
+        if not isinstance(v, SurfaceGridLandfireFBFM40FuelLoadSource):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridLandfireFBFM40FuelLoadSource`")
         else:
             match += 1
         # validate data type: SurfaceGridUniformValue
@@ -76,17 +73,12 @@ class CreateSurfaceGridRequestFuelLoad(BaseModel):
             error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridUniformValue`")
         else:
             match += 1
-        # validate data type: UniformFBFM40SizeClassValue
-        if not isinstance(v, UniformFBFM40SizeClassValue):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `UniformFBFM40SizeClassValue`")
-        else:
-            match += 1
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in CreateSurfaceGridRequestFuelLoad with oneOf schemas: LandfireSurfaceGridFuelLoadSource, SurfaceGridUniformValue, UniformFBFM40SizeClassValue. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when setting `actual_instance` in SurfaceGridFuelLoadSource with oneOf schemas: SurfaceGridLandfireFBFM40FuelLoadSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in CreateSurfaceGridRequestFuelLoad with oneOf schemas: LandfireSurfaceGridFuelLoadSource, SurfaceGridUniformValue, UniformFBFM40SizeClassValue. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting `actual_instance` in SurfaceGridFuelLoadSource with oneOf schemas: SurfaceGridLandfireFBFM40FuelLoadSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -104,9 +96,9 @@ class CreateSurfaceGridRequestFuelLoad(BaseModel):
         error_messages = []
         match = 0
 
-        # deserialize data into LandfireSurfaceGridFuelLoadSource
+        # deserialize data into SurfaceGridLandfireFBFM40FuelLoadSource
         try:
-            instance.actual_instance = LandfireSurfaceGridFuelLoadSource.from_json(json_str)
+            instance.actual_instance = SurfaceGridLandfireFBFM40FuelLoadSource.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
@@ -116,19 +108,13 @@ class CreateSurfaceGridRequestFuelLoad(BaseModel):
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into UniformFBFM40SizeClassValue
-        try:
-            instance.actual_instance = UniformFBFM40SizeClassValue.from_json(json_str)
-            match += 1
-        except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
 
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into CreateSurfaceGridRequestFuelLoad with oneOf schemas: LandfireSurfaceGridFuelLoadSource, SurfaceGridUniformValue, UniformFBFM40SizeClassValue. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when deserializing the JSON string into SurfaceGridFuelLoadSource with oneOf schemas: SurfaceGridLandfireFBFM40FuelLoadSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into CreateSurfaceGridRequestFuelLoad with oneOf schemas: LandfireSurfaceGridFuelLoadSource, SurfaceGridUniformValue, UniformFBFM40SizeClassValue. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into SurfaceGridFuelLoadSource with oneOf schemas: SurfaceGridLandfireFBFM40FuelLoadSource, SurfaceGridUniformValue. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -142,7 +128,7 @@ class CreateSurfaceGridRequestFuelLoad(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], LandfireSurfaceGridFuelLoadSource, SurfaceGridUniformValue, UniformFBFM40SizeClassValue]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], SurfaceGridLandfireFBFM40FuelLoadSource, SurfaceGridUniformValue]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None

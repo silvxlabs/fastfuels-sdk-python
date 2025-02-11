@@ -1,3 +1,7 @@
+"""
+fastfuels_sdk/features.py
+"""
+
 # Core imports
 from __future__ import annotations
 from time import sleep
@@ -40,8 +44,8 @@ class Features(FeaturesModel):
 
     Examples
     --------
-    >>> domain = Domain.from_id("abc123")
-    >>> features = Features.from_domain(domain)
+    >>> from fastfuels_sdk import Features
+    >>> features = Features.from_domain_id("abc123")
 
     >>> # Access road data
     >>> if features.road:
@@ -66,13 +70,13 @@ class Features(FeaturesModel):
     water: Optional[WaterFeature]
 
     @classmethod
-    def from_domain(cls, domain: Domain) -> Features:
+    def from_domain_id(cls, domain_id: str) -> Features:
         """Retrieve the features (roads and water bodies) associated with a domain.
 
         Parameters
         ----------
-        domain : Domain
-            The domain whose features should be retrieved
+        domain_id : str
+            The ID of the domain to retrieve features for
 
         Returns
         -------
@@ -85,9 +89,8 @@ class Features(FeaturesModel):
 
         Examples
         --------
-        >>> from fastfuels_sdk.domains import Domain
-        >>> my_domain = Domain.from_id("abc123")
-        >>> features = Features.from_domain(my_domain)
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
 
         >>> # Check for specific features. These will be None until created.
         >>> if features.road:
@@ -99,8 +102,12 @@ class Features(FeaturesModel):
         --------
         Features.get : Refresh feature data
         """
-        features_response = _FEATURES_API.get_features(domain_id=domain.id)
-        return cls(domain_id=domain.id, **features_response.model_dump())
+        features_response = _FEATURES_API.get_features(domain_id=domain_id)
+        response_data = _convert_api_models_to_sdk_classes(
+            domain_id, features_response.model_dump()
+        )
+
+        return cls(domain_id=domain_id, **response_data)
 
     def get(self, in_place: bool = False) -> Features:
         """Get the latest feature data for this domain.
@@ -118,9 +125,8 @@ class Features(FeaturesModel):
 
         Examples
         --------
-        >>> from fastfuels_sdk.domains import Domain
-        >>> domain = Domain.from_id("abc123")
-        >>> features = Features.from_domain(domain)
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
         >>> # Get fresh data in a new instance
         >>> updated_features = features.get()
         >>>
@@ -133,16 +139,9 @@ class Features(FeaturesModel):
         """
         response = _FEATURES_API.get_features(domain_id=self.domain_id)
         response_data = response.model_dump()
-
-        # Convert API models to SDK classes with domain_id
-        if "road" in response_data and response_data["road"]:
-            response_data["road"] = RoadFeature(
-                domain_id=self.domain_id, **response_data["road"]
-            )
-        if "water" in response_data and response_data["water"]:
-            response_data["water"] = WaterFeature(
-                domain_id=self.domain_id, **response_data["water"]
-            )
+        response_data = _convert_api_models_to_sdk_classes(
+            self.domain_id, response_data
+        )
 
         if in_place:
             # Update all attributes of current instance
@@ -175,9 +174,8 @@ class Features(FeaturesModel):
 
         Examples
         --------
-        >>> from fastfuels_sdk.domains import Domain
-        >>> domain = Domain.from_id("abc123")
-        >>> features = Features.from_domain(domain)
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
         >>> # Create from OpenStreetMap
         >>> road = features.create_road_feature("OSM")
         >>>
@@ -227,9 +225,8 @@ class Features(FeaturesModel):
 
         Examples
         --------
-        >>> from fastfuels_sdk.domains import Domain
-        >>> domain = Domain.from_id("abc123")
-        >>> features = Features.from_domain(domain)
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
         >>> # Create new road features
         >>> road = features.create_road_feature_from_osm()
         >>>
@@ -267,9 +264,8 @@ class Features(FeaturesModel):
 
         Examples
         --------
-        >>> from fastfuels_sdk.domains import Domain
-        >>> domain = Domain.from_id("abc123")
-        >>> features = Features.from_domain(domain)
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
         >>>
         >>> # Create from OpenStreetMap
         >>> water = features.create_water_feature("OSM")
@@ -320,9 +316,8 @@ class Features(FeaturesModel):
 
         Examples
         --------
-        >>> from fastfuels_sdk.domains import Domain
-        >>> domain = Domain.from_id("abc123")
-        >>> features = Features.from_domain(domain)
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
         >>>
         >>> # Create new water features
         >>> water = features.create_water_feature_from_osm()
@@ -363,9 +358,9 @@ class RoadFeature(RoadFeatureModel):
 
     Examples
     --------
+    >>> from fastfuels_sdk.features import Features
     Get existing road features:
-    >>> domain = Domain.from_id("abc123")
-    >>> features = Features.from_domain(domain)
+    >>> features = Features.from_domain_id("abc123")
     >>> if features.road:
     ...     road_features = features.road
 
@@ -393,9 +388,8 @@ class RoadFeature(RoadFeatureModel):
 
         Examples
         --------
-        >>> from fastfuels_sdk.features import Domain, Features
-        >>> domain = Domain.from_id("abc123")
-        >>> features = Features.from_domain(domain)
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
         >>> road = features.create_road_feature("OSM")
         >>> # Get fresh data in a new instance
         >>> updated_road = road.get()
@@ -442,9 +436,8 @@ class RoadFeature(RoadFeatureModel):
 
         Examples
         --------
-        >>> from fastfuels_sdk.features import Domain, Features
-        >>> domain = Domain.from_id("abc123")
-        >>> features = Features.from_domain(domain)
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
         >>> road = features.create_road_feature("OSM")
         >>> road.wait_until_completed(verbose=True)
         Road features have status `pending` (5.00s)
@@ -476,9 +469,8 @@ class RoadFeature(RoadFeatureModel):
 
         Examples
         --------
-        >>> from fastfuels_sdk.features import Domain, Features
-        >>> domain = Domain.from_id("abc123")
-        >>> features = Features.from_domain(domain)
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
         >>> road = features.create_road_feature("OSM")
         >>> # Remove road features when no longer needed
         >>> road.delete()
@@ -514,9 +506,8 @@ class WaterFeature(WaterFeatureModel):
     Examples
     --------
     Get existing water features:
-    >>> from fastfuels_sdk.features import Domain, Features
-    >>> domain = Domain.from_id("abc123")
-    >>> features = Features.from_domain(domain)
+    >>> from fastfuels_sdk import Features
+    >>> features = Features.from_domain_id("abc123")
     >>> if features.water:
     ...     water_features = features.water
 
@@ -544,9 +535,8 @@ class WaterFeature(WaterFeatureModel):
 
         Examples
         --------
-        >>> from fastfuels_sdk.features import Domain, Features
-        >>> domain = Domain.from_id("abc123")
-        >>> features = Features.from_domain(domain)
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
         >>> water = features.create_water_feature("OSM")
         >>> # Get fresh data in a new instance
         >>> updated_water = water.get()
@@ -593,9 +583,8 @@ class WaterFeature(WaterFeatureModel):
 
         Examples
         --------
-        >>> from fastfuels_sdk.features import Domain, Features
-        >>> domain = Domain.from_id("abc123")
-        >>> features = Features.from_domain(domain)
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
         >>> water = features.create_water_feature("OSM")
         >>> water.wait_until_completed(verbose=True)
         Water features have status `pending` (5.00s)
@@ -627,9 +616,8 @@ class WaterFeature(WaterFeatureModel):
 
         Examples
         --------
-        >>> from fastfuels_sdk.features import Domain, Features
-        >>> domain = Domain.from_id("abc123")
-        >>> features = Features.from_domain(domain)
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
         >>> water = features.create_water_feature("OSM")
         >>> # Remove water features when no longer needed
         >>> water.delete()
@@ -638,3 +626,17 @@ class WaterFeature(WaterFeatureModel):
         """
         _WATER_FEATURE_API.delete_water_feature(domain_id=self.domain_id)
         return None
+
+
+def _convert_api_models_to_sdk_classes(domain_id, response_data: dict) -> dict:
+    """Convert API models to SDK classes with domain_id."""
+    if "road" in response_data and response_data["road"]:
+        response_data["road"] = RoadFeature(
+            domain_id=domain_id, **response_data["road"]
+        )
+    if "water" in response_data and response_data["water"]:
+        response_data["water"] = WaterFeature(
+            domain_id=domain_id, **response_data["water"]
+        )
+
+    return response_data

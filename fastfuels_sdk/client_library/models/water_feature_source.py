@@ -27,8 +27,6 @@ class WaterFeatureSource(str, Enum):
     allowed enum values
     """
     OSM = 'OSM'
-    FILE = 'File'
-    FEATURECOLLECTION = 'FeatureCollection'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:

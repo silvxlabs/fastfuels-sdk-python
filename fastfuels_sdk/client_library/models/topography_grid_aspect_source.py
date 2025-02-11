@@ -17,21 +17,24 @@ import json
 import pprint
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
 from typing import Any, List, Optional
-from fastfuels_sdk.client_library.models.landfire_surface_grid_source import LandfireSurfaceGridSource
+from fastfuels_sdk.client_library.models.topography_grid3_dep_source_aspect import TopographyGrid3DEPSourceAspect
+from fastfuels_sdk.client_library.models.topography_grid_landfire_source_aspect import TopographyGridLandfireSourceAspect
 from pydantic import StrictStr, Field
 from typing import Union, List, Set, Optional, Dict
 from typing_extensions import Literal, Self
 
-CREATESURFACEGRIDREQUESTFBFM_ONE_OF_SCHEMAS = ["LandfireSurfaceGridSource"]
+TOPOGRAPHYGRIDASPECTSOURCE_ONE_OF_SCHEMAS = ["TopographyGrid3DEPSourceAspect", "TopographyGridLandfireSourceAspect"]
 
-class CreateSurfaceGridRequestFBFM(BaseModel):
+class TopographyGridAspectSource(BaseModel):
     """
-    CreateSurfaceGridRequestFBFM
+    TopographyGridAspectSource
     """
-    # data type: LandfireSurfaceGridSource
-    oneof_schema_1_validator: Optional[LandfireSurfaceGridSource] = None
-    actual_instance: Optional[Union[LandfireSurfaceGridSource]] = None
-    one_of_schemas: Set[str] = { "LandfireSurfaceGridSource" }
+    # data type: TopographyGrid3DEPSourceAspect
+    oneof_schema_1_validator: Optional[TopographyGrid3DEPSourceAspect] = None
+    # data type: TopographyGridLandfireSourceAspect
+    oneof_schema_2_validator: Optional[TopographyGridLandfireSourceAspect] = None
+    actual_instance: Optional[Union[TopographyGrid3DEPSourceAspect, TopographyGridLandfireSourceAspect]] = None
+    one_of_schemas: Set[str] = { "TopographyGrid3DEPSourceAspect", "TopographyGridLandfireSourceAspect" }
 
     model_config = ConfigDict(
         validate_assignment=True,
@@ -57,20 +60,25 @@ class CreateSurfaceGridRequestFBFM(BaseModel):
         if v is None:
             return v
 
-        instance = CreateSurfaceGridRequestFBFM.model_construct()
+        instance = TopographyGridAspectSource.model_construct()
         error_messages = []
         match = 0
-        # validate data type: LandfireSurfaceGridSource
-        if not isinstance(v, LandfireSurfaceGridSource):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `LandfireSurfaceGridSource`")
+        # validate data type: TopographyGrid3DEPSourceAspect
+        if not isinstance(v, TopographyGrid3DEPSourceAspect):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `TopographyGrid3DEPSourceAspect`")
+        else:
+            match += 1
+        # validate data type: TopographyGridLandfireSourceAspect
+        if not isinstance(v, TopographyGridLandfireSourceAspect):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `TopographyGridLandfireSourceAspect`")
         else:
             match += 1
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in CreateSurfaceGridRequestFBFM with oneOf schemas: LandfireSurfaceGridSource. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when setting `actual_instance` in TopographyGridAspectSource with oneOf schemas: TopographyGrid3DEPSourceAspect, TopographyGridLandfireSourceAspect. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in CreateSurfaceGridRequestFBFM with oneOf schemas: LandfireSurfaceGridSource. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting `actual_instance` in TopographyGridAspectSource with oneOf schemas: TopographyGrid3DEPSourceAspect, TopographyGridLandfireSourceAspect. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -88,19 +96,25 @@ class CreateSurfaceGridRequestFBFM(BaseModel):
         error_messages = []
         match = 0
 
-        # deserialize data into LandfireSurfaceGridSource
+        # deserialize data into TopographyGrid3DEPSourceAspect
         try:
-            instance.actual_instance = LandfireSurfaceGridSource.from_json(json_str)
+            instance.actual_instance = TopographyGrid3DEPSourceAspect.from_json(json_str)
+            match += 1
+        except (ValidationError, ValueError) as e:
+            error_messages.append(str(e))
+        # deserialize data into TopographyGridLandfireSourceAspect
+        try:
+            instance.actual_instance = TopographyGridLandfireSourceAspect.from_json(json_str)
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
 
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into CreateSurfaceGridRequestFBFM with oneOf schemas: LandfireSurfaceGridSource. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when deserializing the JSON string into TopographyGridAspectSource with oneOf schemas: TopographyGrid3DEPSourceAspect, TopographyGridLandfireSourceAspect. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into CreateSurfaceGridRequestFBFM with oneOf schemas: LandfireSurfaceGridSource. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into TopographyGridAspectSource with oneOf schemas: TopographyGrid3DEPSourceAspect, TopographyGridLandfireSourceAspect. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -114,7 +128,7 @@ class CreateSurfaceGridRequestFBFM(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], LandfireSurfaceGridSource]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], TopographyGrid3DEPSourceAspect, TopographyGridLandfireSourceAspect]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None

@@ -18,28 +18,28 @@ import json
 import pprint
 import re  # noqa: F401
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
-from typing import Optional, Union
-from typing_extensions import Annotated
+from typing import Optional
+from fastfuels_sdk.client_library.models.tree_inventory_source import TreeInventorySource
 from typing import Union, Any, List, Set, TYPE_CHECKING, Optional, Dict
 from typing_extensions import Literal, Self
 from pydantic import Field
 
-CURINGLIVEHERBACEOUS_ANY_OF_SCHEMAS = ["float", "str"]
+TREEINVENTORYSOURCESINNER_ANY_OF_SCHEMAS = ["TreeInventorySource", "str"]
 
-class Curingliveherbaceous(BaseModel):
+class TreeInventorySourcesInner(BaseModel):
     """
-    Curing level (%) for live herbaceous fuel. Can be 'dynamic' to use the dynamic fuel model based on the live fuel moisture content. In that case, a fuel moisture content must be provided for the live herbaceous size class.
+    TreeInventorySourcesInner
     """
 
-    # data type: float
-    anyof_schema_1_validator: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = None
+    # data type: TreeInventorySource
+    anyof_schema_1_validator: Optional[TreeInventorySource] = None
     # data type: str
     anyof_schema_2_validator: Optional[StrictStr] = None
     if TYPE_CHECKING:
-        actual_instance: Optional[Union[float, str]] = None
+        actual_instance: Optional[Union[TreeInventorySource, str]] = None
     else:
         actual_instance: Any = None
-    any_of_schemas: Set[str] = { "float", "str" }
+    any_of_schemas: Set[str] = { "TreeInventorySource", "str" }
 
     model_config = {
         "validate_assignment": True,
@@ -58,14 +58,14 @@ class Curingliveherbaceous(BaseModel):
 
     @field_validator('actual_instance')
     def actual_instance_must_validate_anyof(cls, v):
-        instance = Curingliveherbaceous.model_construct()
+        instance = TreeInventorySourcesInner.model_construct()
         error_messages = []
-        # validate data type: float
-        try:
-            instance.anyof_schema_1_validator = v
+        # validate data type: TreeInventorySource
+        if not isinstance(v, TreeInventorySource):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `TreeInventorySource`")
+        else:
             return v
-        except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
+
         # validate data type: str
         try:
             instance.anyof_schema_2_validator = v
@@ -74,7 +74,7 @@ class Curingliveherbaceous(BaseModel):
             error_messages.append(str(e))
         if error_messages:
             # no match
-            raise ValueError("No match found when setting the actual_instance in Curingliveherbaceous with anyOf schemas: float, str. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting the actual_instance in TreeInventorySourcesInner with anyOf schemas: TreeInventorySource, str. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -87,15 +87,12 @@ class Curingliveherbaceous(BaseModel):
         """Returns the object represented by the json string"""
         instance = cls.model_construct()
         error_messages = []
-        # deserialize data into float
+        # anyof_schema_1_validator: Optional[TreeInventorySource] = None
         try:
-            # validation
-            instance.anyof_schema_1_validator = json.loads(json_str)
-            # assign value to actual_instance
-            instance.actual_instance = instance.anyof_schema_1_validator
+            instance.actual_instance = TreeInventorySource.from_json(json_str)
             return instance
         except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
+             error_messages.append(str(e))
         # deserialize data into str
         try:
             # validation
@@ -108,7 +105,7 @@ class Curingliveherbaceous(BaseModel):
 
         if error_messages:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into Curingliveherbaceous with anyOf schemas: float, str. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into TreeInventorySourcesInner with anyOf schemas: TreeInventorySource, str. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -122,7 +119,7 @@ class Curingliveherbaceous(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], float, str]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], TreeInventorySource, str]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None

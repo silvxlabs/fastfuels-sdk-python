@@ -31,7 +31,7 @@ def test_domain():
 @pytest.fixture(scope="module")
 def test_features(test_domain):
     """Fixture that creates a test features object to be used by the tests"""
-    features = Features.from_domain(test_domain)
+    features = Features.from_domain_id(test_domain.id)
 
     # Return the features for use in tests
     yield features
@@ -42,7 +42,7 @@ class TestFeaturesFromDomain:
     def test_success(self, test_domain):
         """Test successful retrieval of features from a domain"""
         # Get features using domain
-        features = Features.from_domain(test_domain)
+        features = Features.from_domain_id(test_domain.id)
 
         # Verify basic structure and domain relationship
         assert features is not None
@@ -60,7 +60,7 @@ class TestFeaturesFromDomain:
         bad_test_domain = test_domain.model_copy(deep=True)
         bad_test_domain.id = uuid4().hex
         with pytest.raises(NotFoundException):
-            Features.from_domain(bad_test_domain)
+            Features.from_domain_id(bad_test_domain.id)
 
 
 class TestGetFeatures:

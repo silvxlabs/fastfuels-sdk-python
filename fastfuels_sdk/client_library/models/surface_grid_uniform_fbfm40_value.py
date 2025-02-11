@@ -19,18 +19,19 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from fastfuels_sdk.client_library.models.interpolation_method import InterpolationMethod
+from fastfuels_sdk.client_library.models.fbfm40 import FBFM40
+from fastfuels_sdk.client_library.models.feature_type import FeatureType
 from typing import Optional, Set
 from typing_extensions import Self
 
-class LandfireTopographyGridSource(BaseModel):
+class SurfaceGridUniformFBFM40Value(BaseModel):
     """
-    LandfireTopographyGridSource
+    SurfaceGridUniformFBFM40Value
     """ # noqa: E501
-    source: Optional[StrictStr] = 'LANDFIRE'
-    version: Optional[StrictStr] = '2020'
-    interpolation_method: Optional[InterpolationMethod] = Field(default=None, alias="interpolationMethod")
-    __properties: ClassVar[List[str]] = ["source", "version", "interpolationMethod"]
+    feature_masks: Optional[List[FeatureType]] = Field(default=None, description="List of feature masks to apply to the surface grid attribute", alias="featureMasks")
+    source: Optional[StrictStr] = 'uniform'
+    value: FBFM40
+    __properties: ClassVar[List[str]] = ["featureMasks", "source", "value"]
 
     @field_validator('source')
     def source_validate_enum(cls, value):
@@ -38,18 +39,8 @@ class LandfireTopographyGridSource(BaseModel):
         if value is None:
             return value
 
-        if value not in set(['LANDFIRE']):
-            raise ValueError("must be one of enum values ('LANDFIRE')")
-        return value
-
-    @field_validator('version')
-    def version_validate_enum(cls, value):
-        """Validates the enum"""
-        if value is None:
-            return value
-
-        if value not in set(['2020']):
-            raise ValueError("must be one of enum values ('2020')")
+        if value not in set(['uniform']):
+            raise ValueError("must be one of enum values ('uniform')")
         return value
 
     model_config = ConfigDict(
@@ -70,7 +61,7 @@ class LandfireTopographyGridSource(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of LandfireTopographyGridSource from a JSON string"""
+        """Create an instance of SurfaceGridUniformFBFM40Value from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -95,7 +86,7 @@ class LandfireTopographyGridSource(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of LandfireTopographyGridSource from a dict"""
+        """Create an instance of SurfaceGridUniformFBFM40Value from a dict"""
         if obj is None:
             return None
 
@@ -103,9 +94,9 @@ class LandfireTopographyGridSource(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "source": obj.get("source") if obj.get("source") is not None else 'LANDFIRE',
-            "version": obj.get("version") if obj.get("version") is not None else '2020',
-            "interpolationMethod": obj.get("interpolationMethod")
+            "featureMasks": obj.get("featureMasks"),
+            "source": obj.get("source") if obj.get("source") is not None else 'uniform',
+            "value": obj.get("value")
         })
         return _obj
 

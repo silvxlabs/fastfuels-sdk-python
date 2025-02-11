@@ -3,11 +3,10 @@ tests/test_inventories.py
 """
 
 # Core imports
-from time import sleep
+from __future__ import annotations
 
 # Internal imports
-from tests import TEST_TMP_DIR
-from tests.utils import create_default_domain
+from tests.utils import create_default_domain, normalize_datetime
 from fastfuels_sdk.inventories import Inventories, TreeInventory
 from fastfuels_sdk.client_library.exceptions import NotFoundException, ApiException
 from fastfuels_sdk.client_library import (
@@ -36,7 +35,7 @@ def test_domain():
 @pytest.fixture(scope="module")
 def test_inventories(test_domain):
     """Fixture that creates a test inventories object to be used by the tests"""
-    inventories = Inventories.from_domain(test_domain)
+    inventories = Inventories.from_domain_id(test_domain.id)
 
     # Return the inventory for use in tests
     yield inventories
@@ -56,7 +55,7 @@ def test_domain_with_tree_inventory(test_domain, test_inventories):
 @pytest.fixture(scope="module")
 def test_tree_inventory(test_domain_with_tree_inventory):
     """Fixture that creates a test tree inventory to be used by the tests"""
-    tree_inventory = TreeInventory.from_domain(test_domain_with_tree_inventory)
+    tree_inventory = TreeInventory.from_domain_id(test_domain_with_tree_inventory.id)
 
     # Return the tree inventory for use in tests
     yield tree_inventory
@@ -81,7 +80,7 @@ class TestInventoriesFromId:
         matches the expected `Inventories` class, and it correctly initializes with the domain's
         ID and a `None` tree attribute.
         """
-        inventories = Inventories.from_domain(test_domain)
+        inventories = Inventories.from_domain_id(test_domain.id)
         assert inventories is not None
         assert isinstance(inventories, Inventories)
         assert inventories.domain_id == test_domain.id
@@ -96,7 +95,7 @@ class TestInventoriesFromId:
         bad_test_domain = test_domain.model_copy(deep=True)
         bad_test_domain.id = "bad_id"
         with pytest.raises(NotFoundException):
-            Inventories.from_domain(bad_test_domain)
+            Inventories.from_domain_id(bad_test_domain.id)
 
 
 class TestGetInventories:
@@ -127,119 +126,6 @@ class TestGetInventories:
         assert new_inventories is test_inventories
         assert new_inventories.domain_id == test_inventories.domain_id
         assert new_inventories.tree == test_inventories.tree
-
-
-class TestParseInventoryItems:
-    @pytest.mark.parametrize(
-        "item_class", [TreeInventoryModification, TreeInventoryTreatment]
-    )
-    def test_none_input(self, item_class):
-        """Test handling of None input"""
-        assert Inventories._parse_inventory_items(None, item_class) is None
-
-    @pytest.mark.parametrize(
-        "item_class", [TreeInventoryModification, TreeInventoryTreatment]
-    )
-    def test_empty_list(self, item_class):
-        """Test handling of empty list"""
-        assert Inventories._parse_inventory_items([], item_class) == []
-
-    def test_single_modification(self):
-        """Test parsing single modification dict"""
-        modification = {
-            "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
-            "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}],
-        }
-
-        result = Inventories._parse_inventory_items(
-            modification, TreeInventoryModification
-        )
-
-        assert len(result) == 1
-        assert isinstance(result[0], TreeInventoryModification)
-        parsed = result[0].to_dict()
-        assert len(parsed["conditions"]) == 1
-        assert len(parsed["actions"]) == 1
-        assert parsed["conditions"][0]["attribute"] == "HT"
-        assert parsed["actions"][0]["attribute"] == "HT"
-
-    def test_single_treatment(self):
-        """Test parsing single treatment dict"""
-        treatment = {
-            "method": "proportionalThinning",
-            "targetMetric": "basalArea",
-            "targetValue": 25.0,
-        }
-
-        result = Inventories._parse_inventory_items(treatment, TreeInventoryTreatment)
-
-        assert len(result) == 1
-        assert isinstance(result[0], TreeInventoryTreatment)
-        parsed = result[0].to_dict()
-        assert parsed["method"] == "proportionalThinning"
-        assert parsed["targetMetric"] == "basalArea"
-        assert parsed["targetValue"] == 25.0
-
-    def test_multiple_modifications(self):
-        """Test parsing list of modifications"""
-        modifications = [
-            {
-                "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
-                "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}],
-            },
-            {
-                "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
-                "actions": [{"attribute": "all", "modifier": "remove"}],
-            },
-        ]
-
-        result = Inventories._parse_inventory_items(
-            modifications, TreeInventoryModification
-        )
-
-        assert len(result) == 2
-        assert all(isinstance(mod, TreeInventoryModification) for mod in result)
-
-        # Verify first modification
-        mod1 = result[0].to_dict()
-        assert mod1["conditions"][0]["attribute"] == "HT"
-        assert mod1["actions"][0]["modifier"] == "multiply"
-
-        # Verify second modification
-        mod2 = result[1].to_dict()
-        assert mod2["conditions"][0]["attribute"] == "DIA"
-        assert mod2["actions"][0]["modifier"] == "remove"
-
-    def test_multiple_treatments(self):
-        """Test parsing list of treatments"""
-        treatments = [
-            {
-                "method": "proportionalThinning",
-                "targetMetric": "basalArea",
-                "targetValue": 25.0,
-            },
-            {
-                "method": "directionalThinning",
-                "direction": "below",
-                "targetMetric": "diameter",
-                "targetValue": 30.0,
-            },
-        ]
-
-        result = Inventories._parse_inventory_items(treatments, TreeInventoryTreatment)
-
-        assert len(result) == 2
-        assert all(isinstance(t, TreeInventoryTreatment) for t in result)
-
-        # Verify first treatment
-        t1 = result[0].to_dict()
-        assert t1["method"] == "proportionalThinning"
-        assert t1["targetMetric"] == "basalArea"
-
-        # Verify second treatment
-        t2 = result[1].to_dict()
-        assert t2["method"] == "directionalThinning"
-        assert t2["direction"] == "below"
 
 
 class TestCreateTreeInventory:
@@ -486,8 +372,8 @@ class TestCreateTreeInventoryFromTreeMap:
         assert isinstance(updated_inventory.tree, TreeInventory)
 
         # Normalize datetime fields before comparison
-        normalized_updated = self.normalize_datetime(updated_inventory.tree)
-        normalized_tree = self.normalize_datetime(tree_inventory)
+        normalized_updated = normalize_datetime(updated_inventory.tree)
+        normalized_tree = normalize_datetime(tree_inventory)
 
         assert normalized_updated == normalized_tree
 
@@ -505,8 +391,8 @@ class TestCreateTreeInventoryFromTreeMap:
         assert isinstance(updated_inventory.tree, TreeInventory)
 
         # Normalize datetime fields before comparison
-        normalized_updated = self.normalize_datetime(updated_inventory.tree)
-        normalized_tree = self.normalize_datetime(tree_inventory)
+        normalized_updated = normalize_datetime(updated_inventory.tree)
+        normalized_tree = normalize_datetime(tree_inventory)
 
         assert normalized_updated == normalized_tree
 
@@ -529,8 +415,8 @@ class TestCreateTreeInventoryFromTreeMap:
         assert test_inventories.tree is not original_tree
 
         # Verify the returned inventory matches what's stored
-        normalized_stored = self.normalize_datetime(test_inventories.tree)
-        normalized_returned = self.normalize_datetime(tree_inventory)
+        normalized_stored = normalize_datetime(test_inventories.tree)
+        normalized_returned = normalize_datetime(tree_inventory)
         assert normalized_stored == normalized_returned
 
     def test_in_place_false(self, test_domain, test_inventories):
@@ -576,7 +462,9 @@ class TestCreateTreeInventoryFromTreeMap:
 class TestTreeInventoryFromDomain:
     def test_valid_domain(self, test_domain_with_tree_inventory):
         """Test creation of TreeInventory from a valid domain"""
-        tree_inventory = TreeInventory.from_domain(test_domain_with_tree_inventory)
+        tree_inventory = TreeInventory.from_domain_id(
+            test_domain_with_tree_inventory.id
+        )
         assert tree_inventory is not None
         assert isinstance(tree_inventory, TreeInventory)
         assert tree_inventory.domain_id == test_domain_with_tree_inventory.id
@@ -586,7 +474,7 @@ class TestTreeInventoryFromDomain:
         bad_test_domain = test_domain.model_copy(deep=True)
         bad_test_domain.id = "bad_id"
         with pytest.raises(NotFoundException):
-            TreeInventory.from_domain(bad_test_domain)
+            TreeInventory.from_domain_id(bad_test_domain.id)
 
 
 class TestGetTreeInventory:
@@ -642,31 +530,6 @@ class TestCreateTreeInventoryExport:
     def test_create_invalid_format(self, test_tree_inventory_completed):
         with pytest.raises(ApiException):
             test_tree_inventory_completed.create_export(export_format="invalid_format")
-
-
-class TestGetTreeInventoryExport:
-    @pytest.mark.parametrize(
-        "export_fixture",
-        [
-            "tree_inventory_export_csv",
-            "tree_inventory_export_parquet",
-            "tree_inventory_export_geojson",
-        ],
-    )
-    def test_created_export(self, export_fixture, request):
-        export = request.getfixturevalue(export_fixture)
-        assert export is not None
-        assert isinstance(export, Export)
-        assert export.domain_id is not None
-        assert export.resource == "inventories"
-        assert export.sub_resource == "tree"
-        assert export.attribute is None
-        assert export.format in export_fixture
-        assert export.status in ["pending", "running", "completed"]
-        assert export.created_on is not None
-        assert export.modified_on is not None
-        assert export.expires_on is not None
-        assert export.signed_url is None
 
 
 class TestDeleteTreeInventory:
