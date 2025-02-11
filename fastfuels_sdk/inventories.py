@@ -22,6 +22,7 @@ from fastfuels_sdk.client_library.models import (
     TreeInventorySource,
     TreeInventoryModification,
     TreeInventoryTreatment,
+    TreeMapSourceCanopyHeightMapConfiguration,
 )
 
 _INVENTORIES_API = InventoriesApi(get_client())
@@ -265,6 +266,7 @@ class Inventories(InventoriesModel):
         self,
         version: str = "2016",
         seed: int = None,
+        canopy_height_map_source: Optional[str] = None,
         modifications: Optional[dict | list[dict]] = None,
         treatments: Optional[dict | list[dict]] = None,
         feature_masks: Optional[str | list[str]] = None,
@@ -415,10 +417,28 @@ class Inventories(InventoriesModel):
         ...     },
         ...     feature_masks=["road", "water"]
         ... )
+
+        Apply a high resolution canopy height map data fusion:
+        >>> tree_inventory = inventories.create_tree_inventory_from_treemap(
+        ...     canopy_height_map_source="Meta2024"
+        ... )
         """
+        if canopy_height_map_source:
+            canopy_height_map_configuration = (
+                TreeMapSourceCanopyHeightMapConfiguration.from_dict(
+                    {"source": canopy_height_map_source}
+                )
+            )
+        else:
+            canopy_height_map_configuration = None
+
         return self.create_tree_inventory(
             sources=[TreeInventorySource.TREEMAP],
-            tree_map=TreeMapSource(version=TreeMapVersion(version), seed=seed),
+            tree_map=TreeMapSource(
+                version=TreeMapVersion(version),
+                seed=seed,
+                canopyHeightMapConfiguration=canopy_height_map_configuration,
+            ),
             modifications=modifications,
             treatments=treatments,
             feature_masks=feature_masks,

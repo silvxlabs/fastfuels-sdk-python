@@ -410,6 +410,24 @@ class TestCreateTreeInventoryFromTreeMap:
 
         assert normalized_updated == normalized_tree
 
+    @pytest.mark.parametrize("chm_source", ["Meta2024", None])
+    def test_canopy_height_map_source(self, test_domain, test_inventories, chm_source):
+        """Test creating a tree inventory from TreeMap using a specific CHM source"""
+        tree_inventory = test_inventories.create_tree_inventory_from_treemap(
+            canopy_height_map_source=chm_source
+        )
+
+        # Verify the inventory was created correctly
+        self.assert_data_validity(tree_inventory, test_domain.id, "2016")
+        if chm_source:
+            assert tree_inventory.tree_map.canopy_height_map_configuration is not None
+            assert (
+                tree_inventory.tree_map.canopy_height_map_configuration.actual_instance.source
+                == chm_source
+            )
+        else:
+            assert tree_inventory.tree_map.canopy_height_map_configuration is None
+
     def test_in_place_true(self, test_domain, test_inventories):
         """Test creation with in_place=True"""
         # Store original state
@@ -470,6 +488,13 @@ class TestCreateTreeInventoryFromTreeMap:
         with pytest.raises(ValueError):
             test_inventories.create_tree_inventory_from_treemap(
                 seed="2asfasdsdf123`12"  # noqa
+            )
+
+    def test_invalid_chm_source(self, test_domain, test_inventories):
+        """Test creation with invalid chm source"""
+        with pytest.raises(ValueError):
+            test_inventories.create_tree_inventory_from_treemap(
+                canopy_height_map_source="invalid_source"
             )
 
 
