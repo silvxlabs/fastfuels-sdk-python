@@ -1,5 +1,6 @@
 numpy<2
 pandas
+pydantic>=2
 requests
 scipy
 zarr>2
