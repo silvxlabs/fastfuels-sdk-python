@@ -13,7 +13,7 @@ from fastfuels_sdk import Features
 features = Features.from_domain_id("your_domain_id")
 ```
 
-# Check what features exist
+## Check what features exist
 if features.road:
     print("Domain has road features")
 if features.water:

@@ -1,8 +1,3 @@
----
-title: How to Work with FastFuels Inventory Data
-description: Learn how to create, manage, and export inventory data using the FastFuels SDK
----
-
 # How to Work with FastFuels Inventory Data
 
 This guide shows you how to work with inventory data using the FastFuels SDK. You'll learn how to create and manage different types of inventories, with a focus on tree inventories which are currently the main type available. The patterns shown here will apply to other inventory types (such as shrub, log, or grass inventories) as they become available.
