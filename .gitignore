@@ -140,3 +140,10 @@ dmypy.json
 ncar-data/
 local_projects/
 tests/test-data/tmp/
+tests/tmp/
+
+#PDFs
+*.pdf
+
+#Code workspace
+*.code-workspace

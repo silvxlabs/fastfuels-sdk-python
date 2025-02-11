@@ -3,11 +3,20 @@ site_name: FastFuels SDK Documentation
 
 theme:
   name: "material"
+  features:
+    - content.code.copy
 
 nav:
   - Home: index.md
-  - Tutorials: tutorials.md
-  - How-To Guides: how-to-guides.md
+  - How-To Guides:
+    - Authentication: guides/authentication.md
+    - Domains: guides/domains.md
+    - Inventories: guides/inventories.md
+    - Features: guides/features.md
+    - Grids: guides/grids.md
+  - Tutorials:
+    - Export to QUIC-Fire: tutorials/export_to_quicfire.md
+
   - Reference: reference.md
 
 plugins:
@@ -17,7 +26,20 @@ plugins:
         python:
           options:
             docstring_style: numpy
-            docstring_section_style: list
+            docstring_section_style: table
             ignore_init_summary: true
             show_root_heading: true
             show_source: false
+            members_order: source
+            annotations_path: brief
+            separate_signature: true
+            show_signature_annotations: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences

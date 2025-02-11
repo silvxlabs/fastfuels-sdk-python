@@ -1,163 +1,95 @@
 """
-Test Exports module
+tests/test_exports.py
 """
 
 # Internal imports
-import sys
+from tests import TEST_TMP_DIR
+from tests.utils import create_default_domain
+from fastfuels_sdk.inventories import Inventories
 
-sys.path.append("../")
-from fastfuels_sdk.exports import *
-
-
-def test_export_zarr_to_quicfire():
-    """
-    Test writing a FastFuels zarr file to a QUIC-Fire .dat input file stack.
-    """
-    # Load the test zarr file
-    test_zroot = zarr.open("test-data/test_small_fuelgrid.zip")
-    canopy_group = test_zroot["canopy"]
-
-    # Get the domain size from the zarr file
-    nx = test_zroot.attrs["nx"]
-    ny = test_zroot.attrs["ny"]
-    nz = test_zroot.attrs["nz"]
-
-    # Write the test zarr file to a QUIC-Fire .dat input file stack
-    tmp_dir = Path("test-data/tmp")
-    tmp_dir.mkdir(exist_ok=True)
-    export_zarr_to_quicfire(test_zroot, tmp_dir)
-
-    # Combine the surface and canopy bulk density arrays into a single array
-    bd_array = canopy_group["bulk-density"][...]
-    bd_array[..., 0] += test_zroot["surface"]["bulk-density"][...]
-
-    # Load the treesrhof.dat file and check that the values are the
-    # same as the bulk density array
-    treesrhof_dat = FortranFile(tmp_dir / "treesrhof.dat", "r")
-    treesrhof_array = treesrhof_dat.read_reals(dtype=np.float32)
-    treesrhof_array = treesrhof_array.reshape((nz, ny, nx))
-    treesrhof_array = np.moveaxis(treesrhof_array, 0, 2).astype(np.float32)
-    assert np.allclose(treesrhof_array, bd_array)
-
-    # Combine the surface and canopy FMC arrays into a single array
-    fmc_array = canopy_group["FMC"][...]
-    fmc_array[..., 0] = test_zroot["surface"]["FMC"][...]
-
-    # Load the treesmoist.dat file and check that the values are the
-    # same as the FMC array
-    treesmoist_dat = FortranFile(tmp_dir / "treesmoist.dat", "r")
-    treesmoist_array = treesmoist_dat.read_reals(dtype=np.float32)
-    treesmoist_array = treesmoist_array.reshape((nz, ny, nx))
-    treesmoist_array = np.moveaxis(treesmoist_array, 0, 2).astype(np.float32)
-    assert np.allclose(treesmoist_array, fmc_array)
-
-    # Combine the surface and canopy fuel depth arrays into a single array
-    fd_array = np.zeros_like(canopy_group["bulk-density"][...])
-    fd_array[..., 0] = test_zroot["surface"]["fuel-depth"][...]
-
-    # Load the treesfueldepth.dat file and check that the values are the
-    # same as the fuel-depth array
-    treesfueldepth_dat = FortranFile(tmp_dir / "treesfueldepth.dat", "r")
-    treesfueldepth_array = treesfueldepth_dat.read_reals(dtype=np.float32)
-    treesfueldepth_array = treesfueldepth_array.reshape((nz, ny, nx))
-    treesfueldepth_array = np.moveaxis(treesfueldepth_array, 0, 2).astype(
-        np.float32)
-    assert np.allclose(treesfueldepth_array, fd_array)
-
-    # Load the treesss.dat file and check that the values are the same as the
-    # SAV array
-    treesss_dat = FortranFile(tmp_dir / "treesss.dat", "r")
-    treesss_array = treesss_dat.read_reals(dtype=np.float32)
-    treesss_array = treesss_array.reshape((nz, ny, nx))
-    treesss_array = np.moveaxis(treesss_array, 0, 2).astype(np.float32)
-    sav_array = canopy_group["SAV"][...]
-    sav_array[..., 0] = test_zroot["surface"]["SAV"][...]
-    size_scale_array = np.nan_to_num(2 / sav_array, nan=0, posinf=0, neginf=0, copy=False)
-    assert np.allclose(treesss_array, size_scale_array)
-
-    # Load the topo.dat file and check that the values are the
-    # same as the DEM array
-    topo_dat = FortranFile(tmp_dir / "topo.dat", "r")
-    topo_array = topo_dat.read_reals(dtype=np.float32)
-    topo_array = topo_array.reshape((ny, nx))
-    assert np.allclose(topo_array, test_zroot["surface"]["DEM"][...])
+# External imports
+import pytest
 
 
-def test_export_zarr_to_duet():
-    """
-    Test writing a FastFuels zarr file to a Duet .dat input file stack.
-    """
-    # Load the test zarr file
-    test_zroot = zarr.open("test-data/test_small_fuelgrid.zip")
-    canopy_group = test_zroot["canopy"]
+class TestTreeInventoryExports:
+    """Tests specific to tree inventory exports"""
 
-    # Get the domain size from the zarr file
-    nx = test_zroot.attrs["nx"]
-    ny = test_zroot.attrs["ny"]
-    nz = test_zroot.attrs["nz"]
-    dx = test_zroot.attrs["dx"]
-    dy = test_zroot.attrs["dy"]
-    dz = test_zroot.attrs["dz"]
-    seed = 1234
-    wind_dir = 270.0
-    wind_var = 0.0
-    duration = 1
+    @pytest.fixture(scope="class")
+    def domain(self):
+        """Creates a test domain"""
+        domain = create_default_domain()
+        yield domain
+        domain.delete()
 
-    # Write the test zarr file to a Duet .dat input file stack
-    tmp_dir = Path("test-data/tmp")
-    tmp_dir.mkdir(exist_ok=True)
-    export_zarr_to_duet(test_zroot, tmp_dir, seed=seed,
-                        wind_dir=wind_dir, wind_var=wind_var,
-                        duration=duration)
+    @pytest.fixture(scope="class")
+    def tree_inventory(self, domain):
+        """Creates and completes a tree inventory"""
+        inventories = Inventories.from_domain_id(domain.id)
+        tree_inventory = inventories.create_tree_inventory(sources="TreeMap")
+        tree_inventory.wait_until_completed(in_place=True)
+        return tree_inventory
 
-    # Load the treesrhof.dat file and check that the values are the
-    # same as the bulk density array
-    bd_array = canopy_group["bulk-density"][...]
-    treesrhof_dat = FortranFile(tmp_dir / "treesrhof.dat", "r")
-    treesrhof_array = treesrhof_dat.read_reals(dtype=np.float32)
-    treesrhof_array = treesrhof_array.reshape((nz, ny, nx))
-    treesrhof_array = np.moveaxis(treesrhof_array, 0, 2).astype(np.float32)
-    assert np.allclose(treesrhof_array, bd_array)
+    @pytest.fixture(scope="class")
+    def tree_inventory_export_csv(self, tree_inventory):
+        export = tree_inventory.create_export(export_format="csv")
+        return export
 
-    # Load the treesspcd.dat file and check that the values are the
-    # same as the species-code array
-    spcd_array = canopy_group["species-code"][...]
-    treesspcd_dat = FortranFile(tmp_dir / "treesspcd.dat", "r")
-    treesspcd_array = treesspcd_dat.read_ints(dtype=np.int16)
-    treesspcd_array = treesspcd_array.reshape((nz, ny, nx))
-    treesspcd_array = np.moveaxis(treesspcd_array, 0, 2).astype(np.int32)
-    assert np.allclose(treesspcd_array, spcd_array)
+    @pytest.fixture(scope="class")
+    def tree_inventory_export_parquet(self, tree_inventory):
+        export = tree_inventory.create_export(export_format="parquet")
+        return export
 
-    # Load the treesmoist.dat file and check that the values are the
-    # same as the FMC array
-    fmc_array = canopy_group["FMC"][...]
-    treesmoist_dat = FortranFile(tmp_dir / "treesmoist.dat", "r")
-    treesmoist_array = treesmoist_dat.read_reals(dtype=np.float32)
-    treesmoist_array = treesmoist_array.reshape((nz, ny, nx))
-    treesmoist_array = np.moveaxis(treesmoist_array, 0, 2).astype(np.float32)
-    assert np.allclose(treesmoist_array, fmc_array)
+    @pytest.fixture(scope="class")
+    def tree_inventory_export_geojson(self, tree_inventory):
+        export = tree_inventory.create_export(export_format="geojson")
+        return export
 
-    # Load the duet.in file and check that the values are the same as the
-    # domain size and grid spacing
-    duet_in = open(tmp_dir / "duet.in", "r")
-    duet_in_lines = duet_in.readlines()
-    assert int(duet_in_lines[0].split(" ")[0]) == nx
-    assert int(duet_in_lines[1].split(" ")[0]) == ny
-    assert int(duet_in_lines[2].split(" ")[0]) == nz
-    assert float(duet_in_lines[3].split(" ")[0]) == dx
-    assert float(duet_in_lines[4].split(" ")[0]) == dy
-    assert float(duet_in_lines[5].split(" ")[0]) == dz
-    assert int(duet_in_lines[6].split(" ")[0]) == seed
-    assert float(duet_in_lines[7].split(" ")[0]) == wind_dir
-    assert float(duet_in_lines[8].split(" ")[0]) == wind_var
-    assert float(duet_in_lines[9].split(" ")[0]) == duration
+    @pytest.mark.parametrize(
+        "export_fixture",
+        [
+            "tree_inventory_export_csv",
+            "tree_inventory_export_parquet",
+            "tree_inventory_export_geojson",
+        ],
+        ids=["csv", "parquet", "geojson"],
+    )
+    def test_to_file_with_filename(self, tree_inventory, export_fixture, request):
+        """Test downloading exports with specific filenames"""
+        # Create and wait for export to complete
+        export = request.getfixturevalue(export_fixture)
+        export.wait_until_completed(in_place=True)
 
+        # Download with specific filename
+        filename = f"trees.{export.format}"
+        file_path = TEST_TMP_DIR / filename
+        export.to_file(file_path)
 
-def test_export_zarr_to_fds():
-    # Pull in data from the test zarr file
-    test_zroot = zarr.open("test-data/test_small_fuelgrid.zip")
-    tmp_dir = Path("test-data/tmp")
-    tmp_dir.mkdir(exist_ok=True)
+        # Verify file was downloaded with correct name
+        assert file_path.exists()
+        assert file_path.is_file()
+        assert filename in [f.name for f in TEST_TMP_DIR.iterdir()]
 
-    # Write the test zarr file to a FDS binary input file stack
-    export_zarr_to_fds(test_zroot, tmp_dir)
+    @pytest.mark.parametrize(
+        "export_fixture",
+        [
+            "tree_inventory_export_csv",
+            "tree_inventory_export_parquet",
+            "tree_inventory_export_geojson",
+        ],
+        ids=["csv", "parquet", "geojson"],
+    )
+    def test_to_file_with_directory(self, tree_inventory, export_fixture, request):
+        """Test downloading exports to directory without specifying filename"""
+        # Create and wait for export to complete
+        export = request.getfixturevalue(export_fixture)
+        export.wait_until_completed(in_place=True)
+
+        # Download to directory
+        export.to_file(TEST_TMP_DIR)
+
+        # Verify file was downloaded with default name
+        expected_filename = f"inventories_tree.{export.format}"
+        expected_path = TEST_TMP_DIR / expected_filename
+        assert expected_path.exists()
+        assert expected_path.is_file()
+        assert expected_filename in [f.name for f in TEST_TMP_DIR.iterdir()]

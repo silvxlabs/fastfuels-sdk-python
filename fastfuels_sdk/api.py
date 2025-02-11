@@ -1,22 +1,43 @@
+"""
+fastfuels_sdk/api.py
+"""
+
 import os
-import requests
+from typing import Optional
 
-# Load the API key from the environment
-api_key = os.getenv("FASTFUELS_API_KEY")
+from fastfuels_sdk.client_library.api_client import ApiClient
 
-# Check if the API key is valid
-if api_key is None:
-    raise ValueError(
-        "The Application Default Credentials are not available. "
-        "The environment variable FASTFUELS_API_KEY must be defined "
-        "containing a valid API key.")
+_client: Optional[ApiClient] = None
 
-# Use the key to access the API
-headers = {"X-API-KEY": api_key}
 
-# Create a requests module session
-SESSION = requests.Session()
-SESSION.headers.update(headers)
+def set_api_key(api_key: str) -> None:
+    global _client
 
-# Define the live API URL
-API_URL = "https://fastfuels.silvx.io"
+    config = {
+        "header_name": "api-key",
+        "header_value": api_key,
+    }
+
+    _client = ApiClient(**config)
+
+
+def get_client() -> ApiClient:
+    global _client
+
+    if _client is not None:
+        return _client
+
+    api_key = os.getenv("FASTFUELS_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            "FASTFUELS_API_KEY environment variable not set. "
+            "Please set this variable with your API key."
+        )
+    config = {
+        "header_name": "api-key",
+        "header_value": api_key,
+    }
+
+    _client = ApiClient(**config)
+
+    return _client
