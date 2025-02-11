@@ -1,3 +1,4 @@
+geopandas
 numpy<2
 pandas
 pydantic>=2
