@@ -149,7 +149,7 @@ class TestGetGridExport:
     def test_get_export(self, test_grids, export_format):
         """Test retrieving grid export status"""
         # First create an export
-        export = test_grids.create_export(export_format=export_format)
+        test_grids.create_export(export_format=export_format)
 
         # Get the export status
         retrieved_export = test_grids.get_export(export_format=export_format)

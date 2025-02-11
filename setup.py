@@ -28,9 +28,7 @@ LONG_DESCRIPTION = read_file("README.md")
 VERSION = get_version()
 LICENSE = "MIT"
 URL = "https://github.com/silvxlabs/fastfuels-sdk-python"
-PROJECT_URLS = {
-    "Bug Tracker": f"{URL}/issues"
-}
+PROJECT_URLS = {"Bug Tracker": f"{URL}/issues"}
 INSTALL_REQUIRES = get_requirements("requirements/requirements.txt")
 
 print(NAME, VERSION)
@@ -44,21 +42,23 @@ setup(
     license=LICENSE,
     url=URL,
     project_urls=PROJECT_URLS,
-    classifiers=["Intended Audience :: Developers",
-                 "Intended Audience :: Science/Research",
-                 "License :: OSI Approved :: MIT License",
-                 "Operating System :: OS Independent",
-                 "Programming Language :: Python :: 3",
-                 "Programming Language :: Python :: 3.8",
-                 "Programming Language :: Python :: 3.9",
-                 "Programming Language :: Python :: 3.10",
-                 "Programming Language :: Python :: 3.11",
-                 "Programming Language :: Python :: 3.12",
-                 "Topic :: Scientific/Engineering", ],
+    classifiers=[
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Topic :: Scientific/Engineering",
+    ],
     package_dir={"": "."},
     packages=find_packages(exclude=["docs", "tests"]),
     package_data={
-        'fastfuels_sdk': ['templates/*.template'],
+        "fastfuels_sdk": ["templates/*.template"],
     },
     include_package_data=True,
     install_requires=INSTALL_REQUIRES,

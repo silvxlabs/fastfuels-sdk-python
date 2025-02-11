@@ -50,7 +50,7 @@ coordinates = [
 # Create a GeoDataFrame
 polygon = Polygon(coordinates)
 roi = gpd.GeoDataFrame(
-    geometry=[polygon], 
+    geometry=[polygon],
     crs="EPSG:4326"  # WGS 84 coordinate system
 )
 ```
@@ -160,7 +160,7 @@ surface_grid = (
         remove_non_burnable=["NB1", "NB2"],
     )
     .with_uniform_fuel_moisture(
-        value=0.15, 
+        value=0.15,
         feature_masks=["road", "water"]
     )
     .build()

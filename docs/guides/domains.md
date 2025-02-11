@@ -10,7 +10,7 @@ from fastfuels_sdk.domains import Domain
 
 with open("area.geojson") as f:
     geojson = json.load(f)
-    
+
 domain = Domain.from_geojson(
     geojson=geojson,
     name="My Domain",
@@ -46,7 +46,7 @@ To fetch a domain using its ID:
 domain = Domain.from_id("abc123")
 ```
 
-## Update Domain Properties 
+## Update Domain Properties
 
 To modify a domain's name, description or tags:
 
@@ -87,7 +87,7 @@ from fastfuels_sdk.domains import list_domains
 # Get first page with default size (100)
 response = list_domains()
 
-# Custom page and size 
+# Custom page and size
 response = list_domains(
     page=2,
     size=50,

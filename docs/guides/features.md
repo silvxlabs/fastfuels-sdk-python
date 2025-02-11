@@ -109,14 +109,14 @@ To update just road or water features:
 if features.road:
     # Get new instance with fresh data
     updated_road = features.road.get()
-    
+
     # Or update in place
     features.road.get(in_place=True)
 
 if features.water:
     # Get new instance with fresh data
     updated_water = features.water.get()
-    
+
     # Or update in place
     features.water.get(in_place=True)
 ```
@@ -131,7 +131,7 @@ To remove road features from a domain:
 if features.road:
     # Delete the road features
     features.road.delete()
-    
+
     # Refresh features to reflect deletion
     features.get(in_place=True)
     assert features.road is None
@@ -145,7 +145,7 @@ Similarly for water features:
 if features.water:
     # Delete the water features
     features.water.delete()
-    
+
     # Refresh features to reflect deletion
     features.get(in_place=True)
     assert features.water is None

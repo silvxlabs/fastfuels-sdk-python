@@ -9,7 +9,6 @@ from typing import Optional, List
 
 # Internal imports
 from fastfuels_sdk.api import get_client
-from fastfuels_sdk.domains import Domain
 from fastfuels_sdk.client_library.api import (
     FeaturesApi,
     RoadFeatureApi,

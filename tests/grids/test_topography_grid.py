@@ -316,16 +316,6 @@ class TestGetTopographyGridAttributes:
         with pytest.raises(NotFoundException):
             temp_grid.get_attributes()
 
-    def test_grid_dimensions(self, topography_grid_fixture_completed):
-        """Test that grid dimensions are correctly reported.
-
-        Verifies that:
-        1. Grid has expected dimensions ["y", "x"]
-        2. Shape values are positive integers
-        3. Chunk shape is consistent with overall shape
-        """
-        metadata = topography_grid_fixture_completed.get_attributes()
-
 
 class TestCreateTopographyGridExport:
     """Test suite for TopographyGrid.create_export() method."""

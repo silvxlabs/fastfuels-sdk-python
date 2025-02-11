@@ -48,7 +48,7 @@ Your CSV file must include these columns:
 - TREE_ID (Integer): Unique identifier for each tree
 - SPCD (Integer): FIA species code
 - STATUSCD (Integer): Tree status (1: Live, 2: Dead, etc.)
-- DIA (Float): Diameter in cm 
+- DIA (Float): Diameter in cm
 - HT (Float): Height in meters
 - CR (Float): Crown ratio (0-1)
 - X (Float): X coordinate
