@@ -12,6 +12,7 @@ from fastfuels_sdk.grids import (
     FeatureGrid,
 )
 from fastfuels_sdk.exports import Export
+from fastfuels_sdk.convenience import export_roi_to_quicfire
 
 
 __all__ = [
@@ -31,4 +32,5 @@ __all__ = [
     "TopographyGridBuilder",
     "FeatureGrid",
     "Export",
+    "export_roi_to_quicfire",
 ]

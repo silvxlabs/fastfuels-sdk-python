@@ -13,6 +13,9 @@ nav:
     - Domains: guides/domains.md
     - Inventories: guides/inventories.md
     - Features: guides/features.md
+    - Grids: guides/grids.md
+  - Tutorials:
+    - Export to QUIC-Fire: tutorials/export_to_quicfire.md
 
   - Reference: reference.md
 
