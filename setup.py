@@ -62,5 +62,5 @@ setup(
     },
     include_package_data=True,
     install_requires=INSTALL_REQUIRES,
-    python_requires=">=3.9ß",
+    python_requires=">=3.9",
 )
