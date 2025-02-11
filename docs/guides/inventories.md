@@ -1,68 +1,66 @@
-# How to Work with FastFuels Inventory Data
+# How to Work with FastFuels Inventories
 
-This guide shows you how to work with inventory data using the FastFuels SDK. You'll learn how to create and manage different types of inventories, with a focus on tree inventories which are currently the main type available. The patterns shown here will apply to other inventory types (such as shrub, log, or grass inventories) as they become available.
+This guide shows you how to accomplish common tasks with FastFuels inventories. For learning the basics, see the [Getting Started tutorial]. For detailed reference, see the [API Reference].
 
-## Getting Started with Inventories
+## How to Create a Tree Inventory from TreeMap Data
 
-Every inventory in FastFuels belongs to a domain. Start by initializing an Inventories object from your domain:
+To generate a tree inventory using TreeMap's nationwide coverage:
 
 ```python
 from fastfuels_sdk import Inventories
 
+# Initialize from your domain
 inventories = Inventories.from_domain_id("your_domain_id")
+
+# Create basic inventory
+tree_inventory = inventories.create_tree_inventory_from_treemap()
+
+# Wait for processing to complete
+tree_inventory = tree_inventory.wait_until_completed()
 ```
 
-Check what inventories currently exist:
+To make the inventory reproducible, specify a seed:
 
 ```python
-# Get latest inventory data
-inventories = inventories.get()
-
-# Check available inventories
-if inventories.tree:
-    print("Tree inventory exists")
-```
-
-## Working with Tree Inventories
-
-### Creating a Basic Tree Inventory
-
-The simplest way to create a tree inventory is using TreeMap data:
-
-```python
-tree_inventory = inventories.create_tree_inventory(sources="TreeMap")
-```
-
-Tree inventory creation happens asynchronously. Wait for processing to complete:
-
-```python
-tree_inventory.wait_until_completed(in_place=True)
-print(f"Status: {tree_inventory.status}")  # Should print 'completed'
-```
-
-### Customizing Your Tree Inventory
-
-#### Control TreeMap Source Settings
-
-You can specify the TreeMap version and set a seed for reproducible results:
-
-```python
-tree_inventory = inventories.create_tree_inventory(
-    sources="TreeMap",
-    tree_map={
-        "version": "2016",  # Use 2014 or 2016
-        "seed": 42         # For reproducible results
-    }
+tree_inventory = inventories.create_tree_inventory_from_treemap(
+    version="2016",
+    seed=42
 )
 ```
 
-#### Modify Tree Attributes
+## How to Upload Your Own Tree Data
 
-Apply modifications to tree attributes based on conditions:
+If you have your own tree measurements, you can upload them from a CSV file:
 
 ```python
-tree_inventory = inventories.create_tree_inventory(
-    sources="TreeMap",
+from pathlib import Path
+
+# Create inventory from your CSV file
+tree_inventory = inventories.create_tree_inventory_from_file_upload(
+    file_path=Path("my_trees.csv")
+)
+
+# Wait for processing
+tree_inventory = tree_inventory.wait_until_completed()
+```
+
+Your CSV file must include these columns:
+- TREE_ID (Integer): Unique identifier for each tree
+- SPCD (Integer): FIA species code
+- STATUSCD (Integer): Tree status (1: Live, 2: Dead, etc.)
+- DIA (Float): Diameter in cm 
+- HT (Float): Height in meters
+- CR (Float): Crown ratio (0-1)
+- X (Float): X coordinate
+- Y (Float): Y coordinate
+
+## How to Modify Tree Attributes
+
+To adjust tree measurements based on conditions:
+
+```python
+# Reduce height of all trees over 20m by 10%
+tree_inventory = inventories.create_tree_inventory_from_treemap(
     modifications={
         "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
         "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
@@ -70,105 +68,86 @@ tree_inventory = inventories.create_tree_inventory(
 )
 ```
 
-Available fields for modifications:
-- `HT`: Height (meters)
-- `DIA`: Diameter at breast height (centimeters)
-- `CR`: Crown ratio (0-1)
-- `SPCD`: Species code (integer)
-
-#### Add Silvicultural Treatments
-
-Apply proportional thinning to reach a target basal area:
+To remove trees from roads and water bodies:
 
 ```python
-tree_inventory = inventories.create_tree_inventory(
-    sources="TreeMap",
-    treatments={
-        "method": "proportionalThinning",
-        "targetMetric": "basalArea",
-        "targetValue": 25.0  # Target in m²/ha
-    }
-)
-```
-
-Or use directional thinning:
-
-```python
-tree_inventory = inventories.create_tree_inventory(
-    sources="TreeMap",
-    treatments={
-        "method": "directionalThinning",
-        "direction": "below",        # or "above"
-        "targetMetric": "diameter",  # or "basalArea"
-        "targetValue": 30.0         # cm for diameter, m²/ha for basalArea
-    }
-)
-```
-
-#### Exclude Features
-
-Mask out specific features to exclude trees from those areas:
-
-```python
-tree_inventory = inventories.create_tree_inventory(
-    sources="TreeMap",
+tree_inventory = inventories.create_tree_inventory_from_treemap(
     feature_masks=["road", "water"]
 )
 ```
 
-### Exporting Inventory Data
+## How to Apply Forest Management Treatments
 
-1. Create an export in your desired format:
+To thin to a target basal area:
 
 ```python
-# Available formats: "csv", "parquet", "geojson"
-export = tree_inventory.create_export("csv")
+# Thin to 25 m²/ha basal area
+tree_inventory = inventories.create_tree_inventory_from_treemap(
+    treatments={
+        "method": "proportionalThinning",
+        "targetMetric": "basalArea",
+        "targetValue": 25.0
+    }
+)
 ```
 
-2. Wait for the export to complete and download:
+To remove trees below a diameter threshold:
 
 ```python
-from pathlib import Path
+# Remove trees under 30cm diameter
+tree_inventory = inventories.create_tree_inventory_from_treemap(
+    treatments={
+        "method": "directionalThinning",
+        "direction": "below",
+        "targetMetric": "diameter",
+        "targetValue": 30.0
+    }
+)
+```
 
-export.wait_until_completed(in_place=True)
+## How to Export Inventory Data
 
-# Download with specific filename
-export.to_file(Path("trees.csv"))
+To save your inventory data to a file:
 
-# Or download to a directory (uses default filename)
+```python
+# Create export in desired format
+export = tree_inventory.create_export("csv")  # or "parquet" or "geojson"
+export = export.wait_until_completed()
+
+# Download to specific file
+export.to_file("trees.csv")
+
+# Or download to directory (uses default filename)
 export.to_file(Path("output_directory"))
 ```
 
-### Managing Inventories
+## How to Manage Existing Inventories
 
-Check inventory status:
+To check if inventories exist:
 
 ```python
-# Get latest status for all inventories
 inventories = inventories.get()
-
-# Check specific tree inventory status
 if inventories.tree:
-    tree_inventory = inventories.tree.get()
-    print(f"Tree inventory status: {tree_inventory.status}")
+    print("Tree inventory exists")
 ```
 
-Delete an inventory:
+To delete an inventory:
 
 ```python
 if inventories.tree:
     inventories.tree.delete()
 ```
 
-## Complete Example
+## Common Workflows
 
-Here's a complete example showing how to create and process a tree inventory with multiple options:
+### Complete Processing Pipeline
+
+If you need to create an inventory with multiple modifications:
 
 ```python
 # Create inventory with multiple settings
-tree_inventory = inventories.create_tree_inventory(
-    sources="TreeMap",
-    tree_map={"version": "2016", "seed": 42},
+tree_inventory = inventories.create_tree_inventory_from_treemap(
+    seed=42,
     modifications={
         "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
         "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
@@ -181,11 +160,38 @@ tree_inventory = inventories.create_tree_inventory(
     feature_masks=["road", "water"]
 )
 
-# Wait for processing to complete
-tree_inventory.wait_until_completed(in_place=True)
-
-# Create and download export
+# Wait for processing and export
+tree_inventory = tree_inventory.wait_until_completed()
 export = tree_inventory.create_export("csv")
-export.wait_until_completed(in_place=True)
-export.to_file(Path("processed_trees.csv"))
+export = export.wait_until_completed()
+export.to_file("processed_trees.csv")
+```
+
+### Converting Your Data to FastFuels Format
+
+To process your own tree measurements and apply treatments:
+
+```python
+# Upload your data
+tree_inventory = inventories.create_tree_inventory_from_file_upload(
+    file_path=Path("field_measurements.csv")
+)
+
+# Wait for processing
+tree_inventory = tree_inventory.wait_until_completed()
+
+# Apply treatments and export
+tree_inventory = inventories.create_tree_inventory_from_treemap(
+    treatments={
+        "method": "proportionalThinning",
+        "targetMetric": "basalArea",
+        "targetValue": 25.0
+    }
+)
+tree_inventory = tree_inventory.wait_until_completed()
+
+# Export results
+export = tree_inventory.create_export("csv")
+export = export.wait_until_completed()
+export.to_file("processed_measurements.csv")
 ```

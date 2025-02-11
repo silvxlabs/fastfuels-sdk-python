@@ -5,6 +5,7 @@ inventories.py
 # Core imports
 from __future__ import annotations
 from time import sleep
+from pathlib import Path
 from typing import Optional
 
 # Internal imports
@@ -423,6 +424,97 @@ class Inventories(InventoriesModel):
             feature_masks=feature_masks,
             in_place=in_place,
         )
+
+    def create_tree_inventory_from_file_upload(
+        self,
+        file_path: Path | str,
+    ) -> TreeInventory:
+        """
+        Create a tree inventory using a file upload for the current domain.
+
+        This method uploads a CSV file containing tree inventory data and creates a new
+        tree inventory for the domain. The file must follow specific format requirements
+        and contain required columns with appropriate data types.
+
+        Parameters
+        ----------
+        file_path : Path or str
+            Path to the CSV file containing the tree inventory data.
+            The file must include the following columns:
+            - TREE_ID (Integer): Unique identifier for each tree
+            - SPCD (Integer): FIA species code
+            - STATUSCD (Integer): Tree status code (0: No status, 1: Live, 2: Dead, 3: Missing)
+            - DIA (Float): Diameter at breast height in cm (0-1200 cm, nullable)
+            - HT (Float): Tree height in meters (0-116 m, nullable)
+            - CR (Float): Crown ratio (0-1, nullable)
+            - X (Float): X coordinate in projected coordinate system (nullable)
+            - Y (Float): Y coordinate in projected coordinate system (nullable)
+
+        Returns
+        -------
+        TreeInventory
+            A TreeInventory object representing the newly created inventory.
+            The inventory starts in "pending" status and is processed asynchronously.
+            Use wait_until_completed() to wait for processing to finish.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the specified file_path does not exist.
+        ValueError
+            If the file size exceeds 500MB or if the file is not a CSV.
+        ApiException
+            If there is an error communicating with the API.
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Inventories
+        >>> from pathlib import Path
+        >>> inventories = Inventories.from_domain_id("abc123")
+        >>> file_path = Path("my_trees.csv")
+        >>> # Create and wait for inventory
+        >>> inventory = inventories.create_tree_inventory_from_file_upload(file_path)
+        >>> inventory = inventory.wait_until_completed()
+        >>> print(inventory.status)
+        'completed'
+
+        Notes
+        -----
+        File Format Requirements:
+        - Maximum file size: 500MB
+        - File type: CSV
+        - Must include all required columns with correct data types
+        - TREE_ID must be unique integers
+        - Values must be within specified ranges
+        - Trees must fall within domain bounds
+        """
+        # Convert string path to Path object if needed
+        file_path = Path(file_path)
+
+        # Check if file exists
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        # Check file size (500MB limit)
+        max_size = 500 * 1024 * 1024  # 500MB in bytes
+        if file_path.stat().st_size > max_size:
+            raise ValueError(f"File size exceeds 500MB limit: {file_path}")
+
+        # Check file extension
+        if file_path.suffix.lower() != ".csv":
+            raise ValueError(f"File must be a CSV: {file_path}")
+
+        # Read file content
+        with open(file_path, "rb") as f:
+            file_content = f.read()
+
+        # Create file upload request
+        response = _TREE_INVENTORY_API.create_tree_inventory_from_file_upload(
+            domain_id=self.domain_id, upload_file=file_content
+        )
+
+        # Return TreeInventory instance
+        return TreeInventory(domain_id=self.domain_id, **response.model_dump())
 
 
 class TreeInventory(TreeInventoryModel):
