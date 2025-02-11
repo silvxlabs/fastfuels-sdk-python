@@ -156,9 +156,16 @@ class TestCreateTreeInventory:
         tree_inventory = test_inventories.create_tree_inventory(sources=source)
 
         self.assert_data_validity(tree_inventory, test_inventories.domain_id)
-        assert (
-            tree_inventory.sources == source if isinstance(source, list) else [source]
-        )
+        # Convert the sources to their string values for comparison
+        actual_sources = [
+            src.actual_instance.value if hasattr(src, "actual_instance") else src
+            for src in tree_inventory.sources
+        ]
+        expected_sources = [source] if not isinstance(source, list) else source
+        expected_sources = [
+            s.value if hasattr(s, "value") else s for s in expected_sources
+        ]
+        assert actual_sources == expected_sources
         assert tree_inventory.treatments == []
         assert tree_inventory.modifications == []
         assert tree_inventory.feature_masks == []
@@ -353,7 +360,12 @@ class TestCreateTreeInventoryFromTreeMap:
             isinstance(tree_inventory.checksum, str)
             and len(tree_inventory.checksum) > 0
         )
-        assert tree_inventory.sources == ["TreeMap"]
+        # Convert the sources to their string values for comparison
+        actual_sources = [
+            src.actual_instance.value if hasattr(src, "actual_instance") else src
+            for src in tree_inventory.sources
+        ]
+        assert actual_sources == ["TreeMap"]
         assert tree_inventory.tree_map is not None
         assert tree_inventory.tree_map.version == version
         assert (

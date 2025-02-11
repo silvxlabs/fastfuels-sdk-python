@@ -69,7 +69,10 @@ class Inventories(InventoriesModel):
         >>> inventories = Inventories.from_domain_id("abc123")
         """
         inventories_response = _INVENTORIES_API.get_inventories(domain_id=domain_id)
-        return cls(domain_id=domain_id, **inventories_response.model_dump())
+        response_data = inventories_response.model_dump()
+        response_data = _convert_api_models_to_sdk_classes(domain_id, response_data)
+
+        return cls(domain_id=domain_id, **response_data)
 
     def get(self, in_place: bool = False):
         """
@@ -100,12 +103,17 @@ class Inventories(InventoriesModel):
         >>> inventories.get(in_place=True)
         """
         response = _INVENTORIES_API.get_inventories(domain_id=self.domain_id)
+        response_data = response.model_dump()
+        response_data = _convert_api_models_to_sdk_classes(
+            self.domain_id, response_data
+        )
+
         if in_place:
             # Update all attributes of current instance
-            for key, value in response.model_dump().items():
+            for key, value in response_data.items():
                 setattr(self, key, value)
             return self
-        return Inventories(domain_id=self.domain_id, **response.model_dump())
+        return Inventories(domain_id=self.domain_id, **response_data)
 
     def create_tree_inventory(
         self,
@@ -890,3 +898,13 @@ class TreeInventory(TreeInventoryModel):
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
+
+
+def _convert_api_models_to_sdk_classes(domain_id, response_data: dict) -> dict:
+    """Convert API models to SDK classes with domain_id."""
+    if "tree" in response_data and response_data["tree"]:
+        response_data["tree"] = TreeInventory(
+            domain_id=domain_id, **response_data["tree"]
+        )
+
+    return response_data
