@@ -65,7 +65,7 @@ surface_grid = grids.create_surface_grid(
 )
 ```
 
-### Topography Grids 
+### Topography Grids
 
 Topography grids contain elevation and terrain data. Create them using `create_topography_grid()`:
 

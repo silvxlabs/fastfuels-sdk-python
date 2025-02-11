@@ -10,7 +10,6 @@ from pathlib import Path
 from fastfuels_sdk import export_roi_to_quicfire
 
 # External imports
-import pytest
 import geopandas as gpd
 
 TEST_DIR = Path(__file__).parent

@@ -6,7 +6,7 @@ exports.py
 from __future__ import annotations
 from time import sleep
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 from urllib.request import urlretrieve
 
 # Internal imports

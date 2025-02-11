@@ -12,8 +12,6 @@ from tests.utils import create_default_domain, normalize_datetime
 from fastfuels_sdk.inventories import Inventories, TreeInventory
 from fastfuels_sdk.client_library.exceptions import NotFoundException, ApiException
 from fastfuels_sdk.client_library import (
-    TreeInventoryModification,
-    TreeInventoryTreatment,
     TreeInventorySource,
     Export,
 )
