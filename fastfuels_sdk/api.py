@@ -5,7 +5,7 @@ fastfuels_sdk/api.py
 import os
 from typing import Optional
 
-from client_library.api_client import ApiClient
+from fastfuels_sdk.client_library.api_client import ApiClient
 
 _client: Optional[ApiClient] = None
 
