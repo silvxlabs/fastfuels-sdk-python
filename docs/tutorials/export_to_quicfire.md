@@ -1,3 +1,5 @@
+from grids.test_feature_grid import feature_grid_fixture
+
 # Tutorial: Create and Export QUIC-Fire Inputs with FastFuels SDK
 
 In this tutorial, you'll learn how to use the FastFuels SDK to create QUIC-Fire input files for a region of interest. We'll walk through each step of the process, from authentication to final export.
@@ -92,7 +94,28 @@ road_feature.wait_until_completed()
 water_feature.wait_until_completed()
 ```
 
-## Step 5: Create Topography Grid
+## Step 5: Create Feature Grid
+
+Next, use the road and water features we created in [Step 4](#step-4-create-road-and-water-features) to generate a feature grid:
+
+```python
+from fastfuels_sdk.grids import Grids
+
+# Create feature grid
+feature_grid = (
+    Grids.from_domain_id(domain.id)
+    .create_feature_grid(
+        attributes=["road", "water"],
+    )
+)
+
+feature_grid.wait_until_completed()
+
+```
+
+This will be used to mask out trees and non-burnable areas when we create the tree inventory in [Step 7](#step-7-create-tree-inventory-and-grid) and the surface grid in [Step 8](#step-8-create-surface-grid).
+
+## Step 6: Create Topography Grid
 
 Add elevation data from 3DEP:
 
@@ -108,7 +131,7 @@ topography_grid = (
 topography_grid.wait_until_completed()
 ```
 
-## Step 6: Create Tree Inventory and Grid
+## Step 7: Create Tree Inventory and Grid
 
 Create a tree inventory and generate the canopy fuel grid:
 
@@ -133,7 +156,7 @@ tree_grid = (
 tree_grid.wait_until_completed()
 ```
 
-## Step 7: Create Surface Grid
+## Step 8: Create Surface Grid
 
 Generate the surface fuels grid:
 
@@ -168,7 +191,7 @@ surface_grid = (
 surface_grid.wait_until_completed()
 ```
 
-## Step 8: Export to QUIC-Fire Format
+## Step 9: Export to QUIC-Fire Format
 
 Create and download the QUIC-Fire export:
 
