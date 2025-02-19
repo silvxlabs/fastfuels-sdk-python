@@ -115,7 +115,7 @@ class TestGetGrids:
 
 
 class TestCreateGridExport:
-    @pytest.mark.parametrize("export_format", ["zarr", "QUICFire"])
+    @pytest.mark.parametrize("export_format", ["zarr", "QUIC-Fire"])
     def test_create(self, test_grids, export_format):
         """Test creating grid exports in different formats"""
         export = test_grids.create_export(export_format=export_format)
@@ -145,7 +145,7 @@ class TestCreateGridExport:
 
 
 class TestGetGridExport:
-    @pytest.mark.parametrize("export_format", ["zarr", "QUICFire"])
+    @pytest.mark.parametrize("export_format", ["zarr", "QUIC-Fire"])
     def test_get_export(self, test_grids, export_format):
         """Test retrieving grid export status"""
         # First create an export
@@ -160,7 +160,7 @@ class TestGetGridExport:
         assert retrieved_export.format == export_format
         assert retrieved_export.status in ["pending", "running", "completed", "failed"]
 
-    @pytest.mark.parametrize("export_format", ["zarr", "QUICFire"])
+    @pytest.mark.parametrize("export_format", ["zarr", "QUIC-Fire"])
     def test_nonexistent_export(self, export_format):
         """Test error handling when export does not exist"""
         new_domain = create_default_domain()

@@ -43,7 +43,7 @@ _FILE_NAMES = {
     ("inventories", "tree", "csv"): "tree_inventory.csv",
     ("inventories", "tree", "parquet"): "tree_inventory.parquet.zip",
     ("inventories", "tree", "geojson"): "tree_inventory.geojson",
-    ("grids", None, "QUICFire"): "quicfire.zip",
+    ("grids", None, "QUIC-Fire"): "quicfire.zip",
     ("grids", None, "zarr"): "grid.zarr.zip",
     ("grids", "tree", "zarr"): "tree_grid.zarr.zip",
     ("grids", "surface", "zarr"): "surface_grid.zarr.zip",

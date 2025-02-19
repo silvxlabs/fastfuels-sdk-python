@@ -200,7 +200,7 @@ from fastfuels_sdk.grids import Grids
 from pathlib import Path
 
 # Create the export
-export = Grids.from_domain_id(domain.id).create_export("QUICFire")
+export = Grids.from_domain_id(domain.id).create_export("QUIC-Fire")
 export.wait_until_completed()
 
 # Download to a local directory
