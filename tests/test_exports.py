@@ -73,7 +73,7 @@ class TestTreeInventoryExports:
         "export_fixture, expected_filename",
         [
             ("tree_inventory_export_csv", "tree_inventory.csv"),
-            ("tree_inventory_export_parquet", "tree_inventory.parquet"),
+            ("tree_inventory_export_parquet", "tree_inventory.parquet.zip"),
             ("tree_inventory_export_geojson", "tree_inventory.geojson"),
         ],
         ids=["csv", "parquet", "geojson"],
