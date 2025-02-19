@@ -99,7 +99,7 @@ Feature grids contain geographic features. Create them using `create_feature_gri
 ```python
 # Create a feature grid with roads and water bodies
 feature_grid = grids.create_feature_grid(
-    attributes=["roads", "water_bodies"]
+    attributes=["road", "water"]
 )
 ```
 

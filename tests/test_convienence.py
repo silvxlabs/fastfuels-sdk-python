@@ -22,12 +22,10 @@ def test_blue_mountain():
     blue_mountain = gpd.read_file(TEST_DATA_DIR / "blue_mtn.geojson")
 
     # Export the Blue Mountain ROI to QUIC-Fire
-    export = export_roi_to_quicfire(
-        blue_mountain, export_path=TEST_TMP_DIR / "temp_export.zip"
-    )
+    export = export_roi_to_quicfire(blue_mountain, export_path=TEST_TMP_DIR)
 
     # Check that the export was successful
     assert export.status == "completed"
 
     # Check that the export file exists
-    assert (TEST_TMP_DIR / "temp_export.zip").exists()
+    assert (TEST_TMP_DIR / "quicfire.zip").exists()
