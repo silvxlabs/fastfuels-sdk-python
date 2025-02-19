@@ -582,12 +582,12 @@ class Grids(GridsModel):
 
         Simple usage with specific feature types:
         >>> grid = grids.create_feature_grid(
-        ...     attributes=["roads", "water_bodies"]
+        ...     attributes=["road", "water"]
         ... )
 
         Create and wait for completion:
         >>> grid = grids.create_feature_grid(
-        ...     attributes=["roads", "water_bodies"],
+        ...     attributes=["road", "water"],
         ...     in_place=True
         ... )
         >>> grid.wait_until_completed()
