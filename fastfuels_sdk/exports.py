@@ -39,6 +39,19 @@ _API_METHODS = {
     # ("grids", "feature"): _FEATURE_GRID_API.get_feature_grid_export,  # Not yet implemented
 }
 
+_FILE_NAMES = {
+    ("inventories", "tree", "csv"): "tree_inventory.csv",
+    ("inventories", "tree", "parquet"): "tree_inventory.parquet.zip",
+    ("inventories", "tree", "geojson"): "tree_inventory.geojson",
+    ("grids", None, "QUICFire"): "quicfire.zip",
+    ("grids", None, "zarr"): "grid.zarr.zip",
+    ("grids", "tree", "zarr"): "tree_grid.zarr.zip",
+    ("grids", "surface", "zarr"): "surface_grid.zarr.zip",
+    ("grids", "surface", "geotiff"): "surface_grid.tif",
+    ("grids", "topography", "zarr"): "topography_grid.zarr.zip",
+    ("grids", "topography", "geotiff"): "topography_grid.tif",
+}
+
 
 class Export(ExportModel):
     """
@@ -185,8 +198,9 @@ class Export(ExportModel):
             path = Path(path)
 
         if path.is_dir():
-            fname = f"{self.resource}{'_' if self.sub_resource else None}{self.sub_resource}.{self.format}"
-            path = path / fname
+            path = path / _FILE_NAMES.get(
+                (self.resource, self.sub_resource, self.format), "export"
+            )
 
         if self.status != "completed":
             raise ValueError(
