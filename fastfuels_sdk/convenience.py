@@ -104,7 +104,7 @@ def export_roi_to_quicfire(
     topography_grid.wait_until_completed(verbose=verbose)
     surface_grid.wait_until_completed(verbose=verbose)
     tree_grid.wait_until_completed(verbose=verbose)
-    export = Grids.from_domain_id(domain.id).create_export("QUICFire")
+    export = Grids.from_domain_id(domain.id).create_export("QUIC-Fire")
     export.wait_until_completed(verbose=verbose)
 
     # Export the QUIC-Fire data to the specified path

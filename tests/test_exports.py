@@ -70,15 +70,17 @@ class TestTreeInventoryExports:
         assert filename in [f.name for f in TEST_TMP_DIR.iterdir()]
 
     @pytest.mark.parametrize(
-        "export_fixture",
+        "export_fixture, expected_filename",
         [
-            "tree_inventory_export_csv",
-            "tree_inventory_export_parquet",
-            "tree_inventory_export_geojson",
+            ("tree_inventory_export_csv", "tree_inventory.csv"),
+            ("tree_inventory_export_parquet", "tree_inventory.parquet.zip"),
+            ("tree_inventory_export_geojson", "tree_inventory.geojson"),
         ],
         ids=["csv", "parquet", "geojson"],
     )
-    def test_to_file_with_directory(self, tree_inventory, export_fixture, request):
+    def test_to_file_with_directory(
+        self, tree_inventory, export_fixture, expected_filename, request
+    ):
         """Test downloading exports to directory without specifying filename"""
         # Create and wait for export to complete
         export = request.getfixturevalue(export_fixture)
@@ -88,7 +90,6 @@ class TestTreeInventoryExports:
         export.to_file(TEST_TMP_DIR)
 
         # Verify file was downloaded with default name
-        expected_filename = f"inventories_tree.{export.format}"
         expected_path = TEST_TMP_DIR / expected_filename
         assert expected_path.exists()
         assert expected_path.is_file()
