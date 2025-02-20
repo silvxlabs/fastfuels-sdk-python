@@ -1,7 +1,7 @@
 geopandas
-numpy<2
+numpy
 pandas
 pydantic>=2
 requests
 scipy
-zarr>2
+zarr
