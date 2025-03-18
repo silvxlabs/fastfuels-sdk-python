@@ -2,7 +2,7 @@ name: Test on Cron Schedule
 on:
   schedule:
     # Runs every day at 1am
-    - cron: '0 1 * * *'
+    # - cron: '0 1 * * *'
 
 env:
     FASTFUELS_API_KEY: ${{ secrets.FASTFUELS_API_KEY }}
