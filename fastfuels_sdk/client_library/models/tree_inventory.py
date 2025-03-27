@@ -24,9 +24,10 @@ from typing_extensions import Annotated
 from fastfuels_sdk.client_library.models.feature_type import FeatureType
 from fastfuels_sdk.client_library.models.job_status import JobStatus
 from fastfuels_sdk.client_library.models.tree_inventory_modification import TreeInventoryModification
-from fastfuels_sdk.client_library.models.tree_inventory_sources_inner import TreeInventorySourcesInner
+from fastfuels_sdk.client_library.models.tree_inventory_source import TreeInventorySource
 from fastfuels_sdk.client_library.models.tree_inventory_treatment import TreeInventoryTreatment
 from fastfuels_sdk.client_library.models.tree_map_source import TreeMapSource
+from fastfuels_sdk.client_library.models.upload_response import UploadResponse
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -34,7 +35,7 @@ class TreeInventory(BaseModel):
     """
     TreeInventory
     """ # noqa: E501
-    sources: List[TreeInventorySourcesInner]
+    sources: List[TreeInventorySource]
     tree_map: Optional[TreeMapSource] = Field(default=None, alias="TreeMap")
     modifications: Optional[Annotated[List[TreeInventoryModification], Field(max_length=1000)]] = Field(default=None, description="List of modifications to apply to the tree inventory data")
     treatments: Optional[Annotated[List[TreeInventoryTreatment], Field(max_length=1000)]] = Field(default=None, description="List of silvicultural treatments to apply.")
@@ -43,7 +44,8 @@ class TreeInventory(BaseModel):
     created_on: Optional[datetime] = Field(default=None, alias="createdOn")
     modified_on: Optional[datetime] = Field(default=None, alias="modifiedOn")
     checksum: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["sources", "TreeMap", "modifications", "treatments", "featureMasks", "status", "createdOn", "modifiedOn", "checksum"]
+    file: Optional[UploadResponse] = None
+    __properties: ClassVar[List[str]] = ["sources", "TreeMap", "modifications", "treatments", "featureMasks", "status", "createdOn", "modifiedOn", "checksum", "file"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -84,13 +86,6 @@ class TreeInventory(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in sources (list)
-        _items = []
-        if self.sources:
-            for _item_sources in self.sources:
-                if _item_sources:
-                    _items.append(_item_sources.to_dict())
-            _dict['sources'] = _items
         # override the default output from pydantic by calling `to_dict()` of tree_map
         if self.tree_map:
             _dict['TreeMap'] = self.tree_map.to_dict()
@@ -108,6 +103,9 @@ class TreeInventory(BaseModel):
                 if _item_treatments:
                     _items.append(_item_treatments.to_dict())
             _dict['treatments'] = _items
+        # override the default output from pydantic by calling `to_dict()` of file
+        if self.file:
+            _dict['file'] = self.file.to_dict()
         # set to None if tree_map (nullable) is None
         # and model_fields_set contains the field
         if self.tree_map is None and "tree_map" in self.model_fields_set:
@@ -128,6 +126,11 @@ class TreeInventory(BaseModel):
         if self.checksum is None and "checksum" in self.model_fields_set:
             _dict['checksum'] = None
 
+        # set to None if file (nullable) is None
+        # and model_fields_set contains the field
+        if self.file is None and "file" in self.model_fields_set:
+            _dict['file'] = None
+
         return _dict
 
     @classmethod
@@ -140,7 +143,7 @@ class TreeInventory(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "sources": [TreeInventorySourcesInner.from_dict(_item) for _item in obj["sources"]] if obj.get("sources") is not None else None,
+            "sources": obj.get("sources"),
             "TreeMap": TreeMapSource.from_dict(obj["TreeMap"]) if obj.get("TreeMap") is not None else None,
             "modifications": [TreeInventoryModification.from_dict(_item) for _item in obj["modifications"]] if obj.get("modifications") is not None else None,
             "treatments": [TreeInventoryTreatment.from_dict(_item) for _item in obj["treatments"]] if obj.get("treatments") is not None else None,
@@ -148,7 +151,8 @@ class TreeInventory(BaseModel):
             "status": obj.get("status"),
             "createdOn": obj.get("createdOn"),
             "modifiedOn": obj.get("modifiedOn"),
-            "checksum": obj.get("checksum")
+            "checksum": obj.get("checksum"),
+            "file": UploadResponse.from_dict(obj["file"]) if obj.get("file") is not None else None
         })
         return _obj
 

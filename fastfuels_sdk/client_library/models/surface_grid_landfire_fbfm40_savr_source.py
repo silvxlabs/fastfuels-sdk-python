@@ -19,6 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
+from typing_extensions import Annotated
 from fastfuels_sdk.client_library.models.feature_type import FeatureType
 from fastfuels_sdk.client_library.models.surface_grid_interpolation_method import SurfaceGridInterpolationMethod
 from fastfuels_sdk.client_library.models.surface_grid_landfire_fbfm40_group import SurfaceGridLandfireFBFM40Group
@@ -35,7 +36,7 @@ class SurfaceGridLandfireFBFM40SAVRSource(BaseModel):
     version: Optional[StrictStr] = Field(default='2022', description="Version of the LANDFIRE data to use for the surface grid attribute.")
     interpolation_method: Optional[SurfaceGridInterpolationMethod] = Field(default=None, description="Interpolation method to use when resampling the LANDFIRE data to the desired surface grid resolution.", alias="interpolationMethod")
     remove_non_burnable: Optional[List[StrictStr]] = Field(default=None, alias="removeNonBurnable")
-    groups: Optional[List[SurfaceGridLandfireFBFM40Group]] = None
+    groups: Optional[Annotated[List[SurfaceGridLandfireFBFM40Group], Field(min_length=1)]] = None
     __properties: ClassVar[List[str]] = ["featureMasks", "source", "product", "version", "interpolationMethod", "removeNonBurnable", "groups"]
 
     @field_validator('source')
