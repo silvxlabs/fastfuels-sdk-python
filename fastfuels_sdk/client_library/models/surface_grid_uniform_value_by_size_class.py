@@ -36,7 +36,7 @@ class SurfaceGridUniformValueBySizeClass(BaseModel):
     hundred_hour: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=None, alias="hundredHour")
     live_herbaceous: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=None, alias="liveHerbaceous")
     live_woody: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=None, alias="liveWoody")
-    groups: Optional[List[SurfaceGridLandfireFBFM40Group]] = None
+    groups: Optional[Annotated[List[SurfaceGridLandfireFBFM40Group], Field(min_length=1)]] = None
     __properties: ClassVar[List[str]] = ["featureMasks", "source", "oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody", "groups"]
 
     @field_validator('source')
