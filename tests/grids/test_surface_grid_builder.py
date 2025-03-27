@@ -111,7 +111,7 @@ class BaseUniformBySizeClassTest:
     attribute_snake_case: str
     method_name: str
     test_values: dict
-    test_groups: list[str] = None
+    test_groups: list[str]
 
     def test_uniform_by_size_class(self, builder):
         """Test basic uniform by size class configuration."""
@@ -144,8 +144,7 @@ class BaseUniformBySizeClassTest:
         assert config["hundredHour"] == self.test_values.get("hundred_hour")
         assert config["liveHerbaceous"] == self.test_values.get("live_herbaceous")
         assert config["liveWoody"] == self.test_values.get("live_woody")
-        if "groups" in self.test_values:
-            assert config["groups"] == self.test_values["groups"]
+        assert config["groups"] == self.test_groups
 
 
 class BaseLandfireTest:
@@ -251,14 +250,23 @@ class TestFuelLoad:
             "hundred_hour": 0.3,
             "live_herbaceous": 0.4,
             "live_woody": 0.5,
-            "groups": [
-                "oneHour",
-                "tenHour",
-                "hundredHour",
-                "liveHerbaceous",
-                "liveWoody",
-            ],
         }
+        test_groups = [
+            "oneHour",
+            "tenHour",
+            "hundredHour",
+            "liveHerbaceous",
+            "liveWoody",
+        ]
+
+    class TestUniformBySizeClassSingleValue(BaseUniformBySizeClassTest):
+        attribute = SurfaceGridAttribute.FUELLOAD
+        attribute_snake_case = "fuel_load"
+        method_name = "with_uniform_fuel_load_by_size_class"
+        test_values = {
+            "one_hour": 0.1,
+        }
+        test_groups = ["oneHour"]
 
     class TestLandfire(BaseLandfireTest):
         attribute = SurfaceGridAttribute.FUELLOAD
@@ -307,14 +315,23 @@ class TestFuelMoisture:
             "hundred_hour": 20.0,
             "live_herbaceous": 75.0,
             "live_woody": 90.0,
-            "groups": [
-                "oneHour",
-                "tenHour",
-                "hundredHour",
-                "liveHerbaceous",
-                "liveWoody",
-            ],
         }
+        test_groups = [
+            "oneHour",
+            "tenHour",
+            "hundredHour",
+            "liveHerbaceous",
+            "liveWoody",
+        ]
+
+    class TestUniformBySizeClassOneValue(BaseUniformBySizeClassTest):
+        attribute = SurfaceGridAttribute.FUELMOISTURE
+        attribute_snake_case = "fuel_moisture"
+        method_name = "with_uniform_fuel_moisture_by_size_class"
+        test_values = {
+            "one_hour": 10.0,
+        }
+        test_groups = ["oneHour"]
 
 
 class TestFBFM:

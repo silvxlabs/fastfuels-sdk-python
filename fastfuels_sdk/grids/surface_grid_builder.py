@@ -65,25 +65,22 @@ class SurfaceGridBuilder:
         hundred_hour: float = None,
         live_herbaceous: float = None,
         live_woody: float = None,
-        groups: List[str] = None,
         feature_masks: list[str] = None,
     ) -> "SurfaceGridBuilder":
         """Set uniform fuel load values by size class.
 
         Parameters
         ----------
-        one_hour : float
+        one_hour : float, optional
             1-hour fuel load value in kg/m².
-        ten_hour : float
+        ten_hour : float, optional
             10-hour fuel load value in kg/m².
-        hundred_hour : float
+        hundred_hour : float, optional
             100-hour fuel load value in kg/m².
-        live_herbaceous : float
+        live_herbaceous : float, optional
             Live herbaceous fuel load value in kg/m².
-        live_woody : float
+        live_woody : float, optional
             Live woody fuel load value in kg/m².
-        groups : list[str], optional
-            List of fuel load groups to include. Can be: "oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody"
         feature_masks : list[str], optional
             List of feature masks to apply to the surface grid attribute. Can be "road" or "water". Note that including these masks requires a feature grid with the appropriate attributes to have a "completed" status.
 
@@ -94,17 +91,29 @@ class SurfaceGridBuilder:
         ...     one_hour=0.5,
         ...     ten_hour=1.0,
         ...     hundred_hour=2.0,
-        ...     groups=["oneHour", "tenHour", "hundredHour"],
         ...     feature_masks=["road", "water"]
         ... )
 
         Notes
         -----
-        If a size class is not provided, it will be excluded from the configuration.
-
-        If a size class is included in `groups`, but a value is not provided, then the API will raise an error.
-
+        Only size classes with provided values will be included in the configuration.
         """
+        # Map parameter names to their corresponding group names in camelCase
+        param_to_group = {
+            "one_hour": "oneHour",
+            "ten_hour": "tenHour",
+            "hundred_hour": "hundredHour",
+            "live_herbaceous": "liveHerbaceous",
+            "live_woody": "liveWoody",
+        }
+
+        # Build the groups list based on which parameters have values
+        groups = []
+        for param_name, group_name in param_to_group.items():
+            if locals()[param_name] is not None:
+                groups.append(group_name)
+
+        # Create the configuration dictionary
         self.config["fuel_load"] = SurfaceGridUniformValueBySizeClass.from_dict(
             {
                 "source": "uniformBySizeClass",
@@ -290,30 +299,27 @@ class SurfaceGridBuilder:
 
     def with_uniform_fuel_moisture_by_size_class(
         self,
-        one_hour: float,
-        ten_hour: float,
-        hundred_hour: float,
-        live_herbaceous: float,
-        live_woody: float,
-        groups: List[str] = None,
+        one_hour: float = None,
+        ten_hour: float = None,
+        hundred_hour: float = None,
+        live_herbaceous: float = None,
+        live_woody: float = None,
         feature_masks: list[str] = None,
     ) -> "SurfaceGridBuilder":
         """Set uniform fuel moisture values by size class.
 
         Parameters
         ----------
-        one_hour : float
+        one_hour : float, optional
             1-hour fuel moisture content (%).
-        ten_hour : float
+        ten_hour : float, optional
             10-hour fuel moisture content (%).
-        hundred_hour : float
+        hundred_hour : float, optional
             100-hour fuel moisture content (%).
-        live_herbaceous : float
+        live_herbaceous : float, optional
             Live herbaceous fuel moisture content (%).
-        live_woody : float
+        live_woody : float, optional
             Live woody fuel moisture content (%).
-        groups : list[str], optional
-            List of fuel moisture groups to include. Can be: "oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody"
         feature_masks : list[str], optional
             List of feature masks to apply to the surface grid attribute. Can be "road" or "water". Note that including these masks requires a feature grid with the appropriate attributes to have a "completed" status.
 
@@ -326,10 +332,25 @@ class SurfaceGridBuilder:
         ...     hundred_hour=20.0,
         ...     live_herbaceous=75.0,
         ...     live_woody=90.0,
-        ...     groups=["oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody"],
         ...     feature_masks=["road", "water"]
         ... )
         """
+        # Map parameter names to their corresponding group names in camelCase
+        param_to_group = {
+            "one_hour": "oneHour",
+            "ten_hour": "tenHour",
+            "hundred_hour": "hundredHour",
+            "live_herbaceous": "liveHerbaceous",
+            "live_woody": "liveWoody",
+        }
+
+        # Build the groups list based on which parameters have values
+        groups = []
+        for param_name, group_name in param_to_group.items():
+            if locals()[param_name] is not None:
+                groups.append(group_name)
+
+        # Create the configuration dictionary
         self.config["fuel_moisture"] = SurfaceGridUniformValueBySizeClass.from_dict(
             {
                 "source": "uniformBySizeClass",
