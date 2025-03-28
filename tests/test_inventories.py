@@ -531,6 +531,12 @@ class TestCreateTreeInventoryFromFileUpload:
         assert tree_inventory is not None
         assert tree_inventory.status == "pending"
         assert tree_inventory.domain_id == test_inventories.domain_id
+        assert tree_inventory.sources == ["file"]
+
+        tree_inventory.wait_until_completed()
+
+        # Verify the inventory was created correctly
+        assert tree_inventory.status == "completed"
 
     def test_file_not_found(self, test_inventories):
         """Test handling of non-existent file"""
@@ -545,58 +551,59 @@ class TestCreateTreeInventoryFromFileUpload:
         with pytest.raises(ValueError, match="File must be a CSV"):
             test_inventories.create_tree_inventory_from_file_upload(invalid_file)
 
-    def test_file_too_large(self, test_inventories, valid_tree_data):
-        """Test handling of file exceeding size limit"""
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
-            # Create large dataset by repeating the data
-            repetitions = int(1e3)
-            large_df = pd.concat([valid_tree_data] * repetitions, ignore_index=True)
-            large_df.to_csv(tmp.name, index=False)
-
-            with pytest.raises(ValueError, match="File size exceeds 500MB limit"):
-                test_inventories.create_tree_inventory_from_file_upload(tmp.name)
-
-    def test_missing_column(self, test_inventories, valid_tree_data):
-        """Test handling of CSV with missing required column"""
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
-            # Drop a required column
-            invalid_data = valid_tree_data.drop("TREE_ID", axis=1)
-            invalid_data.to_csv(tmp.name, index=False)
-
-            with pytest.raises(ApiException):
-                test_inventories.create_tree_inventory_from_file_upload(tmp.name)
-
-    def test_invalid_column_name(self, test_inventories, valid_tree_data):
-        """Test handling of CSV with invalid column name"""
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
-            # Rename a column to invalid name
-            invalid_data = valid_tree_data.rename(columns={"TREE_ID": "BAD_SCHEMA"})
-            invalid_data.to_csv(tmp.name, index=False)
-
-            with pytest.raises(ApiException):
-                test_inventories.create_tree_inventory_from_file_upload(tmp.name)
-
-    def test_invalid_data_type(self, test_inventories, valid_tree_data):
-        """Test handling of CSV with invalid data type"""
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
-            # Change SPCD to invalid type (float instead of int)
-            invalid_data = valid_tree_data.copy()
-            invalid_data["SPCD"] = np.random.uniform(0, 1, len(invalid_data))
-            invalid_data.to_csv(tmp.name, index=False)
-
-            with pytest.raises(ApiException):
-                test_inventories.create_tree_inventory_from_file_upload(tmp.name)
-
-    def test_out_of_bounds_tree(self, test_inventories, valid_tree_data):
-        """Test handling of CSV with tree locations out of bounds"""
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
-            # Put trees out of bounds
-            invalid_data = valid_tree_data.copy()
-            invalid_data["X"] = invalid_data["X"] * 10
-            invalid_data.to_csv(tmp.name, index=False)
-
-            with pytest.raises(ApiException):
-                test_inventories.create_tree_inventory_from_file_upload(tmp.name)
+    # TODO: Consider adding local checks to create_tree_inventory_from_file_upload for this. Otherwise, we will rely on API tests
+    # def test_file_too_large(self, test_inventories, valid_tree_data):
+    #     """Test handling of file exceeding size limit"""
+    #     with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
+    #         # Create large dataset by repeating the data
+    #         repetitions = int(1e3)
+    #         large_df = pd.concat([valid_tree_data] * repetitions, ignore_index=True)
+    #         large_df.to_csv(tmp.name, index=False)
+    #
+    #         with pytest.raises(ValueError, match="File size exceeds 500MB limit"):
+    #             test_inventories.create_tree_inventory_from_file_upload(tmp.name)
+    #
+    # def test_missing_column(self, test_inventories, valid_tree_data):
+    #     """Test handling of CSV with missing required column"""
+    #     with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
+    #         # Drop a required column
+    #         invalid_data = valid_tree_data.drop("TREE_ID", axis=1)
+    #         invalid_data.to_csv(tmp.name, index=False)
+    #
+    #         with pytest.raises(ApiException):
+    #             test_inventories.create_tree_inventory_from_file_upload(tmp.name)
+    #
+    # def test_invalid_column_name(self, test_inventories, valid_tree_data):
+    #     """Test handling of CSV with invalid column name"""
+    #     with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
+    #         # Rename a column to invalid name
+    #         invalid_data = valid_tree_data.rename(columns={"TREE_ID": "BAD_SCHEMA"})
+    #         invalid_data.to_csv(tmp.name, index=False)
+    #
+    #         with pytest.raises(ApiException):
+    #             test_inventories.create_tree_inventory_from_file_upload(tmp.name)
+    #
+    # def test_invalid_data_type(self, test_inventories, valid_tree_data):
+    #     """Test handling of CSV with invalid data type"""
+    #     with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
+    #         # Change SPCD to invalid type (float instead of int)
+    #         invalid_data = valid_tree_data.copy()
+    #         invalid_data["SPCD"] = np.random.uniform(0, 1, len(invalid_data))
+    #         invalid_data.to_csv(tmp.name, index=False)
+    #
+    #         with pytest.raises(ApiException):
+    #             test_inventories.create_tree_inventory_from_file_upload(tmp.name)
+    #
+    # def test_out_of_bounds_tree(self, test_inventories, valid_tree_data):
+    #     """Test handling of CSV with tree locations out of bounds"""
+    #     with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
+    #         # Put trees out of bounds
+    #         invalid_data = valid_tree_data.copy()
+    #         invalid_data["X"] = invalid_data["X"] * 10
+    #         invalid_data.to_csv(tmp.name, index=False)
+    #
+    #         with pytest.raises(ApiException):
+    #             test_inventories.create_tree_inventory_from_file_upload(tmp.name)
 
     def teardown_method(self, method):
         """Clean up any temporary files after each test"""

@@ -38,7 +38,7 @@ class SurfaceGridLandfireFBFM40FuelLoadSource(BaseModel):
     remove_non_burnable: Optional[List[StrictStr]] = Field(default=None, alias="removeNonBurnable")
     curing_live_herbaceous: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=0.25, description="Proportion of live herbaceous fuel that is cured.", alias="curingLiveHerbaceous")
     curing_live_woody: Optional[Union[Annotated[float, Field(strict=True, ge=0.0)], Annotated[int, Field(strict=True, ge=0)]]] = Field(default=0.1, description="Proportion of live woody fuel that is cured.", alias="curingLiveWoody")
-    groups: Optional[List[SurfaceGridLandfireFBFM40Group]] = None
+    groups: Optional[Annotated[List[SurfaceGridLandfireFBFM40Group], Field(min_length=1)]] = None
     __properties: ClassVar[List[str]] = ["featureMasks", "source", "product", "version", "interpolationMethod", "removeNonBurnable", "curingLiveHerbaceous", "curingLiveWoody", "groups"]
 
     @field_validator('source')

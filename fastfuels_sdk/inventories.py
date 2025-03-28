@@ -25,6 +25,9 @@ from fastfuels_sdk.client_library.models import (
     TreeMapSourceCanopyHeightMapConfiguration,
 )
 
+# External imports
+import requests
+
 _INVENTORIES_API = InventoriesApi(get_client())
 _TREE_INVENTORY_API = TreeInventoryApi(get_client())
 
@@ -524,17 +527,27 @@ class Inventories(InventoriesModel):
         if file_path.suffix.lower() != ".csv":
             raise ValueError(f"File must be a CSV: {file_path}")
 
-        # Read file content
-        with open(file_path, "rb") as f:
-            file_content = f.read()
-
-        # Create file upload request
-        response = _TREE_INVENTORY_API.create_tree_inventory_from_file_upload(
-            domain_id=self.domain_id, upload_file=file_content
+        # Create tree inventory resource with "file" source
+        signed_url_response = _TREE_INVENTORY_API.create_tree_inventory(
+            self.domain_id,
+            CreateTreeInventoryRequest(sources=[TreeInventorySource.FILE]),
         )
 
-        # Return TreeInventory instance
-        return TreeInventory(domain_id=self.domain_id, **response.model_dump())
+        # Read file content
+        with open(file_path, "rb") as file:
+            upload_response = requests.put(
+                signed_url_response.file.url,
+                headers=signed_url_response.file.headers,
+                data=file,
+            )
+            if upload_response.status_code != 200:
+                raise ValueError(f"Failed to upload file: {upload_response.text}")
+
+        tree_inventory = TreeInventory(
+            domain_id=self.domain_id, **signed_url_response.model_dump()
+        )
+
+        return tree_inventory
 
 
 class TreeInventory(TreeInventoryModel):
