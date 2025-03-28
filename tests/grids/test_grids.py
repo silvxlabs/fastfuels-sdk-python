@@ -37,6 +37,22 @@ def test_grids(test_domain):
     # Cleanup handled by test_domain fixture
 
 
+@pytest.fixture(scope="module")
+def test_surface_grid_complete(test_grids):
+    """Fixture that creates a complete surface grid for testing"""
+    # Create a complete surface grid
+    surface_grid = test_grids.create_surface_grid(
+        attributes=["fuelMoisture"], fuel_moisture={"source": "uniform", "value": 10}
+    )
+    surface_grid.wait_until_completed()
+
+    # Return the complete surface grid for use in tests
+    yield surface_grid
+
+    # Cleanup: Delete the surface grid after the tests
+    surface_grid.delete()
+
+
 class TestGridsFromDomain:
     def test_success(self, test_domain):
         """Test successful retrieval of grids from a domain"""
@@ -116,7 +132,7 @@ class TestGetGrids:
 
 class TestCreateGridExport:
     @pytest.mark.parametrize("export_format", ["zarr", "QUIC-Fire"])
-    def test_create(self, test_grids, export_format):
+    def test_create(self, test_grids, export_format, test_surface_grid_complete):
         """Test creating grid exports in different formats"""
         export = test_grids.create_export(export_format=export_format)
 
