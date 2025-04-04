@@ -97,6 +97,7 @@ def export_roi_to_quicfire(
     tree_grid = (
         TreeGridBuilder(domain_id=domain.id)
         .with_bulk_density_from_tree_inventory()
+        .with_uniform_fuel_moisture(value=100)
         .build()
     )
 
