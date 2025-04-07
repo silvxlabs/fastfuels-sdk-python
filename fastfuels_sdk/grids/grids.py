@@ -40,6 +40,7 @@ from fastfuels_sdk.client_library.models import (
     TreeGridUniformValue,
     TreeGridSPCDSource,
     TreeGridBulkDensitySource,
+    TreeGridSAVRSource,
     CreateFeatureGridRequest,
 )
 
@@ -426,6 +427,7 @@ class Grids(GridsModel):
         bulk_density: Optional[dict] = None,
         spcd: Optional[dict] = None,
         fuel_moisture: Optional[dict] = None,
+        savr: Optional[dict] = None,
         in_place: bool = False,
     ) -> TreeGrid:
         """Create a tree grid for the current domain.
@@ -442,6 +444,7 @@ class Grids(GridsModel):
             - "bulkDensity": Canopy bulk density
             - "SPCD": Species code
             - "fuelMoisture": Moisture content
+            - "SAVR": Surface area to volume ratio
 
         bulk_density : dict, optional
             Configuration for bulk density attribute. Sources available:
@@ -473,6 +476,18 @@ class Grids(GridsModel):
                 "source": "uniform",
                 "value": float  # moisture content in %
             }
+
+        SAVR: dict, optional
+            Configuration for surface area to volume ratio. Sources available:
+            - Inventory:
+                {
+                    "source": "inventory"
+                }
+            - Uniform:
+                {
+                    "source": "uniform",
+                    "value": str  # surface area to volume ratio in m²/m³
+                }
 
         in_place : bool, optional
             If True, updates this object's tree grid (self.tree).
@@ -523,6 +538,7 @@ class Grids(GridsModel):
             fuelMoisture=(
                 TreeGridUniformValue.from_dict(fuel_moisture) if fuel_moisture else None
             ),
+            SAVR=(TreeGridSAVRSource.from_dict(savr) if savr else None),
         )
 
         response = _TREE_GRID_API.create_tree_grid(
@@ -536,6 +552,7 @@ class Grids(GridsModel):
         tree_grid.bulk_density = response.bulk_density
         tree_grid.spcd = response.spcd
         tree_grid.fuel_moisture = response.fuel_moisture
+        tree_grid.savr = response.savr
 
         if in_place:
             self.tree = tree_grid

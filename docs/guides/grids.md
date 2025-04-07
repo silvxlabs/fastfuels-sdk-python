@@ -167,6 +167,7 @@ from fastfuels_sdk import TreeGridBuilder
 tree_grid = (TreeGridBuilder("abc123")
     .with_bulk_density_from_tree_inventory()
     .with_spcd_from_tree_inventory()
+    .with_savr_from_tree_inventory()
     .with_uniform_fuel_moisture(15.0)
     .build())
 ```
