@@ -23,6 +23,7 @@ from typing import Any, ClassVar, Dict, List, Optional
 from fastfuels_sdk.client_library.models.job_status import JobStatus
 from fastfuels_sdk.client_library.models.tree_grid_attribute import TreeGridAttribute
 from fastfuels_sdk.client_library.models.tree_grid_bulk_density_source import TreeGridBulkDensitySource
+from fastfuels_sdk.client_library.models.tree_grid_savr_source import TreeGridSAVRSource
 from fastfuels_sdk.client_library.models.tree_grid_spcd_source import TreeGridSPCDSource
 from fastfuels_sdk.client_library.models.tree_grid_uniform_value import TreeGridUniformValue
 from typing import Optional, Set
@@ -36,12 +37,13 @@ class TreeGrid(BaseModel):
     bulk_density: Optional[TreeGridBulkDensitySource] = Field(default=None, alias="bulkDensity")
     fuel_moisture: Optional[TreeGridUniformValue] = Field(default=None, alias="fuelMoisture")
     spcd: Optional[TreeGridSPCDSource] = Field(default=None, alias="SPCD")
+    savr: Optional[TreeGridSAVRSource] = Field(default=None, alias="SAVR")
     status: Optional[JobStatus] = None
     created_on: Optional[datetime] = Field(default=None, alias="createdOn")
     modified_on: Optional[datetime] = Field(default=None, alias="modifiedOn")
     checksum: Optional[StrictStr] = None
     tree_inventory_checksum: Optional[StrictStr] = Field(default=None, alias="treeInventoryChecksum")
-    __properties: ClassVar[List[str]] = ["attributes", "bulkDensity", "fuelMoisture", "SPCD", "status", "createdOn", "modifiedOn", "checksum", "treeInventoryChecksum"]
+    __properties: ClassVar[List[str]] = ["attributes", "bulkDensity", "fuelMoisture", "SPCD", "SAVR", "status", "createdOn", "modifiedOn", "checksum", "treeInventoryChecksum"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -91,6 +93,9 @@ class TreeGrid(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of spcd
         if self.spcd:
             _dict['SPCD'] = self.spcd.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of savr
+        if self.savr:
+            _dict['SAVR'] = self.savr.to_dict()
         # set to None if bulk_density (nullable) is None
         # and model_fields_set contains the field
         if self.bulk_density is None and "bulk_density" in self.model_fields_set:
@@ -105,6 +110,11 @@ class TreeGrid(BaseModel):
         # and model_fields_set contains the field
         if self.spcd is None and "spcd" in self.model_fields_set:
             _dict['SPCD'] = None
+
+        # set to None if savr (nullable) is None
+        # and model_fields_set contains the field
+        if self.savr is None and "savr" in self.model_fields_set:
+            _dict['SAVR'] = None
 
         # set to None if created_on (nullable) is None
         # and model_fields_set contains the field
@@ -142,6 +152,7 @@ class TreeGrid(BaseModel):
             "bulkDensity": TreeGridBulkDensitySource.from_dict(obj["bulkDensity"]) if obj.get("bulkDensity") is not None else None,
             "fuelMoisture": TreeGridUniformValue.from_dict(obj["fuelMoisture"]) if obj.get("fuelMoisture") is not None else None,
             "SPCD": TreeGridSPCDSource.from_dict(obj["SPCD"]) if obj.get("SPCD") is not None else None,
+            "SAVR": TreeGridSAVRSource.from_dict(obj["SAVR"]) if obj.get("SAVR") is not None else None,
             "status": obj.get("status"),
             "createdOn": obj.get("createdOn"),
             "modifiedOn": obj.get("modifiedOn"),

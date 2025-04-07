@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
 from fastfuels_sdk.client_library.models.tree_grid_attribute import TreeGridAttribute
 from fastfuels_sdk.client_library.models.tree_grid_bulk_density_source import TreeGridBulkDensitySource
+from fastfuels_sdk.client_library.models.tree_grid_savr_source import TreeGridSAVRSource
 from fastfuels_sdk.client_library.models.tree_grid_spcd_source import TreeGridSPCDSource
 from fastfuels_sdk.client_library.models.tree_grid_uniform_value import TreeGridUniformValue
 from typing import Optional, Set
@@ -34,7 +35,8 @@ class CreateTreeGridRequest(BaseModel):
     bulk_density: Optional[TreeGridBulkDensitySource] = Field(default=None, alias="bulkDensity")
     fuel_moisture: Optional[TreeGridUniformValue] = Field(default=None, alias="fuelMoisture")
     spcd: Optional[TreeGridSPCDSource] = Field(default=None, alias="SPCD")
-    __properties: ClassVar[List[str]] = ["attributes", "bulkDensity", "fuelMoisture", "SPCD"]
+    savr: Optional[TreeGridSAVRSource] = Field(default=None, alias="SAVR")
+    __properties: ClassVar[List[str]] = ["attributes", "bulkDensity", "fuelMoisture", "SPCD", "SAVR"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -84,6 +86,9 @@ class CreateTreeGridRequest(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of spcd
         if self.spcd:
             _dict['SPCD'] = self.spcd.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of savr
+        if self.savr:
+            _dict['SAVR'] = self.savr.to_dict()
         # set to None if bulk_density (nullable) is None
         # and model_fields_set contains the field
         if self.bulk_density is None and "bulk_density" in self.model_fields_set:
@@ -98,6 +103,11 @@ class CreateTreeGridRequest(BaseModel):
         # and model_fields_set contains the field
         if self.spcd is None and "spcd" in self.model_fields_set:
             _dict['SPCD'] = None
+
+        # set to None if savr (nullable) is None
+        # and model_fields_set contains the field
+        if self.savr is None and "savr" in self.model_fields_set:
+            _dict['SAVR'] = None
 
         return _dict
 
@@ -114,7 +124,8 @@ class CreateTreeGridRequest(BaseModel):
             "attributes": obj.get("attributes"),
             "bulkDensity": TreeGridBulkDensitySource.from_dict(obj["bulkDensity"]) if obj.get("bulkDensity") is not None else None,
             "fuelMoisture": TreeGridUniformValue.from_dict(obj["fuelMoisture"]) if obj.get("fuelMoisture") is not None else None,
-            "SPCD": TreeGridSPCDSource.from_dict(obj["SPCD"]) if obj.get("SPCD") is not None else None
+            "SPCD": TreeGridSPCDSource.from_dict(obj["SPCD"]) if obj.get("SPCD") is not None else None,
+            "SAVR": TreeGridSAVRSource.from_dict(obj["SAVR"]) if obj.get("SAVR") is not None else None
         })
         return _obj
 

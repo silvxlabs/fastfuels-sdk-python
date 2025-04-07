@@ -106,6 +106,7 @@ from fastfuels_sdk.client_library.models.tree_grid import TreeGrid
 from fastfuels_sdk.client_library.models.tree_grid_attribute import TreeGridAttribute
 from fastfuels_sdk.client_library.models.tree_grid_bulk_density_source import TreeGridBulkDensitySource
 from fastfuels_sdk.client_library.models.tree_grid_inventory_source import TreeGridInventorySource
+from fastfuels_sdk.client_library.models.tree_grid_savr_source import TreeGridSAVRSource
 from fastfuels_sdk.client_library.models.tree_grid_spcd_source import TreeGridSPCDSource
 from fastfuels_sdk.client_library.models.tree_grid_uniform_value import TreeGridUniformValue
 from fastfuels_sdk.client_library.models.tree_inventory import TreeInventory
