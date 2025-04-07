@@ -115,6 +115,17 @@ class TestBulkDensity:
         method_name = "with_bulk_density_from_tree_inventory"
 
 
+class TestSAVR:
+    """Test suite for surface area to volume ratio (SAVR) configurations."""
+
+    class TestInventory(BaseInventoryTest):
+        """Test cases for inventory SAVR configurations."""
+
+        attribute = "SAVR"
+        attribute_snake_case = "savr"
+        method_name = "with_savr_from_tree_inventory"
+
+
 class TestSPCD:
     """Test suite for Species Code (SPCD) configurations."""
 

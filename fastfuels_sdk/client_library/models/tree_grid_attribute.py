@@ -29,6 +29,7 @@ class TreeGridAttribute(str, Enum):
     BULKDENSITY = 'bulkDensity'
     FUELMOISTURE = 'fuelMoisture'
     SPCD = 'SPCD'
+    SAVR = 'SAVR'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:

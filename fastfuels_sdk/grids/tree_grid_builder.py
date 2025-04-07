@@ -62,6 +62,21 @@ class TreeGridBuilder:
 
         return self
 
+    def with_savr_from_tree_inventory(self) -> "TreeGridBuilder":
+        """Add surface area to volume ratio (SAVR) attribute from tree inventory data.
+
+        Examples
+        --------
+        >>> builder = TreeGridBuilder("abc123")
+        >>> builder.with_savr_from_tree_inventory()
+        """
+        self.config["savr"] = TreeGridBulkDensitySource.from_dict(
+            TreeGridInventorySource.from_dict({"source": "TreeInventory"}).to_dict()
+        ).to_dict()
+        self.attributes.append("SAVR")
+
+        return self
+
     def with_spcd_from_tree_inventory(self) -> "TreeGridBuilder":
         """Add species code (SPCD) attribute from tree inventory data.
 
