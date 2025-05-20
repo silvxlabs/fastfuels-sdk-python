@@ -14,13 +14,14 @@ from fastfuels_sdk.client_library.models import (
     GridAttributeMetadataResponse,
 )
 
-_TREE_GRID_API = TreeGridApi(get_client())
-
-
 class TreeGrid(TreeGridModel):
     """Tree grid data within a domain's spatial boundaries."""
 
     domain_id: str
+
+    def __init__(self, **kwargs):
+        super.__init__(**kwargs)
+        self._TREE_GRID_API = TreeGridApi(get_client())
 
     @classmethod
     def from_domain_id(cls, domain_id: str) -> TreeGrid:
@@ -42,7 +43,7 @@ class TreeGrid(TreeGridModel):
         >>> tree_grid.status
         'completed'
         """
-        response = _TREE_GRID_API.get_tree_grid(domain_id=domain_id)
+        response =self._TREE_GRID_API.get_tree_grid(domain_id=domain_id)
         return cls(domain_id=domain_id, **response.model_dump())
 
     def get(self, in_place: bool = False) -> TreeGrid:
@@ -70,7 +71,7 @@ class TreeGrid(TreeGridModel):
         >>> # Or update the existing instance
         >>> tree_grid.get(in_place=True)
         """
-        response = _TREE_GRID_API.get_tree_grid(domain_id=self.domain_id)
+        response =self._TREE_GRID_API.get_tree_grid(domain_id=self.domain_id)
         if in_place:
             # Update all attributes of current instance
             for key, value in response.model_dump().items():
@@ -182,7 +183,7 @@ class TreeGrid(TreeGridModel):
         >>> print(metadata.shape)
         [100, 100, 50]
         """
-        return _TREE_GRID_API.get_tree_grid_attribute_metadata(domain_id=self.domain_id)
+        returnself._TREE_GRID_API.get_tree_grid_attribute_metadata(domain_id=self.domain_id)
 
     def create_export(self, export_format: str) -> Export:
         """Create an export of the tree grid data.
@@ -207,7 +208,7 @@ class TreeGrid(TreeGridModel):
         >>> export.wait_until_completed()
         >>> export.to_file("grid_data.zarr")
         """
-        response = _TREE_GRID_API.create_tree_grid_export(
+        response =self._TREE_GRID_API.create_tree_grid_export(
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
@@ -234,7 +235,7 @@ class TreeGrid(TreeGridModel):
         >>> export.wait_until_completed()
         >>> export.to_file("grid_data.zarr")
         """
-        response = _TREE_GRID_API.get_tree_grid_export(
+        response =self._TREE_GRID_API.get_tree_grid_export(
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
@@ -258,5 +259,5 @@ class TreeGrid(TreeGridModel):
         >>> # Subsequent operations will raise NotFoundException
         >>> tree_grid.get()  # raises NotFoundException
         """
-        _TREE_GRID_API.delete_tree_grid(domain_id=self.domain_id)
+        self._TREE_GRID_API.delete_tree_grid(domain_id=self.domain_id)
         return None

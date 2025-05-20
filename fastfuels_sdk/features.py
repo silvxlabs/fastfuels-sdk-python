@@ -24,10 +24,6 @@ from fastfuels_sdk.client_library.models import (
     WaterFeatureSource,
 )
 
-_FEATURES_API = FeaturesApi(get_client())
-_ROAD_FEATURE_API = RoadFeatureApi(get_client())
-_WATER_FEATURE_API = WaterFeatureApi(get_client())
-
 
 class Features(FeaturesModel):
     """Geographic features (roads and water bodies) associated with a domain.
@@ -68,6 +64,12 @@ class Features(FeaturesModel):
     road: Optional[RoadFeature]
     water: Optional[WaterFeature]
 
+    def __init__(self, **kwargs):
+        super.__init__(**kwargs)
+        self._FEATURES_API = FeaturesApi(get_client())
+        self._ROAD_FEATURE_API = RoadFeatureApi(get_client())
+        self._WATER_FEATURE_API = WaterFeatureApi(get_client())
+
     @classmethod
     def from_domain_id(cls, domain_id: str) -> Features:
         """Retrieve the features (roads and water bodies) associated with a domain.
@@ -101,7 +103,7 @@ class Features(FeaturesModel):
         --------
         Features.get : Refresh feature data
         """
-        features_response = _FEATURES_API.get_features(domain_id=domain_id)
+        features_response = self._FEATURES_API.get_features(domain_id=domain_id)
         response_data = _convert_api_models_to_sdk_classes(
             domain_id, features_response.model_dump()
         )
@@ -193,7 +195,7 @@ class Features(FeaturesModel):
         )
 
         # Call API
-        response = _ROAD_FEATURE_API.create_road_feature(
+        response = self._ROAD_FEATURE_API.create_road_feature(
             domain_id=self.domain_id, create_road_feature_request=request
         )
 
@@ -284,7 +286,7 @@ class Features(FeaturesModel):
         )
 
         # Call API
-        response = _WATER_FEATURE_API.create_water_feature(
+        response = self._WATER_FEATURE_API.create_water_feature(
             domain_id=self.domain_id, create_water_feature_request=request
         )
 
@@ -396,7 +398,7 @@ class RoadFeature(RoadFeatureModel):
         >>> # Or update the existing instance
         >>> road.get(in_place=True)
         """
-        response = _ROAD_FEATURE_API.get_road_feature(domain_id=self.domain_id)
+        response = self._ROAD_FEATURE_API.get_road_feature(domain_id=self.domain_id)
         if in_place:
             # Update all attributes of current instance
             for key, value in response.model_dump().items():
@@ -476,7 +478,7 @@ class RoadFeature(RoadFeatureModel):
         >>> # Subsequent operations will raise NotFoundException
         >>> road.get()  # raises NotFoundException
         """
-        _ROAD_FEATURE_API.delete_road_feature(domain_id=self.domain_id)
+        self._ROAD_FEATURE_API.delete_road_feature(domain_id=self.domain_id)
         return None
 
 
@@ -543,7 +545,7 @@ class WaterFeature(WaterFeatureModel):
         >>> # Or update the existing instance
         >>> water.get(in_place=True)
         """
-        response = _WATER_FEATURE_API.get_water_feature(domain_id=self.domain_id)
+        response = self._WATER_FEATURE_API.get_water_feature(domain_id=self.domain_id)
         if in_place:
             # Update all attributes of current instance
             for key, value in response.model_dump().items():
@@ -623,7 +625,7 @@ class WaterFeature(WaterFeatureModel):
         >>> # Subsequent operations will raise NotFoundException
         >>> water.get()  # raises NotFoundException
         """
-        _WATER_FEATURE_API.delete_water_feature(domain_id=self.domain_id)
+        self._WATER_FEATURE_API.delete_water_feature(domain_id=self.domain_id)
         return None
 
 
