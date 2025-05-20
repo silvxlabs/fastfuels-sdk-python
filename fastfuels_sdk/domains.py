@@ -18,7 +18,7 @@ from fastfuels_sdk.client_library.models import (
     UpdateDomainRequest,
 )
 
-_DOMAIN_API = DomainsApi(get_client())
+# _DOMAIN_API = DomainsApi(get_client())
 
 
 class Domain(DomainModel):
@@ -80,6 +80,7 @@ class Domain(DomainModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.API = DomainsApi(get_client())
 
     @classmethod
     def from_id(cls, domain_id: str) -> "Domain":
@@ -104,7 +105,7 @@ class Domain(DomainModel):
         >>> domain.id
         'abc123'
         """
-        get_domain_response = _DOMAIN_API.get_domain(domain_id)
+        get_domain_response = self.API.get_domain(domain_id)
         return cls(**get_domain_response.model_dump())
 
     @classmethod
@@ -172,7 +173,7 @@ class Domain(DomainModel):
         }
 
         request = CreateDomainRequest.from_dict(feature_data)
-        response = _DOMAIN_API.create_domain(
+        response = self.API.create_domain(
             create_domain_request=request.model_dump()  # noqa
         )
         return cls(**response.model_dump()) if response else None
@@ -291,7 +292,7 @@ class Domain(DomainModel):
         ensure all references to this Domain instance see the updated data.
         """
         # Fetch latest data from API
-        response = _DOMAIN_API.get_domain(self.id)
+        response = self.API.get_domain(self.id)
 
         if in_place:
             # Update all attributes of current instance
@@ -365,7 +366,7 @@ class Domain(DomainModel):
         # Only make API call if there are fields to update
         if update_data:
             request = UpdateDomainRequest(**update_data)
-            response = _DOMAIN_API.update_domain(
+            response = self.API.update_domain(
                 domain_id=self.id, update_domain_request=request
             )
 
@@ -401,7 +402,7 @@ class Domain(DomainModel):
         >>> domain.get()
         # Raises NotFoundException
         """
-        _DOMAIN_API.delete_domain(domain_id=self.id)
+        self.API.delete_domain(domain_id=self.id)
         return None
 
 
@@ -462,9 +463,11 @@ def list_domains(
     - The maximum page size is 1000 items.
     - When calculating total pages, use: ceil(response.totalItems / response.pageSize)
     """
+
+    API = DomainsApi(get_client())
     sort_by = DomainSortField(sort_by) if sort_by else None
     sort_order = DomainSortOrder(sort_order) if sort_order else None
-    list_response = _DOMAIN_API.list_domains(
+    list_response = API.list_domains(
         page=page, size=size, sort_by=sort_by, sort_order=sort_order
     )
     list_response.domains = [Domain(**d.model_dump()) for d in list_response.domains]

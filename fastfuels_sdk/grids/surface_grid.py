@@ -14,13 +14,14 @@ from fastfuels_sdk.client_library.models import (
     GridAttributeMetadataResponse,
 )
 
-_SURFACE_GRID_API = SurfaceGridApi(get_client())
-
-
 class SurfaceGrid(SurfaceGridModel):
     """Surface grid data within a domain's spatial boundaries."""
 
     domain_id: str
+
+    def __init__(self, **kwargs):
+        super.__init__(**kwargs)
+        self._SURFACE_GRID_API = SurfaceGridApi(get_client())
 
     @classmethod
     def from_domain_id(cls, domain_id: str) -> "SurfaceGrid":
@@ -42,7 +43,7 @@ class SurfaceGrid(SurfaceGridModel):
         >>> print(grid.status)
         'completed'
         """
-        response = _SURFACE_GRID_API.get_surface_grid(domain_id=domain_id)
+        response = self._SURFACE_GRID_API.get_surface_grid(domain_id=domain_id)
         return cls(domain_id=domain_id, **response.model_dump())
 
     def get(self, in_place: bool = False) -> "SurfaceGrid":
@@ -70,7 +71,7 @@ class SurfaceGrid(SurfaceGridModel):
         >>> # Or update the existing instance
         >>> grid.get(in_place=True)
         """
-        response = _SURFACE_GRID_API.get_surface_grid(domain_id=self.domain_id)
+        response = self._SURFACE_GRID_API.get_surface_grid(domain_id=self.domain_id)
         if in_place:
             # Update all attributes of current instance
             for key, value in response.model_dump().items():
@@ -195,7 +196,7 @@ class SurfaceGrid(SurfaceGridModel):
         >>> print(metadata.shape)
         [100, 100, 50]
         """
-        return _SURFACE_GRID_API.get_surface_grid_attribute_metadata(
+        return self._SURFACE_GRID_API.get_surface_grid_attribute_metadata(
             domain_id=self.domain_id
         )
 
@@ -222,7 +223,7 @@ class SurfaceGrid(SurfaceGridModel):
         >>> export.wait_until_completed()
         >>> export.to_file("grid_data.zarr")
         """
-        response = _SURFACE_GRID_API.create_surface_grid_export(
+        response = self._SURFACE_GRID_API.create_surface_grid_export(
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
@@ -250,7 +251,7 @@ class SurfaceGrid(SurfaceGridModel):
         >>> export.wait_until_completed()
         >>> export.to_file("grid_data.zarr")
         """
-        response = _SURFACE_GRID_API.get_surface_grid_export(
+        response = self._SURFACE_GRID_API.get_surface_grid_export(
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
@@ -274,5 +275,5 @@ class SurfaceGrid(SurfaceGridModel):
         >>> # Subsequent operations will raise NotFoundException
         >>> grid.get()  # raises NotFoundException
         """
-        _SURFACE_GRID_API.delete_surface_grid(domain_id=self.domain_id)
+        self._SURFACE_GRID_API.delete_surface_grid(domain_id=self.domain_id)
         return None

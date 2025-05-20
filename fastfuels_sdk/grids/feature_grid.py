@@ -13,13 +13,17 @@ from fastfuels_sdk.client_library.models import (
     GridAttributeMetadataResponse,
 )
 
-_SURFACE_GRID_API = FeatureGridApi(get_client())
+
 
 
 class FeatureGrid(FeatureGridModel):
     """Feature grid data within a domain's spatial boundaries."""
 
     domain_id: str
+
+    def __init__(self, **kwargs):
+        super.__init__(**kwargs)
+        self._SURFACE_GRID_API = FeatureGridApi(get_client())
 
     @classmethod
     def from_domain_id(cls, domain_id: str) -> "FeatureGrid":
@@ -41,7 +45,7 @@ class FeatureGrid(FeatureGridModel):
         >>> print(grid.status)
         'completed'
         """
-        response = _SURFACE_GRID_API.get_feature_grid(domain_id=domain_id)
+        response =self._SURFACE_GRID_API.get_feature_grid(domain_id=domain_id)
         return cls(domain_id=domain_id, **response.model_dump())
 
     def get(self, in_place: bool = False) -> "FeatureGrid":
@@ -69,7 +73,7 @@ class FeatureGrid(FeatureGridModel):
         >>> # Or update the existing instance
         >>> grid.get(in_place=True)
         """
-        response = _SURFACE_GRID_API.get_feature_grid(domain_id=self.domain_id)
+        response =self._SURFACE_GRID_API.get_feature_grid(domain_id=self.domain_id)
         if in_place:
             # Update all attributes of current instance
             for key, value in response.model_dump().items():
@@ -194,7 +198,7 @@ class FeatureGrid(FeatureGridModel):
         >>> print(metadata.shape)
         [100, 100, 50]
         """
-        return _SURFACE_GRID_API.get_feature_grid_attribute_metadata(
+        return self._SURFACE_GRID_API.get_feature_grid_attribute_metadata(
             domain_id=self.domain_id
         )
 
@@ -217,5 +221,5 @@ class FeatureGrid(FeatureGridModel):
         >>> # Subsequent operations will raise NotFoundException
         >>> grid.get()  # raises NotFoundException
         """
-        _SURFACE_GRID_API.delete_feature_grid(domain_id=self.domain_id)
+        self._SURFACE_GRID_API.delete_feature_grid(domain_id=self.domain_id)
         return None

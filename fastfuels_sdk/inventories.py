@@ -28,8 +28,8 @@ from fastfuels_sdk.client_library.models import (
 # External imports
 import requests
 
-_INVENTORIES_API = InventoriesApi(get_client())
-_TREE_INVENTORY_API = TreeInventoryApi(get_client())
+# _INVENTORIES_API = InventoriesApi(get_client())
+# _TREE_INVENTORY_API = TreeInventoryApi(get_client())
 
 
 class Inventories(InventoriesModel):
@@ -48,6 +48,11 @@ class Inventories(InventoriesModel):
 
     domain_id: str
     tree: Optional[TreeInventory]  # Override the default TreeInventoryModel type
+
+    def __init__(self, **kwargs):
+        self._INVENTORIES_API = InventoriesApi(get_client())
+        self._TREE_INVENTORY_API = TreeInventoryApi(get_client)
+        super.__init__(**kwargs)
 
     @classmethod
     def from_domain_id(cls, domain_id: str) -> Inventories:
@@ -73,7 +78,7 @@ class Inventories(InventoriesModel):
         >>> from fastfuels_sdk import Inventories
         >>> inventories = Inventories.from_domain_id("abc123")
         """
-        inventories_response = _INVENTORIES_API.get_inventories(domain_id=domain_id)
+        inventories_response = self._INVENTORIES_API.get_inventories(domain_id=domain_id)
         response_data = inventories_response.model_dump()
         response_data = _convert_api_models_to_sdk_classes(domain_id, response_data)
 
@@ -107,7 +112,7 @@ class Inventories(InventoriesModel):
         >>> # Fetch and update the inventory data in place
         >>> inventories.get(in_place=True)
         """
-        response = _INVENTORIES_API.get_inventories(domain_id=self.domain_id)
+        response = self._INVENTORIES_API.get_inventories(domain_id=self.domain_id)
         response_data = response.model_dump()
         response_data = _convert_api_models_to_sdk_classes(
             self.domain_id, response_data
@@ -254,7 +259,7 @@ class Inventories(InventoriesModel):
                 [feature_masks] if isinstance(feature_masks, str) else feature_masks
             ),
         )
-        response = _TREE_INVENTORY_API.create_tree_inventory(
+        response = self._TREE_INVENTORY_API.create_tree_inventory(
             self.domain_id, request_body
         )
         tree_inventory = TreeInventory(
@@ -528,7 +533,7 @@ class Inventories(InventoriesModel):
             raise ValueError(f"File must be a CSV: {file_path}")
 
         # Create tree inventory resource with "file" source
-        signed_url_response = _TREE_INVENTORY_API.create_tree_inventory(
+        signed_url_response = self._TREE_INVENTORY_API.create_tree_inventory(
             self.domain_id,
             CreateTreeInventoryRequest(sources=[TreeInventorySource.FILE]),
         )
@@ -620,6 +625,10 @@ class TreeInventory(TreeInventoryModel):
 
     domain_id: str
 
+    def __init__(self, **kwargs):
+        self._TREE_INVENTORY_API = TreeInventoryApi(get_client())
+        super.__init__(**kwargs)
+
     @classmethod
     def from_domain_id(cls, domain_id: str) -> TreeInventory:
         """
@@ -662,7 +671,7 @@ class TreeInventory(TreeInventoryModel):
         - Use get() to refresh the inventory data and wait_until_completed() to wait
           for processing to finish
         """
-        response = _TREE_INVENTORY_API.get_tree_inventory(domain_id=domain_id)
+        response = self._TREE_INVENTORY_API.get_tree_inventory(domain_id=domain_id)
         return cls(domain_id=domain_id, **response.model_dump())
 
     def get(self, in_place: bool = False):
@@ -727,7 +736,7 @@ class TreeInventory(TreeInventoryModel):
         - This method is often used in conjunction with wait_until_completed()
           to monitor the progress of tree inventory processing.
         """
-        response = _TREE_INVENTORY_API.get_tree_inventory(domain_id=self.domain_id)
+        response = self._TREE_INVENTORY_API.get_tree_inventory(domain_id=self.domain_id)
         if in_place:
             # Update all attributes of current instance
             for key, value in response.model_dump().items():
@@ -874,7 +883,7 @@ class TreeInventory(TreeInventoryModel):
         - Consider creating an export of important inventory data before deletion
           using create_export()
         """
-        _TREE_INVENTORY_API.delete_tree_inventory(domain_id=self.domain_id)
+        self._TREE_INVENTORY_API.delete_tree_inventory(domain_id=self.domain_id)
 
         return None
 
@@ -955,7 +964,7 @@ class TreeInventory(TreeInventoryModel):
           process - use get() to check status, wait_until_completed() to wait for
           completion, and to_file() to download
         """
-        response = _TREE_INVENTORY_API.create_tree_inventory_export(
+        response = self._TREE_INVENTORY_API.create_tree_inventory_export(
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
@@ -1019,7 +1028,7 @@ class TreeInventory(TreeInventoryModel):
           create_export().wait_until_completed() is simpler
         - Always check the export's status before attempting to download using to_file()
         """
-        response = _TREE_INVENTORY_API.get_tree_inventory_export(
+        response = self._TREE_INVENTORY_API.get_tree_inventory_export(
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
