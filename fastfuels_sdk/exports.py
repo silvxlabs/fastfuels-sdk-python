@@ -167,6 +167,8 @@ class Export(ExportModel):
         export = self.get(in_place=in_place if in_place else False)
 
         while export.status != "completed":
+            if export.status == "failed":
+                raise RuntimeError("Export processing failed.")
             if elapsed_time >= timeout:
                 raise TimeoutError(
                     f"Timed out waiting for export to finish after {timeout} seconds."

@@ -159,6 +159,8 @@ class SurfaceGrid(SurfaceGridModel):
         surface_grid = self.get(in_place=in_place if in_place else False)
 
         while surface_grid.status != "completed":
+            if surface_grid.status == "failed":
+                raise RuntimeError("Surface grid processing failed.")
             if elapsed_time >= timeout:
                 raise TimeoutError("Timed out waiting for surface grid to finish.")
             sleep(step)
