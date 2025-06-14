@@ -445,6 +445,8 @@ class RoadFeature(RoadFeatureModel):
         elapsed_time = 0
         road_feature = self.get(in_place=in_place if in_place else False)
         while road_feature.status != "completed":
+            if road_feature.status == "failed":
+                raise RuntimeError("Road feature processing failed.")
             if elapsed_time >= timeout:
                 raise TimeoutError("Timed out waiting for road features to finish.")
             sleep(step)
@@ -592,6 +594,8 @@ class WaterFeature(WaterFeatureModel):
         elapsed_time = 0
         water_feature = self.get(in_place=in_place if in_place else False)
         while water_feature.status != "completed":
+            if water_feature.status == "failed":
+                raise RuntimeError("Water feature processing failed.")
             if elapsed_time >= timeout:
                 raise TimeoutError("Timed out waiting for water features to finish.")
             sleep(step)

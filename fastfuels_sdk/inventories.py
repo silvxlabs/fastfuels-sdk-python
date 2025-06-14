@@ -825,6 +825,8 @@ class TreeInventory(TreeInventoryModel):
         elapsed_time = 0
         tree_inventory = self.get(in_place=in_place if in_place else False)
         while tree_inventory.status != "completed":
+            if tree_inventory.status == "failed":
+                raise RuntimeError("Tree inventory processing failed.")
             if elapsed_time >= timeout:
                 raise TimeoutError("Timed out waiting for tree inventory to finish.")
             sleep(step)

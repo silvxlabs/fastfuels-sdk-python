@@ -159,6 +159,8 @@ class TopographyGrid(TopographyGridModel):
         topography_grid = self.get(in_place=in_place if in_place else False)
 
         while topography_grid.status != "completed":
+            if topography_grid.status == "failed":
+                raise RuntimeError("Topography grid processing failed.")
             if elapsed_time >= timeout:
                 raise TimeoutError("Timed out waiting for topography grid to finish.")
             sleep(step)

@@ -158,6 +158,8 @@ class FeatureGrid(FeatureGridModel):
         feature_grid = self.get(in_place=in_place if in_place else False)
 
         while feature_grid.status != "completed":
+            if feature_grid.status == "failed":
+                raise RuntimeError("Feature grid processing failed.")
             if elapsed_time >= timeout:
                 raise TimeoutError("Timed out waiting for feature grid to finish.")
             sleep(step)

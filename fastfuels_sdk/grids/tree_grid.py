@@ -146,6 +146,8 @@ class TreeGrid(TreeGridModel):
         tree_grid = self.get(in_place=in_place if in_place else False)
 
         while tree_grid.status != "completed":
+            if tree_grid.status == "failed":
+                raise RuntimeError("Tree grid processing failed.")
             if elapsed_time >= timeout:
                 raise TimeoutError("Timed out waiting for tree grid to finish.")
             sleep(step)
