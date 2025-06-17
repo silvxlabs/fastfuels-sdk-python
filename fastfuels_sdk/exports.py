@@ -21,38 +21,6 @@ from fastfuels_sdk.client_library.api import (
     FeatureGridApi,
 )
 
-# Initialize API clients
-_TREE_INVENTORY_API = TreeInventoryApi(get_client())
-_GRIDS_API = GridsApi(get_client())
-_TREE_GRID_API = TreeGridApi(get_client())
-_SURFACE_GRID_API = SurfaceGridApi(get_client())
-_TOPOGRAPHY_GRID_API = TopographyGridApi(get_client())
-_FEATURE_GRID_API = FeatureGridApi(get_client())
-
-# Define a mapping of (resource, sub_resource) tuples to their corresponding API methods
-_API_METHODS = {
-    ("inventories", "tree"): _TREE_INVENTORY_API.get_tree_inventory_export,
-    ("grids", None): _GRIDS_API.get_grid_export,
-    ("grids", "tree"): _TREE_GRID_API.get_tree_grid_export,
-    ("grids", "surface"): _SURFACE_GRID_API.get_surface_grid_export,
-    ("grids", "topography"): _TOPOGRAPHY_GRID_API.get_topography_grid_export,
-    # ("grids", "feature"): _FEATURE_GRID_API.get_feature_grid_export,  # Not yet implemented
-}
-
-_FILE_NAMES = {
-    ("inventories", "tree", "csv"): "tree_inventory.csv",
-    ("inventories", "tree", "parquet"): "tree_inventory.parquet.zip",
-    ("inventories", "tree", "geojson"): "tree_inventory.geojson",
-    ("grids", None, "QUIC-Fire"): "quicfire.zip",
-    ("grids", None, "zarr"): "grid.zarr.zip",
-    ("grids", "tree", "zarr"): "tree_grid.zarr.zip",
-    ("grids", "surface", "zarr"): "surface_grid.zarr.zip",
-    ("grids", "surface", "geotiff"): "surface_grid.tif",
-    ("grids", "topography", "zarr"): "topography_grid.zarr.zip",
-    ("grids", "topography", "geotiff"): "topography_grid.tif",
-}
-
-
 class Export(ExportModel):
     """
     Class for handling exports of various resources from the FastFuels API.
@@ -93,8 +61,37 @@ class Export(ExportModel):
             If the resource and sub_resource combination is not supported
         """
         super().__init__(**data)
+        # Initialize API clients
+        self._TREE_INVENTORY_API = TreeInventoryApi(get_client())
+        self._GRIDS_API = GridsApi(get_client())
+        self._TREE_GRID_API = TreeGridApi(get_client())
+        self._SURFACE_GRID_API = SurfaceGridApi(get_client())
+        self._TOPOGRAPHY_GRID_API = TopographyGridApi(get_client())
+        self._FEATURE_GRID_API = FeatureGridApi(get_client())
 
-        api_method = _API_METHODS.get((self.resource, self.sub_resource))
+        # Define a mapping of (resource, sub_resource) tuples to their corresponding API methods
+        self._API_METHODS = {
+            ("inventories", "tree"): self._TREE_INVENTORY_API.get_tree_inventory_export,
+            ("grids", None): self._GRIDS_API.get_grid_export,
+            ("grids", "tree"): self._TREE_GRID_API.get_tree_grid_export,
+            ("grids", "surface"): self._SURFACE_GRID_API.get_surface_grid_export,
+            ("grids", "topography"): self._TOPOGRAPHY_GRID_API.get_topography_grid_export,
+            # ("grids", "feature"): _FEATURE_GRID_API.get_feature_grid_export,  # Not yet implemented
+        }
+
+        self._FILE_NAMES = {
+            ("inventories", "tree", "csv"): "tree_inventory.csv",
+            ("inventories", "tree", "parquet"): "tree_inventory.parquet.zip",
+            ("inventories", "tree", "geojson"): "tree_inventory.geojson",
+            ("grids", None, "QUIC-Fire"): "quicfire.zip",
+            ("grids", None, "zarr"): "grid.zarr.zip",
+            ("grids", "tree", "zarr"): "tree_grid.zarr.zip",
+            ("grids", "surface", "zarr"): "surface_grid.zarr.zip",
+            ("grids", "surface", "geotiff"): "surface_grid.tif",
+            ("grids", "topography", "zarr"): "topography_grid.zarr.zip",
+            ("grids", "topography", "geotiff"): "topography_grid.tif",
+        }
+        api_method = self._API_METHODS.get((self.resource, self.sub_resource))
         if api_method is None:
             raise NotImplementedError(
                 f"Export not implemented for resource={self.resource}, "
