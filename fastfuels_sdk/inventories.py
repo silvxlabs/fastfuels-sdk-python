@@ -305,6 +305,12 @@ class Inventories(InventoriesModel):
             identical trees for the same domain and parameters. If omitted, generates
             different trees each time.
 
+        canopy_height_map_source : str, optional
+            High-resolution canopy height map source for improved tree height estimates.
+            When specified, fuses canopy height data with TreeMap to provide more accurate
+            height information. Available sources:
+            - "Meta2024": Meta's 2024 global canopy height map at 1-meter resolution
+
         modifications : dict or list[dict], optional
             Rules for modifying tree attributes. Each modification includes:
             - conditions: List of criteria that trees must meet
