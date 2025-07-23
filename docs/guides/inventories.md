@@ -28,6 +28,14 @@ tree_inventory = inventories.create_tree_inventory_from_treemap(
 )
 ```
 
+To use high-resolution canopy height data for improved tree height estimates:
+
+```python
+tree_inventory = inventories.create_tree_inventory_from_treemap(
+    canopy_height_map_source="Meta2024"
+)
+```
+
 ## How to Upload Your Own Tree Data
 
 If you have your own tree measurements, you can upload them from a CSV file:
