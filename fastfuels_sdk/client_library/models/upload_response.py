@@ -19,6 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from fastfuels_sdk.client_library.models.processing_error import ProcessingError
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -30,7 +31,9 @@ class UploadResponse(BaseModel):
     method: Optional[StrictStr] = None
     url: Optional[StrictStr] = None
     headers: Optional[Dict[str, StrictStr]] = None
-    __properties: ClassVar[List[str]] = ["message", "method", "url", "headers"]
+    curl: Optional[StrictStr] = None
+    error: Optional[ProcessingError] = None
+    __properties: ClassVar[List[str]] = ["message", "method", "url", "headers", "curl", "error"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -71,6 +74,9 @@ class UploadResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of error
+        if self.error:
+            _dict['error'] = self.error.to_dict()
         # set to None if message (nullable) is None
         # and model_fields_set contains the field
         if self.message is None and "message" in self.model_fields_set:
@@ -91,6 +97,16 @@ class UploadResponse(BaseModel):
         if self.headers is None and "headers" in self.model_fields_set:
             _dict['headers'] = None
 
+        # set to None if curl (nullable) is None
+        # and model_fields_set contains the field
+        if self.curl is None and "curl" in self.model_fields_set:
+            _dict['curl'] = None
+
+        # set to None if error (nullable) is None
+        # and model_fields_set contains the field
+        if self.error is None and "error" in self.model_fields_set:
+            _dict['error'] = None
+
         return _dict
 
     @classmethod
@@ -106,7 +122,9 @@ class UploadResponse(BaseModel):
             "message": obj.get("message"),
             "method": obj.get("method"),
             "url": obj.get("url"),
-            "headers": obj.get("headers")
+            "headers": obj.get("headers"),
+            "curl": obj.get("curl"),
+            "error": ProcessingError.from_dict(obj["error"]) if obj.get("error") is not None else None
         })
         return _obj
 

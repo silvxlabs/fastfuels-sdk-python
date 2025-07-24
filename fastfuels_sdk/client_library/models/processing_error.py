@@ -17,21 +17,20 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from fastfuels_sdk.client_library.models.meta_canopy_height_map_source import MetaCanopyHeightMapSource
-from fastfuels_sdk.client_library.models.tree_map_version import TreeMapVersion
 from typing import Optional, Set
 from typing_extensions import Self
 
-class TreeMapSource(BaseModel):
+class ProcessingError(BaseModel):
     """
-    TreeMapSource
+    Structured error information for user feedback, matching the uploader service error format.
     """ # noqa: E501
-    version: Optional[TreeMapVersion] = None
-    seed: Optional[StrictInt] = None
-    canopy_height_map_configuration: Optional[MetaCanopyHeightMapSource] = Field(default=None, alias="canopyHeightMapConfiguration")
-    __properties: ClassVar[List[str]] = ["version", "seed", "canopyHeightMapConfiguration"]
+    code: StrictStr = Field(description="A unique error code identifying the type of error that occurred.")
+    message: StrictStr = Field(description="A user-friendly error message describing what went wrong.")
+    details: StrictStr = Field(description="Technical details about the error for debugging purposes.")
+    suggestions: Optional[StrictStr] = None
+    __properties: ClassVar[List[str]] = ["code", "message", "details", "suggestions"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -51,7 +50,7 @@ class TreeMapSource(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of TreeMapSource from a JSON string"""
+        """Create an instance of ProcessingError from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,19 +71,16 @@ class TreeMapSource(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of canopy_height_map_configuration
-        if self.canopy_height_map_configuration:
-            _dict['canopyHeightMapConfiguration'] = self.canopy_height_map_configuration.to_dict()
-        # set to None if canopy_height_map_configuration (nullable) is None
+        # set to None if suggestions (nullable) is None
         # and model_fields_set contains the field
-        if self.canopy_height_map_configuration is None and "canopy_height_map_configuration" in self.model_fields_set:
-            _dict['canopyHeightMapConfiguration'] = None
+        if self.suggestions is None and "suggestions" in self.model_fields_set:
+            _dict['suggestions'] = None
 
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of TreeMapSource from a dict"""
+        """Create an instance of ProcessingError from a dict"""
         if obj is None:
             return None
 
@@ -92,9 +88,10 @@ class TreeMapSource(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "version": obj.get("version"),
-            "seed": obj.get("seed"),
-            "canopyHeightMapConfiguration": MetaCanopyHeightMapSource.from_dict(obj["canopyHeightMapConfiguration"]) if obj.get("canopyHeightMapConfiguration") is not None else None
+            "code": obj.get("code"),
+            "message": obj.get("message"),
+            "details": obj.get("details"),
+            "suggestions": obj.get("suggestions")
         })
         return _obj
 
