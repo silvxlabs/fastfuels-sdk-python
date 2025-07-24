@@ -22,7 +22,7 @@ from fastfuels_sdk.client_library.models import (
     TreeInventorySource,
     TreeInventoryModification,
     TreeInventoryTreatment,
-    TreeMapSourceCanopyHeightMapConfiguration,
+    MetaCanopyHeightMapSource,
 )
 
 # External imports
@@ -433,10 +433,8 @@ class Inventories(InventoriesModel):
         ... )
         """
         if canopy_height_map_source:
-            canopy_height_map_configuration = (
-                TreeMapSourceCanopyHeightMapConfiguration.from_dict(
-                    {"source": canopy_height_map_source}
-                )
+            canopy_height_map_configuration = MetaCanopyHeightMapSource.from_dict(
+                {"source": canopy_height_map_source}
             )
         else:
             canopy_height_map_configuration = None

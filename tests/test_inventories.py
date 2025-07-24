@@ -422,7 +422,7 @@ class TestCreateTreeInventoryFromTreeMap:
         if chm_source:
             assert tree_inventory.tree_map.canopy_height_map_configuration is not None
             assert (
-                tree_inventory.tree_map.canopy_height_map_configuration.actual_instance.source
+                tree_inventory.tree_map.canopy_height_map_configuration.source
                 == chm_source
             )
         else:
