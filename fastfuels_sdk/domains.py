@@ -18,6 +18,9 @@ from fastfuels_sdk.client_library.models import (
     UpdateDomainRequest,
 )
 
+# External imports
+import geopandas as gpd
+
 _DOMAIN_API = DomainsApi(get_client())
 
 
@@ -75,6 +78,9 @@ class Domain(DomainModel):
     --------
     Domain.from_geojson : Create domain from GeoJSON data
     Domain.from_geodataframe : Create domain from GeoPandas GeoDataFrame
+    Domain.to_dict : Export domain as dictionary
+    Domain.to_json : Export domain as JSON string
+    Domain.to_geodataframe : Convert domain to GeoPandas GeoDataFrame
     list_domains : List available domains
     """
 
@@ -380,6 +386,86 @@ class Domain(DomainModel):
 
         # If no updates, return self or new instance based on in_place
         return self if in_place else Domain(**self.model_dump())
+
+    def to_json(self) -> str:
+        """Serialize the entire Domain object to JSON string.
+
+        Returns the complete Domain object as a JSON string, including all attributes
+        like id, name, description, features, CRS, resolutions, timestamps, etc.
+        Uses clean serialization without internal Pydantic validation fields.
+
+        Returns
+        -------
+        str
+            JSON string representation of the complete Domain object
+
+        Examples
+        --------
+        >>> domain = Domain.from_id("abc123")
+        >>> json_str = domain.to_json()
+        >>> with open("domain.json", "w") as f:
+        ...     f.write(json_str)
+        """
+        return json.dumps(self.to_dict(), default=str, indent=2)
+
+    def to_geodataframe(self) -> gpd.GeoDataFrame:
+        """Convert the Domain to a GeoPandas GeoDataFrame.
+
+        Creates a GeoDataFrame containing the Domain's geometry and attributes. This provides
+        a convenient way to work with Domain data using GeoPandas for spatial analysis,
+        visualization, or export to various geospatial file formats.
+
+        Returns
+        -------
+        gpd.GeoDataFrame
+            A GeoDataFrame with the Domain's features and CRS information
+
+        Examples
+        --------
+        Convert to GeoDataFrame:
+        >>> domain = Domain.from_id("abc123")
+        >>> gdf = domain.to_geodataframe()
+        >>> print(gdf.crs)
+        >>> print(gdf.geometry)
+
+        Export to shapefile:
+        >>> gdf = domain.to_geodataframe()
+        >>> gdf.to_file("domain.shp")
+
+        Spatial analysis:
+        >>> gdf = domain.to_geodataframe()
+        >>> area = gdf.geometry.area.sum()
+        >>> print(f"Domain area: {area} square units")
+        """
+        # Extract GeoJSON features for GeoPandas
+        features_geojson = {
+            "type": "FeatureCollection",
+            "features": (
+                [feature.to_dict() for feature in self.features]
+                if self.features
+                else []
+            ),
+        }
+
+        # Add CRS if present
+        if self.crs:
+            features_geojson["crs"] = self.crs.to_dict()
+
+        # Convert to GeoDataFrame
+        gdf = gpd.read_file(json.dumps(features_geojson), driver="GeoJSON")
+
+        # Add domain metadata as columns
+        gdf["domain_id"] = self.id
+        gdf["domain_name"] = self.name
+        gdf["domain_description"] = self.description
+        gdf["horizontal_resolution"] = self.horizontal_resolution
+        gdf["vertical_resolution"] = self.vertical_resolution
+
+        # Add tags as a string column if present
+        if self.tags:
+            gdf["tags"] = ", ".join(self.tags)
+
+        return gdf
 
     def delete(self) -> None:
         """Delete an existing domain resource based on the domain ID.

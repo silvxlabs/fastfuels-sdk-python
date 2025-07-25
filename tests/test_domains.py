@@ -508,3 +508,253 @@ class TestDeleteDomain:
         # get_domain should not work with the id of the domain we just deleted
         with pytest.raises(NotFoundException):
             domain_to_delete.get()
+
+
+class TestDomainToJson:
+    """Test suite for Domain.to_json() method."""
+
+    def test_to_json_returns_string(self, test_domain):
+        """Test that to_json returns a string."""
+        result = test_domain.to_json()
+        assert isinstance(result, str)
+
+    def test_to_json_valid_json(self, test_domain):
+        """Test that to_json returns valid JSON."""
+        result = test_domain.to_json()
+        parsed = json.loads(result)
+        assert isinstance(parsed, dict)
+
+    def test_to_json_contains_all_attributes(self, test_domain):
+        """Test that JSON contains all expected domain attributes in API format."""
+        result = test_domain.to_json()
+        parsed = json.loads(result)
+
+        # Check required attributes (using API camelCase format)
+        assert "id" in parsed
+        assert "name" in parsed
+        assert "description" in parsed
+        assert "features" in parsed
+        assert "horizontalResolution" in parsed
+        assert "verticalResolution" in parsed
+        assert "type" in parsed
+        assert "createdOn" in parsed
+        assert "modifiedOn" in parsed
+
+        # Verify values match
+        assert parsed["id"] == test_domain.id
+        assert parsed["name"] == test_domain.name
+        assert parsed["description"] == test_domain.description
+        assert parsed["horizontalResolution"] == test_domain.horizontal_resolution
+        assert parsed["verticalResolution"] == test_domain.vertical_resolution
+
+    def test_to_json_includes_crs_when_present(self, test_domain):
+        """Test that CRS is included in JSON when present."""
+        result = test_domain.to_json()
+        parsed = json.loads(result)
+
+        if test_domain.crs:
+            assert "crs" in parsed
+            assert parsed["crs"] is not None
+        else:
+            assert parsed.get("crs") is None
+
+    def test_to_json_includes_tags_when_present(self, test_domain):
+        """Test that tags are included in JSON when present."""
+        # Update domain with tags
+        domain_with_tags = test_domain.update(tags=["test", "json"], in_place=False)
+
+        result = domain_with_tags.to_json()
+        parsed = json.loads(result)
+
+        assert "tags" in parsed
+        assert parsed["tags"] == ["test", "json"]
+
+    def test_to_json_clean_geometry_serialization(self, test_domain):
+        """Test that JSON doesn't contain internal Pydantic validation fields."""
+        result = test_domain.to_json()
+        parsed = json.loads(result)
+
+        # Check that features have clean geometry
+        assert "features" in parsed
+        assert len(parsed["features"]) > 0
+
+        for feature in parsed["features"]:
+            geometry = feature["geometry"]
+
+            # Should have clean geometry structure
+            assert "type" in geometry
+            assert "coordinates" in geometry
+
+            # Should NOT have internal Pydantic fields
+            assert "oneof_schema_1_validator" not in geometry
+            assert "actual_instance" not in geometry
+            assert "one_of_schemas" not in geometry
+            assert "discriminator_value_class_map" not in geometry
+
+
+class TestDomainToGeoDataFrame:
+    """Test suite for Domain.to_geodataframe() method."""
+
+    def test_to_geodataframe_returns_geodataframe(self, test_domain):
+        """Test that to_geodataframe returns a GeoDataFrame."""
+        result = test_domain.to_geodataframe()
+        assert isinstance(result, gdp.GeoDataFrame)
+
+    def test_to_geodataframe_has_geometry(self, test_domain):
+        """Test that resulting GeoDataFrame has geometry column."""
+        result = test_domain.to_geodataframe()
+        assert "geometry" in result.columns
+        assert result.geometry is not None
+        assert len(result) > 0
+
+    def test_to_geodataframe_includes_domain_metadata(self, test_domain):
+        """Test that GeoDataFrame includes domain metadata as columns."""
+        result = test_domain.to_geodataframe()
+
+        # Check metadata columns exist
+        expected_columns = [
+            "domain_id",
+            "domain_name",
+            "domain_description",
+            "horizontal_resolution",
+            "vertical_resolution",
+        ]
+
+        for col in expected_columns:
+            assert col in result.columns
+
+        # Verify values
+        assert result["domain_id"].iloc[0] == test_domain.id
+        assert result["domain_name"].iloc[0] == test_domain.name
+        assert result["domain_description"].iloc[0] == test_domain.description
+        assert (
+            result["horizontal_resolution"].iloc[0] == test_domain.horizontal_resolution
+        )
+        assert result["vertical_resolution"].iloc[0] == test_domain.vertical_resolution
+
+    def test_to_geodataframe_preserves_crs(self, test_domain):
+        """Test that GeoDataFrame preserves CRS information."""
+        result = test_domain.to_geodataframe()
+
+        if test_domain.crs:
+            assert result.crs is not None
+            # The CRS should match the domain's CRS
+            assert str(result.crs) == test_domain.crs.properties.name
+
+    def test_to_geodataframe_includes_tags_when_present(self, test_domain):
+        """Test that tags are included as comma-separated string when present."""
+        # Update domain with tags
+        domain_with_tags = test_domain.update(
+            tags=["geo", "dataframe", "test"], in_place=False
+        )
+
+        result = domain_with_tags.to_geodataframe()
+
+        assert "tags" in result.columns
+        assert result["tags"].iloc[0] == "geo, dataframe, test"
+
+    def test_to_geodataframe_no_tags_column_when_empty(self, test_domain):
+        """Test that tags column is not present when domain has no tags."""
+        # Ensure domain has no tags
+        domain_no_tags = test_domain.update(tags=None, in_place=False)
+
+        result = domain_no_tags.to_geodataframe()
+
+        # Tags column should not exist if no tags
+        if domain_no_tags.tags is None or len(domain_no_tags.tags) == 0:
+            assert "tags" not in result.columns or result["tags"].isna().all()
+
+    def test_to_geodataframe_same_feature_count(self, test_domain):
+        """Test that GeoDataFrame has same number of features as domain."""
+        result = test_domain.to_geodataframe()
+
+        # Should have same number of rows as features
+        assert len(result) == len(test_domain.features)
+
+
+class TestDomainToDict:
+    """Test suite for Domain.to_dict() method."""
+
+    def test_to_dict_returns_dict(self, test_domain):
+        """Test that to_dict returns a dictionary."""
+        result = test_domain.to_dict()
+        assert isinstance(result, dict)
+
+    def test_to_dict_contains_all_attributes(self, test_domain):
+        """Test that dict contains all expected domain attributes in API format."""
+        result = test_domain.to_dict()
+
+        # Check required attributes (using API camelCase format)
+        assert "id" in result
+        assert "name" in result
+        assert "description" in result
+        assert "features" in result
+        assert "horizontalResolution" in result
+        assert "verticalResolution" in result
+        assert "type" in result
+        assert "createdOn" in result
+        assert "modifiedOn" in result
+
+        # Verify values match
+        assert result["id"] == test_domain.id
+        assert result["name"] == test_domain.name
+        assert result["description"] == test_domain.description
+        assert result["horizontalResolution"] == test_domain.horizontal_resolution
+        assert result["verticalResolution"] == test_domain.vertical_resolution
+
+    def test_to_dict_includes_crs_when_present(self, test_domain):
+        """Test that CRS is included in dict when present."""
+        result = test_domain.to_dict()
+
+        if test_domain.crs:
+            assert "crs" in result
+            assert result["crs"] is not None
+        else:
+            assert result.get("crs") is None
+
+    def test_to_dict_includes_tags_when_present(self, test_domain):
+        """Test that tags are included in dict when present."""
+        # Update domain with tags
+        domain_with_tags = test_domain.update(tags=["test", "dict"], in_place=False)
+
+        result = domain_with_tags.to_dict()
+
+        assert "tags" in result
+        assert result["tags"] == ["test", "dict"]
+
+    def test_to_dict_features_are_dicts(self, test_domain):
+        """Test that features in the dict are proper dictionaries."""
+        result = test_domain.to_dict()
+
+        assert "features" in result
+        assert isinstance(result["features"], list)
+        assert len(result["features"]) > 0
+
+        # Each feature should be a dict
+        for feature in result["features"]:
+            assert isinstance(feature, dict)
+            assert "type" in feature
+            assert "geometry" in feature
+
+    def test_to_dict_crs_is_dict_when_present(self, test_domain):
+        """Test that CRS in the dict is a proper dictionary when present."""
+        result = test_domain.to_dict()
+
+        if test_domain.crs and result.get("crs"):
+            assert isinstance(result["crs"], dict)
+            assert "type" in result["crs"]
+            assert "properties" in result["crs"]
+
+    def test_to_dict_roundtrip_consistency(self, test_domain):
+        """Test that to_dict can be used to recreate equivalent domain."""
+        result_dict = test_domain.to_dict()
+
+        # Should be able to create a new domain with the same data
+        new_domain = Domain(**result_dict)
+
+        # Key attributes should match
+        assert new_domain.id == test_domain.id
+        assert new_domain.name == test_domain.name
+        assert new_domain.description == test_domain.description
+        assert new_domain.horizontal_resolution == test_domain.horizontal_resolution
+        assert new_domain.vertical_resolution == test_domain.vertical_resolution
