@@ -4,4 +4,5 @@ pandas
 pydantic>=2
 requests
 scipy
+urllib3>=2.1.0
 zarr
