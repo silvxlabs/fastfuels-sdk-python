@@ -28,6 +28,8 @@ class TreeMapVersion(str, Enum):
     """
     ENUM_2014 = '2014'
     ENUM_2016 = '2016'
+    ENUM_2020 = '2020'
+    ENUM_2022 = '2022'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:

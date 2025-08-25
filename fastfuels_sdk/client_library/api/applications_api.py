@@ -58,9 +58,9 @@ class ApplicationsApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> Application:
-        """New application
+        """Create application
 
-        Create a new application
+        Create a new application for API access
 
         :param create_application_request: (required)
         :type create_application_request: CreateApplicationRequest
@@ -126,9 +126,9 @@ class ApplicationsApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[Application]:
-        """New application
+        """Create application
 
-        Create a new application
+        Create a new application for API access
 
         :param create_application_request: (required)
         :type create_application_request: CreateApplicationRequest
@@ -194,9 +194,9 @@ class ApplicationsApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """New application
+        """Create application
 
-        Create a new application
+        Create a new application for API access
 
         :param create_application_request: (required)
         :type create_application_request: CreateApplicationRequest
@@ -601,9 +601,9 @@ class ApplicationsApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> Application:
-        """Get Application
+        """Get application
 
-        Get an application by ID
+        Get application details by ID
 
         :param application_id: (required)
         :type application_id: str
@@ -669,9 +669,9 @@ class ApplicationsApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[Application]:
-        """Get Application
+        """Get application
 
-        Get an application by ID
+        Get application details by ID
 
         :param application_id: (required)
         :type application_id: str
@@ -737,9 +737,9 @@ class ApplicationsApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Get Application
+        """Get application
 
-        Get an application by ID
+        Get application details by ID
 
         :param application_id: (required)
         :type application_id: str
@@ -867,9 +867,9 @@ class ApplicationsApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ListApplicationsResponse:
-        """List application
+        """List applications
 
-        List applications for authenticated user
+        Get paginated list of user's applications
 
         :param page:
         :type page: int
@@ -939,9 +939,9 @@ class ApplicationsApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[ListApplicationsResponse]:
-        """List application
+        """List applications
 
-        List applications for authenticated user
+        Get paginated list of user's applications
 
         :param page:
         :type page: int
@@ -1011,9 +1011,9 @@ class ApplicationsApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """List application
+        """List applications
 
-        List applications for authenticated user
+        Get paginated list of user's applications
 
         :param page:
         :type page: int
@@ -1151,9 +1151,9 @@ class ApplicationsApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> Application:
-        """Update Application
+        """Update application
 
-        Update an application by ID
+        Update application details
 
         :param application_id: (required)
         :type application_id: str
@@ -1223,9 +1223,9 @@ class ApplicationsApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[Application]:
-        """Update Application
+        """Update application
 
-        Update an application by ID
+        Update application details
 
         :param application_id: (required)
         :type application_id: str
@@ -1295,9 +1295,9 @@ class ApplicationsApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Update Application
+        """Update application
 
-        Update an application by ID
+        Update application details
 
         :param application_id: (required)
         :type application_id: str

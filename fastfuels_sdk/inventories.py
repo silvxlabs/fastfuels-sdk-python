@@ -144,7 +144,7 @@ class Inventories(InventoriesModel):
 
         tree_map : TreeMapSource or dict, optional
             Configuration for TreeMap source if being used. Can be provided as a dict with:
-            - version: "2014" or "2016" (default: "2016")
+            - version: "2014", "2016", "2020", or "2022" (default: "2022")
             - seed: Integer for reproducible generation (optional)
 
         modifications : dict or list[dict], optional
@@ -267,7 +267,7 @@ class Inventories(InventoriesModel):
 
     def create_tree_inventory_from_treemap(
         self,
-        version: str = "2016",
+        version: str = "2022",
         seed: int = None,
         canopy_height_map_source: Optional[str] = None,
         modifications: Optional[dict | list[dict]] = None,
@@ -297,8 +297,10 @@ class Inventories(InventoriesModel):
         ----------
         version : str, optional
             The TreeMap version to use. Available versions:
-            - "2016" (default) - More recent dataset, recommended for most use cases
-            - "2014" - Earlier dataset, use if you need historical comparison
+            - "2022" (default)
+            - "2020"
+            - "2016"
+            - "2014"
 
         seed : int, optional
             Random seed for reproducible tree generation. When provided, generates
