@@ -378,7 +378,7 @@ class TestCreateTreeInventoryFromTreeMap:
     def test_defaults(self, test_domain, test_inventories):
         """Test basic creation without in_place"""
         tree_inventory = test_inventories.create_tree_inventory_from_treemap()
-        self.assert_data_validity(tree_inventory, test_domain.id, "2016")
+        self.assert_data_validity(tree_inventory, test_domain.id, "2022")
 
         # Check if the tree inventory is successfully added to the inventories
         updated_inventory = test_inventories.get()
@@ -391,7 +391,7 @@ class TestCreateTreeInventoryFromTreeMap:
 
         assert normalized_updated == normalized_tree
 
-    @pytest.mark.parametrize("version", ["2014", "2016"])
+    @pytest.mark.parametrize("version", ["2014", "2016", "2020", "2022"])
     def test_versions(self, test_domain, test_inventories, version):
         """Test basic creation without in_place"""
         tree_inventory = test_inventories.create_tree_inventory_from_treemap(
@@ -418,7 +418,7 @@ class TestCreateTreeInventoryFromTreeMap:
         )
 
         # Verify the inventory was created correctly
-        self.assert_data_validity(tree_inventory, test_domain.id, "2016")
+        self.assert_data_validity(tree_inventory, test_domain.id, "2022")
         if chm_source:
             assert tree_inventory.tree_map.canopy_height_map_configuration is not None
             assert (
@@ -439,7 +439,7 @@ class TestCreateTreeInventoryFromTreeMap:
         )
 
         # Verify the inventory was created correctly
-        self.assert_data_validity(tree_inventory, test_domain.id, "2016")
+        self.assert_data_validity(tree_inventory, test_domain.id, "2022")
 
         # Verify in_place update occurred
         assert test_inventories.tree is not None
@@ -462,7 +462,7 @@ class TestCreateTreeInventoryFromTreeMap:
         )
 
         # Verify the inventory was created correctly
-        self.assert_data_validity(tree_inventory, test_domain.id, "2016")
+        self.assert_data_validity(tree_inventory, test_domain.id, "2022")
 
         # Verify in_place update did not occur
         assert test_inventories.tree is original_tree

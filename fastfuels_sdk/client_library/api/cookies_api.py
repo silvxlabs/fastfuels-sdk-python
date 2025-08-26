@@ -52,8 +52,9 @@ class CookiesApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> object:
-        """Delete Cookie
+        """Delete session cookie
 
+        Remove session cookie for logout
 
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -114,8 +115,9 @@ class CookiesApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[object]:
-        """Delete Cookie
+        """Delete session cookie
 
+        Remove session cookie for logout
 
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -176,8 +178,9 @@ class CookiesApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Delete Cookie
+        """Delete session cookie
 
+        Remove session cookie for logout
 
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -294,8 +297,9 @@ class CookiesApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> object:
-        """Get Cookie
+        """Create session cookie
 
+        Create a session cookie for authentication
 
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -356,8 +360,9 @@ class CookiesApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[object]:
-        """Get Cookie
+        """Create session cookie
 
+        Create a session cookie for authentication
 
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -418,8 +423,9 @@ class CookiesApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Get Cookie
+        """Create session cookie
 
+        Create a session cookie for authentication
 
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request

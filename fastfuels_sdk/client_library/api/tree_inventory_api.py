@@ -16,9 +16,8 @@ from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
 from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
 
-from fastfuels_sdk.client_library.models.create_tree_inventory_request import (
-    CreateTreeInventoryRequest,
-)
+from pydantic import StrictStr, field_validator
+from fastfuels_sdk.client_library.models.create_tree_inventory_request import CreateTreeInventoryRequest
 from fastfuels_sdk.client_library.models.export import Export
 from fastfuels_sdk.client_library.models.tree_inventory import TreeInventory
 
@@ -39,6 +38,7 @@ class TreeInventoryApi:
             api_client = ApiClient.get_default()
         self.api_client = api_client
 
+
     @validate_call
     def create_tree_inventory(
         self,
@@ -48,8 +48,9 @@ class TreeInventoryApi:
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -58,7 +59,7 @@ class TreeInventoryApi:
     ) -> TreeInventory:
         """Create Tree Inventory
 
-        # Create Tree Inventory  This endpoint creates a new tree inventory resource for a specific domain. Tree Inventory data represents a complete forest inventory that exists within the spatial context of a domain. The tree inventory data can be generated using various data products and models that provide either national coverage (e.g., TreeMap) or local coverage.  On resource creation, the tree inventory data is set to a status of \"pending\". The tree inventory data is generated in the background using the specified method (e.g., TreeMap). Once the tree inventory data is generated and available for user access, the status is updated to \"completed\".  ## Endpoint  ``` POST /v1/domains/{domainId}/inventories/tree ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain for   which you want to create the tree inventory.  ## Request Body  The request body should be a JSON object containing the following fields:  - `sources` (array of strings, required): List of data sources to be used for building the tree inventory. Currently, only one data source at a time is supported. Possible values are:   - `\"TreeMap\"`: Indicates that the tree inventory should be created using the TreeMap raster product. This approach generates a tree inventory with national coverage.   - `\"file\"`: Indicates that you will upload a file via a signed url. Please see File Source Configuration for more info.  - `modifications` (array of objects, optional): List of modifications to apply to the tree inventory data. Maximum 1000 modifications allowed.  - `treatments` (array of objects, optional): List of silvicultural treatments to apply to the tree inventory. Maximum 1000 treatments allowed.  - `featureMasks` (array of strings, optional): List of Features to mask tree inventory data.  ### TreeMap Source Configuration  If `\"TreeMap\"` is included in the `sources`, the request body can include additional configurations for `TreeMap`:  - `TreeMap` (object, optional): Advanced configurations for the TreeMap data source.   - `version` (string, optional): The version of TreeMap to use. Default is `\"2016\"`. Possible values are:     - `\"2014\"`: Use the 2014 version of TreeMap.     - `\"2016\"`: Use the 2016 version of TreeMap.   - `seed` (integer, optional): The random seed to use for generating the tree inventory. If not provided, a random seed will be generated.   - `canopyHeightMapConfiguration` (object, optional): Canopy height map configuration for TreeMap data source. If provided, the canopy height map will be used to segment and impute the coarse 30m TreeMap data with high-resolution canopy height data. Details of this approach will be provided in an upcoming publication. Please contact support.fastfuels@silvxlabs.com for more information.     - `source` (string, required): The source of the canopy height map data. Possible values are:         - `\"Meta2024\"`: Use the Meta2024 canopy height map data. More information about this data source can be found here: https://www.sciencedirect.com/science/article/pii/S003442572300439X  ### File Source Configuration Generate Signed URL for Tree Inventory Upload  If the source is `\"file\"`, this endpoint generates a signed URL that allows users to upload a CSV file representing the tree inventory data. The signed URL is valid for 1 hour and has a maximum upload size of 500 MB.  The full work flow consists of the following steps: 1. Call this endpoint to get a signed URL 2. Perform a put request to send your file to the signed url. Here is a python example:  ```[python] with open(\"your_file_goes_here.csv\", \"rb\") as file:     upload_response = requests.put(         signed_url_response[\"file\"][\"url\"],         data=file,         headers=signed_url_response[\"file\"][\"headers\"],     ) ``` **Note**: the signed_url_response has a field named \"file\" with the relevant info for the put request.  3. Your file will be validated and processed in the background 4. The status of your upload can be retrieved via and inventory get() request  #### Required Columns  The CSV file must include the following columns with their specified data types and constraints:  1. **SPCD** (Integer)    - FIA species code    - Must be an integer    - Represents standard FIA species classifications  2. **STATUSCD** (Integer)    - Tree status code    - Must be one of these values:      - 0: No status      - 1: Live      - 2: Dead      - 3: Missing  3. **DIA** (Float)    - Diameter at breast height (DBH)    - Unit: centimeters (cm)    - Range: 0 to 1200 cm    - Measured at 1.37 meters above ground  4. **HT** (Float)    - Tree height    - Unit: meters (m)    - Range: 0 to 116 meters    - Measured from ground to tree top  5. **CR** (Float)    - Crown ratio    - Unit: ratio (dimensionless)    - Range: 0 to 1    - Represents the ratio of crown length to total tree height  6. **X** (Float)    - X coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (west to east)    - Required: Yes    - Used for spatial positioning  7. **Y** (Float)    - Y coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (south to north)    - Required: Yes    - Used for spatial positioning  ### Treatments  The `treatments` field is an array of treatment objects. Each treatment object represents a silvicultural treatment to be applied to the tree inventory. Currently, there are two types of treatment types available:  1. Proportional Thinning 2. Directional Thinning  #### Proportional Thinning  - `method`: \"proportionalThinning\" (string, required) - `targetMetric`: \"basalArea\" (string, required) - `targetValue`: float (required)   - Unit: square meters per hectare (m²/ha)   - Represents the target basal area after thinning  #### Directional Thinning  - `method`: \"directionalThinning\" (string, required) - `direction`: (string, required)   - Possible values: \"below\" or \"above\"   - Indicates whether to thin from below (smallest to largest) or above (largest to smallest) - `targetMetric`: (string, required)   - Possible values: \"diameter\" or \"basalArea\" - `targetValue`: float (required)   - Units of the targetValue quantity depends on the targetMetric:     - For \"diameter\": centimeters (cm)     - For \"basalArea\": square meters per hectare (m²/ha)   - Represents the threshold for thinning (diameter) or the target basal area after thinning  Note: The order of treatments in the array determines the sequence in which they will be applied to the tree inventory.  ## Response  If the request is successful, the endpoint will return a `201 Created` status code and the created tree inventory resource in the response body. The response body will be a JSON object with the following fields:  - `status` (string): The status of the tree inventory. Will be set to `\"pending\"` initially. - `createdOn` (string): The timestamp when the tree inventory was created. - `modifiedOn` (string): The timestamp when the tree inventory was last modified. - `checksum` (string): A unique checksum for the tree inventory resource.  ## Error Responses  - `404 Not Found`: The specified domain does not exist or the user does not have access to it. - `422 Unprocessable Entity`: The request body is invalid or missing required fields. - `429 Too Many Requests`: An error occurred while submitting the job due to resource exhaustion.
+        # Create Tree Inventory  This endpoint creates a new tree inventory resource for a specific domain. Tree Inventory data represents a complete forest inventory that exists within the spatial context of a domain. The tree inventory data can be generated using various data products and models that provide either national coverage (e.g., TreeMap) or local coverage.  On resource creation, the tree inventory data is set to a status of \"pending\". The tree inventory data is generated in the background using the specified method (e.g., TreeMap). Once the tree inventory data is generated and available for user access, the status is updated to \"completed\".  ## Endpoint  ``` POST /v1/domains/{domainId}/inventories/tree ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain for   which you want to create the tree inventory.  ## Request Body  The request body should be a JSON object containing the following fields:  - `sources` (array of strings, required): List of data sources to be used for building the tree inventory. Currently, only one data source at a time is supported. Possible values are:   - `\"TreeMap\"`: Indicates that the tree inventory should be created using the TreeMap raster product. This approach generates a tree inventory with national coverage.   - `\"file\"`: Indicates that you will upload a file via a signed url. Please see File Source Configuration for more info.  - `modifications` (array of objects, optional): List of modifications to apply to the tree inventory data. Maximum 1000 modifications allowed.  - `treatments` (array of objects, optional): List of silvicultural treatments to apply to the tree inventory. Maximum 1000 treatments allowed.  - `featureMasks` (array of strings, optional): List of Features to mask tree inventory data.  ### TreeMap Source Configuration  If `\"TreeMap\"` is included in the `sources`, the request body can include additional configurations for `TreeMap`:  - `TreeMap` (object, optional): Advanced configurations for the TreeMap data source.   - `version` (string, optional): The version of TreeMap to use. Default is `\"2022\"`. Possible values are:     - `\"2014\"`: Use the 2014 version of TreeMap.     - `\"2016\"`: Use the 2016 version of TreeMap.     - `\"2020\"`: Use the 2020 version of TreeMap.     - `\"2022\"`: Use the 2022 version of TreeMap.   - `seed` (integer, optional): The random seed to use for generating the tree inventory. If not provided, a random seed will be generated.   - `canopyHeightMapConfiguration` (object, optional): Canopy height map configuration for TreeMap data source. If provided, the canopy height map will be used to segment and impute the coarse 30m TreeMap data with high-resolution canopy height data. Details of this approach will be provided in an upcoming publication. Please contact support.fastfuels@silvxlabs.com for more information.     - `source` (string, required): The source of the canopy height map data. Possible values are:         - `\"Meta2024\"`: Use the Meta2024 canopy height map data. More information about this data source can be found here: https://www.sciencedirect.com/science/article/pii/S003442572300439X  ### File Source Configuration Generate Signed URL for Tree Inventory Upload  If the source is `\"file\"`, this endpoint generates a signed URL that allows users to upload a CSV file representing the tree inventory data. The signed URL is valid for 1 hour and has a maximum upload size of 500 MB.  The full work flow consists of the following steps: 1. Call this endpoint to get a signed URL 2. Perform a put request to send your file to the signed url. Here is a python example:  ```[python] with open(\"your_file_goes_here.csv\", \"rb\") as file:     upload_response = requests.put(         signed_url_response[\"file\"][\"url\"],         data=file,         headers=signed_url_response[\"file\"][\"headers\"],     ) ``` **Note**: the signed_url_response has a field named \"file\" with the relevant info for the put request.  3. Your file will be validated and processed in the background 4. The status of your upload can be retrieved via and inventory get() request  #### Required Columns  The CSV file must include the following columns with their specified data types and constraints:  1. **SPCD** (Integer)    - FIA species code    - Must be an integer    - Represents standard FIA species classifications  2. **STATUSCD** (Integer)    - Tree status code    - Must be one of these values:      - 0: No status      - 1: Live      - 2: Dead      - 3: Missing  3. **DIA** (Float)    - Diameter at breast height (DBH)    - Unit: centimeters (cm)    - Range: 0 to 1200 cm    - Measured at 1.37 meters above ground  4. **HT** (Float)    - Tree height    - Unit: meters (m)    - Range: 0 to 116 meters    - Measured from ground to tree top  5. **CR** (Float)    - Crown ratio    - Unit: ratio (dimensionless)    - Range: 0 to 1    - Represents the ratio of crown length to total tree height  6. **X** (Float)    - X coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (west to east)    - Required: Yes    - Used for spatial positioning  7. **Y** (Float)    - Y coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (south to north)    - Required: Yes    - Used for spatial positioning  ### Treatments  The `treatments` field is an array of treatment objects. Each treatment object represents a silvicultural treatment to be applied to the tree inventory. Currently, there are two types of treatment types available:  1. Proportional Thinning 2. Directional Thinning  #### Proportional Thinning  - `method`: \"proportionalThinning\" (string, required) - `targetMetric`: \"basalArea\" (string, required) - `targetValue`: float (required)   - Unit: square meters per hectare (m²/ha)   - Represents the target basal area after thinning  #### Directional Thinning  - `method`: \"directionalThinning\" (string, required) - `direction`: (string, required)   - Possible values: \"below\" or \"above\"   - Indicates whether to thin from below (smallest to largest) or above (largest to smallest) - `targetMetric`: (string, required)   - Possible values: \"diameter\" or \"basalArea\" - `targetValue`: float (required)   - Units of the targetValue quantity depends on the targetMetric:     - For \"diameter\": centimeters (cm)     - For \"basalArea\": square meters per hectare (m²/ha)   - Represents the threshold for thinning (diameter) or the target basal area after thinning  Note: The order of treatments in the array determines the sequence in which they will be applied to the tree inventory.  ## Response  If the request is successful, the endpoint will return a `201 Created` status code and the created tree inventory resource in the response body. The response body will be a JSON object with the following fields:  - `status` (string): The status of the tree inventory. Will be set to `\"pending\"` initially. - `createdOn` (string): The timestamp when the tree inventory was created. - `modifiedOn` (string): The timestamp when the tree inventory was last modified. - `checksum` (string): A unique checksum for the tree inventory resource.  ## Error Responses  - `404 Not Found`: The specified domain does not exist or the user does not have access to it. - `422 Unprocessable Entity`: The request body is invalid or missing required fields. - `429 Too Many Requests`: An error occurred while submitting the job due to resource exhaustion.
 
         :param domain_id: (required)
         :type domain_id: str
@@ -84,7 +85,7 @@ class TreeInventoryApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._create_tree_inventory_serialize(
             domain_id=domain_id,
@@ -92,21 +93,23 @@ class TreeInventoryApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "201": "TreeInventory",
-            "422": "HTTPValidationError",
+            '201': "TreeInventory",
+            '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
+
 
     @validate_call
     def create_tree_inventory_with_http_info(
@@ -117,8 +120,9 @@ class TreeInventoryApi:
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -127,7 +131,7 @@ class TreeInventoryApi:
     ) -> ApiResponse[TreeInventory]:
         """Create Tree Inventory
 
-        # Create Tree Inventory  This endpoint creates a new tree inventory resource for a specific domain. Tree Inventory data represents a complete forest inventory that exists within the spatial context of a domain. The tree inventory data can be generated using various data products and models that provide either national coverage (e.g., TreeMap) or local coverage.  On resource creation, the tree inventory data is set to a status of \"pending\". The tree inventory data is generated in the background using the specified method (e.g., TreeMap). Once the tree inventory data is generated and available for user access, the status is updated to \"completed\".  ## Endpoint  ``` POST /v1/domains/{domainId}/inventories/tree ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain for   which you want to create the tree inventory.  ## Request Body  The request body should be a JSON object containing the following fields:  - `sources` (array of strings, required): List of data sources to be used for building the tree inventory. Currently, only one data source at a time is supported. Possible values are:   - `\"TreeMap\"`: Indicates that the tree inventory should be created using the TreeMap raster product. This approach generates a tree inventory with national coverage.   - `\"file\"`: Indicates that you will upload a file via a signed url. Please see File Source Configuration for more info.  - `modifications` (array of objects, optional): List of modifications to apply to the tree inventory data. Maximum 1000 modifications allowed.  - `treatments` (array of objects, optional): List of silvicultural treatments to apply to the tree inventory. Maximum 1000 treatments allowed.  - `featureMasks` (array of strings, optional): List of Features to mask tree inventory data.  ### TreeMap Source Configuration  If `\"TreeMap\"` is included in the `sources`, the request body can include additional configurations for `TreeMap`:  - `TreeMap` (object, optional): Advanced configurations for the TreeMap data source.   - `version` (string, optional): The version of TreeMap to use. Default is `\"2016\"`. Possible values are:     - `\"2014\"`: Use the 2014 version of TreeMap.     - `\"2016\"`: Use the 2016 version of TreeMap.   - `seed` (integer, optional): The random seed to use for generating the tree inventory. If not provided, a random seed will be generated.   - `canopyHeightMapConfiguration` (object, optional): Canopy height map configuration for TreeMap data source. If provided, the canopy height map will be used to segment and impute the coarse 30m TreeMap data with high-resolution canopy height data. Details of this approach will be provided in an upcoming publication. Please contact support.fastfuels@silvxlabs.com for more information.     - `source` (string, required): The source of the canopy height map data. Possible values are:         - `\"Meta2024\"`: Use the Meta2024 canopy height map data. More information about this data source can be found here: https://www.sciencedirect.com/science/article/pii/S003442572300439X  ### File Source Configuration Generate Signed URL for Tree Inventory Upload  If the source is `\"file\"`, this endpoint generates a signed URL that allows users to upload a CSV file representing the tree inventory data. The signed URL is valid for 1 hour and has a maximum upload size of 500 MB.  The full work flow consists of the following steps: 1. Call this endpoint to get a signed URL 2. Perform a put request to send your file to the signed url. Here is a python example:  ```[python] with open(\"your_file_goes_here.csv\", \"rb\") as file:     upload_response = requests.put(         signed_url_response[\"file\"][\"url\"],         data=file,         headers=signed_url_response[\"file\"][\"headers\"],     ) ``` **Note**: the signed_url_response has a field named \"file\" with the relevant info for the put request.  3. Your file will be validated and processed in the background 4. The status of your upload can be retrieved via and inventory get() request  #### Required Columns  The CSV file must include the following columns with their specified data types and constraints:  1. **SPCD** (Integer)    - FIA species code    - Must be an integer    - Represents standard FIA species classifications  2. **STATUSCD** (Integer)    - Tree status code    - Must be one of these values:      - 0: No status      - 1: Live      - 2: Dead      - 3: Missing  3. **DIA** (Float)    - Diameter at breast height (DBH)    - Unit: centimeters (cm)    - Range: 0 to 1200 cm    - Measured at 1.37 meters above ground  4. **HT** (Float)    - Tree height    - Unit: meters (m)    - Range: 0 to 116 meters    - Measured from ground to tree top  5. **CR** (Float)    - Crown ratio    - Unit: ratio (dimensionless)    - Range: 0 to 1    - Represents the ratio of crown length to total tree height  6. **X** (Float)    - X coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (west to east)    - Required: Yes    - Used for spatial positioning  7. **Y** (Float)    - Y coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (south to north)    - Required: Yes    - Used for spatial positioning  ### Treatments  The `treatments` field is an array of treatment objects. Each treatment object represents a silvicultural treatment to be applied to the tree inventory. Currently, there are two types of treatment types available:  1. Proportional Thinning 2. Directional Thinning  #### Proportional Thinning  - `method`: \"proportionalThinning\" (string, required) - `targetMetric`: \"basalArea\" (string, required) - `targetValue`: float (required)   - Unit: square meters per hectare (m²/ha)   - Represents the target basal area after thinning  #### Directional Thinning  - `method`: \"directionalThinning\" (string, required) - `direction`: (string, required)   - Possible values: \"below\" or \"above\"   - Indicates whether to thin from below (smallest to largest) or above (largest to smallest) - `targetMetric`: (string, required)   - Possible values: \"diameter\" or \"basalArea\" - `targetValue`: float (required)   - Units of the targetValue quantity depends on the targetMetric:     - For \"diameter\": centimeters (cm)     - For \"basalArea\": square meters per hectare (m²/ha)   - Represents the threshold for thinning (diameter) or the target basal area after thinning  Note: The order of treatments in the array determines the sequence in which they will be applied to the tree inventory.  ## Response  If the request is successful, the endpoint will return a `201 Created` status code and the created tree inventory resource in the response body. The response body will be a JSON object with the following fields:  - `status` (string): The status of the tree inventory. Will be set to `\"pending\"` initially. - `createdOn` (string): The timestamp when the tree inventory was created. - `modifiedOn` (string): The timestamp when the tree inventory was last modified. - `checksum` (string): A unique checksum for the tree inventory resource.  ## Error Responses  - `404 Not Found`: The specified domain does not exist or the user does not have access to it. - `422 Unprocessable Entity`: The request body is invalid or missing required fields. - `429 Too Many Requests`: An error occurred while submitting the job due to resource exhaustion.
+        # Create Tree Inventory  This endpoint creates a new tree inventory resource for a specific domain. Tree Inventory data represents a complete forest inventory that exists within the spatial context of a domain. The tree inventory data can be generated using various data products and models that provide either national coverage (e.g., TreeMap) or local coverage.  On resource creation, the tree inventory data is set to a status of \"pending\". The tree inventory data is generated in the background using the specified method (e.g., TreeMap). Once the tree inventory data is generated and available for user access, the status is updated to \"completed\".  ## Endpoint  ``` POST /v1/domains/{domainId}/inventories/tree ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain for   which you want to create the tree inventory.  ## Request Body  The request body should be a JSON object containing the following fields:  - `sources` (array of strings, required): List of data sources to be used for building the tree inventory. Currently, only one data source at a time is supported. Possible values are:   - `\"TreeMap\"`: Indicates that the tree inventory should be created using the TreeMap raster product. This approach generates a tree inventory with national coverage.   - `\"file\"`: Indicates that you will upload a file via a signed url. Please see File Source Configuration for more info.  - `modifications` (array of objects, optional): List of modifications to apply to the tree inventory data. Maximum 1000 modifications allowed.  - `treatments` (array of objects, optional): List of silvicultural treatments to apply to the tree inventory. Maximum 1000 treatments allowed.  - `featureMasks` (array of strings, optional): List of Features to mask tree inventory data.  ### TreeMap Source Configuration  If `\"TreeMap\"` is included in the `sources`, the request body can include additional configurations for `TreeMap`:  - `TreeMap` (object, optional): Advanced configurations for the TreeMap data source.   - `version` (string, optional): The version of TreeMap to use. Default is `\"2022\"`. Possible values are:     - `\"2014\"`: Use the 2014 version of TreeMap.     - `\"2016\"`: Use the 2016 version of TreeMap.     - `\"2020\"`: Use the 2020 version of TreeMap.     - `\"2022\"`: Use the 2022 version of TreeMap.   - `seed` (integer, optional): The random seed to use for generating the tree inventory. If not provided, a random seed will be generated.   - `canopyHeightMapConfiguration` (object, optional): Canopy height map configuration for TreeMap data source. If provided, the canopy height map will be used to segment and impute the coarse 30m TreeMap data with high-resolution canopy height data. Details of this approach will be provided in an upcoming publication. Please contact support.fastfuels@silvxlabs.com for more information.     - `source` (string, required): The source of the canopy height map data. Possible values are:         - `\"Meta2024\"`: Use the Meta2024 canopy height map data. More information about this data source can be found here: https://www.sciencedirect.com/science/article/pii/S003442572300439X  ### File Source Configuration Generate Signed URL for Tree Inventory Upload  If the source is `\"file\"`, this endpoint generates a signed URL that allows users to upload a CSV file representing the tree inventory data. The signed URL is valid for 1 hour and has a maximum upload size of 500 MB.  The full work flow consists of the following steps: 1. Call this endpoint to get a signed URL 2. Perform a put request to send your file to the signed url. Here is a python example:  ```[python] with open(\"your_file_goes_here.csv\", \"rb\") as file:     upload_response = requests.put(         signed_url_response[\"file\"][\"url\"],         data=file,         headers=signed_url_response[\"file\"][\"headers\"],     ) ``` **Note**: the signed_url_response has a field named \"file\" with the relevant info for the put request.  3. Your file will be validated and processed in the background 4. The status of your upload can be retrieved via and inventory get() request  #### Required Columns  The CSV file must include the following columns with their specified data types and constraints:  1. **SPCD** (Integer)    - FIA species code    - Must be an integer    - Represents standard FIA species classifications  2. **STATUSCD** (Integer)    - Tree status code    - Must be one of these values:      - 0: No status      - 1: Live      - 2: Dead      - 3: Missing  3. **DIA** (Float)    - Diameter at breast height (DBH)    - Unit: centimeters (cm)    - Range: 0 to 1200 cm    - Measured at 1.37 meters above ground  4. **HT** (Float)    - Tree height    - Unit: meters (m)    - Range: 0 to 116 meters    - Measured from ground to tree top  5. **CR** (Float)    - Crown ratio    - Unit: ratio (dimensionless)    - Range: 0 to 1    - Represents the ratio of crown length to total tree height  6. **X** (Float)    - X coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (west to east)    - Required: Yes    - Used for spatial positioning  7. **Y** (Float)    - Y coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (south to north)    - Required: Yes    - Used for spatial positioning  ### Treatments  The `treatments` field is an array of treatment objects. Each treatment object represents a silvicultural treatment to be applied to the tree inventory. Currently, there are two types of treatment types available:  1. Proportional Thinning 2. Directional Thinning  #### Proportional Thinning  - `method`: \"proportionalThinning\" (string, required) - `targetMetric`: \"basalArea\" (string, required) - `targetValue`: float (required)   - Unit: square meters per hectare (m²/ha)   - Represents the target basal area after thinning  #### Directional Thinning  - `method`: \"directionalThinning\" (string, required) - `direction`: (string, required)   - Possible values: \"below\" or \"above\"   - Indicates whether to thin from below (smallest to largest) or above (largest to smallest) - `targetMetric`: (string, required)   - Possible values: \"diameter\" or \"basalArea\" - `targetValue`: float (required)   - Units of the targetValue quantity depends on the targetMetric:     - For \"diameter\": centimeters (cm)     - For \"basalArea\": square meters per hectare (m²/ha)   - Represents the threshold for thinning (diameter) or the target basal area after thinning  Note: The order of treatments in the array determines the sequence in which they will be applied to the tree inventory.  ## Response  If the request is successful, the endpoint will return a `201 Created` status code and the created tree inventory resource in the response body. The response body will be a JSON object with the following fields:  - `status` (string): The status of the tree inventory. Will be set to `\"pending\"` initially. - `createdOn` (string): The timestamp when the tree inventory was created. - `modifiedOn` (string): The timestamp when the tree inventory was last modified. - `checksum` (string): A unique checksum for the tree inventory resource.  ## Error Responses  - `404 Not Found`: The specified domain does not exist or the user does not have access to it. - `422 Unprocessable Entity`: The request body is invalid or missing required fields. - `429 Too Many Requests`: An error occurred while submitting the job due to resource exhaustion.
 
         :param domain_id: (required)
         :type domain_id: str
@@ -153,7 +157,7 @@ class TreeInventoryApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._create_tree_inventory_serialize(
             domain_id=domain_id,
@@ -161,21 +165,23 @@ class TreeInventoryApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "201": "TreeInventory",
-            "422": "HTTPValidationError",
+            '201': "TreeInventory",
+            '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
+
 
     @validate_call
     def create_tree_inventory_without_preload_content(
@@ -186,8 +192,9 @@ class TreeInventoryApi:
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -196,7 +203,7 @@ class TreeInventoryApi:
     ) -> RESTResponseType:
         """Create Tree Inventory
 
-        # Create Tree Inventory  This endpoint creates a new tree inventory resource for a specific domain. Tree Inventory data represents a complete forest inventory that exists within the spatial context of a domain. The tree inventory data can be generated using various data products and models that provide either national coverage (e.g., TreeMap) or local coverage.  On resource creation, the tree inventory data is set to a status of \"pending\". The tree inventory data is generated in the background using the specified method (e.g., TreeMap). Once the tree inventory data is generated and available for user access, the status is updated to \"completed\".  ## Endpoint  ``` POST /v1/domains/{domainId}/inventories/tree ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain for   which you want to create the tree inventory.  ## Request Body  The request body should be a JSON object containing the following fields:  - `sources` (array of strings, required): List of data sources to be used for building the tree inventory. Currently, only one data source at a time is supported. Possible values are:   - `\"TreeMap\"`: Indicates that the tree inventory should be created using the TreeMap raster product. This approach generates a tree inventory with national coverage.   - `\"file\"`: Indicates that you will upload a file via a signed url. Please see File Source Configuration for more info.  - `modifications` (array of objects, optional): List of modifications to apply to the tree inventory data. Maximum 1000 modifications allowed.  - `treatments` (array of objects, optional): List of silvicultural treatments to apply to the tree inventory. Maximum 1000 treatments allowed.  - `featureMasks` (array of strings, optional): List of Features to mask tree inventory data.  ### TreeMap Source Configuration  If `\"TreeMap\"` is included in the `sources`, the request body can include additional configurations for `TreeMap`:  - `TreeMap` (object, optional): Advanced configurations for the TreeMap data source.   - `version` (string, optional): The version of TreeMap to use. Default is `\"2016\"`. Possible values are:     - `\"2014\"`: Use the 2014 version of TreeMap.     - `\"2016\"`: Use the 2016 version of TreeMap.   - `seed` (integer, optional): The random seed to use for generating the tree inventory. If not provided, a random seed will be generated.   - `canopyHeightMapConfiguration` (object, optional): Canopy height map configuration for TreeMap data source. If provided, the canopy height map will be used to segment and impute the coarse 30m TreeMap data with high-resolution canopy height data. Details of this approach will be provided in an upcoming publication. Please contact support.fastfuels@silvxlabs.com for more information.     - `source` (string, required): The source of the canopy height map data. Possible values are:         - `\"Meta2024\"`: Use the Meta2024 canopy height map data. More information about this data source can be found here: https://www.sciencedirect.com/science/article/pii/S003442572300439X  ### File Source Configuration Generate Signed URL for Tree Inventory Upload  If the source is `\"file\"`, this endpoint generates a signed URL that allows users to upload a CSV file representing the tree inventory data. The signed URL is valid for 1 hour and has a maximum upload size of 500 MB.  The full work flow consists of the following steps: 1. Call this endpoint to get a signed URL 2. Perform a put request to send your file to the signed url. Here is a python example:  ```[python] with open(\"your_file_goes_here.csv\", \"rb\") as file:     upload_response = requests.put(         signed_url_response[\"file\"][\"url\"],         data=file,         headers=signed_url_response[\"file\"][\"headers\"],     ) ``` **Note**: the signed_url_response has a field named \"file\" with the relevant info for the put request.  3. Your file will be validated and processed in the background 4. The status of your upload can be retrieved via and inventory get() request  #### Required Columns  The CSV file must include the following columns with their specified data types and constraints:  1. **SPCD** (Integer)    - FIA species code    - Must be an integer    - Represents standard FIA species classifications  2. **STATUSCD** (Integer)    - Tree status code    - Must be one of these values:      - 0: No status      - 1: Live      - 2: Dead      - 3: Missing  3. **DIA** (Float)    - Diameter at breast height (DBH)    - Unit: centimeters (cm)    - Range: 0 to 1200 cm    - Measured at 1.37 meters above ground  4. **HT** (Float)    - Tree height    - Unit: meters (m)    - Range: 0 to 116 meters    - Measured from ground to tree top  5. **CR** (Float)    - Crown ratio    - Unit: ratio (dimensionless)    - Range: 0 to 1    - Represents the ratio of crown length to total tree height  6. **X** (Float)    - X coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (west to east)    - Required: Yes    - Used for spatial positioning  7. **Y** (Float)    - Y coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (south to north)    - Required: Yes    - Used for spatial positioning  ### Treatments  The `treatments` field is an array of treatment objects. Each treatment object represents a silvicultural treatment to be applied to the tree inventory. Currently, there are two types of treatment types available:  1. Proportional Thinning 2. Directional Thinning  #### Proportional Thinning  - `method`: \"proportionalThinning\" (string, required) - `targetMetric`: \"basalArea\" (string, required) - `targetValue`: float (required)   - Unit: square meters per hectare (m²/ha)   - Represents the target basal area after thinning  #### Directional Thinning  - `method`: \"directionalThinning\" (string, required) - `direction`: (string, required)   - Possible values: \"below\" or \"above\"   - Indicates whether to thin from below (smallest to largest) or above (largest to smallest) - `targetMetric`: (string, required)   - Possible values: \"diameter\" or \"basalArea\" - `targetValue`: float (required)   - Units of the targetValue quantity depends on the targetMetric:     - For \"diameter\": centimeters (cm)     - For \"basalArea\": square meters per hectare (m²/ha)   - Represents the threshold for thinning (diameter) or the target basal area after thinning  Note: The order of treatments in the array determines the sequence in which they will be applied to the tree inventory.  ## Response  If the request is successful, the endpoint will return a `201 Created` status code and the created tree inventory resource in the response body. The response body will be a JSON object with the following fields:  - `status` (string): The status of the tree inventory. Will be set to `\"pending\"` initially. - `createdOn` (string): The timestamp when the tree inventory was created. - `modifiedOn` (string): The timestamp when the tree inventory was last modified. - `checksum` (string): A unique checksum for the tree inventory resource.  ## Error Responses  - `404 Not Found`: The specified domain does not exist or the user does not have access to it. - `422 Unprocessable Entity`: The request body is invalid or missing required fields. - `429 Too Many Requests`: An error occurred while submitting the job due to resource exhaustion.
+        # Create Tree Inventory  This endpoint creates a new tree inventory resource for a specific domain. Tree Inventory data represents a complete forest inventory that exists within the spatial context of a domain. The tree inventory data can be generated using various data products and models that provide either national coverage (e.g., TreeMap) or local coverage.  On resource creation, the tree inventory data is set to a status of \"pending\". The tree inventory data is generated in the background using the specified method (e.g., TreeMap). Once the tree inventory data is generated and available for user access, the status is updated to \"completed\".  ## Endpoint  ``` POST /v1/domains/{domainId}/inventories/tree ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain for   which you want to create the tree inventory.  ## Request Body  The request body should be a JSON object containing the following fields:  - `sources` (array of strings, required): List of data sources to be used for building the tree inventory. Currently, only one data source at a time is supported. Possible values are:   - `\"TreeMap\"`: Indicates that the tree inventory should be created using the TreeMap raster product. This approach generates a tree inventory with national coverage.   - `\"file\"`: Indicates that you will upload a file via a signed url. Please see File Source Configuration for more info.  - `modifications` (array of objects, optional): List of modifications to apply to the tree inventory data. Maximum 1000 modifications allowed.  - `treatments` (array of objects, optional): List of silvicultural treatments to apply to the tree inventory. Maximum 1000 treatments allowed.  - `featureMasks` (array of strings, optional): List of Features to mask tree inventory data.  ### TreeMap Source Configuration  If `\"TreeMap\"` is included in the `sources`, the request body can include additional configurations for `TreeMap`:  - `TreeMap` (object, optional): Advanced configurations for the TreeMap data source.   - `version` (string, optional): The version of TreeMap to use. Default is `\"2022\"`. Possible values are:     - `\"2014\"`: Use the 2014 version of TreeMap.     - `\"2016\"`: Use the 2016 version of TreeMap.     - `\"2020\"`: Use the 2020 version of TreeMap.     - `\"2022\"`: Use the 2022 version of TreeMap.   - `seed` (integer, optional): The random seed to use for generating the tree inventory. If not provided, a random seed will be generated.   - `canopyHeightMapConfiguration` (object, optional): Canopy height map configuration for TreeMap data source. If provided, the canopy height map will be used to segment and impute the coarse 30m TreeMap data with high-resolution canopy height data. Details of this approach will be provided in an upcoming publication. Please contact support.fastfuels@silvxlabs.com for more information.     - `source` (string, required): The source of the canopy height map data. Possible values are:         - `\"Meta2024\"`: Use the Meta2024 canopy height map data. More information about this data source can be found here: https://www.sciencedirect.com/science/article/pii/S003442572300439X  ### File Source Configuration Generate Signed URL for Tree Inventory Upload  If the source is `\"file\"`, this endpoint generates a signed URL that allows users to upload a CSV file representing the tree inventory data. The signed URL is valid for 1 hour and has a maximum upload size of 500 MB.  The full work flow consists of the following steps: 1. Call this endpoint to get a signed URL 2. Perform a put request to send your file to the signed url. Here is a python example:  ```[python] with open(\"your_file_goes_here.csv\", \"rb\") as file:     upload_response = requests.put(         signed_url_response[\"file\"][\"url\"],         data=file,         headers=signed_url_response[\"file\"][\"headers\"],     ) ``` **Note**: the signed_url_response has a field named \"file\" with the relevant info for the put request.  3. Your file will be validated and processed in the background 4. The status of your upload can be retrieved via and inventory get() request  #### Required Columns  The CSV file must include the following columns with their specified data types and constraints:  1. **SPCD** (Integer)    - FIA species code    - Must be an integer    - Represents standard FIA species classifications  2. **STATUSCD** (Integer)    - Tree status code    - Must be one of these values:      - 0: No status      - 1: Live      - 2: Dead      - 3: Missing  3. **DIA** (Float)    - Diameter at breast height (DBH)    - Unit: centimeters (cm)    - Range: 0 to 1200 cm    - Measured at 1.37 meters above ground  4. **HT** (Float)    - Tree height    - Unit: meters (m)    - Range: 0 to 116 meters    - Measured from ground to tree top  5. **CR** (Float)    - Crown ratio    - Unit: ratio (dimensionless)    - Range: 0 to 1    - Represents the ratio of crown length to total tree height  6. **X** (Float)    - X coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (west to east)    - Required: Yes    - Used for spatial positioning  7. **Y** (Float)    - Y coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (south to north)    - Required: Yes    - Used for spatial positioning  ### Treatments  The `treatments` field is an array of treatment objects. Each treatment object represents a silvicultural treatment to be applied to the tree inventory. Currently, there are two types of treatment types available:  1. Proportional Thinning 2. Directional Thinning  #### Proportional Thinning  - `method`: \"proportionalThinning\" (string, required) - `targetMetric`: \"basalArea\" (string, required) - `targetValue`: float (required)   - Unit: square meters per hectare (m²/ha)   - Represents the target basal area after thinning  #### Directional Thinning  - `method`: \"directionalThinning\" (string, required) - `direction`: (string, required)   - Possible values: \"below\" or \"above\"   - Indicates whether to thin from below (smallest to largest) or above (largest to smallest) - `targetMetric`: (string, required)   - Possible values: \"diameter\" or \"basalArea\" - `targetValue`: float (required)   - Units of the targetValue quantity depends on the targetMetric:     - For \"diameter\": centimeters (cm)     - For \"basalArea\": square meters per hectare (m²/ha)   - Represents the threshold for thinning (diameter) or the target basal area after thinning  Note: The order of treatments in the array determines the sequence in which they will be applied to the tree inventory.  ## Response  If the request is successful, the endpoint will return a `201 Created` status code and the created tree inventory resource in the response body. The response body will be a JSON object with the following fields:  - `status` (string): The status of the tree inventory. Will be set to `\"pending\"` initially. - `createdOn` (string): The timestamp when the tree inventory was created. - `modifiedOn` (string): The timestamp when the tree inventory was last modified. - `checksum` (string): A unique checksum for the tree inventory resource.  ## Error Responses  - `404 Not Found`: The specified domain does not exist or the user does not have access to it. - `422 Unprocessable Entity`: The request body is invalid or missing required fields. - `429 Too Many Requests`: An error occurred while submitting the job due to resource exhaustion.
 
         :param domain_id: (required)
         :type domain_id: str
@@ -222,7 +229,7 @@ class TreeInventoryApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._create_tree_inventory_serialize(
             domain_id=domain_id,
@@ -230,17 +237,19 @@ class TreeInventoryApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "201": "TreeInventory",
-            "422": "HTTPValidationError",
+            '201': "TreeInventory",
+            '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         return response_data.response
+
 
     def _create_tree_inventory_serialize(
         self,
@@ -254,7 +263,8 @@ class TreeInventoryApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {}
+        _collection_formats: Dict[str, str] = {
+        }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -267,7 +277,7 @@ class TreeInventoryApi:
 
         # process the path parameters
         if domain_id is not None:
-            _path_params["domainId"] = domain_id
+            _path_params['domainId'] = domain_id
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -275,28 +285,38 @@ class TreeInventoryApi:
         if create_tree_inventory_request is not None:
             _body_params = create_tree_inventory_request
 
+
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
             )
 
         # set the HTTP header `Content-Type`
         if _content_type:
-            _header_params["Content-Type"] = _content_type
+            _header_params['Content-Type'] = _content_type
         else:
-            _default_content_type = self.api_client.select_header_content_type(
-                ["application/json"]
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
             )
             if _default_content_type is not None:
-                _header_params["Content-Type"] = _default_content_type
+                _header_params['Content-Type'] = _default_content_type
 
         # authentication setting
-        _auth_settings: List[str] = ["APIKeyHeader", "HTTPBearer"]
+        _auth_settings: List[str] = [
+            'APIKeyHeader', 
+            'HTTPBearer'
+        ]
 
         return self.api_client.param_serialize(
-            method="POST",
-            resource_path="/v1/domains/{domainId}/inventories/tree",
+            method='POST',
+            resource_path='/v1/domains/{domainId}/inventories/tree',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -306,8 +326,11 @@ class TreeInventoryApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth,
+            _request_auth=_request_auth
         )
+
+
+
 
     @validate_call
     def create_tree_inventory_export(
@@ -318,8 +341,9 @@ class TreeInventoryApi:
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -354,7 +378,7 @@ class TreeInventoryApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._create_tree_inventory_export_serialize(
             domain_id=domain_id,
@@ -362,21 +386,23 @@ class TreeInventoryApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "201": "Export",
-            "422": "HTTPValidationError",
+            '201': "Export",
+            '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
+
 
     @validate_call
     def create_tree_inventory_export_with_http_info(
@@ -387,8 +413,9 @@ class TreeInventoryApi:
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -423,7 +450,7 @@ class TreeInventoryApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._create_tree_inventory_export_serialize(
             domain_id=domain_id,
@@ -431,21 +458,23 @@ class TreeInventoryApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "201": "Export",
-            "422": "HTTPValidationError",
+            '201': "Export",
+            '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
+
 
     @validate_call
     def create_tree_inventory_export_without_preload_content(
@@ -456,8 +485,9 @@ class TreeInventoryApi:
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -492,7 +522,7 @@ class TreeInventoryApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._create_tree_inventory_export_serialize(
             domain_id=domain_id,
@@ -500,17 +530,19 @@ class TreeInventoryApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "201": "Export",
-            "422": "HTTPValidationError",
+            '201': "Export",
+            '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         return response_data.response
+
 
     def _create_tree_inventory_export_serialize(
         self,
@@ -524,7 +556,8 @@ class TreeInventoryApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {}
+        _collection_formats: Dict[str, str] = {
+        }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -537,26 +570,33 @@ class TreeInventoryApi:
 
         # process the path parameters
         if domain_id is not None:
-            _path_params["domainId"] = domain_id
+            _path_params['domainId'] = domain_id
         if export_format is not None:
-            _path_params["exportFormat"] = export_format
+            _path_params['exportFormat'] = export_format
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
+
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
             )
 
+
         # authentication setting
-        _auth_settings: List[str] = ["APIKeyHeader", "HTTPBearer"]
+        _auth_settings: List[str] = [
+            'APIKeyHeader', 
+            'HTTPBearer'
+        ]
 
         return self.api_client.param_serialize(
-            method="POST",
-            resource_path="/v1/domains/{domainId}/inventories/tree/exports/{exportFormat}",
+            method='POST',
+            resource_path='/v1/domains/{domainId}/inventories/tree/exports/{exportFormat}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -566,8 +606,11 @@ class TreeInventoryApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth,
+            _request_auth=_request_auth
         )
+
+
+
 
     @validate_call
     def delete_tree_inventory(
@@ -577,8 +620,9 @@ class TreeInventoryApi:
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -611,28 +655,30 @@ class TreeInventoryApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._delete_tree_inventory_serialize(
             domain_id=domain_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "204": None,
-            "422": "HTTPValidationError",
+            '204': None,
+            '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
+
 
     @validate_call
     def delete_tree_inventory_with_http_info(
@@ -642,8 +688,9 @@ class TreeInventoryApi:
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -676,28 +723,30 @@ class TreeInventoryApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._delete_tree_inventory_serialize(
             domain_id=domain_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "204": None,
-            "422": "HTTPValidationError",
+            '204': None,
+            '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
+
 
     @validate_call
     def delete_tree_inventory_without_preload_content(
@@ -707,8 +756,9 @@ class TreeInventoryApi:
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -741,24 +791,26 @@ class TreeInventoryApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._delete_tree_inventory_serialize(
             domain_id=domain_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "204": None,
-            "422": "HTTPValidationError",
+            '204': None,
+            '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         return response_data.response
+
 
     def _delete_tree_inventory_serialize(
         self,
@@ -771,7 +823,8 @@ class TreeInventoryApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {}
+        _collection_formats: Dict[str, str] = {
+        }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -784,24 +837,31 @@ class TreeInventoryApi:
 
         # process the path parameters
         if domain_id is not None:
-            _path_params["domainId"] = domain_id
+            _path_params['domainId'] = domain_id
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
+
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
             )
 
+
         # authentication setting
-        _auth_settings: List[str] = ["APIKeyHeader", "HTTPBearer"]
+        _auth_settings: List[str] = [
+            'APIKeyHeader', 
+            'HTTPBearer'
+        ]
 
         return self.api_client.param_serialize(
-            method="DELETE",
-            resource_path="/v1/domains/{domainId}/inventories/tree",
+            method='DELETE',
+            resource_path='/v1/domains/{domainId}/inventories/tree',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -811,8 +871,11 @@ class TreeInventoryApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth,
+            _request_auth=_request_auth
         )
+
+
+
 
     @validate_call
     def get_tree_inventory(
@@ -822,8 +885,9 @@ class TreeInventoryApi:
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -856,28 +920,30 @@ class TreeInventoryApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._get_tree_inventory_serialize(
             domain_id=domain_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "TreeInventory",
-            "422": "HTTPValidationError",
+            '200': "TreeInventory",
+            '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
+
 
     @validate_call
     def get_tree_inventory_with_http_info(
@@ -887,8 +953,9 @@ class TreeInventoryApi:
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -921,28 +988,30 @@ class TreeInventoryApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._get_tree_inventory_serialize(
             domain_id=domain_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "TreeInventory",
-            "422": "HTTPValidationError",
+            '200': "TreeInventory",
+            '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
+
 
     @validate_call
     def get_tree_inventory_without_preload_content(
@@ -952,8 +1021,9 @@ class TreeInventoryApi:
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -986,24 +1056,26 @@ class TreeInventoryApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._get_tree_inventory_serialize(
             domain_id=domain_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "TreeInventory",
-            "422": "HTTPValidationError",
+            '200': "TreeInventory",
+            '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         return response_data.response
+
 
     def _get_tree_inventory_serialize(
         self,
@@ -1016,7 +1088,8 @@ class TreeInventoryApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {}
+        _collection_formats: Dict[str, str] = {
+        }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -1029,24 +1102,31 @@ class TreeInventoryApi:
 
         # process the path parameters
         if domain_id is not None:
-            _path_params["domainId"] = domain_id
+            _path_params['domainId'] = domain_id
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
+
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
             )
 
+
         # authentication setting
-        _auth_settings: List[str] = ["APIKeyHeader", "HTTPBearer"]
+        _auth_settings: List[str] = [
+            'APIKeyHeader', 
+            'HTTPBearer'
+        ]
 
         return self.api_client.param_serialize(
-            method="GET",
-            resource_path="/v1/domains/{domainId}/inventories/tree",
+            method='GET',
+            resource_path='/v1/domains/{domainId}/inventories/tree',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -1056,8 +1136,11 @@ class TreeInventoryApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth,
+            _request_auth=_request_auth
         )
+
+
+
 
     @validate_call
     def get_tree_inventory_export(
@@ -1068,8 +1151,9 @@ class TreeInventoryApi:
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1104,7 +1188,7 @@ class TreeInventoryApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._get_tree_inventory_export_serialize(
             domain_id=domain_id,
@@ -1112,21 +1196,23 @@ class TreeInventoryApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "Export",
-            "422": "HTTPValidationError",
+            '200': "Export",
+            '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
+
 
     @validate_call
     def get_tree_inventory_export_with_http_info(
@@ -1137,8 +1223,9 @@ class TreeInventoryApi:
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1173,7 +1260,7 @@ class TreeInventoryApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._get_tree_inventory_export_serialize(
             domain_id=domain_id,
@@ -1181,21 +1268,23 @@ class TreeInventoryApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "Export",
-            "422": "HTTPValidationError",
+            '200': "Export",
+            '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
+
 
     @validate_call
     def get_tree_inventory_export_without_preload_content(
@@ -1206,8 +1295,9 @@ class TreeInventoryApi:
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1242,7 +1332,7 @@ class TreeInventoryApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._get_tree_inventory_export_serialize(
             domain_id=domain_id,
@@ -1250,17 +1340,19 @@ class TreeInventoryApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "Export",
-            "422": "HTTPValidationError",
+            '200': "Export",
+            '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         return response_data.response
+
 
     def _get_tree_inventory_export_serialize(
         self,
@@ -1274,7 +1366,8 @@ class TreeInventoryApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {}
+        _collection_formats: Dict[str, str] = {
+        }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -1287,26 +1380,33 @@ class TreeInventoryApi:
 
         # process the path parameters
         if domain_id is not None:
-            _path_params["domainId"] = domain_id
+            _path_params['domainId'] = domain_id
         if export_format is not None:
-            _path_params["exportFormat"] = export_format
+            _path_params['exportFormat'] = export_format
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
+
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
             )
 
+
         # authentication setting
-        _auth_settings: List[str] = ["APIKeyHeader", "HTTPBearer"]
+        _auth_settings: List[str] = [
+            'APIKeyHeader', 
+            'HTTPBearer'
+        ]
 
         return self.api_client.param_serialize(
-            method="GET",
-            resource_path="/v1/domains/{domainId}/inventories/tree/exports/{exportFormat}",
+            method='GET',
+            resource_path='/v1/domains/{domainId}/inventories/tree/exports/{exportFormat}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -1316,5 +1416,7 @@ class TreeInventoryApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth,
+            _request_auth=_request_auth
         )
+
+
