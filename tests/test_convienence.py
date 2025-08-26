@@ -10,6 +10,7 @@ from pathlib import Path
 from fastfuels_sdk import export_roi_to_quicfire
 
 # External imports
+import pytest
 import geopandas as gpd
 
 TEST_DIR = Path(__file__).parent
@@ -17,6 +18,7 @@ TEST_DATA_DIR = TEST_DIR / "data"
 TEST_TMP_DIR = TEST_DIR / "tmp"
 
 
+@pytest.mark.skip(reason="Only run this test locally")
 def test_blue_mountain():
     # Load the Blue Mountain ROI
     blue_mountain = gpd.read_file(TEST_DATA_DIR / "blue_mtn.geojson")
