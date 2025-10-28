@@ -20,6 +20,7 @@ import json
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from fastfuels_sdk.client_library.models.geojson import Geojson
 from fastfuels_sdk.client_library.models.job_status import JobStatus
 from fastfuels_sdk.client_library.models.road_feature_source import RoadFeatureSource
 from typing import Optional, Set
@@ -27,14 +28,15 @@ from typing_extensions import Self
 
 class RoadFeature(BaseModel):
     """
-    RoadFeature
+    Response model for road features without strict validation.
     """ # noqa: E501
     sources: List[RoadFeatureSource] = Field(description="List of sources of road features")
+    geojson: Optional[Geojson] = None
     status: Optional[JobStatus] = None
     created_on: Optional[datetime] = Field(default=None, alias="createdOn")
     modified_on: Optional[datetime] = Field(default=None, alias="modifiedOn")
     checksum: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["sources", "status", "createdOn", "modifiedOn", "checksum"]
+    __properties: ClassVar[List[str]] = ["sources", "geojson", "status", "createdOn", "modifiedOn", "checksum"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -76,6 +78,14 @@ class RoadFeature(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of geojson
+        if self.geojson:
+            _dict['geojson'] = self.geojson.to_dict()
+        # set to None if geojson (nullable) is None
+        # and model_fields_set contains the field
+        if self.geojson is None and "geojson" in self.model_fields_set:
+            _dict['geojson'] = None
+
         # set to None if status (nullable) is None
         # and model_fields_set contains the field
         if self.status is None and "status" in self.model_fields_set:
@@ -109,6 +119,7 @@ class RoadFeature(BaseModel):
 
         _obj = cls.model_validate({
             "sources": obj.get("sources"),
+            "geojson": Geojson.from_dict(obj["geojson"]) if obj.get("geojson") is not None else None,
             "status": obj.get("status"),
             "createdOn": obj.get("createdOn"),
             "modifiedOn": obj.get("modifiedOn"),

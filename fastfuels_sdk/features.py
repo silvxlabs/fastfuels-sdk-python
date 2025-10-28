@@ -5,7 +5,7 @@ fastfuels_sdk/features.py
 # Core imports
 from __future__ import annotations
 from time import sleep
-from typing import Optional, List
+from typing import Optional, List, Union, Dict, Any
 
 # Internal imports
 from fastfuels_sdk.api import get_client
@@ -22,6 +22,7 @@ from fastfuels_sdk.client_library.models import (
     CreateWaterFeatureRequest,
     RoadFeatureSource,
     WaterFeatureSource,
+    Geojson,
 )
 
 _FEATURES_API = FeaturesApi(get_client())
@@ -103,7 +104,7 @@ class Features(FeaturesModel):
         """
         features_response = _FEATURES_API.get_features(domain_id=domain_id)
         response_data = _convert_api_models_to_sdk_classes(
-            domain_id, features_response.model_dump()
+            domain_id, features_response.model_dump(), features_response
         )
 
         return cls(domain_id=domain_id, **response_data)
@@ -139,7 +140,7 @@ class Features(FeaturesModel):
         response = _FEATURES_API.get_features(domain_id=self.domain_id)
         response_data = response.model_dump()
         response_data = _convert_api_models_to_sdk_classes(
-            self.domain_id, response_data
+            self.domain_id, response_data, response
         )
 
         if in_place:
@@ -153,6 +154,7 @@ class Features(FeaturesModel):
     def create_road_feature(
         self,
         sources: str | List[str] | RoadFeatureSource | List[RoadFeatureSource],
+        geojson: Optional[Union[Dict[str, Any], Geojson]] = None,
         in_place: bool = False,
     ) -> RoadFeature:
         """Create road features for this domain using specified data sources.
@@ -160,8 +162,12 @@ class Features(FeaturesModel):
         Parameters
         ----------
         sources : str or list[str] or RoadFeatureSource or list[RoadFeatureSource]
-            Data sources to use. Currently, supports:
-            - "OSM": OpenStreetMap data
+            Data sources to use. Supports:
+            - "OSM": OpenStreetMap data (not supported for local CRS domains)
+            - "geojson": User-provided GeoJSON data (supported for all CRS including local)
+        geojson : dict or Geojson, optional
+            GeoJSON Feature or FeatureCollection containing Polygon or MultiPolygon geometries.
+            Required when source is "geojson".
         in_place : bool, optional
             If True, updates this Features instance with new data.
             If False (default), leaves this instance unchanged.
@@ -178,6 +184,19 @@ class Features(FeaturesModel):
         >>> # Create from OpenStreetMap
         >>> road = features.create_road_feature("OSM")
         >>>
+        >>> # Create from GeoJSON
+        >>> geojson_data = {
+        ...     "type": "FeatureCollection",
+        ...     "features": [{
+        ...         "type": "Feature",
+        ...         "geometry": {
+        ...             "type": "Polygon",
+        ...             "coordinates": [[...]]
+        ...         }
+        ...     }]
+        ... }
+        >>> road = features.create_road_feature("geojson", geojson=geojson_data)
+        >>>
         >>> # Update Features instance
         >>> features.create_road_feature("OSM", in_place=True)
         >>> features.road.status
@@ -186,11 +205,21 @@ class Features(FeaturesModel):
         See Also
         --------
         Features.create_road_feature_from_osm : Simpler method for OSM data
+        Features.create_road_feature_from_geodataframe : Simpler method for GeoDataFrame data
         """
+        # Normalize sources to list
+        sources_list = [sources] if isinstance(sources, str) else sources
+
+        # Convert geojson dict to Geojson model if needed
+        geojson_param = None
+        if geojson is not None:
+            if isinstance(geojson, dict):
+                geojson_param = Geojson.from_dict(geojson)
+            else:
+                geojson_param = geojson
+
         # Create API request
-        request = CreateRoadFeatureRequest(
-            sources=[sources] if isinstance(sources, str) else sources
-        )
+        request = CreateRoadFeatureRequest(sources=sources_list, geojson=geojson_param)
 
         # Call API
         response = _ROAD_FEATURE_API.create_road_feature(
@@ -198,7 +227,13 @@ class Features(FeaturesModel):
         )
 
         # Convert API model to SDK class
-        road_feature = RoadFeature(domain_id=self.domain_id, **response.model_dump())
+        # Keep the geojson field as-is since it's already a Geojson instance
+        response_dict = response.model_dump()
+        # The geojson field from response is already a Geojson instance, keep it
+        if hasattr(response, "geojson") and response.geojson is not None:
+            response_dict["geojson"] = response.geojson
+
+        road_feature = RoadFeature(domain_id=self.domain_id, **response_dict)
 
         if in_place:
             self.road = road_feature
@@ -239,6 +274,72 @@ class Features(FeaturesModel):
         Features.create_road_feature : More general method supporting multiple sources
         """
         return self.create_road_feature(sources="OSM", in_place=in_place)
+
+    def create_road_feature_from_geodataframe(
+        self,
+        gdf,
+        in_place: bool = False,
+    ) -> RoadFeature:
+        """Create road features for this domain from a GeoPandas GeoDataFrame.
+
+        This convenience method accepts a GeoDataFrame and converts it to GeoJSON
+        for road feature creation. Supports all coordinate systems including local CRS.
+
+        Parameters
+        ----------
+        gdf : geopandas.GeoDataFrame
+            GeoDataFrame containing Polygon or MultiPolygon geometries representing road areas.
+            The geometries will be clipped to the domain boundary.
+        in_place : bool, optional
+            If True, updates this Features instance with new data.
+            If False (default), leaves this instance unchanged.
+
+        Returns
+        -------
+        RoadFeature
+            The newly created road feature object
+
+        Examples
+        --------
+        >>> import geopandas as gpd
+        >>> from shapely.geometry import Polygon
+        >>> from fastfuels_sdk import Features
+        >>>
+        >>> features = Features.from_domain_id("abc123")
+        >>>
+        >>> # Create GeoDataFrame with road polygons
+        >>> gdf = gpd.GeoDataFrame({
+        ...     'geometry': [Polygon([
+        ...         (-120.0, 39.0),
+        ...         (-120.0, 39.1),
+        ...         (-119.9, 39.1),
+        ...         (-119.9, 39.0),
+        ...         (-120.0, 39.0)
+        ...     ])]
+        ... }, crs="EPSG:4326")
+        >>>
+        >>> # Create road features
+        >>> road = features.create_road_feature_from_geodataframe(gdf)
+        >>>
+        >>> # Update Features instance
+        >>> features.create_road_feature_from_geodataframe(gdf, in_place=True)
+        >>> features.road.status
+        "pending"
+
+        See Also
+        --------
+        Features.create_road_feature : More general method supporting multiple sources
+        Features.create_road_feature_from_osm : Simpler method for OSM data
+        """
+        import json
+
+        # Convert GeoDataFrame to GeoJSON dict
+        geojson_str = gdf.to_json()
+        geojson_dict = json.loads(geojson_str)
+
+        return self.create_road_feature(
+            sources="geojson", geojson=geojson_dict, in_place=in_place
+        )
 
     def create_water_feature(
         self,
@@ -336,16 +437,18 @@ class Features(FeaturesModel):
 class RoadFeature(RoadFeatureModel):
     """Road network features within a domain's spatial boundaries.
 
-    Represents road features extracted from various data sources (like OpenStreetMap)
-    within a domain. Road features include information about road locations,
-    types, and attributes.
+    Represents road features extracted from various data sources (OpenStreetMap
+    or user-provided GeoJSON/GeoDataFrame). Road features include information about
+    road locations, types, and attributes.
 
     Attributes
     ----------
     domain_id : str
         ID of the domain these roads belong to
     sources : list[RoadFeatureSource]
-        Data sources used to create these features
+        Data sources used to create these features ("OSM" or "geojson")
+    geojson : Geojson, optional
+        GeoJSON data if created from geojson source
     status : str, optional
         Current processing status ("pending", "running", "completed")
     created_on : datetime, optional
@@ -363,10 +466,15 @@ class RoadFeature(RoadFeatureModel):
     >>> if features.road:
     ...     road_features = features.road
 
-    Create new road features:
+    Create road features from OpenStreetMap:
     >>> road_features = features.create_road_feature("OSM")
     >>> print(road_features.status)
     'pending'
+
+    Create road features from GeoDataFrame:
+    >>> import geopandas as gpd
+    >>> gdf = gpd.read_file("roads.geojson")
+    >>> road_features = features.create_road_feature_from_geodataframe(gdf)
     """
 
     domain_id: str
@@ -397,12 +505,18 @@ class RoadFeature(RoadFeatureModel):
         >>> road.get(in_place=True)
         """
         response = _ROAD_FEATURE_API.get_road_feature(domain_id=self.domain_id)
+        response_dict = response.model_dump()
+
+        # The geojson field from response is already a Geojson instance, keep it
+        if hasattr(response, "geojson") and response.geojson is not None:
+            response_dict["geojson"] = response.geojson
+
         if in_place:
             # Update all attributes of current instance
-            for key, value in response.model_dump().items():
+            for key, value in response_dict.items():
                 setattr(self, key, value)
             return self
-        return RoadFeature(domain_id=self.domain_id, **response.model_dump())
+        return RoadFeature(domain_id=self.domain_id, **response_dict)
 
     def wait_until_completed(
         self,
@@ -631,12 +745,30 @@ class WaterFeature(WaterFeatureModel):
         return None
 
 
-def _convert_api_models_to_sdk_classes(domain_id, response_data: dict) -> dict:
-    """Convert API models to SDK classes with domain_id."""
+def _convert_api_models_to_sdk_classes(
+    domain_id, response_data: dict, response_obj=None
+) -> dict:
+    """Convert API models to SDK classes with domain_id.
+
+    Parameters
+    ----------
+    domain_id : str
+        Domain ID to attach to features
+    response_data : dict
+        Dict representation of the response
+    response_obj : optional
+        Original response object (to preserve complex nested models like Geojson)
+    """
     if "road" in response_data and response_data["road"]:
-        response_data["road"] = RoadFeature(
-            domain_id=domain_id, **response_data["road"]
-        )
+        road_data = response_data["road"]
+        # If we have the original response object, use its geojson field directly
+        if response_obj and hasattr(response_obj, "road") and response_obj.road:
+            if (
+                hasattr(response_obj.road, "geojson")
+                and response_obj.road.geojson is not None
+            ):
+                road_data["geojson"] = response_obj.road.geojson
+        response_data["road"] = RoadFeature(domain_id=domain_id, **road_data)
     if "water" in response_data and response_data["water"]:
         response_data["water"] = WaterFeature(
             domain_id=domain_id, **response_data["water"]

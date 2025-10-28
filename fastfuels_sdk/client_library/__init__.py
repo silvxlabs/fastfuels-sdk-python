@@ -71,6 +71,7 @@ __all__ = [
     "GeoJSONStyleProperties",
     "GeoJsonCRS",
     "GeoJsonCRSProperties",
+    "Geojson",
     "Geometry",
     "GridAttributeMetadataResponse",
     "Grids",
@@ -223,6 +224,7 @@ from fastfuels_sdk.client_library.models.geo_json_feature_collection import GeoJ
 from fastfuels_sdk.client_library.models.geo_json_style_properties import GeoJSONStyleProperties as GeoJSONStyleProperties
 from fastfuels_sdk.client_library.models.geo_json_crs import GeoJsonCRS as GeoJsonCRS
 from fastfuels_sdk.client_library.models.geo_json_crs_properties import GeoJsonCRSProperties as GeoJsonCRSProperties
+from fastfuels_sdk.client_library.models.geojson import Geojson as Geojson
 from fastfuels_sdk.client_library.models.geometry import Geometry as Geometry
 from fastfuels_sdk.client_library.models.grid_attribute_metadata_response import GridAttributeMetadataResponse as GridAttributeMetadataResponse
 from fastfuels_sdk.client_library.models.grids import Grids as Grids
@@ -315,3 +317,4 @@ from fastfuels_sdk.client_library.models.validation_error import ValidationError
 from fastfuels_sdk.client_library.models.validation_error_loc_inner import ValidationErrorLocInner as ValidationErrorLocInner
 from fastfuels_sdk.client_library.models.water_feature import WaterFeature as WaterFeature
 from fastfuels_sdk.client_library.models.water_feature_source import WaterFeatureSource as WaterFeatureSource
+

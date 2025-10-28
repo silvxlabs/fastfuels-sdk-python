@@ -18,17 +18,19 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
+from fastfuels_sdk.client_library.models.geojson import Geojson
 from fastfuels_sdk.client_library.models.road_feature_source import RoadFeatureSource
 from typing import Optional, Set
 from typing_extensions import Self
 
 class CreateRoadFeatureRequest(BaseModel):
     """
-    CreateRoadFeatureRequest
+    Request model for creating road features with validation.
     """ # noqa: E501
     sources: List[RoadFeatureSource] = Field(description="List of sources of road features")
-    __properties: ClassVar[List[str]] = ["sources"]
+    geojson: Optional[Geojson] = None
+    __properties: ClassVar[List[str]] = ["sources", "geojson"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -69,6 +71,14 @@ class CreateRoadFeatureRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of geojson
+        if self.geojson:
+            _dict['geojson'] = self.geojson.to_dict()
+        # set to None if geojson (nullable) is None
+        # and model_fields_set contains the field
+        if self.geojson is None and "geojson" in self.model_fields_set:
+            _dict['geojson'] = None
+
         return _dict
 
     @classmethod
@@ -81,7 +91,8 @@ class CreateRoadFeatureRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "sources": obj.get("sources")
+            "sources": obj.get("sources"),
+            "geojson": Geojson.from_dict(obj["geojson"]) if obj.get("geojson") is not None else None
         })
         return _obj
 
