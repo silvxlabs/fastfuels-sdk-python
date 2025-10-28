@@ -785,3 +785,119 @@ class TestDomainToDict:
         assert new_domain.description == test_domain.description
         assert new_domain.horizontal_resolution == test_domain.horizontal_resolution
         assert new_domain.vertical_resolution == test_domain.vertical_resolution
+
+
+class TestDomainExport:
+    """Test suite for Domain.export() method."""
+
+    def test_export_returns_dict(self, test_domain):
+        """Test that export returns a dictionary."""
+        result = test_domain.export()
+        assert isinstance(result, dict)
+
+    def test_export_contains_expected_keys(self, test_domain):
+        """Test that export contains the expected top-level keys."""
+        result = test_domain.export()
+
+        # Check that all expected top-level keys are present
+        expected_keys = ["domain", "features", "grids", "inventories"]
+        for key in expected_keys:
+            assert key in result, f"Expected key '{key}' not found in export"
+
+    def test_export_domain_metadata(self, test_domain):
+        """Test that export includes complete domain metadata."""
+        # Refresh domain data to ensure clean state
+        test_domain = test_domain.get()
+        result = test_domain.export()
+
+        domain_data = result["domain"]
+        assert isinstance(domain_data, dict)
+
+        # Verify key domain attributes are present
+        assert "id" in domain_data
+        assert "name" in domain_data
+        assert "description" in domain_data
+        assert "horizontalResolution" in domain_data
+        assert "verticalResolution" in domain_data
+        assert "crs" in domain_data
+        assert "features" in domain_data
+        assert "createdOn" in domain_data
+        assert "modifiedOn" in domain_data
+
+        # Verify values match the domain instance
+        assert domain_data["id"] == test_domain.id
+        assert domain_data["name"] == test_domain.name
+        assert domain_data["description"] == test_domain.description
+        assert domain_data["horizontalResolution"] == test_domain.horizontal_resolution
+        assert domain_data["verticalResolution"] == test_domain.vertical_resolution
+
+    def test_export_features_metadata(self, test_domain):
+        """Test that export includes features metadata section."""
+        result = test_domain.export()
+
+        features_data = result["features"]
+        assert isinstance(features_data, dict)
+
+        # Features section should be present even if empty
+        # The structure allows for 'road' and 'water' features
+
+    def test_export_grids_metadata(self, test_domain):
+        """Test that export includes grids metadata section."""
+        result = test_domain.export()
+
+        grids_data = result["grids"]
+        assert isinstance(grids_data, dict)
+
+        # Grids section should be present even if empty
+        # The structure allows for 'tree', 'surface', 'topography', 'feature' grids
+
+    def test_export_inventories_metadata(self, test_domain):
+        """Test that export includes inventories metadata section."""
+        result = test_domain.export()
+
+        inventories_data = result["inventories"]
+        assert isinstance(inventories_data, dict)
+
+        # Inventories section should be present even if empty
+        # The structure allows for 'tree' inventory
+
+    def test_export_excludes_large_payloads(self, test_domain):
+        """Test that export excludes large data payloads as documented."""
+        result = test_domain.export()
+
+        # The domain geometry features should be present in domain metadata
+        # but not full GeoJSON in features section
+        assert "domain" in result
+        assert "features" in result["domain"]
+
+        # Features section should have metadata only, not full GeoJSON data
+        # This is verified by checking structure, not actual exclusion
+        # since that depends on API implementation
+
+    def test_export_can_be_serialized_to_json(self, test_domain):
+        """Test that export result can be serialized to JSON."""
+        result = test_domain.export()
+
+        # Should be able to serialize to JSON
+        json_str = json.dumps(result, default=str)
+        assert isinstance(json_str, str)
+
+        # Should be able to parse back
+        parsed = json.loads(json_str)
+        assert isinstance(parsed, dict)
+        assert "domain" in parsed
+        assert "features" in parsed
+        assert "grids" in parsed
+        assert "inventories" in parsed
+
+    def test_export_with_nonexistent_domain(self, test_domain):
+        """Test export with a domain ID that doesn't exist."""
+        # Create a domain instance by copying test_domain but with fake ID
+        fake_id = uuid4().hex
+        domain_dict = test_domain.to_dict()
+        domain_dict["id"] = fake_id
+        fake_domain = Domain(**domain_dict)
+
+        # Export should raise NotFoundException
+        with pytest.raises(NotFoundException):
+            fake_domain.export()

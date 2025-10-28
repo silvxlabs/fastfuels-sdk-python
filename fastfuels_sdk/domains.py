@@ -467,6 +467,45 @@ class Domain(DomainModel):
 
         return gdf
 
+    def export(self) -> dict:
+        """Export all domain metadata including features, grids, and inventories.
+
+        Returns domain configuration and metadata for all resources without including
+        large data payloads like grid arrays, GeoJSON features, or tree records.
+
+        Returns
+        -------
+        dict
+            Dictionary containing:
+            - domain: Full domain metadata (id, name, description, resolutions, CRS, etc.)
+            - features: Feature metadata excluding GeoJSON data
+            - grids: Grid metadata excluding array data
+            - inventories: Inventory metadata excluding tree records
+
+        Examples
+        --------
+        Export domain metadata:
+        >>> domain = Domain.from_id("abc123")
+        >>> export_data = domain.export()
+        >>> print(export_data['domain']['name'])
+        'My Domain'
+        >>> print(export_data['grids']['tree']['status'])
+        'completed'
+
+        Save export to file:
+        >>> export_data = domain.export()
+        >>> with open('domain_export.json', 'w') as f:
+        ...     json.dump(export_data, f, indent=2)
+
+        Notes
+        -----
+        Large data payloads are excluded to keep response size manageable:
+        - Feature GeoJSON: Use dedicated feature export endpoints
+        - Grid array data: Use grid export endpoints
+        - Tree inventory records: Use inventory export endpoints
+        """
+        return _DOMAIN_API.export_domain_data(domain_id=self.id)
+
     def delete(self) -> None:
         """Delete an existing domain resource based on the domain ID.
 
