@@ -12,7 +12,6 @@
     Do not edit the class manually.
 """  # noqa: E501
 
-
 # import models into model package
 from fastfuels_sdk.client_library.models.access import Access
 from fastfuels_sdk.client_library.models.application import Application
@@ -43,6 +42,7 @@ from fastfuels_sdk.client_library.models.geo_json_feature_collection import GeoJ
 from fastfuels_sdk.client_library.models.geo_json_style_properties import GeoJSONStyleProperties
 from fastfuels_sdk.client_library.models.geo_json_crs import GeoJsonCRS
 from fastfuels_sdk.client_library.models.geo_json_crs_properties import GeoJsonCRSProperties
+from fastfuels_sdk.client_library.models.geojson import Geojson
 from fastfuels_sdk.client_library.models.geometry import Geometry
 from fastfuels_sdk.client_library.models.grid_attribute_metadata_response import GridAttributeMetadataResponse
 from fastfuels_sdk.client_library.models.grids import Grids
@@ -135,3 +135,4 @@ from fastfuels_sdk.client_library.models.validation_error import ValidationError
 from fastfuels_sdk.client_library.models.validation_error_loc_inner import ValidationErrorLocInner
 from fastfuels_sdk.client_library.models.water_feature import WaterFeature
 from fastfuels_sdk.client_library.models.water_feature_source import WaterFeatureSource
+

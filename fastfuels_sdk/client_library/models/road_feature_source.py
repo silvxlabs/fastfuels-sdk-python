@@ -27,6 +27,7 @@ class RoadFeatureSource(str, Enum):
     allowed enum values
     """
     OSM = 'OSM'
+    GEOJSON = 'geojson'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
