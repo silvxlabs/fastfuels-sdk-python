@@ -591,6 +591,33 @@ class TestDomainToJson:
             assert "one_of_schemas" not in geometry
             assert "discriminator_value_class_map" not in geometry
 
+    def test_to_json_datetime_serialization(self, test_domain):
+        """Test that datetime fields are properly serialized as ISO 8601 strings."""
+        from datetime import datetime
+
+        result = test_domain.to_json()
+        parsed = json.loads(result)
+
+        # Verify datetime fields exist and are strings (not datetime objects)
+        assert "createdOn" in parsed
+        assert "modifiedOn" in parsed
+        assert isinstance(parsed["createdOn"], str)
+        assert isinstance(parsed["modifiedOn"], str)
+
+        # Verify they are valid ISO 8601 format by parsing them back
+        created_dt = datetime.fromisoformat(parsed["createdOn"].replace("Z", "+00:00"))
+        modified_dt = datetime.fromisoformat(
+            parsed["modifiedOn"].replace("Z", "+00:00")
+        )
+
+        assert isinstance(created_dt, datetime)
+        assert isinstance(modified_dt, datetime)
+
+        # Verify the parsed datetime values match the original (accounting for timezone)
+        # Compare timestamp values to handle timezone differences
+        assert abs((created_dt.timestamp() - test_domain.created_on.timestamp())) < 1
+        assert abs((modified_dt.timestamp() - test_domain.modified_on.timestamp())) < 1
+
 
 class TestDomainToGeoDataFrame:
     """Test suite for Domain.to_geodataframe() method."""
