@@ -148,17 +148,28 @@ class Inventories(InventoriesModel):
             - seed: Integer for reproducible generation (optional)
 
         modifications : dict or list[dict], optional
-            List of modifications to apply. Each modification has:
-            - conditions: List of conditions that must be met
-            - actions: List of actions to apply when conditions are met
+            Rules for modifying or removing tree attributes. Each modification has:
+            - conditions: List of conditions that trees must meet
+            - actions: List of actions to apply to matching trees
 
-            Example:
+            Example - Modify attribute:
             ```python
             {
-                "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
-                "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+                "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+                "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}]
             }
             ```
+
+            Example - Remove trees:
+            ```python
+            {
+                "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
+                "actions": [{"attribute": "all", "modifier": "remove"}]
+            }
+            ```
+
+            Available attributes: HT (height), DIA (diameter), CR (crown ratio), SPCD (species code)
+            Available modifiers: multiply, divide, add, subtract, replace, remove
 
         treatments : dict or list[dict], optional
             List of silvicultural treatments to apply. Supports:
@@ -220,8 +231,17 @@ class Inventories(InventoriesModel):
         >>> inventory = inventories.create_tree_inventory(
         ...     sources="TreeMap",
         ...     modifications={
-        ...         "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
-        ...         "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+        ...         "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+        ...         "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}]
+        ...     }
+        ... )
+
+        Remove small trees:
+        >>> inventory = inventories.create_tree_inventory(
+        ...     sources="TreeMap",
+        ...     modifications={
+        ...         "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
+        ...         "actions": [{"attribute": "all", "modifier": "remove"}]
         ...     }
         ... )
 
@@ -314,23 +334,33 @@ class Inventories(InventoriesModel):
             - "Meta2024": Meta's 2024 global canopy height map at 1-meter resolution
 
         modifications : dict or list[dict], optional
-            Rules for modifying tree attributes. Each modification includes:
+            Rules for modifying or removing tree attributes. Each modification includes:
             - conditions: List of criteria that trees must meet
             - actions: Changes to apply to matching trees
 
-            Example - Reduce height of tall trees:
+            Example - Modify attribute:
             ```python
             {
-                "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
-                "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+                "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+                "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}]
             }
             ```
 
-            Available fields:
+            Example - Remove trees:
+            ```python
+            {
+                "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
+                "actions": [{"attribute": "all", "modifier": "remove"}]
+            }
+            ```
+
+            Available attributes:
             - HT: Height (meters)
             - DIA: Diameter at breast height (centimeters)
             - CR: Crown ratio (0-1)
             - SPCD: Species code (integer)
+
+            Available modifiers: multiply, divide, add, subtract, replace, remove
 
         treatments : dict or list[dict], optional
             Silvicultural treatments to apply. Supports:
@@ -395,8 +425,16 @@ class Inventories(InventoriesModel):
         Reduce height of tall trees:
         >>> tree_inventory = inventories.create_tree_inventory_from_treemap(
         ...     modifications={
-        ...         "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
-        ...         "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+        ...         "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+        ...         "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}]
+        ...     }
+        ... )
+
+        Remove small trees:
+        >>> tree_inventory = inventories.create_tree_inventory_from_treemap(
+        ...     modifications={
+        ...         "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
+        ...         "actions": [{"attribute": "all", "modifier": "remove"}]
         ...     }
         ... )
 
@@ -418,8 +456,8 @@ class Inventories(InventoriesModel):
         >>> tree_inventory = inventories.create_tree_inventory_from_treemap(
         ...     seed=42,
         ...     modifications={
-        ...         "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
-        ...         "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+        ...         "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+        ...         "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}]
         ...     },
         ...     treatments={
         ...         "method": "proportionalThinning",
