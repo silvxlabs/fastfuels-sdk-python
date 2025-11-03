@@ -46,6 +46,71 @@ road = features.create_road_feature_from_osm(in_place=True)
 assert features.road is road
 ```
 
+### Create Road Features from GeoJSON/GeoDataFrame
+
+You can also create road features from your own GeoJSON data or GeoPandas GeoDataFrame. This is particularly useful for:
+- Custom road data not available in OSM
+- Local coordinate system domains (OSM is not supported for local CRS)
+- Integration with existing geospatial workflows
+
+#### Using GeoJSON
+
+```python
+# Define your road areas as GeoJSON
+geojson_data = {
+    "type": "FeatureCollection",
+    "features": [{
+        "type": "Feature",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [[
+                [-120.5, 39.5],
+                [-120.5, 39.6],
+                [-120.4, 39.6],
+                [-120.4, 39.5],
+                [-120.5, 39.5]
+            ]]
+        },
+        "properties": {}
+    }]
+}
+
+# Create road features from GeoJSON
+road = features.create_road_feature(sources="geojson", geojson=geojson_data)
+```
+
+#### Using GeoPandas GeoDataFrame
+
+```python
+import geopandas as gpd
+from shapely.geometry import Polygon
+
+# Create a GeoDataFrame with road polygons
+polygon = Polygon([
+    (-120.5, 39.5),
+    (-120.5, 39.6),
+    (-120.4, 39.6),
+    (-120.4, 39.5),
+    (-120.5, 39.5)
+])
+
+gdf = gpd.GeoDataFrame({
+    'geometry': [polygon],
+    'name': ['highway_1']
+}, crs="EPSG:4326")
+
+# Create road features from GeoDataFrame
+road = features.create_road_feature_from_geodataframe(gdf)
+
+# Or with in_place=True
+road = features.create_road_feature_from_geodataframe(gdf, in_place=True)
+```
+
+!!! note "GeoJSON Requirements"
+    - Must contain Polygon or MultiPolygon geometries (area-based features)
+    - Geometries will be automatically clipped to the domain boundary
+    - For non-local CRS, geometries are transformed to match the domain's CRS
+
 ### Wait for Processing
 
 Road feature creation happens asynchronously. Wait for processing to complete:

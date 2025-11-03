@@ -12,7 +12,6 @@
     Do not edit the class manually.
 """  # noqa: E501
 
-
 # import models into model package
 from fastfuels_sdk.client_library.models.access import Access
 from fastfuels_sdk.client_library.models.application import Application
@@ -43,6 +42,7 @@ from fastfuels_sdk.client_library.models.geo_json_feature_collection import GeoJ
 from fastfuels_sdk.client_library.models.geo_json_style_properties import GeoJSONStyleProperties
 from fastfuels_sdk.client_library.models.geo_json_crs import GeoJsonCRS
 from fastfuels_sdk.client_library.models.geo_json_crs_properties import GeoJsonCRSProperties
+from fastfuels_sdk.client_library.models.geojson import Geojson
 from fastfuels_sdk.client_library.models.geometry import Geometry
 from fastfuels_sdk.client_library.models.grid_attribute_metadata_response import GridAttributeMetadataResponse
 from fastfuels_sdk.client_library.models.grids import Grids
@@ -62,6 +62,7 @@ from fastfuels_sdk.client_library.models.multi_polygon import MultiPolygon
 from fastfuels_sdk.client_library.models.operator import Operator
 from fastfuels_sdk.client_library.models.point import Point
 from fastfuels_sdk.client_library.models.polygon import Polygon
+from fastfuels_sdk.client_library.models.processing_error import ProcessingError
 from fastfuels_sdk.client_library.models.road_feature import RoadFeature
 from fastfuels_sdk.client_library.models.road_feature_source import RoadFeatureSource
 from fastfuels_sdk.client_library.models.scope import Scope
@@ -127,7 +128,6 @@ from fastfuels_sdk.client_library.models.tree_inventory_treatment import TreeInv
 from fastfuels_sdk.client_library.models.tree_inventory_treatment_directional_thinning import TreeInventoryTreatmentDirectionalThinning
 from fastfuels_sdk.client_library.models.tree_inventory_treatment_proportional_thinning import TreeInventoryTreatmentProportionalThinning
 from fastfuels_sdk.client_library.models.tree_map_source import TreeMapSource
-from fastfuels_sdk.client_library.models.tree_map_source_canopy_height_map_configuration import TreeMapSourceCanopyHeightMapConfiguration
 from fastfuels_sdk.client_library.models.tree_map_version import TreeMapVersion
 from fastfuels_sdk.client_library.models.update_domain_request import UpdateDomainRequest
 from fastfuels_sdk.client_library.models.upload_response import UploadResponse
@@ -135,3 +135,4 @@ from fastfuels_sdk.client_library.models.validation_error import ValidationError
 from fastfuels_sdk.client_library.models.validation_error_loc_inner import ValidationErrorLocInner
 from fastfuels_sdk.client_library.models.water_feature import WaterFeature
 from fastfuels_sdk.client_library.models.water_feature_source import WaterFeatureSource
+

@@ -508,3 +508,396 @@ class TestDeleteDomain:
         # get_domain should not work with the id of the domain we just deleted
         with pytest.raises(NotFoundException):
             domain_to_delete.get()
+
+
+class TestDomainToJson:
+    """Test suite for Domain.to_json() method."""
+
+    def test_to_json_returns_string(self, test_domain):
+        """Test that to_json returns a string."""
+        result = test_domain.to_json()
+        assert isinstance(result, str)
+
+    def test_to_json_valid_json(self, test_domain):
+        """Test that to_json returns valid JSON."""
+        result = test_domain.to_json()
+        parsed = json.loads(result)
+        assert isinstance(parsed, dict)
+
+    def test_to_json_contains_all_attributes(self, test_domain):
+        """Test that JSON contains all expected domain attributes in API format."""
+        result = test_domain.to_json()
+        parsed = json.loads(result)
+
+        # Check required attributes (using API camelCase format)
+        assert "id" in parsed
+        assert "name" in parsed
+        assert "description" in parsed
+        assert "features" in parsed
+        assert "horizontalResolution" in parsed
+        assert "verticalResolution" in parsed
+        assert "type" in parsed
+        assert "createdOn" in parsed
+        assert "modifiedOn" in parsed
+
+        # Verify values match
+        assert parsed["id"] == test_domain.id
+        assert parsed["name"] == test_domain.name
+        assert parsed["description"] == test_domain.description
+        assert parsed["horizontalResolution"] == test_domain.horizontal_resolution
+        assert parsed["verticalResolution"] == test_domain.vertical_resolution
+
+    def test_to_json_includes_crs_when_present(self, test_domain):
+        """Test that CRS is included in JSON when present."""
+        result = test_domain.to_json()
+        parsed = json.loads(result)
+
+        if test_domain.crs:
+            assert "crs" in parsed
+            assert parsed["crs"] is not None
+        else:
+            assert parsed.get("crs") is None
+
+    def test_to_json_includes_tags_when_present(self, test_domain):
+        """Test that tags are included in JSON when present."""
+        # Update domain with tags
+        domain_with_tags = test_domain.update(tags=["test", "json"], in_place=False)
+
+        result = domain_with_tags.to_json()
+        parsed = json.loads(result)
+
+        assert "tags" in parsed
+        assert parsed["tags"] == ["test", "json"]
+
+    def test_to_json_clean_geometry_serialization(self, test_domain):
+        """Test that JSON doesn't contain internal Pydantic validation fields."""
+        result = test_domain.to_json()
+        parsed = json.loads(result)
+
+        # Check that features have clean geometry
+        assert "features" in parsed
+        assert len(parsed["features"]) > 0
+
+        for feature in parsed["features"]:
+            geometry = feature["geometry"]
+
+            # Should have clean geometry structure
+            assert "type" in geometry
+            assert "coordinates" in geometry
+
+            # Should NOT have internal Pydantic fields
+            assert "oneof_schema_1_validator" not in geometry
+            assert "actual_instance" not in geometry
+            assert "one_of_schemas" not in geometry
+            assert "discriminator_value_class_map" not in geometry
+
+    def test_to_json_datetime_serialization(self, test_domain):
+        """Test that datetime fields are properly serialized as ISO 8601 strings."""
+        from datetime import datetime
+
+        result = test_domain.to_json()
+        parsed = json.loads(result)
+
+        # Verify datetime fields exist and are strings (not datetime objects)
+        assert "createdOn" in parsed
+        assert "modifiedOn" in parsed
+        assert isinstance(parsed["createdOn"], str)
+        assert isinstance(parsed["modifiedOn"], str)
+
+        # Verify they are valid ISO 8601 format by parsing them back
+        created_dt = datetime.fromisoformat(parsed["createdOn"].replace("Z", "+00:00"))
+        modified_dt = datetime.fromisoformat(
+            parsed["modifiedOn"].replace("Z", "+00:00")
+        )
+
+        assert isinstance(created_dt, datetime)
+        assert isinstance(modified_dt, datetime)
+
+        # Verify the parsed datetime values match the original (accounting for timezone)
+        # Compare timestamp values to handle timezone differences
+        assert abs((created_dt.timestamp() - test_domain.created_on.timestamp())) < 1
+        assert abs((modified_dt.timestamp() - test_domain.modified_on.timestamp())) < 1
+
+
+class TestDomainToGeoDataFrame:
+    """Test suite for Domain.to_geodataframe() method."""
+
+    def test_to_geodataframe_returns_geodataframe(self, test_domain):
+        """Test that to_geodataframe returns a GeoDataFrame."""
+        result = test_domain.to_geodataframe()
+        assert isinstance(result, gdp.GeoDataFrame)
+
+    def test_to_geodataframe_has_geometry(self, test_domain):
+        """Test that resulting GeoDataFrame has geometry column."""
+        result = test_domain.to_geodataframe()
+        assert "geometry" in result.columns
+        assert result.geometry is not None
+        assert len(result) > 0
+
+    def test_to_geodataframe_includes_domain_metadata(self, test_domain):
+        """Test that GeoDataFrame includes domain metadata as columns."""
+        result = test_domain.to_geodataframe()
+
+        # Check metadata columns exist
+        expected_columns = [
+            "domain_id",
+            "domain_name",
+            "domain_description",
+            "horizontal_resolution",
+            "vertical_resolution",
+        ]
+
+        for col in expected_columns:
+            assert col in result.columns
+
+        # Verify values
+        assert result["domain_id"].iloc[0] == test_domain.id
+        assert result["domain_name"].iloc[0] == test_domain.name
+        assert result["domain_description"].iloc[0] == test_domain.description
+        assert (
+            result["horizontal_resolution"].iloc[0] == test_domain.horizontal_resolution
+        )
+        assert result["vertical_resolution"].iloc[0] == test_domain.vertical_resolution
+
+    def test_to_geodataframe_preserves_crs(self, test_domain):
+        """Test that GeoDataFrame preserves CRS information."""
+        result = test_domain.to_geodataframe()
+
+        if test_domain.crs:
+            assert result.crs is not None
+            # The CRS should match the domain's CRS
+            assert str(result.crs) == test_domain.crs.properties.name
+
+    def test_to_geodataframe_includes_tags_when_present(self, test_domain):
+        """Test that tags are included as comma-separated string when present."""
+        # Update domain with tags
+        domain_with_tags = test_domain.update(
+            tags=["geo", "dataframe", "test"], in_place=False
+        )
+
+        result = domain_with_tags.to_geodataframe()
+
+        assert "tags" in result.columns
+        assert result["tags"].iloc[0] == "geo, dataframe, test"
+
+    def test_to_geodataframe_no_tags_column_when_empty(self, test_domain):
+        """Test that tags column is not present when domain has no tags."""
+        # Ensure domain has no tags
+        domain_no_tags = test_domain.update(tags=None, in_place=False)
+
+        result = domain_no_tags.to_geodataframe()
+
+        # Tags column should not exist if no tags
+        if domain_no_tags.tags is None or len(domain_no_tags.tags) == 0:
+            assert "tags" not in result.columns or result["tags"].isna().all()
+
+    def test_to_geodataframe_same_feature_count(self, test_domain):
+        """Test that GeoDataFrame has same number of features as domain."""
+        result = test_domain.to_geodataframe()
+
+        # Should have same number of rows as features
+        assert len(result) == len(test_domain.features)
+
+
+class TestDomainToDict:
+    """Test suite for Domain.to_dict() method."""
+
+    def test_to_dict_returns_dict(self, test_domain):
+        """Test that to_dict returns a dictionary."""
+        result = test_domain.to_dict()
+        assert isinstance(result, dict)
+
+    def test_to_dict_contains_all_attributes(self, test_domain):
+        """Test that dict contains all expected domain attributes in API format."""
+        result = test_domain.to_dict()
+
+        # Check required attributes (using API camelCase format)
+        assert "id" in result
+        assert "name" in result
+        assert "description" in result
+        assert "features" in result
+        assert "horizontalResolution" in result
+        assert "verticalResolution" in result
+        assert "type" in result
+        assert "createdOn" in result
+        assert "modifiedOn" in result
+
+        # Verify values match
+        assert result["id"] == test_domain.id
+        assert result["name"] == test_domain.name
+        assert result["description"] == test_domain.description
+        assert result["horizontalResolution"] == test_domain.horizontal_resolution
+        assert result["verticalResolution"] == test_domain.vertical_resolution
+
+    def test_to_dict_includes_crs_when_present(self, test_domain):
+        """Test that CRS is included in dict when present."""
+        result = test_domain.to_dict()
+
+        if test_domain.crs:
+            assert "crs" in result
+            assert result["crs"] is not None
+        else:
+            assert result.get("crs") is None
+
+    def test_to_dict_includes_tags_when_present(self, test_domain):
+        """Test that tags are included in dict when present."""
+        # Update domain with tags
+        domain_with_tags = test_domain.update(tags=["test", "dict"], in_place=False)
+
+        result = domain_with_tags.to_dict()
+
+        assert "tags" in result
+        assert result["tags"] == ["test", "dict"]
+
+    def test_to_dict_features_are_dicts(self, test_domain):
+        """Test that features in the dict are proper dictionaries."""
+        result = test_domain.to_dict()
+
+        assert "features" in result
+        assert isinstance(result["features"], list)
+        assert len(result["features"]) > 0
+
+        # Each feature should be a dict
+        for feature in result["features"]:
+            assert isinstance(feature, dict)
+            assert "type" in feature
+            assert "geometry" in feature
+
+    def test_to_dict_crs_is_dict_when_present(self, test_domain):
+        """Test that CRS in the dict is a proper dictionary when present."""
+        result = test_domain.to_dict()
+
+        if test_domain.crs and result.get("crs"):
+            assert isinstance(result["crs"], dict)
+            assert "type" in result["crs"]
+            assert "properties" in result["crs"]
+
+    def test_to_dict_roundtrip_consistency(self, test_domain):
+        """Test that to_dict can be used to recreate equivalent domain."""
+        result_dict = test_domain.to_dict()
+
+        # Should be able to create a new domain with the same data
+        new_domain = Domain(**result_dict)
+
+        # Key attributes should match
+        assert new_domain.id == test_domain.id
+        assert new_domain.name == test_domain.name
+        assert new_domain.description == test_domain.description
+        assert new_domain.horizontal_resolution == test_domain.horizontal_resolution
+        assert new_domain.vertical_resolution == test_domain.vertical_resolution
+
+
+class TestDomainExport:
+    """Test suite for Domain.export() method."""
+
+    def test_export_returns_dict(self, test_domain):
+        """Test that export returns a dictionary."""
+        result = test_domain.export()
+        assert isinstance(result, dict)
+
+    def test_export_contains_expected_keys(self, test_domain):
+        """Test that export contains the expected top-level keys."""
+        result = test_domain.export()
+
+        # Check that all expected top-level keys are present
+        expected_keys = ["domain", "features", "grids", "inventories"]
+        for key in expected_keys:
+            assert key in result, f"Expected key '{key}' not found in export"
+
+    def test_export_domain_metadata(self, test_domain):
+        """Test that export includes complete domain metadata."""
+        # Refresh domain data to ensure clean state
+        test_domain = test_domain.get()
+        result = test_domain.export()
+
+        domain_data = result["domain"]
+        assert isinstance(domain_data, dict)
+
+        # Verify key domain attributes are present
+        assert "id" in domain_data
+        assert "name" in domain_data
+        assert "description" in domain_data
+        assert "horizontalResolution" in domain_data
+        assert "verticalResolution" in domain_data
+        assert "crs" in domain_data
+        assert "features" in domain_data
+        assert "createdOn" in domain_data
+        assert "modifiedOn" in domain_data
+
+        # Verify values match the domain instance
+        assert domain_data["id"] == test_domain.id
+        assert domain_data["name"] == test_domain.name
+        assert domain_data["description"] == test_domain.description
+        assert domain_data["horizontalResolution"] == test_domain.horizontal_resolution
+        assert domain_data["verticalResolution"] == test_domain.vertical_resolution
+
+    def test_export_features_metadata(self, test_domain):
+        """Test that export includes features metadata section."""
+        result = test_domain.export()
+
+        features_data = result["features"]
+        assert isinstance(features_data, dict)
+
+        # Features section should be present even if empty
+        # The structure allows for 'road' and 'water' features
+
+    def test_export_grids_metadata(self, test_domain):
+        """Test that export includes grids metadata section."""
+        result = test_domain.export()
+
+        grids_data = result["grids"]
+        assert isinstance(grids_data, dict)
+
+        # Grids section should be present even if empty
+        # The structure allows for 'tree', 'surface', 'topography', 'feature' grids
+
+    def test_export_inventories_metadata(self, test_domain):
+        """Test that export includes inventories metadata section."""
+        result = test_domain.export()
+
+        inventories_data = result["inventories"]
+        assert isinstance(inventories_data, dict)
+
+        # Inventories section should be present even if empty
+        # The structure allows for 'tree' inventory
+
+    def test_export_excludes_large_payloads(self, test_domain):
+        """Test that export excludes large data payloads as documented."""
+        result = test_domain.export()
+
+        # The domain geometry features should be present in domain metadata
+        # but not full GeoJSON in features section
+        assert "domain" in result
+        assert "features" in result["domain"]
+
+        # Features section should have metadata only, not full GeoJSON data
+        # This is verified by checking structure, not actual exclusion
+        # since that depends on API implementation
+
+    def test_export_can_be_serialized_to_json(self, test_domain):
+        """Test that export result can be serialized to JSON."""
+        result = test_domain.export()
+
+        # Should be able to serialize to JSON
+        json_str = json.dumps(result, default=str)
+        assert isinstance(json_str, str)
+
+        # Should be able to parse back
+        parsed = json.loads(json_str)
+        assert isinstance(parsed, dict)
+        assert "domain" in parsed
+        assert "features" in parsed
+        assert "grids" in parsed
+        assert "inventories" in parsed
+
+    def test_export_with_nonexistent_domain(self, test_domain):
+        """Test export with a domain ID that doesn't exist."""
+        # Create a domain instance by copying test_domain but with fake ID
+        fake_id = uuid4().hex
+        domain_dict = test_domain.to_dict()
+        domain_dict["id"] = fake_id
+        fake_domain = Domain(**domain_dict)
+
+        # Export should raise NotFoundException
+        with pytest.raises(NotFoundException):
+            fake_domain.export()

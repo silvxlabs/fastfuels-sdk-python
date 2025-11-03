@@ -28,6 +28,14 @@ tree_inventory = inventories.create_tree_inventory_from_treemap(
 )
 ```
 
+To use high-resolution canopy height data for improved tree height estimates:
+
+```python
+tree_inventory = inventories.create_tree_inventory_from_treemap(
+    canopy_height_map_source="Meta2024"
+)
+```
+
 ## How to Upload Your Own Tree Data
 
 If you have your own tree measurements, you can upload them from a CSV file:
@@ -62,8 +70,8 @@ To adjust tree measurements based on conditions:
 # Reduce height of all trees over 20m by 10%
 tree_inventory = inventories.create_tree_inventory_from_treemap(
     modifications={
-        "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
-        "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+        "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+        "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}]
     }
 )
 ```
@@ -73,6 +81,36 @@ To remove trees from roads and water bodies:
 ```python
 tree_inventory = inventories.create_tree_inventory_from_treemap(
     feature_masks=["road", "water"]
+)
+```
+
+To remove trees based on attribute conditions:
+
+```python
+# Remove all trees with diameter less than 10cm
+tree_inventory = inventories.create_tree_inventory_from_treemap(
+    modifications={
+        "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
+        "actions": [{"attribute": "all", "modifier": "remove"}]
+    }
+)
+```
+
+You can also combine multiple modifications, including removal:
+
+```python
+# Reduce height of tall trees AND remove small trees
+tree_inventory = inventories.create_tree_inventory_from_treemap(
+    modifications=[
+        {
+            "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+            "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}]
+        },
+        {
+            "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
+            "actions": [{"attribute": "all", "modifier": "remove"}]
+        }
+    ]
 )
 ```
 
@@ -149,8 +187,8 @@ If you need to create an inventory with multiple modifications:
 tree_inventory = inventories.create_tree_inventory_from_treemap(
     seed=42,
     modifications={
-        "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
-        "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+        "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+        "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}]
     },
     treatments={
         "method": "proportionalThinning",

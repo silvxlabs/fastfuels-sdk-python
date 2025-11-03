@@ -10,33 +10,28 @@ from typing import Any
 from urllib.request import urlretrieve
 
 # Internal imports
-from fastfuels_sdk.api import get_client
-from fastfuels_sdk.client_library.models import Export as ExportModel
-from fastfuels_sdk.client_library.api import (
-    TreeInventoryApi,
-    GridsApi,
-    TreeGridApi,
-    SurfaceGridApi,
-    TopographyGridApi,
-    FeatureGridApi,
+from fastfuels_sdk.api import (
+    get_tree_inventory_api,
+    get_grids_api,
+    get_tree_grid_api,
+    get_surface_grid_api,
+    get_topography_grid_api,
 )
+from fastfuels_sdk.utils import format_processing_error
+from fastfuels_sdk.client_library.models import Export as ExportModel
 
-# Initialize API clients
-_TREE_INVENTORY_API = TreeInventoryApi(get_client())
-_GRIDS_API = GridsApi(get_client())
-_TREE_GRID_API = TreeGridApi(get_client())
-_SURFACE_GRID_API = SurfaceGridApi(get_client())
-_TOPOGRAPHY_GRID_API = TopographyGridApi(get_client())
-_FEATURE_GRID_API = FeatureGridApi(get_client())
-
-# Define a mapping of (resource, sub_resource) tuples to their corresponding API methods
+# Define a mapping of (resource, sub_resource) tuples to functions that return the API methods
+# This ensures that each call uses the current API client instance
 _API_METHODS = {
-    ("inventories", "tree"): _TREE_INVENTORY_API.get_tree_inventory_export,
-    ("grids", None): _GRIDS_API.get_grid_export,
-    ("grids", "tree"): _TREE_GRID_API.get_tree_grid_export,
-    ("grids", "surface"): _SURFACE_GRID_API.get_surface_grid_export,
-    ("grids", "topography"): _TOPOGRAPHY_GRID_API.get_topography_grid_export,
-    # ("grids", "feature"): _FEATURE_GRID_API.get_feature_grid_export,  # Not yet implemented
+    ("inventories", "tree"): lambda: get_tree_inventory_api().get_tree_inventory_export,
+    ("grids", None): lambda: get_grids_api().get_grid_export,
+    ("grids", "tree"): lambda: get_tree_grid_api().get_tree_grid_export,
+    ("grids", "surface"): lambda: get_surface_grid_api().get_surface_grid_export,
+    (
+        "grids",
+        "topography",
+    ): lambda: get_topography_grid_api().get_topography_grid_export,
+    # ("grids", "feature"): lambda: get_feature_grid_api().get_feature_grid_export,  # Not yet implemented
 }
 
 _FILE_NAMES = {
@@ -94,14 +89,15 @@ class Export(ExportModel):
         """
         super().__init__(**data)
 
-        api_method = _API_METHODS.get((self.resource, self.sub_resource))
-        if api_method is None:
+        api_method_getter = _API_METHODS.get((self.resource, self.sub_resource))
+        if api_method_getter is None:
             raise NotImplementedError(
                 f"Export not implemented for resource={self.resource}, "
                 f"sub_resource={self.sub_resource}"
             )
 
-        self._api_get_method = lambda: api_method(
+        # Store a lambda that calls the getter function to get the current API method
+        self._api_get_method = lambda: api_method_getter()(
             domain_id=self.domain_id, export_format=self.format
         )
 
@@ -168,7 +164,16 @@ class Export(ExportModel):
 
         while export.status != "completed":
             if export.status == "failed":
-                raise RuntimeError("Export processing failed.")
+                error_msg = "Export processing failed."
+
+                # Extract detailed error information if available
+                error_obj = getattr(export, "error", None)
+                if error_obj:
+                    error_details = format_processing_error(error_obj)
+                    if error_details:
+                        error_msg = f"{error_msg}\n\n{error_details}"
+
+                raise RuntimeError(error_msg)
             if elapsed_time >= timeout:
                 raise TimeoutError(
                     f"Timed out waiting for export to finish after {timeout} seconds."

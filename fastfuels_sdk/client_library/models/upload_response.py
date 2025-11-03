@@ -30,7 +30,8 @@ class UploadResponse(BaseModel):
     method: Optional[StrictStr] = None
     url: Optional[StrictStr] = None
     headers: Optional[Dict[str, StrictStr]] = None
-    __properties: ClassVar[List[str]] = ["message", "method", "url", "headers"]
+    curl: Optional[StrictStr] = None
+    __properties: ClassVar[List[str]] = ["message", "method", "url", "headers", "curl"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -91,6 +92,11 @@ class UploadResponse(BaseModel):
         if self.headers is None and "headers" in self.model_fields_set:
             _dict['headers'] = None
 
+        # set to None if curl (nullable) is None
+        # and model_fields_set contains the field
+        if self.curl is None and "curl" in self.model_fields_set:
+            _dict['curl'] = None
+
         return _dict
 
     @classmethod
@@ -106,7 +112,8 @@ class UploadResponse(BaseModel):
             "message": obj.get("message"),
             "method": obj.get("method"),
             "url": obj.get("url"),
-            "headers": obj.get("headers")
+            "headers": obj.get("headers"),
+            "curl": obj.get("curl")
         })
         return _obj
 

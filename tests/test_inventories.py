@@ -378,7 +378,7 @@ class TestCreateTreeInventoryFromTreeMap:
     def test_defaults(self, test_domain, test_inventories):
         """Test basic creation without in_place"""
         tree_inventory = test_inventories.create_tree_inventory_from_treemap()
-        self.assert_data_validity(tree_inventory, test_domain.id, "2016")
+        self.assert_data_validity(tree_inventory, test_domain.id, "2022")
 
         # Check if the tree inventory is successfully added to the inventories
         updated_inventory = test_inventories.get()
@@ -391,7 +391,7 @@ class TestCreateTreeInventoryFromTreeMap:
 
         assert normalized_updated == normalized_tree
 
-    @pytest.mark.parametrize("version", ["2014", "2016"])
+    @pytest.mark.parametrize("version", ["2014", "2016", "2020", "2022"])
     def test_versions(self, test_domain, test_inventories, version):
         """Test basic creation without in_place"""
         tree_inventory = test_inventories.create_tree_inventory_from_treemap(
@@ -418,11 +418,11 @@ class TestCreateTreeInventoryFromTreeMap:
         )
 
         # Verify the inventory was created correctly
-        self.assert_data_validity(tree_inventory, test_domain.id, "2016")
+        self.assert_data_validity(tree_inventory, test_domain.id, "2022")
         if chm_source:
             assert tree_inventory.tree_map.canopy_height_map_configuration is not None
             assert (
-                tree_inventory.tree_map.canopy_height_map_configuration.actual_instance.source
+                tree_inventory.tree_map.canopy_height_map_configuration.source
                 == chm_source
             )
         else:
@@ -439,7 +439,7 @@ class TestCreateTreeInventoryFromTreeMap:
         )
 
         # Verify the inventory was created correctly
-        self.assert_data_validity(tree_inventory, test_domain.id, "2016")
+        self.assert_data_validity(tree_inventory, test_domain.id, "2022")
 
         # Verify in_place update occurred
         assert test_inventories.tree is not None
@@ -462,7 +462,7 @@ class TestCreateTreeInventoryFromTreeMap:
         )
 
         # Verify the inventory was created correctly
-        self.assert_data_validity(tree_inventory, test_domain.id, "2016")
+        self.assert_data_validity(tree_inventory, test_domain.id, "2022")
 
         # Verify in_place update did not occur
         assert test_inventories.tree is original_tree
@@ -516,6 +516,21 @@ class TestCreateTreeInventoryFromFileUpload:
         return pd.DataFrame(data)
 
     @pytest.fixture
+    def invalid_tree_data_large_cr(self):
+        num_trees = int(1e4)
+        data = {
+            "TREE_ID": np.arange(num_trees, dtype=np.int64),
+            "SPCD": np.random.randint(1, 100, num_trees),
+            "STATUSCD": np.random.randint(0, 4, num_trees),
+            "DIA": np.random.uniform(0, 1200, num_trees),
+            "HT": np.random.uniform(0, 116, num_trees),
+            "CR": np.random.uniform(0, 100, num_trees),
+            "X": np.random.uniform(721064.0, 721514.0, num_trees),
+            "Y": np.random.uniform(5190012.0, 5190284.0, num_trees),
+        }
+        return pd.DataFrame(data)
+
+    @pytest.fixture
     def temp_csv_file(self, valid_tree_data):
         """Fixture to create a temporary CSV file with valid data"""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
@@ -550,6 +565,22 @@ class TestCreateTreeInventoryFromFileUpload:
 
         with pytest.raises(ValueError, match="File must be a CSV"):
             test_inventories.create_tree_inventory_from_file_upload(invalid_file)
+
+    def test_invalid_data_large_cr(self, test_inventories, invalid_tree_data_large_cr):
+        """Test handling of CSV with invalid CR values (>1) - verifies detailed error reporting"""
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
+            invalid_tree_data_large_cr.to_csv(tmp.name, index=False)
+
+            data = test_inventories.create_tree_inventory_from_file_upload(tmp.name)
+
+            # Verify that wait_until_completed raises RuntimeError with detailed error info
+            with pytest.raises(RuntimeError) as exc_info:
+                data.wait_until_completed()
+
+            error_msg = str(exc_info.value)
+            assert "Tree inventory processing failed" in error_msg
+            assert "SCHEMA_VALIDATION_ERROR" in error_msg
+            assert "Crown ratio must be between 0 and 1" in error_msg
 
     # TODO: Consider adding local checks to create_tree_inventory_from_file_upload for this. Otherwise, we will rely on API tests
     # def test_file_too_large(self, test_inventories, valid_tree_data):

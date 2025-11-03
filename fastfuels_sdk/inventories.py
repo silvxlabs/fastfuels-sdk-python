@@ -9,10 +9,12 @@ from pathlib import Path
 from typing import Optional
 
 # Internal imports
-from fastfuels_sdk.api import get_client
-from fastfuels_sdk.utils import parse_dict_items_to_pydantic_list
+from fastfuels_sdk.api import get_inventories_api, get_tree_inventory_api
+from fastfuels_sdk.utils import (
+    parse_dict_items_to_pydantic_list,
+    format_processing_error,
+)
 from fastfuels_sdk.exports import Export
-from fastfuels_sdk.client_library.api import InventoriesApi, TreeInventoryApi
 from fastfuels_sdk.client_library.models import (
     Inventories as InventoriesModel,
     TreeInventory as TreeInventoryModel,
@@ -22,14 +24,11 @@ from fastfuels_sdk.client_library.models import (
     TreeInventorySource,
     TreeInventoryModification,
     TreeInventoryTreatment,
-    TreeMapSourceCanopyHeightMapConfiguration,
+    MetaCanopyHeightMapSource,
 )
 
 # External imports
 import requests
-
-_INVENTORIES_API = InventoriesApi(get_client())
-_TREE_INVENTORY_API = TreeInventoryApi(get_client())
 
 
 class Inventories(InventoriesModel):
@@ -73,7 +72,9 @@ class Inventories(InventoriesModel):
         >>> from fastfuels_sdk import Inventories
         >>> inventories = Inventories.from_domain_id("abc123")
         """
-        inventories_response = _INVENTORIES_API.get_inventories(domain_id=domain_id)
+        inventories_response = get_inventories_api().get_inventories(
+            domain_id=domain_id
+        )
         response_data = inventories_response.model_dump()
         response_data = _convert_api_models_to_sdk_classes(domain_id, response_data)
 
@@ -107,7 +108,7 @@ class Inventories(InventoriesModel):
         >>> # Fetch and update the inventory data in place
         >>> inventories.get(in_place=True)
         """
-        response = _INVENTORIES_API.get_inventories(domain_id=self.domain_id)
+        response = get_inventories_api().get_inventories(domain_id=self.domain_id)
         response_data = response.model_dump()
         response_data = _convert_api_models_to_sdk_classes(
             self.domain_id, response_data
@@ -144,21 +145,32 @@ class Inventories(InventoriesModel):
 
         tree_map : TreeMapSource or dict, optional
             Configuration for TreeMap source if being used. Can be provided as a dict with:
-            - version: "2014" or "2016" (default: "2016")
+            - version: "2014", "2016", "2020", or "2022" (default: "2022")
             - seed: Integer for reproducible generation (optional)
 
         modifications : dict or list[dict], optional
-            List of modifications to apply. Each modification has:
-            - conditions: List of conditions that must be met
-            - actions: List of actions to apply when conditions are met
+            Rules for modifying or removing tree attributes. Each modification has:
+            - conditions: List of conditions that trees must meet
+            - actions: List of actions to apply to matching trees
 
-            Example:
+            Example - Modify attribute:
             ```python
             {
-                "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
-                "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+                "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+                "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}]
             }
             ```
+
+            Example - Remove trees:
+            ```python
+            {
+                "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
+                "actions": [{"attribute": "all", "modifier": "remove"}]
+            }
+            ```
+
+            Available attributes: HT (height), DIA (diameter), CR (crown ratio), SPCD (species code)
+            Available modifiers: multiply, divide, add, subtract, replace, remove
 
         treatments : dict or list[dict], optional
             List of silvicultural treatments to apply. Supports:
@@ -220,8 +232,17 @@ class Inventories(InventoriesModel):
         >>> inventory = inventories.create_tree_inventory(
         ...     sources="TreeMap",
         ...     modifications={
-        ...         "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
-        ...         "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+        ...         "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+        ...         "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}]
+        ...     }
+        ... )
+
+        Remove small trees:
+        >>> inventory = inventories.create_tree_inventory(
+        ...     sources="TreeMap",
+        ...     modifications={
+        ...         "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
+        ...         "actions": [{"attribute": "all", "modifier": "remove"}]
         ...     }
         ... )
 
@@ -254,7 +275,7 @@ class Inventories(InventoriesModel):
                 [feature_masks] if isinstance(feature_masks, str) else feature_masks
             ),
         )
-        response = _TREE_INVENTORY_API.create_tree_inventory(
+        response = get_tree_inventory_api().create_tree_inventory(
             self.domain_id, request_body
         )
         tree_inventory = TreeInventory(
@@ -267,7 +288,7 @@ class Inventories(InventoriesModel):
 
     def create_tree_inventory_from_treemap(
         self,
-        version: str = "2016",
+        version: str = "2022",
         seed: int = None,
         canopy_height_map_source: Optional[str] = None,
         modifications: Optional[dict | list[dict]] = None,
@@ -297,32 +318,50 @@ class Inventories(InventoriesModel):
         ----------
         version : str, optional
             The TreeMap version to use. Available versions:
-            - "2016" (default) - More recent dataset, recommended for most use cases
-            - "2014" - Earlier dataset, use if you need historical comparison
+            - "2022" (default)
+            - "2020"
+            - "2016"
+            - "2014"
 
         seed : int, optional
             Random seed for reproducible tree generation. When provided, generates
             identical trees for the same domain and parameters. If omitted, generates
             different trees each time.
 
+        canopy_height_map_source : str, optional
+            High-resolution canopy height map source for improved tree height estimates.
+            When specified, fuses canopy height data with TreeMap to provide more accurate
+            height information. Available sources:
+            - "Meta2024": Meta's 2024 global canopy height map at 1-meter resolution
+
         modifications : dict or list[dict], optional
-            Rules for modifying tree attributes. Each modification includes:
+            Rules for modifying or removing tree attributes. Each modification includes:
             - conditions: List of criteria that trees must meet
             - actions: Changes to apply to matching trees
 
-            Example - Reduce height of tall trees:
+            Example - Modify attribute:
             ```python
             {
-                "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
-                "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+                "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+                "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}]
             }
             ```
 
-            Available fields:
+            Example - Remove trees:
+            ```python
+            {
+                "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
+                "actions": [{"attribute": "all", "modifier": "remove"}]
+            }
+            ```
+
+            Available attributes:
             - HT: Height (meters)
             - DIA: Diameter at breast height (centimeters)
             - CR: Crown ratio (0-1)
             - SPCD: Species code (integer)
+
+            Available modifiers: multiply, divide, add, subtract, replace, remove
 
         treatments : dict or list[dict], optional
             Silvicultural treatments to apply. Supports:
@@ -387,8 +426,16 @@ class Inventories(InventoriesModel):
         Reduce height of tall trees:
         >>> tree_inventory = inventories.create_tree_inventory_from_treemap(
         ...     modifications={
-        ...         "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
-        ...         "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+        ...         "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+        ...         "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}]
+        ...     }
+        ... )
+
+        Remove small trees:
+        >>> tree_inventory = inventories.create_tree_inventory_from_treemap(
+        ...     modifications={
+        ...         "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
+        ...         "actions": [{"attribute": "all", "modifier": "remove"}]
         ...     }
         ... )
 
@@ -410,8 +457,8 @@ class Inventories(InventoriesModel):
         >>> tree_inventory = inventories.create_tree_inventory_from_treemap(
         ...     seed=42,
         ...     modifications={
-        ...         "conditions": [{"field": "HT", "operator": "gt", "value": 20}],
-        ...         "actions": [{"field": "HT", "modifier": "multiply", "value": 0.9}]
+        ...         "conditions": [{"attribute": "HT", "operator": "gt", "value": 20}],
+        ...         "actions": [{"attribute": "HT", "modifier": "multiply", "value": 0.9}]
         ...     },
         ...     treatments={
         ...         "method": "proportionalThinning",
@@ -427,10 +474,8 @@ class Inventories(InventoriesModel):
         ... )
         """
         if canopy_height_map_source:
-            canopy_height_map_configuration = (
-                TreeMapSourceCanopyHeightMapConfiguration.from_dict(
-                    {"source": canopy_height_map_source}
-                )
+            canopy_height_map_configuration = MetaCanopyHeightMapSource.from_dict(
+                {"source": canopy_height_map_source}
             )
         else:
             canopy_height_map_configuration = None
@@ -528,7 +573,7 @@ class Inventories(InventoriesModel):
             raise ValueError(f"File must be a CSV: {file_path}")
 
         # Create tree inventory resource with "file" source
-        signed_url_response = _TREE_INVENTORY_API.create_tree_inventory(
+        signed_url_response = get_tree_inventory_api().create_tree_inventory(
             self.domain_id,
             CreateTreeInventoryRequest(sources=[TreeInventorySource.FILE]),
         )
@@ -662,7 +707,7 @@ class TreeInventory(TreeInventoryModel):
         - Use get() to refresh the inventory data and wait_until_completed() to wait
           for processing to finish
         """
-        response = _TREE_INVENTORY_API.get_tree_inventory(domain_id=domain_id)
+        response = get_tree_inventory_api().get_tree_inventory(domain_id=domain_id)
         return cls(domain_id=domain_id, **response.model_dump())
 
     def get(self, in_place: bool = False):
@@ -727,7 +772,7 @@ class TreeInventory(TreeInventoryModel):
         - This method is often used in conjunction with wait_until_completed()
           to monitor the progress of tree inventory processing.
         """
-        response = _TREE_INVENTORY_API.get_tree_inventory(domain_id=self.domain_id)
+        response = get_tree_inventory_api().get_tree_inventory(domain_id=self.domain_id)
         if in_place:
             # Update all attributes of current instance
             for key, value in response.model_dump().items():
@@ -826,7 +871,16 @@ class TreeInventory(TreeInventoryModel):
         tree_inventory = self.get(in_place=in_place if in_place else False)
         while tree_inventory.status != "completed":
             if tree_inventory.status == "failed":
-                raise RuntimeError("Tree inventory processing failed.")
+                error_msg = "Tree inventory processing failed."
+
+                # Extract detailed error information if available
+                error_obj = getattr(tree_inventory, "error", None)
+                if error_obj:
+                    error_details = format_processing_error(error_obj)
+                    if error_details:
+                        error_msg = f"{error_msg}\n\n{error_details}"
+
+                raise RuntimeError(error_msg)
             if elapsed_time >= timeout:
                 raise TimeoutError("Timed out waiting for tree inventory to finish.")
             sleep(step)
@@ -876,7 +930,7 @@ class TreeInventory(TreeInventoryModel):
         - Consider creating an export of important inventory data before deletion
           using create_export()
         """
-        _TREE_INVENTORY_API.delete_tree_inventory(domain_id=self.domain_id)
+        get_tree_inventory_api().delete_tree_inventory(domain_id=self.domain_id)
 
         return None
 
@@ -957,7 +1011,7 @@ class TreeInventory(TreeInventoryModel):
           process - use get() to check status, wait_until_completed() to wait for
           completion, and to_file() to download
         """
-        response = _TREE_INVENTORY_API.create_tree_inventory_export(
+        response = get_tree_inventory_api().create_tree_inventory_export(
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
@@ -1021,7 +1075,7 @@ class TreeInventory(TreeInventoryModel):
           create_export().wait_until_completed() is simpler
         - Always check the export's status before attempting to download using to_file()
         """
-        response = _TREE_INVENTORY_API.get_tree_inventory_export(
+        response = get_tree_inventory_api().get_tree_inventory_export(
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())

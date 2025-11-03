@@ -58,9 +58,9 @@ class APIKeysApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> Key:
-        """New API key
+        """Create API key
 
-        Create a new API key
+        Create a new API key for authentication
 
         :param create_key_request: (required)
         :type create_key_request: CreateKeyRequest
@@ -126,9 +126,9 @@ class APIKeysApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[Key]:
-        """New API key
+        """Create API key
 
-        Create a new API key
+        Create a new API key for authentication
 
         :param create_key_request: (required)
         :type create_key_request: CreateKeyRequest
@@ -194,9 +194,9 @@ class APIKeysApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """New API key
+        """Create API key
 
-        Create a new API key
+        Create a new API key for authentication
 
         :param create_key_request: (required)
         :type create_key_request: CreateKeyRequest
@@ -336,9 +336,9 @@ class APIKeysApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> None:
-        """Delete key
+        """Delete API key
 
-        Delete an API key by ID
+        Permanently delete an API key by ID
 
         :param key_id: (required)
         :type key_id: str
@@ -404,9 +404,9 @@ class APIKeysApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[None]:
-        """Delete key
+        """Delete API key
 
-        Delete an API key by ID
+        Permanently delete an API key by ID
 
         :param key_id: (required)
         :type key_id: str
@@ -472,9 +472,9 @@ class APIKeysApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Delete key
+        """Delete API key
 
-        Delete an API key by ID
+        Permanently delete an API key by ID
 
         :param key_id: (required)
         :type key_id: str
@@ -601,9 +601,9 @@ class APIKeysApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> Key:
-        """Get key
+        """Get API key
 
-        Get an API key by ID
+        Get API key details by ID
 
         :param key_id: (required)
         :type key_id: str
@@ -669,9 +669,9 @@ class APIKeysApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[Key]:
-        """Get key
+        """Get API key
 
-        Get an API key by ID
+        Get API key details by ID
 
         :param key_id: (required)
         :type key_id: str
@@ -737,9 +737,9 @@ class APIKeysApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Get key
+        """Get API key
 
-        Get an API key by ID
+        Get API key details by ID
 
         :param key_id: (required)
         :type key_id: str
@@ -867,9 +867,9 @@ class APIKeysApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ListKeysResponse:
-        """List keys
+        """List API keys
 
-        List API keys for both users and applications
+        Get paginated list of accessible API keys
 
         :param page:
         :type page: int
@@ -939,9 +939,9 @@ class APIKeysApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[ListKeysResponse]:
-        """List keys
+        """List API keys
 
-        List API keys for both users and applications
+        Get paginated list of accessible API keys
 
         :param page:
         :type page: int
@@ -1011,9 +1011,9 @@ class APIKeysApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """List keys
+        """List API keys
 
-        List API keys for both users and applications
+        Get paginated list of accessible API keys
 
         :param page:
         :type page: int

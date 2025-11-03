@@ -497,7 +497,7 @@ def export_roi(
     tree_inventory = Inventories.from_domain_id(
         domain.id
     ).create_tree_inventory_from_treemap(
-        feature_masks=merged_tree_inventory_config.get("featureMasks", [])
+        feature_masks=["road", "water"], canopy_height_map_source="Meta2024"
     )
 
     # Create surface grid using configuration

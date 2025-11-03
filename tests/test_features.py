@@ -192,6 +192,136 @@ class TestCreateRoadFeatureFromOSM:
             bad_features.create_road_feature_from_osm()
 
 
+class TestCreateRoadFeatureFromGeoJSON:
+    @staticmethod
+    def get_sample_geojson():
+        """Returns a sample GeoJSON for testing"""
+        return {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [-120.5, 39.5],
+                                [-120.5, 39.6],
+                                [-120.4, 39.6],
+                                [-120.4, 39.5],
+                                [-120.5, 39.5],
+                            ]
+                        ],
+                    },
+                    "properties": {},
+                }
+            ],
+        }
+
+    def test_create_with_geojson_dict(self, test_features):
+        """Test road feature creation with GeoJSON dict"""
+        geojson_data = self.get_sample_geojson()
+        road_feature = test_features.create_road_feature(
+            sources="geojson", geojson=geojson_data
+        )
+
+        assert road_feature is not None
+        assert isinstance(road_feature, RoadFeature)
+        assert road_feature.status in ["pending", "running", "completed"]
+        assert "geojson" in [str(s.value) for s in road_feature.sources]
+        assert road_feature.geojson is not None
+        # Original features object should be unchanged
+        assert test_features.road is not road_feature
+
+    def test_create_with_geojson_in_place(self, test_features):
+        """Test road feature creation with GeoJSON and in_place=True"""
+        geojson_data = self.get_sample_geojson()
+        road_feature = test_features.create_road_feature(
+            sources="geojson", geojson=geojson_data, in_place=True
+        )
+
+        assert road_feature is not None
+        assert isinstance(road_feature, RoadFeature)
+        # Features object should be updated
+        assert test_features.road is road_feature
+        assert test_features.road.status in ["pending", "running", "completed"]
+        assert road_feature.geojson is not None
+
+    def test_create_nonexistent_domain(self, test_features):
+        """Test error handling for non-existent domain"""
+        bad_features = test_features.model_copy(deep=True)
+        bad_features.domain_id = uuid4().hex
+        geojson_data = self.get_sample_geojson()
+
+        with pytest.raises(NotFoundException):
+            bad_features.create_road_feature(sources="geojson", geojson=geojson_data)
+
+
+class TestCreateRoadFeatureFromGeoDataFrame:
+    @staticmethod
+    def get_sample_geodataframe():
+        """Returns a sample GeoDataFrame for testing"""
+        try:
+            import geopandas as gpd
+            from shapely.geometry import Polygon
+        except ImportError:
+            pytest.skip("GeoPandas not installed")
+
+        # Create a simple polygon
+        polygon = Polygon(
+            [
+                (-120.5, 39.5),
+                (-120.5, 39.6),
+                (-120.4, 39.6),
+                (-120.4, 39.5),
+                (-120.5, 39.5),
+            ]
+        )
+
+        # Create GeoDataFrame
+        gdf = gpd.GeoDataFrame(
+            {"geometry": [polygon], "name": ["test_road"]}, crs="EPSG:4326"
+        )
+
+        return gdf
+
+    def test_create_from_geodataframe(self, test_features):
+        """Test road feature creation from GeoDataFrame"""
+        gdf = self.get_sample_geodataframe()
+        road_feature = test_features.create_road_feature_from_geodataframe(gdf)
+
+        assert road_feature is not None
+        assert isinstance(road_feature, RoadFeature)
+        assert road_feature.status in ["pending", "running", "completed"]
+        assert "geojson" in [str(s.value) for s in road_feature.sources]
+        assert road_feature.geojson is not None
+        # Original features object should be unchanged
+        assert test_features.road is not road_feature
+
+    def test_create_from_geodataframe_in_place(self, test_features):
+        """Test road feature creation from GeoDataFrame with in_place=True"""
+        gdf = self.get_sample_geodataframe()
+        road_feature = test_features.create_road_feature_from_geodataframe(
+            gdf, in_place=True
+        )
+
+        assert road_feature is not None
+        assert isinstance(road_feature, RoadFeature)
+        # Features object should be updated
+        assert test_features.road is road_feature
+        assert test_features.road.status in ["pending", "running", "completed"]
+        assert road_feature.geojson is not None
+
+    def test_create_nonexistent_domain(self, test_features):
+        """Test error handling for non-existent domain"""
+        bad_features = test_features.model_copy(deep=True)
+        bad_features.domain_id = uuid4().hex
+        gdf = self.get_sample_geodataframe()
+
+        with pytest.raises(NotFoundException):
+            bad_features.create_road_feature_from_geodataframe(gdf)
+
+
 class TestCreateWaterFeature:
     @staticmethod
     def assert_data_validity(water_feature, domain_id):

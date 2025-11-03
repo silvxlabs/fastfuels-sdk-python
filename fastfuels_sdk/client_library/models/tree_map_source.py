@@ -19,7 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt
 from typing import Any, ClassVar, Dict, List, Optional
-from fastfuels_sdk.client_library.models.tree_map_source_canopy_height_map_configuration import TreeMapSourceCanopyHeightMapConfiguration
+from fastfuels_sdk.client_library.models.meta_canopy_height_map_source import MetaCanopyHeightMapSource
 from fastfuels_sdk.client_library.models.tree_map_version import TreeMapVersion
 from typing import Optional, Set
 from typing_extensions import Self
@@ -30,7 +30,7 @@ class TreeMapSource(BaseModel):
     """ # noqa: E501
     version: Optional[TreeMapVersion] = None
     seed: Optional[StrictInt] = None
-    canopy_height_map_configuration: Optional[TreeMapSourceCanopyHeightMapConfiguration] = Field(default=None, alias="canopyHeightMapConfiguration")
+    canopy_height_map_configuration: Optional[MetaCanopyHeightMapSource] = Field(default=None, alias="canopyHeightMapConfiguration")
     __properties: ClassVar[List[str]] = ["version", "seed", "canopyHeightMapConfiguration"]
 
     model_config = ConfigDict(
@@ -94,7 +94,7 @@ class TreeMapSource(BaseModel):
         _obj = cls.model_validate({
             "version": obj.get("version"),
             "seed": obj.get("seed"),
-            "canopyHeightMapConfiguration": TreeMapSourceCanopyHeightMapConfiguration.from_dict(obj["canopyHeightMapConfiguration"]) if obj.get("canopyHeightMapConfiguration") is not None else None
+            "canopyHeightMapConfiguration": MetaCanopyHeightMapSource.from_dict(obj["canopyHeightMapConfiguration"]) if obj.get("canopyHeightMapConfiguration") is not None else None
         })
         return _obj
 

@@ -6,15 +6,13 @@ fastfuels_sdk/grids/surface_grid.py
 from __future__ import annotations
 
 # Internal imports
-from fastfuels_sdk.api import get_client
+from fastfuels_sdk.api import get_surface_grid_api
+from fastfuels_sdk.utils import format_processing_error
 from fastfuels_sdk.exports import Export
-from fastfuels_sdk.client_library.api import SurfaceGridApi
 from fastfuels_sdk.client_library.models import (
     SurfaceGrid as SurfaceGridModel,
     GridAttributeMetadataResponse,
 )
-
-_SURFACE_GRID_API = SurfaceGridApi(get_client())
 
 
 class SurfaceGrid(SurfaceGridModel):
@@ -42,7 +40,7 @@ class SurfaceGrid(SurfaceGridModel):
         >>> print(grid.status)
         'completed'
         """
-        response = _SURFACE_GRID_API.get_surface_grid(domain_id=domain_id)
+        response = get_surface_grid_api().get_surface_grid(domain_id=domain_id)
         return cls(domain_id=domain_id, **response.model_dump())
 
     def get(self, in_place: bool = False) -> "SurfaceGrid":
@@ -70,7 +68,7 @@ class SurfaceGrid(SurfaceGridModel):
         >>> # Or update the existing instance
         >>> grid.get(in_place=True)
         """
-        response = _SURFACE_GRID_API.get_surface_grid(domain_id=self.domain_id)
+        response = get_surface_grid_api().get_surface_grid(domain_id=self.domain_id)
         if in_place:
             # Update all attributes of current instance
             for key, value in response.model_dump().items():
@@ -160,7 +158,16 @@ class SurfaceGrid(SurfaceGridModel):
 
         while surface_grid.status != "completed":
             if surface_grid.status == "failed":
-                raise RuntimeError("Surface grid processing failed.")
+                error_msg = "Surface grid processing failed."
+
+                # Extract detailed error information if available
+                error_obj = getattr(surface_grid, "error", None)
+                if error_obj:
+                    error_details = format_processing_error(error_obj)
+                    if error_details:
+                        error_msg = f"{error_msg}\n\n{error_details}"
+
+                raise RuntimeError(error_msg)
             if elapsed_time >= timeout:
                 raise TimeoutError("Timed out waiting for surface grid to finish.")
             sleep(step)
@@ -197,7 +204,7 @@ class SurfaceGrid(SurfaceGridModel):
         >>> print(metadata.shape)
         [100, 100, 50]
         """
-        return _SURFACE_GRID_API.get_surface_grid_attribute_metadata(
+        return get_surface_grid_api().get_surface_grid_attribute_metadata(
             domain_id=self.domain_id
         )
 
@@ -224,7 +231,7 @@ class SurfaceGrid(SurfaceGridModel):
         >>> export.wait_until_completed()
         >>> export.to_file("grid_data.zarr")
         """
-        response = _SURFACE_GRID_API.create_surface_grid_export(
+        response = get_surface_grid_api().create_surface_grid_export(
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
@@ -252,7 +259,7 @@ class SurfaceGrid(SurfaceGridModel):
         >>> export.wait_until_completed()
         >>> export.to_file("grid_data.zarr")
         """
-        response = _SURFACE_GRID_API.get_surface_grid_export(
+        response = get_surface_grid_api().get_surface_grid_export(
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
@@ -276,5 +283,5 @@ class SurfaceGrid(SurfaceGridModel):
         >>> # Subsequent operations will raise NotFoundException
         >>> grid.get()  # raises NotFoundException
         """
-        _SURFACE_GRID_API.delete_surface_grid(domain_id=self.domain_id)
+        get_surface_grid_api().delete_surface_grid(domain_id=self.domain_id)
         return None

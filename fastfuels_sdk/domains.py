@@ -7,8 +7,7 @@ import json
 from typing import Optional, List
 
 # Internal imports
-from fastfuels_sdk.api import get_client
-from fastfuels_sdk.client_library.api import DomainsApi
+from fastfuels_sdk.api import get_domains_api
 from fastfuels_sdk.client_library.models import (
     Domain as DomainModel,
     CreateDomainRequest,
@@ -18,7 +17,8 @@ from fastfuels_sdk.client_library.models import (
     UpdateDomainRequest,
 )
 
-_DOMAIN_API = DomainsApi(get_client())
+# External imports
+import geopandas as gpd
 
 
 class Domain(DomainModel):
@@ -75,6 +75,9 @@ class Domain(DomainModel):
     --------
     Domain.from_geojson : Create domain from GeoJSON data
     Domain.from_geodataframe : Create domain from GeoPandas GeoDataFrame
+    Domain.to_dict : Export domain as dictionary
+    Domain.to_json : Export domain as JSON string
+    Domain.to_geodataframe : Convert domain to GeoPandas GeoDataFrame
     list_domains : List available domains
     """
 
@@ -104,7 +107,7 @@ class Domain(DomainModel):
         >>> domain.id
         'abc123'
         """
-        get_domain_response = _DOMAIN_API.get_domain(domain_id)
+        get_domain_response = get_domains_api().get_domain(domain_id)
         return cls(**get_domain_response.model_dump())
 
     @classmethod
@@ -172,7 +175,7 @@ class Domain(DomainModel):
         }
 
         request = CreateDomainRequest.from_dict(feature_data)
-        response = _DOMAIN_API.create_domain(
+        response = get_domains_api().create_domain(
             create_domain_request=request.model_dump()  # noqa
         )
         return cls(**response.model_dump()) if response else None
@@ -291,7 +294,7 @@ class Domain(DomainModel):
         ensure all references to this Domain instance see the updated data.
         """
         # Fetch latest data from API
-        response = _DOMAIN_API.get_domain(self.id)
+        response = get_domains_api().get_domain(self.id)
 
         if in_place:
             # Update all attributes of current instance
@@ -365,7 +368,7 @@ class Domain(DomainModel):
         # Only make API call if there are fields to update
         if update_data:
             request = UpdateDomainRequest(**update_data)
-            response = _DOMAIN_API.update_domain(
+            response = get_domains_api().update_domain(
                 domain_id=self.id, update_domain_request=request
             )
 
@@ -380,6 +383,125 @@ class Domain(DomainModel):
 
         # If no updates, return self or new instance based on in_place
         return self if in_place else Domain(**self.model_dump())
+
+    def to_json(self) -> str:
+        """Serialize the entire Domain object to JSON string.
+
+        Returns the complete Domain object as a JSON string, including all attributes
+        like id, name, description, features, CRS, resolutions, timestamps, etc.
+        Uses clean serialization without internal Pydantic validation fields.
+
+        Returns
+        -------
+        str
+            JSON string representation of the complete Domain object
+
+        Examples
+        --------
+        >>> domain = Domain.from_id("abc123")
+        >>> json_str = domain.to_json()
+        >>> with open("domain.json", "w") as f:
+        ...     f.write(json_str)
+        """
+        return json.dumps(self.to_dict(), default=str, indent=2)
+
+    def to_geodataframe(self) -> gpd.GeoDataFrame:
+        """Convert the Domain to a GeoPandas GeoDataFrame.
+
+        Creates a GeoDataFrame containing the Domain's geometry and attributes. This provides
+        a convenient way to work with Domain data using GeoPandas for spatial analysis,
+        visualization, or export to various geospatial file formats.
+
+        Returns
+        -------
+        gpd.GeoDataFrame
+            A GeoDataFrame with the Domain's features and CRS information
+
+        Examples
+        --------
+        Convert to GeoDataFrame:
+        >>> domain = Domain.from_id("abc123")
+        >>> gdf = domain.to_geodataframe()
+        >>> print(gdf.crs)
+        >>> print(gdf.geometry)
+
+        Export to shapefile:
+        >>> gdf = domain.to_geodataframe()
+        >>> gdf.to_file("domain.shp")
+
+        Spatial analysis:
+        >>> gdf = domain.to_geodataframe()
+        >>> area = gdf.geometry.area.sum()
+        >>> print(f"Domain area: {area} square units")
+        """
+        # Extract GeoJSON features for GeoPandas
+        features_geojson = {
+            "type": "FeatureCollection",
+            "features": (
+                [feature.to_dict() for feature in self.features]
+                if self.features
+                else []
+            ),
+        }
+
+        # Add CRS if present
+        if self.crs:
+            features_geojson["crs"] = self.crs.to_dict()
+
+        # Convert to GeoDataFrame
+        gdf = gpd.read_file(json.dumps(features_geojson), driver="GeoJSON")
+
+        # Add domain metadata as columns
+        gdf["domain_id"] = self.id
+        gdf["domain_name"] = self.name
+        gdf["domain_description"] = self.description
+        gdf["horizontal_resolution"] = self.horizontal_resolution
+        gdf["vertical_resolution"] = self.vertical_resolution
+
+        # Add tags as a string column if present
+        if self.tags:
+            gdf["tags"] = ", ".join(self.tags)
+
+        return gdf
+
+    def export(self) -> dict:
+        """Export all domain metadata including features, grids, and inventories.
+
+        Returns domain configuration and metadata for all resources without including
+        large data payloads like grid arrays, GeoJSON features, or tree records.
+
+        Returns
+        -------
+        dict
+            Dictionary containing:
+            - domain: Full domain metadata (id, name, description, resolutions, CRS, etc.)
+            - features: Feature metadata excluding GeoJSON data
+            - grids: Grid metadata excluding array data
+            - inventories: Inventory metadata excluding tree records
+
+        Examples
+        --------
+        Export domain metadata:
+        >>> domain = Domain.from_id("abc123")
+        >>> export_data = domain.export()
+        >>> print(export_data['domain']['name'])
+        'My Domain'
+        >>> print(export_data['grids']['tree']['status'])
+        'completed'
+
+        Save export to file:
+        >>> export_data = domain.export()
+        >>> with open('domain_export.json', 'w') as f:
+        ...     json.dump(export_data, f, indent=2)
+
+        Notes
+        -----
+        Large data payloads are excluded to keep response size manageable:
+        - Feature GeoJSON: Use dedicated feature export endpoints
+        - Grid array data: Use grid export endpoints
+        - Tree inventory records: Use inventory export endpoints
+        """
+        return get_domains_api().export_domain_data(domain_id=self.id)
 
     def delete(self) -> None:
         """Delete an existing domain resource based on the domain ID.
@@ -401,7 +523,7 @@ class Domain(DomainModel):
         >>> domain.get()
         # Raises NotFoundException
         """
-        _DOMAIN_API.delete_domain(domain_id=self.id)
+        get_domains_api().delete_domain(domain_id=self.id)
         return None
 
 
@@ -464,7 +586,7 @@ def list_domains(
     """
     sort_by = DomainSortField(sort_by) if sort_by else None
     sort_order = DomainSortOrder(sort_order) if sort_order else None
-    list_response = _DOMAIN_API.list_domains(
+    list_response = get_domains_api().list_domains(
         page=page, size=size, sort_by=sort_by, sort_order=sort_order
     )
     list_response.domains = [Domain(**d.model_dump()) for d in list_response.domains]

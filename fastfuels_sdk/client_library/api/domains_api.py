@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
 
 from pydantic import Field, StrictInt, StrictStr, field_validator
-from typing import Optional
+from typing import Any, Dict, Optional
 from typing_extensions import Annotated
 from fastfuels_sdk.client_library.models.create_domain_request import CreateDomainRequest
 from fastfuels_sdk.client_library.models.domain import Domain
@@ -575,6 +575,271 @@ class DomainsApi:
         return self.api_client.param_serialize(
             method='DELETE',
             resource_path='/v1/domains/{domainId}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def export_domain_data(
+        self,
+        domain_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> object:
+        """Export Domain Data
+
+        # Export Domain Data Endpoint  This endpoint exports all metadata for a domain including features, grids, and inventories. Returns domain configuration and metadata for all resources without including large data payloads.  ## Endpoint: `GET /domains/{domainId}/export`  ### Path Parameters  - **domainId**: (string) The unique identifier of the domain to export.  ### Response  The response returns a JSON object containing metadata for the domain and all its resources:  - **domain**: (object) Full domain metadata including:   - **id**: Domain identifier   - **name**: Domain name   - **description**: Domain description   - **horizontalResolution**: Grid horizontal resolution in meters   - **verticalResolution**: Grid vertical resolution in meters   - **crs**: Coordinate reference system   - **features**: Domain boundary geometry   - **createdOn**: Creation timestamp   - **modifiedOn**: Last modification timestamp   - **tags**: Associated tags  - **features**: (object) Feature metadata (excluding GeoJSON data):   - **road**: Road feature configuration, sources, status, timestamps   - **water**: Water feature configuration, sources, status, timestamps  - **grids**: (object) Grid metadata (excluding array data):   - **tree**: Tree grid configuration, attributes, sources, status   - **surface**: Surface grid configuration, attributes, sources, modifications   - **topography**: Topography grid configuration, attributes, sources   - **feature**: Feature grid configuration, attributes  - **inventories**: (object) Inventory metadata (excluding tree records):   - **tree**: Tree inventory configuration, sources, modifications, treatments  ### What is Excluded  The following large data payloads are excluded to keep the response size manageable. Use dedicated endpoints to access this data:  - **Feature GeoJSON**: Use `/features/{type}/exports/geojson` - **Grid array data**: Use `/grids/exports/zarr` or `/grids/{type}/{attribute}/data` - **Tree inventory records**: Use `/inventories/tree/exports/{format}`  ### Use Cases  - Backup domain configuration and settings - Audit domain state and resource creation - Compare domains and their configurations - Debug configuration issues - Export for documentation or sharing  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found: domains/{domainId}\"   - **Detail**: \"Unauthorized access for: domains/{domainId}\"  ### Example Response  ```json {   \"domain\": {     \"id\": \"abc123\",     \"name\": \"My Domain\",     \"description\": \"Test domain\",     \"horizontalResolution\": 10.0,     \"verticalResolution\": 2.0,     ...   },   \"features\": {     \"road\": {       \"status\": \"completed\",       \"sources\": [\"OSM\"],       ...     }   },   \"grids\": {     \"tree\": {       \"status\": \"completed\",       \"attributes\": [\"bulkDensity\", \"fuelMoisture\"],       ...     }   },   \"inventories\": {     \"tree\": {       \"status\": \"completed\",       \"sources\": [\"TreeMap\"],       ...     }   } } ```
+
+        :param domain_id: (required)
+        :type domain_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._export_domain_data_serialize(
+            domain_id=domain_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def export_domain_data_with_http_info(
+        self,
+        domain_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[object]:
+        """Export Domain Data
+
+        # Export Domain Data Endpoint  This endpoint exports all metadata for a domain including features, grids, and inventories. Returns domain configuration and metadata for all resources without including large data payloads.  ## Endpoint: `GET /domains/{domainId}/export`  ### Path Parameters  - **domainId**: (string) The unique identifier of the domain to export.  ### Response  The response returns a JSON object containing metadata for the domain and all its resources:  - **domain**: (object) Full domain metadata including:   - **id**: Domain identifier   - **name**: Domain name   - **description**: Domain description   - **horizontalResolution**: Grid horizontal resolution in meters   - **verticalResolution**: Grid vertical resolution in meters   - **crs**: Coordinate reference system   - **features**: Domain boundary geometry   - **createdOn**: Creation timestamp   - **modifiedOn**: Last modification timestamp   - **tags**: Associated tags  - **features**: (object) Feature metadata (excluding GeoJSON data):   - **road**: Road feature configuration, sources, status, timestamps   - **water**: Water feature configuration, sources, status, timestamps  - **grids**: (object) Grid metadata (excluding array data):   - **tree**: Tree grid configuration, attributes, sources, status   - **surface**: Surface grid configuration, attributes, sources, modifications   - **topography**: Topography grid configuration, attributes, sources   - **feature**: Feature grid configuration, attributes  - **inventories**: (object) Inventory metadata (excluding tree records):   - **tree**: Tree inventory configuration, sources, modifications, treatments  ### What is Excluded  The following large data payloads are excluded to keep the response size manageable. Use dedicated endpoints to access this data:  - **Feature GeoJSON**: Use `/features/{type}/exports/geojson` - **Grid array data**: Use `/grids/exports/zarr` or `/grids/{type}/{attribute}/data` - **Tree inventory records**: Use `/inventories/tree/exports/{format}`  ### Use Cases  - Backup domain configuration and settings - Audit domain state and resource creation - Compare domains and their configurations - Debug configuration issues - Export for documentation or sharing  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found: domains/{domainId}\"   - **Detail**: \"Unauthorized access for: domains/{domainId}\"  ### Example Response  ```json {   \"domain\": {     \"id\": \"abc123\",     \"name\": \"My Domain\",     \"description\": \"Test domain\",     \"horizontalResolution\": 10.0,     \"verticalResolution\": 2.0,     ...   },   \"features\": {     \"road\": {       \"status\": \"completed\",       \"sources\": [\"OSM\"],       ...     }   },   \"grids\": {     \"tree\": {       \"status\": \"completed\",       \"attributes\": [\"bulkDensity\", \"fuelMoisture\"],       ...     }   },   \"inventories\": {     \"tree\": {       \"status\": \"completed\",       \"sources\": [\"TreeMap\"],       ...     }   } } ```
+
+        :param domain_id: (required)
+        :type domain_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._export_domain_data_serialize(
+            domain_id=domain_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def export_domain_data_without_preload_content(
+        self,
+        domain_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Export Domain Data
+
+        # Export Domain Data Endpoint  This endpoint exports all metadata for a domain including features, grids, and inventories. Returns domain configuration and metadata for all resources without including large data payloads.  ## Endpoint: `GET /domains/{domainId}/export`  ### Path Parameters  - **domainId**: (string) The unique identifier of the domain to export.  ### Response  The response returns a JSON object containing metadata for the domain and all its resources:  - **domain**: (object) Full domain metadata including:   - **id**: Domain identifier   - **name**: Domain name   - **description**: Domain description   - **horizontalResolution**: Grid horizontal resolution in meters   - **verticalResolution**: Grid vertical resolution in meters   - **crs**: Coordinate reference system   - **features**: Domain boundary geometry   - **createdOn**: Creation timestamp   - **modifiedOn**: Last modification timestamp   - **tags**: Associated tags  - **features**: (object) Feature metadata (excluding GeoJSON data):   - **road**: Road feature configuration, sources, status, timestamps   - **water**: Water feature configuration, sources, status, timestamps  - **grids**: (object) Grid metadata (excluding array data):   - **tree**: Tree grid configuration, attributes, sources, status   - **surface**: Surface grid configuration, attributes, sources, modifications   - **topography**: Topography grid configuration, attributes, sources   - **feature**: Feature grid configuration, attributes  - **inventories**: (object) Inventory metadata (excluding tree records):   - **tree**: Tree inventory configuration, sources, modifications, treatments  ### What is Excluded  The following large data payloads are excluded to keep the response size manageable. Use dedicated endpoints to access this data:  - **Feature GeoJSON**: Use `/features/{type}/exports/geojson` - **Grid array data**: Use `/grids/exports/zarr` or `/grids/{type}/{attribute}/data` - **Tree inventory records**: Use `/inventories/tree/exports/{format}`  ### Use Cases  - Backup domain configuration and settings - Audit domain state and resource creation - Compare domains and their configurations - Debug configuration issues - Export for documentation or sharing  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found: domains/{domainId}\"   - **Detail**: \"Unauthorized access for: domains/{domainId}\"  ### Example Response  ```json {   \"domain\": {     \"id\": \"abc123\",     \"name\": \"My Domain\",     \"description\": \"Test domain\",     \"horizontalResolution\": 10.0,     \"verticalResolution\": 2.0,     ...   },   \"features\": {     \"road\": {       \"status\": \"completed\",       \"sources\": [\"OSM\"],       ...     }   },   \"grids\": {     \"tree\": {       \"status\": \"completed\",       \"attributes\": [\"bulkDensity\", \"fuelMoisture\"],       ...     }   },   \"inventories\": {     \"tree\": {       \"status\": \"completed\",       \"sources\": [\"TreeMap\"],       ...     }   } } ```
+
+        :param domain_id: (required)
+        :type domain_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._export_domain_data_serialize(
+            domain_id=domain_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _export_domain_data_serialize(
+        self,
+        domain_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if domain_id is not None:
+            _path_params['domainId'] = domain_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'APIKeyHeader', 
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/v1/domains/{domainId}/export',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
