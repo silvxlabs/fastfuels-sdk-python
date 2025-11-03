@@ -733,3 +733,193 @@ class TestIntegratedConfigurationSystem:
         assert called_config["fuelLoad"]["version"] == "2022"  # Default preserved
 
         assert result == mock_export
+
+
+class TestExportRoiFormats:
+    """Test the export_roi function with different export formats."""
+
+    @patch("fastfuels_sdk.convenience.Domain")
+    @patch("fastfuels_sdk.convenience.Features")
+    @patch("fastfuels_sdk.convenience.TopographyGridBuilder")
+    @patch("fastfuels_sdk.convenience.SurfaceGridBuilder")
+    @patch("fastfuels_sdk.convenience.TreeGridBuilder")
+    @patch("fastfuels_sdk.convenience.Grids")
+    @patch("fastfuels_sdk.convenience.Inventories")
+    def test_export_roi_default_quicfire_format(
+        self,
+        mock_inventories,
+        mock_grids,
+        mock_tree_builder,
+        mock_surface_builder,
+        mock_topo_builder,
+        mock_features,
+        mock_domain,
+        sample_roi,
+    ):
+        """Test that export_roi defaults to QUIC-Fire format."""
+        from fastfuels_sdk.convenience import export_roi
+
+        # Setup mocks
+        mock_domain.from_geodataframe.return_value.id = "test-domain"
+        mock_features_instance = Mock()
+        mock_features.from_domain_id.return_value = mock_features_instance
+
+        # Mock builders
+        mock_topo_instance = Mock()
+        mock_topo_builder.return_value = mock_topo_instance
+        mock_topo_instance.with_elevation_from_3dep.return_value = mock_topo_instance
+        mock_topo_instance.build.return_value = Mock()
+
+        mock_surface_instance = Mock()
+        mock_surface_builder.return_value = mock_surface_instance
+        mock_surface_instance.with_fuel_load_from_landfire.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.with_fuel_depth_from_landfire.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.with_uniform_fuel_moisture.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.build.return_value = Mock()
+
+        mock_tree_instance = Mock()
+        mock_tree_builder.return_value = mock_tree_instance
+        mock_tree_instance.with_bulk_density_from_tree_inventory.return_value = (
+            mock_tree_instance
+        )
+        mock_tree_instance.with_uniform_fuel_moisture.return_value = mock_tree_instance
+        mock_tree_instance.build.return_value = Mock()
+
+        mock_grids_instance = Mock()
+        mock_grids.from_domain_id.return_value = mock_grids_instance
+        mock_export = Mock()
+        mock_export.status = "completed"
+        mock_grids_instance.create_export.return_value = mock_export
+
+        mock_inventories_instance = Mock()
+        mock_inventories.from_domain_id.return_value = mock_inventories_instance
+        mock_tree_inventory = Mock()
+        mock_inventories_instance.create_tree_inventory_from_treemap.return_value = (
+            mock_tree_inventory
+        )
+
+        # Call export_roi with default format
+        result = export_roi(sample_roi, "/tmp/test")
+
+        # Verify create_export was called with "QUIC-Fire"
+        mock_grids_instance.create_export.assert_called_once_with("QUIC-Fire")
+        assert result == mock_export
+
+    @patch("fastfuels_sdk.convenience.Domain")
+    @patch("fastfuels_sdk.convenience.Features")
+    @patch("fastfuels_sdk.convenience.TopographyGridBuilder")
+    @patch("fastfuels_sdk.convenience.SurfaceGridBuilder")
+    @patch("fastfuels_sdk.convenience.TreeGridBuilder")
+    @patch("fastfuels_sdk.convenience.Grids")
+    @patch("fastfuels_sdk.convenience.Inventories")
+    def test_export_roi_with_zarr_format(
+        self,
+        mock_inventories,
+        mock_grids,
+        mock_tree_builder,
+        mock_surface_builder,
+        mock_topo_builder,
+        mock_features,
+        mock_domain,
+        sample_roi,
+    ):
+        """Test that export_roi works with zarr format."""
+        from fastfuels_sdk.convenience import export_roi
+
+        # Setup mocks
+        mock_domain.from_geodataframe.return_value.id = "test-domain"
+        mock_features_instance = Mock()
+        mock_features.from_domain_id.return_value = mock_features_instance
+
+        # Mock builders
+        mock_topo_instance = Mock()
+        mock_topo_builder.return_value = mock_topo_instance
+        mock_topo_instance.with_elevation_from_3dep.return_value = mock_topo_instance
+        mock_topo_instance.build.return_value = Mock()
+
+        mock_surface_instance = Mock()
+        mock_surface_builder.return_value = mock_surface_instance
+        mock_surface_instance.with_fuel_load_from_landfire.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.with_fuel_depth_from_landfire.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.with_uniform_fuel_moisture.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.build.return_value = Mock()
+
+        mock_tree_instance = Mock()
+        mock_tree_builder.return_value = mock_tree_instance
+        mock_tree_instance.with_bulk_density_from_tree_inventory.return_value = (
+            mock_tree_instance
+        )
+        mock_tree_instance.with_uniform_fuel_moisture.return_value = mock_tree_instance
+        mock_tree_instance.build.return_value = Mock()
+
+        mock_grids_instance = Mock()
+        mock_grids.from_domain_id.return_value = mock_grids_instance
+        mock_export = Mock()
+        mock_export.status = "completed"
+        mock_grids_instance.create_export.return_value = mock_export
+
+        mock_inventories_instance = Mock()
+        mock_inventories.from_domain_id.return_value = mock_inventories_instance
+        mock_tree_inventory = Mock()
+        mock_inventories_instance.create_tree_inventory_from_treemap.return_value = (
+            mock_tree_inventory
+        )
+
+        # Call export_roi with zarr format
+        result = export_roi(sample_roi, "/tmp/test", export_format="zarr")
+
+        # Verify create_export was called with "zarr"
+        mock_grids_instance.create_export.assert_called_once_with("zarr")
+        assert result == mock_export
+
+    def test_export_roi_invalid_format_raises_error(self, sample_roi):
+        """Test that export_roi raises ValueError for invalid format."""
+        from fastfuels_sdk.convenience import export_roi
+
+        with pytest.raises(ValueError) as excinfo:
+            export_roi(sample_roi, "/tmp/test", export_format="invalid-format")
+
+        assert "Unsupported export format: invalid-format" in str(excinfo.value)
+        assert "QUIC-Fire" in str(excinfo.value)
+        assert "zarr" in str(excinfo.value)
+
+    @patch("fastfuels_sdk.convenience.export_roi")
+    def test_export_roi_to_quicfire_is_wrapper(self, mock_export_roi, sample_roi):
+        """Test that export_roi_to_quicfire properly wraps export_roi."""
+        # Setup mock
+        mock_export = Mock()
+        mock_export_roi.return_value = mock_export
+
+        # Call export_roi_to_quicfire
+        result = export_roi_to_quicfire(
+            sample_roi,
+            "/tmp/test",
+            verbose=True,
+            topography_config={"test": "config"},
+        )
+
+        # Verify export_roi was called with correct parameters
+        mock_export_roi.assert_called_once_with(
+            roi=sample_roi,
+            export_path="/tmp/test",
+            export_format="QUIC-Fire",
+            verbose=True,
+            topography_config={"test": "config"},
+            surface_config=None,
+            tree_config=None,
+            features_config=None,
+            tree_inventory_config=None,
+        )
+        assert result == mock_export

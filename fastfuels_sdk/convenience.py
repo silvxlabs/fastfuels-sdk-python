@@ -248,9 +248,10 @@ def _configure_tree_builder(domain_id: str, config: Dict[str, Any]):
     return builder.build()
 
 
-def export_roi_to_quicfire(
+def export_roi(
     roi: GeoDataFrame,
     export_path: Path | str,
+    export_format: str = "QUIC-Fire",
     verbose: bool = False,
     topography_config: Optional[Dict[str, Any]] = None,
     surface_config: Optional[Dict[str, Any]] = None,
@@ -259,11 +260,11 @@ def export_roi_to_quicfire(
     tree_inventory_config: Optional[Dict[str, Any]] = None,
     **kwargs,
 ) -> Export:
-    """Convenience function to export a region of interest (ROI) to QUIC-Fire.
+    """Convenience function to export a region of interest (ROI) to various formats.
 
     This function creates all necessary grids and resources to export spatial data
-    in a format compatible with QUIC-Fire fire modeling software. It handles the
-    complete workflow from domain creation through final export file generation.
+    in formats compatible with fire modeling software. It handles the complete
+    workflow from domain creation through final export file generation.
 
     Parameters
     ----------
@@ -271,8 +272,12 @@ def export_roi_to_quicfire(
         GeoDataFrame containing the region of interest geometry. Should contain
         polygon geometries defining the spatial extent for the export.
     export_path : Path or str
-        File path where the QUIC-Fire export will be saved. The export is
-        typically saved as a ZIP file containing all required data files.
+        File path where the export will be saved. The export is typically saved
+        as a ZIP file containing all required data files.
+    export_format : str, optional
+        Format for the export. Supported formats:
+        - "QUIC-Fire" (default): Multi-grid bundle for QUIC-Fire fire modeling
+        - "zarr": Multi-grid export in zarr array format
     verbose : bool, optional
         If True, prints progress messages during the export process. Default is False.
     topography_config : dict, optional
@@ -364,17 +369,21 @@ def export_roi_to_quicfire(
     Returns
     -------
     Export
-        The completed QUIC-Fire export object. The export will have "completed"
-        status, and the data will be saved to the specified export_path.
+        The completed export object. The export will have "completed" status,
+        and the data will be saved to the specified export_path.
 
     Examples
     --------
-    Basic usage with default settings:
+    Basic usage with default settings (QUIC-Fire format):
 
     >>> import geopandas as gpd
-    >>> from fastfuels_sdk import export_roi_to_quicfire
+    >>> from fastfuels_sdk import export_roi
     >>> roi = gpd.read_file("my_area.geojson")
-    >>> export = export_roi_to_quicfire(roi, "quicfire_export.zip")
+    >>> export = export_roi(roi, "quicfire_export.zip")
+
+    Export in zarr format:
+
+    >>> export = export_roi(roi, "data_export.zip", export_format="zarr")
 
     Customize surface fuel moisture to 5% (dry conditions):
 
@@ -385,7 +394,7 @@ def export_roi_to_quicfire(
     ...         "featureMasks": ["road", "water"]
     ...     }
     ... }
-    >>> export = export_roi_to_quicfire(
+    >>> export = export_roi(
     ...     roi, "dry_export.zip",
     ...     surface_config=surface_config
     ... )
@@ -397,7 +406,7 @@ def export_roi_to_quicfire(
     ...     "fuelDepth": {"version": "2023"}
     ... }
     >>> features_config = {"createWaterFeatures": False}
-    >>> export = export_roi_to_quicfire(
+    >>> export = export_roi(
     ...     roi, "landfire_2023.zip",
     ...     surface_config=surface_config,
     ...     features_config=features_config
@@ -405,7 +414,7 @@ def export_roi_to_quicfire(
 
     Notes
     -----
-    This function performs the complete QUIC-Fire export workflow:
+    This function performs the complete export workflow:
 
     1. Creates a domain from the input ROI geometry
     2. Creates road and water features from OpenStreetMap (if enabled)
@@ -414,12 +423,20 @@ def export_roi_to_quicfire(
     5. Builds tree inventory from TreeMap data
     6. Generates surface fuel grid from LANDFIRE data
     7. Creates tree canopy grid from inventory data
-    8. Exports all grids in QUIC-Fire compatible format
+    8. Exports all grids in the specified format
 
     All configuration parameters support partial overrides - only specify the
     values you want to change from the defaults. The function will merge your
     configuration with sensible defaults for all other parameters.
     """
+    # Validate export format
+    supported_formats = ["QUIC-Fire", "zarr"]
+    if export_format not in supported_formats:
+        raise ValueError(
+            f"Unsupported export format: {export_format}. "
+            f"Supported formats are: {', '.join(supported_formats)}"
+        )
+
     # Merge user configurations with defaults
     merged_topography_config = _merge_config(
         DEFAULT_TOPOGRAPHY_CONFIG, topography_config
@@ -496,18 +513,84 @@ def export_roi_to_quicfire(
         print("Creating tree grid for the domain")
     tree_grid = _configure_tree_builder(domain.id, merged_tree_config)
 
-    # Create QUIC-Fire Export
+    # Create Export
     topography_grid.wait_until_completed(verbose=verbose)
     surface_grid.wait_until_completed(verbose=verbose)
     tree_grid.wait_until_completed(verbose=verbose)
-    export = Grids.from_domain_id(domain.id).create_export("QUIC-Fire")
+    export = Grids.from_domain_id(domain.id).create_export(export_format)
     export.wait_until_completed(verbose=verbose)
 
-    # Export the QUIC-Fire data to the specified path
+    # Export the data to the specified path
     if verbose:
-        print(f"Exporting QUIC-Fire data to {export_path}")
+        print(f"Exporting {export_format} data to {export_path}")
     export_path = Path(export_path) if isinstance(export_path, str) else export_path
     export.wait_until_completed(verbose=verbose, in_place=True)
     export.to_file(export_path)
 
     return export
+
+
+def export_roi_to_quicfire(
+    roi: GeoDataFrame,
+    export_path: Path | str,
+    verbose: bool = False,
+    topography_config: Optional[Dict[str, Any]] = None,
+    surface_config: Optional[Dict[str, Any]] = None,
+    tree_config: Optional[Dict[str, Any]] = None,
+    features_config: Optional[Dict[str, Any]] = None,
+    tree_inventory_config: Optional[Dict[str, Any]] = None,
+    **kwargs,
+) -> Export:
+    """Convenience function to export a region of interest (ROI) to QUIC-Fire.
+
+    This is a convenience wrapper around export_roi() that sets export_format
+    to "QUIC-Fire". For more flexible export options including zarr format,
+    use export_roi() directly.
+
+    Parameters
+    ----------
+    roi : GeoDataFrame
+        GeoDataFrame containing the region of interest geometry.
+    export_path : Path or str
+        File path where the QUIC-Fire export will be saved.
+    verbose : bool, optional
+        If True, prints progress messages during the export process.
+    topography_config : dict, optional
+        Configuration for topography grid creation. See export_roi() for details.
+    surface_config : dict, optional
+        Configuration for surface fuel grid creation. See export_roi() for details.
+    tree_config : dict, optional
+        Configuration for tree canopy grid creation. See export_roi() for details.
+    features_config : dict, optional
+        Configuration for geographic features creation. See export_roi() for details.
+    tree_inventory_config : dict, optional
+        Configuration for tree inventory creation. See export_roi() for details.
+
+    Returns
+    -------
+    Export
+        The completed QUIC-Fire export object.
+
+    See Also
+    --------
+    export_roi : More flexible export function supporting multiple formats.
+
+    Examples
+    --------
+    >>> import geopandas as gpd
+    >>> from fastfuels_sdk import export_roi_to_quicfire
+    >>> roi = gpd.read_file("my_area.geojson")
+    >>> export = export_roi_to_quicfire(roi, "quicfire_export.zip")
+    """
+    return export_roi(
+        roi=roi,
+        export_path=export_path,
+        export_format="QUIC-Fire",
+        verbose=verbose,
+        topography_config=topography_config,
+        surface_config=surface_config,
+        tree_config=tree_config,
+        features_config=features_config,
+        tree_inventory_config=tree_inventory_config,
+        **kwargs,
+    )

@@ -213,21 +213,41 @@ export.to_file(export_path)
 Now that you understand the complete process, you can use the convenience function to accomplish the same result with less code:
 
 ```python
-from fastfuels_sdk.convenience import export_roi_to_quicfire
+from fastfuels_sdk import export_roi
 
-# Export using the convenience function
-export = export_roi_to_quicfire(
+# Export using the convenience function (defaults to QUIC-Fire format)
+export = export_roi(
     roi=roi,
     export_path=Path("quicfire_export"),
     verbose=True  # See progress updates
 )
 ```
 
+### Export Formats
+
+The `export_roi()` function supports multiple export formats via the `export_format` parameter:
+
+```python
+# Export to QUIC-Fire format (default)
+export = export_roi(roi, "quicfire_export.zip", export_format="QUIC-Fire")
+
+# Export to zarr format
+export = export_roi(roi, "zarr_export.zip", export_format="zarr")
+```
+
+For backwards compatibility, you can also use `export_roi_to_quicfire()` which is a convenience wrapper that always exports to QUIC-Fire format:
+
+```python
+from fastfuels_sdk import export_roi_to_quicfire
+
+export = export_roi_to_quicfire(roi, "quicfire_export.zip", verbose=True)
+```
+
 ### Customizing the Export with Configuration Options
 
-The `export_roi_to_quicfire()` function supports extensive configuration options that let you customize every aspect of the export process. Instead of writing complex builder chains (as shown in the manual process above), you can use simple dictionary-based configurations that mirror the underlying API structures.
+Both `export_roi()` and `export_roi_to_quicfire()` support extensive configuration options that let you customize every aspect of the export process. Instead of writing complex builder chains (as shown in the manual process above), you can use simple dictionary-based configurations that mirror the underlying API structures.
 
-**Why use configuration dictionaries?** They provide the same power as the manual approach but with much simpler syntax. Each configuration parameter in `export_roi_to_quicfire()` directly maps to the builder methods you saw earlier:
+**Why use configuration dictionaries?** They provide the same power as the manual approach but with much simpler syntax. Each configuration parameter directly maps to the builder methods you saw earlier:
 
 - `surface_config` → `SurfaceGridBuilder` methods
 - `topography_config` → `TopographyGridBuilder` methods
@@ -251,7 +271,7 @@ surface_config = {
     }
 }
 
-export = export_roi_to_quicfire(
+export = export_roi(
     roi, "dry_conditions_export",
     surface_config=surface_config,
     verbose=True
@@ -269,7 +289,7 @@ surface_config = {
     "fuelDepth": {"version": "2023"}
 }
 
-export = export_roi_to_quicfire(
+export = export_roi(
     roi, "landfire_2023_export",
     surface_config=surface_config
 )
@@ -285,7 +305,7 @@ features_config = {
     "createWaterFeatures": False
 }
 
-export = export_roi_to_quicfire(
+export = export_roi(
     roi, "roads_only_export",
     features_config=features_config
 )
