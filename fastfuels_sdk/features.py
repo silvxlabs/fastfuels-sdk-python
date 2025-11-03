@@ -8,13 +8,12 @@ from time import sleep
 from typing import Optional, List, Union, Dict, Any
 
 # Internal imports
-from fastfuels_sdk.api import get_client
-from fastfuels_sdk.utils import format_processing_error
-from fastfuels_sdk.client_library.api import (
-    FeaturesApi,
-    RoadFeatureApi,
-    WaterFeatureApi,
+from fastfuels_sdk.api import (
+    get_features_api,
+    get_road_feature_api,
+    get_water_feature_api,
 )
+from fastfuels_sdk.utils import format_processing_error
 from fastfuels_sdk.client_library.models import (
     Features as FeaturesModel,
     RoadFeature as RoadFeatureModel,
@@ -25,10 +24,6 @@ from fastfuels_sdk.client_library.models import (
     WaterFeatureSource,
     Geojson,
 )
-
-_FEATURES_API = FeaturesApi(get_client())
-_ROAD_FEATURE_API = RoadFeatureApi(get_client())
-_WATER_FEATURE_API = WaterFeatureApi(get_client())
 
 
 class Features(FeaturesModel):
@@ -103,7 +98,7 @@ class Features(FeaturesModel):
         --------
         Features.get : Refresh feature data
         """
-        features_response = _FEATURES_API.get_features(domain_id=domain_id)
+        features_response = get_features_api().get_features(domain_id=domain_id)
         response_data = _convert_api_models_to_sdk_classes(
             domain_id, features_response.model_dump(), features_response
         )
@@ -138,7 +133,7 @@ class Features(FeaturesModel):
         --------
         Features.from_domain : Get features for a specific domain
         """
-        response = _FEATURES_API.get_features(domain_id=self.domain_id)
+        response = get_features_api().get_features(domain_id=self.domain_id)
         response_data = response.model_dump()
         response_data = _convert_api_models_to_sdk_classes(
             self.domain_id, response_data, response
@@ -223,7 +218,7 @@ class Features(FeaturesModel):
         request = CreateRoadFeatureRequest(sources=sources_list, geojson=geojson_param)
 
         # Call API
-        response = _ROAD_FEATURE_API.create_road_feature(
+        response = get_road_feature_api().create_road_feature(
             domain_id=self.domain_id, create_road_feature_request=request
         )
 
@@ -386,7 +381,7 @@ class Features(FeaturesModel):
         )
 
         # Call API
-        response = _WATER_FEATURE_API.create_water_feature(
+        response = get_water_feature_api().create_water_feature(
             domain_id=self.domain_id, create_water_feature_request=request
         )
 
@@ -505,7 +500,7 @@ class RoadFeature(RoadFeatureModel):
         >>> # Or update the existing instance
         >>> road.get(in_place=True)
         """
-        response = _ROAD_FEATURE_API.get_road_feature(domain_id=self.domain_id)
+        response = get_road_feature_api().get_road_feature(domain_id=self.domain_id)
         response_dict = response.model_dump()
 
         # The geojson field from response is already a Geojson instance, keep it
@@ -602,7 +597,7 @@ class RoadFeature(RoadFeatureModel):
         >>> # Subsequent operations will raise NotFoundException
         >>> road.get()  # raises NotFoundException
         """
-        _ROAD_FEATURE_API.delete_road_feature(domain_id=self.domain_id)
+        get_road_feature_api().delete_road_feature(domain_id=self.domain_id)
         return None
 
 
@@ -669,7 +664,7 @@ class WaterFeature(WaterFeatureModel):
         >>> # Or update the existing instance
         >>> water.get(in_place=True)
         """
-        response = _WATER_FEATURE_API.get_water_feature(domain_id=self.domain_id)
+        response = get_water_feature_api().get_water_feature(domain_id=self.domain_id)
         if in_place:
             # Update all attributes of current instance
             for key, value in response.model_dump().items():
@@ -761,7 +756,7 @@ class WaterFeature(WaterFeatureModel):
         >>> # Subsequent operations will raise NotFoundException
         >>> water.get()  # raises NotFoundException
         """
-        _WATER_FEATURE_API.delete_water_feature(domain_id=self.domain_id)
+        get_water_feature_api().delete_water_feature(domain_id=self.domain_id)
         return None
 
 
