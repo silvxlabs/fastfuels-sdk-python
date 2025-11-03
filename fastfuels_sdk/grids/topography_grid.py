@@ -6,16 +6,13 @@ fastfuels_sdk/grids/topography_grid.py
 from __future__ import annotations
 
 # Internal imports
-from fastfuels_sdk.api import get_client
+from fastfuels_sdk.api import get_topography_grid_api
 from fastfuels_sdk.utils import format_processing_error
 from fastfuels_sdk.exports import Export
-from fastfuels_sdk.client_library.api import TopographyGridApi
 from fastfuels_sdk.client_library.models import (
     TopographyGrid as TopographyGridModel,
     GridAttributeMetadataResponse,
 )
-
-_TOPOGRAPHY_GRID_API = TopographyGridApi(get_client())
 
 
 class TopographyGrid(TopographyGridModel):
@@ -43,7 +40,7 @@ class TopographyGrid(TopographyGridModel):
         >>> print(grid.status)
         'completed'
         """
-        response = _TOPOGRAPHY_GRID_API.get_topography_grid(domain_id=domain_id)
+        response = get_topography_grid_api().get_topography_grid(domain_id=domain_id)
         return cls(domain_id=domain_id, **response.model_dump())
 
     def get(self, in_place: bool = False) -> "TopographyGrid":
@@ -71,7 +68,9 @@ class TopographyGrid(TopographyGridModel):
         >>> # Or update the existing instance
         >>> grid.get(in_place=True)
         """
-        response = _TOPOGRAPHY_GRID_API.get_topography_grid(domain_id=self.domain_id)
+        response = get_topography_grid_api().get_topography_grid(
+            domain_id=self.domain_id
+        )
         if in_place:
             # Update all attributes of current instance
             for key, value in response.model_dump().items():
@@ -207,7 +206,7 @@ class TopographyGrid(TopographyGridModel):
         >>> print(metadata.shape)
         [100, 100, 50]
         """
-        return _TOPOGRAPHY_GRID_API.get_topography_grid_attribute_metadata(
+        return get_topography_grid_api().get_topography_grid_attribute_metadata(
             domain_id=self.domain_id
         )
 
@@ -234,7 +233,7 @@ class TopographyGrid(TopographyGridModel):
         >>> export.wait_until_completed()
         >>> export.to_file("grid_data.zarr")
         """
-        response = _TOPOGRAPHY_GRID_API.create_topography_grid_export(
+        response = get_topography_grid_api().create_topography_grid_export(
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
@@ -262,7 +261,7 @@ class TopographyGrid(TopographyGridModel):
         >>> export.wait_until_completed()
         >>> export.to_file("grid_data.zarr")
         """
-        response = _TOPOGRAPHY_GRID_API.get_topography_grid_export(
+        response = get_topography_grid_api().get_topography_grid_export(
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
@@ -286,5 +285,5 @@ class TopographyGrid(TopographyGridModel):
         >>> # Subsequent operations will raise NotFoundException
         >>> grid.get()  # raises NotFoundException
         """
-        _TOPOGRAPHY_GRID_API.delete_topography_grid(domain_id=self.domain_id)
+        get_topography_grid_api().delete_topography_grid(domain_id=self.domain_id)
         return None

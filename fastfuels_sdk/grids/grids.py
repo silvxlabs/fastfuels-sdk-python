@@ -10,19 +10,18 @@ from __future__ import annotations
 from typing import Optional, List
 
 # Internal imports
-from fastfuels_sdk.api import get_client
+from fastfuels_sdk.api import (
+    get_grids_api,
+    get_tree_grid_api,
+    get_surface_grid_api,
+    get_topography_grid_api,
+    get_feature_grid_api,
+)
 from fastfuels_sdk.exports import Export
 from fastfuels_sdk.grids.tree_grid import TreeGrid
 from fastfuels_sdk.grids.feature_grid import FeatureGrid
 from fastfuels_sdk.grids.surface_grid import SurfaceGrid
 from fastfuels_sdk.grids.topography_grid import TopographyGrid
-from fastfuels_sdk.client_library.api import (
-    GridsApi,
-    TreeGridApi,
-    SurfaceGridApi,
-    TopographyGridApi,
-    FeatureGridApi,
-)
 from fastfuels_sdk.client_library.models import (
     Grids as GridsModel,
     CreateSurfaceGridRequest,
@@ -43,12 +42,6 @@ from fastfuels_sdk.client_library.models import (
     TreeGridSAVRSource,
     CreateFeatureGridRequest,
 )
-
-_GRIDS_API = GridsApi(get_client())
-_TREE_GRID_API = TreeGridApi(get_client())
-_SURFACE_GRID_API = SurfaceGridApi(get_client())
-_TOPOGRAPHY_GRID_API = TopographyGridApi(get_client())
-_FEATURE_GRID_API = FeatureGridApi(get_client())
 
 
 class Grids(GridsModel):
@@ -127,7 +120,7 @@ class Grids(GridsModel):
         >>> if grids.surface:
         ...     print("Domain has surface grid data")
         """
-        grids_response = _GRIDS_API.get_grids(domain_id=domain_id)
+        grids_response = get_grids_api().get_grids(domain_id=domain_id)
         response_data = grids_response.model_dump()
         response_data = _convert_api_models_to_sdk_classes(domain_id, response_data)
 
@@ -157,7 +150,7 @@ class Grids(GridsModel):
         >>> # Or update the existing instance
         >>> grids.get(in_place=True)
         """
-        response = _GRIDS_API.get_grids(domain_id=self.domain_id)
+        response = get_grids_api().get_grids(domain_id=self.domain_id)
         response_data = response.model_dump()
         response_data = _convert_api_models_to_sdk_classes(
             self.domain_id, response_data
@@ -270,7 +263,7 @@ class Grids(GridsModel):
             ),
         )
 
-        response = _SURFACE_GRID_API.create_surface_grid(
+        response = get_surface_grid_api().create_surface_grid(
             domain_id=self.domain_id, create_surface_grid_request=request
         )
 
@@ -407,7 +400,7 @@ class Grids(GridsModel):
             aspect=(TopographyGridAspectSource.from_dict(aspect) if aspect else None),
         )
 
-        response = _TOPOGRAPHY_GRID_API.create_topography_grid(
+        response = get_topography_grid_api().create_topography_grid(
             domain_id=self.domain_id, create_topography_grid_request=request
         )
 
@@ -541,7 +534,7 @@ class Grids(GridsModel):
             SAVR=(TreeGridSAVRSource.from_dict(savr) if savr else None),
         )
 
-        response = _TREE_GRID_API.create_tree_grid(
+        response = get_tree_grid_api().create_tree_grid(
             domain_id=self.domain_id, create_tree_grid_request=request
         )
 
@@ -613,7 +606,7 @@ class Grids(GridsModel):
             attributes=attributes,  # type: ignore # pydantic handles this for us
         )
 
-        response = _FEATURE_GRID_API.create_feature_grid(
+        response = get_feature_grid_api().create_feature_grid(
             domain_id=self.domain_id, create_feature_grid_request=request
         )
 
@@ -656,7 +649,7 @@ class Grids(GridsModel):
         >>> export.wait_until_completed()
         >>> export.to_file("grid_data.zip")
         """
-        response = _GRIDS_API.create_grid_export(
+        response = get_grids_api().create_grid_export(
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
@@ -686,7 +679,7 @@ class Grids(GridsModel):
         >>> if export.status == "completed":
         ...     export.to_file("grid_data.zarr")
         """
-        response = _GRIDS_API.get_grid_export(
+        response = get_grids_api().get_grid_export(
             domain_id=self.domain_id, export_format=export_format
         )
         return Export(**response.model_dump())
