@@ -213,15 +213,276 @@ export.to_file(export_path)
 Now that you understand the complete process, you can use the convenience function to accomplish the same result with less code:
 
 ```python
-from fastfuels_sdk.convenience import export_roi_to_quicfire
+from fastfuels_sdk import export_roi
 
-# Export using the convenience function
-export = export_roi_to_quicfire(
+# Export using the convenience function (defaults to QUIC-Fire format)
+export = export_roi(
     roi=roi,
     export_path=Path("quicfire_export"),
     verbose=True  # See progress updates
 )
 ```
+
+### Export Formats
+
+The `export_roi()` function supports multiple export formats via the `export_format` parameter:
+
+```python
+# Export to QUIC-Fire format (default)
+export = export_roi(roi, "quicfire_export.zip", export_format="QUIC-Fire")
+
+# Export to zarr format
+export = export_roi(roi, "zarr_export.zip", export_format="zarr")
+```
+
+For backwards compatibility, you can also use `export_roi_to_quicfire()` which is a convenience wrapper that always exports to QUIC-Fire format:
+
+```python
+from fastfuels_sdk import export_roi_to_quicfire
+
+export = export_roi_to_quicfire(roi, "quicfire_export.zip", verbose=True)
+```
+
+### Customizing the Export with Configuration Options
+
+Both `export_roi()` and `export_roi_to_quicfire()` support extensive configuration options that let you customize every aspect of the export process. Instead of writing complex builder chains (as shown in the manual process above), you can use simple dictionary-based configurations that mirror the underlying API structures.
+
+**Why use configuration dictionaries?** They provide the same power as the manual approach but with much simpler syntax. Each configuration parameter directly maps to the builder methods you saw earlier:
+
+- `surface_config` → `SurfaceGridBuilder` methods
+- `topography_config` → `TopographyGridBuilder` methods
+- `tree_config` → `TreeGridBuilder` methods
+- `features_config` → Feature creation controls
+- `tree_inventory_config` → Tree inventory parameters
+
+#### Most Common Use Cases
+
+**Change surface fuel moisture (the #1 most common customization):**
+
+This replaces the manual `.with_uniform_fuel_moisture()` call from Step 8 above:
+
+```python
+# Set surface fuel moisture to 5% for dry conditions
+surface_config = {
+    "fuelMoisture": {
+        "source": "uniform",
+        "value": 0.05,  # 5% moisture content
+        "featureMasks": ["road", "water"]
+    }
+}
+
+export = export_roi(
+    roi, "dry_conditions_export",
+    surface_config=surface_config,
+    verbose=True
+)
+```
+
+**Use newer LANDFIRE data:**
+
+This replaces the `version="2022"` parameters from the manual process:
+
+```python
+# Use LANDFIRE 2023 data instead of default 2022
+surface_config = {
+    "fuelLoad": {"version": "2023"},
+    "fuelDepth": {"version": "2023"}
+}
+
+export = export_roi(
+    roi, "landfire_2023_export",
+    surface_config=surface_config
+)
+```
+
+**Skip water features for faster processing:**
+
+This replaces the manual feature creation from Step 4:
+
+```python
+# Skip water feature creation (roads only)
+features_config = {
+    "createWaterFeatures": False
+}
+
+export = export_roi(
+    roi, "roads_only_export",
+    features_config=features_config
+)
+
+#### Complete Configuration Reference
+
+##### Topography Configuration
+
+```python
+topography_config = {
+    "attributes": ["elevation"],
+    "elevation": {
+        "source": "3DEP",  # "3DEP", "LANDFIRE", or "uniform"
+        "interpolationMethod": "linear"  # "linear", "cubic", or "nearest"
+        # For uniform source only:
+        # "value": 1500.0  # Elevation in meters
+    }
+}
+```
+
+##### Surface Configuration
+
+```python
+surface_config = {
+    "attributes": ["fuelLoad", "fuelDepth", "fuelMoisture"],
+
+    "fuelLoad": {
+        "source": "LANDFIRE",  # "LANDFIRE" or "uniform"
+        "product": "FBFM40",   # LANDFIRE product
+        "version": "2022",     # LANDFIRE version year
+        "interpolationMethod": "cubic",
+        "curingLiveHerbaceous": 0.25,  # 0.0-1.0
+        "curingLiveWoody": 0.1,        # 0.0-1.0
+        "groups": ["oneHour", "tenHour", "hundredHour", "liveHerbaceous", "liveWoody"],
+        "featureMasks": ["road", "water"],
+        "removeNonBurnable": ["NB1", "NB2", "NB3", "NB8", "NB9"],
+        # For uniform source only:
+        # "value": 2.5  # kg/m²
+    },
+
+    "fuelDepth": {
+        "source": "LANDFIRE",  # Similar structure to fuelLoad
+        "product": "FBFM40",
+        "version": "2022",
+        "interpolationMethod": "cubic",
+        "featureMasks": ["road", "water"],
+        "removeNonBurnable": ["NB1", "NB2", "NB3", "NB8", "NB9"]
+        # For uniform: "value": 0.3  # meters
+    },
+
+    "fuelMoisture": {
+        "source": "uniform",  # Currently only uniform supported
+        "value": 0.15,        # Moisture content (0.0-1.0)
+        "featureMasks": ["road", "water"]
+    }
+}
+```
+
+##### Tree Configuration
+
+```python
+tree_config = {
+    "attributes": ["bulkDensity", "fuelMoisture"],
+
+    "bulkDensity": {
+        "source": "inventory",  # "inventory" or "uniform"
+        # For uniform source only:
+        # "value": 0.5  # kg/m³
+    },
+
+    "fuelMoisture": {
+        "source": "uniform",
+        "value": 100  # Moisture content (typically 50-150)
+    }
+}
+```
+
+##### Features Configuration
+
+```python
+features_config = {
+    "createRoadFeatures": True,     # Create road features from OSM
+    "createWaterFeatures": True,    # Create water features from OSM
+    "featureGridAttributes": ["road", "water"]  # Grid attributes to create
+}
+```
+
+##### Tree Inventory Configuration
+
+```python
+tree_inventory_config = {
+    "featureMasks": ["road", "water"]  # Features to mask from inventory
+}
+```
+
+#### Advanced Configuration Examples
+
+**Completely custom surface grid:**
+
+```python
+surface_config = {
+    "fuelLoad": {
+        "source": "uniform",
+        "value": 1.5,  # kg/m²
+        "featureMasks": ["road"]  # Only mask roads, not water
+    },
+    "fuelDepth": {
+        "source": "uniform",
+        "value": 0.2,  # meters
+        "featureMasks": ["road"]
+    },
+    "fuelMoisture": {
+        "source": "uniform",
+        "value": 0.08,  # Very dry conditions (8%)
+        "featureMasks": ["road"]
+    }
+}
+```
+
+**High-resolution with cubic interpolation:**
+
+```python
+topography_config = {
+    "elevation": {
+        "source": "3DEP",
+        "interpolationMethod": "cubic"  # Higher quality interpolation
+    }
+}
+
+surface_config = {
+    "fuelLoad": {
+        "interpolationMethod": "cubic",
+        "groups": ["oneHour", "tenHour", "hundredHour"]  # Include more fuel classes
+    },
+    "fuelDepth": {
+        "interpolationMethod": "cubic"
+    }
+}
+```
+
+**Roads-only configuration:**
+
+```python
+features_config = {
+    "createRoadFeatures": True,
+    "createWaterFeatures": False,    # Skip water features
+    "featureGridAttributes": ["road"]  # Only roads in feature grid
+}
+
+# Update other configs to only mask roads
+surface_config = {
+    "fuelMoisture": {
+        "source": "uniform",
+        "value": 0.12,
+        "featureMasks": ["road"]  # Only road masks
+    }
+}
+
+tree_inventory_config = {
+    "featureMasks": ["road"]  # Only mask roads from tree inventory
+}
+```
+
+#### Configuration Tips
+
+1. **Partial Overrides**: Only specify the parameters you want to change. The function will merge your configuration with sensible defaults.
+
+2. **Feature Mask Consistency**: Make sure `featureMasks` in your surface and tree configs match the features you're actually creating.
+
+3. **Performance Trade-offs**:
+   - `"cubic"` interpolation is higher quality but slower
+   - Disabling water features speeds up processing
+   - Fewer fuel load groups process faster
+
+4. **Validation**: The function validates your configuration against the API requirements and will provide helpful error messages.
+
+5. **Backwards Compatibility**: Existing code without configuration parameters will continue to work exactly as before.
 
 ## Verifying the Export
 
