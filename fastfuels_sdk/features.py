@@ -9,6 +9,7 @@ from typing import Optional, List, Union, Dict, Any
 
 # Internal imports
 from fastfuels_sdk.api import get_client
+from fastfuels_sdk.utils import format_processing_error
 from fastfuels_sdk.client_library.api import (
     FeaturesApi,
     RoadFeatureApi,
@@ -560,7 +561,16 @@ class RoadFeature(RoadFeatureModel):
         road_feature = self.get(in_place=in_place if in_place else False)
         while road_feature.status != "completed":
             if road_feature.status == "failed":
-                raise RuntimeError("Road feature processing failed.")
+                error_msg = "Road feature processing failed."
+
+                # Extract detailed error information if available
+                error_obj = getattr(road_feature, "error", None)
+                if error_obj:
+                    error_details = format_processing_error(error_obj)
+                    if error_details:
+                        error_msg = f"{error_msg}\n\n{error_details}"
+
+                raise RuntimeError(error_msg)
             if elapsed_time >= timeout:
                 raise TimeoutError("Timed out waiting for road features to finish.")
             sleep(step)
@@ -709,7 +719,17 @@ class WaterFeature(WaterFeatureModel):
         water_feature = self.get(in_place=in_place if in_place else False)
         while water_feature.status != "completed":
             if water_feature.status == "failed":
-                raise RuntimeError("Water feature processing failed.")
+                error_msg = "Water feature processing failed."
+
+                # Extract detailed error information if available
+                # Check for error in multiple possible locations
+                error_obj = getattr(water_feature, "error", None)
+                if error_obj:
+                    error_details = format_processing_error(error_obj)
+                    if error_details:
+                        error_msg = f"{error_msg}\n\n{error_details}"
+
+                raise RuntimeError(error_msg)
             if elapsed_time >= timeout:
                 raise TimeoutError("Timed out waiting for water features to finish.")
             sleep(step)

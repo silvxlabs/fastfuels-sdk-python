@@ -10,7 +10,10 @@ from typing import Optional
 
 # Internal imports
 from fastfuels_sdk.api import get_client
-from fastfuels_sdk.utils import parse_dict_items_to_pydantic_list
+from fastfuels_sdk.utils import (
+    parse_dict_items_to_pydantic_list,
+    format_processing_error,
+)
 from fastfuels_sdk.exports import Export
 from fastfuels_sdk.client_library.api import InventoriesApi, TreeInventoryApi
 from fastfuels_sdk.client_library.models import (
@@ -870,7 +873,16 @@ class TreeInventory(TreeInventoryModel):
         tree_inventory = self.get(in_place=in_place if in_place else False)
         while tree_inventory.status != "completed":
             if tree_inventory.status == "failed":
-                raise RuntimeError("Tree inventory processing failed.")
+                error_msg = "Tree inventory processing failed."
+
+                # Extract detailed error information if available
+                error_obj = getattr(tree_inventory, "error", None)
+                if error_obj:
+                    error_details = format_processing_error(error_obj)
+                    if error_details:
+                        error_msg = f"{error_msg}\n\n{error_details}"
+
+                raise RuntimeError(error_msg)
             if elapsed_time >= timeout:
                 raise TimeoutError("Timed out waiting for tree inventory to finish.")
             sleep(step)

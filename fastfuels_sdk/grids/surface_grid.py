@@ -7,6 +7,7 @@ from __future__ import annotations
 
 # Internal imports
 from fastfuels_sdk.api import get_client
+from fastfuels_sdk.utils import format_processing_error
 from fastfuels_sdk.exports import Export
 from fastfuels_sdk.client_library.api import SurfaceGridApi
 from fastfuels_sdk.client_library.models import (
@@ -160,7 +161,16 @@ class SurfaceGrid(SurfaceGridModel):
 
         while surface_grid.status != "completed":
             if surface_grid.status == "failed":
-                raise RuntimeError("Surface grid processing failed.")
+                error_msg = "Surface grid processing failed."
+
+                # Extract detailed error information if available
+                error_obj = getattr(surface_grid, "error", None)
+                if error_obj:
+                    error_details = format_processing_error(error_obj)
+                    if error_details:
+                        error_msg = f"{error_msg}\n\n{error_details}"
+
+                raise RuntimeError(error_msg)
             if elapsed_time >= timeout:
                 raise TimeoutError("Timed out waiting for surface grid to finish.")
             sleep(step)

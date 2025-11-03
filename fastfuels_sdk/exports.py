@@ -11,6 +11,7 @@ from urllib.request import urlretrieve
 
 # Internal imports
 from fastfuels_sdk.api import get_client
+from fastfuels_sdk.utils import format_processing_error
 from fastfuels_sdk.client_library.models import Export as ExportModel
 from fastfuels_sdk.client_library.api import (
     TreeInventoryApi,
@@ -168,7 +169,16 @@ class Export(ExportModel):
 
         while export.status != "completed":
             if export.status == "failed":
-                raise RuntimeError("Export processing failed.")
+                error_msg = "Export processing failed."
+
+                # Extract detailed error information if available
+                error_obj = getattr(export, "error", None)
+                if error_obj:
+                    error_details = format_processing_error(error_obj)
+                    if error_details:
+                        error_msg = f"{error_msg}\n\n{error_details}"
+
+                raise RuntimeError(error_msg)
             if elapsed_time >= timeout:
                 raise TimeoutError(
                     f"Timed out waiting for export to finish after {timeout} seconds."
