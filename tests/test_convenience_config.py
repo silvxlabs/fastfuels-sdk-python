@@ -150,7 +150,7 @@ class TestDefaultConfigurations:
 
         # Verify tree inventory was created with current masks
         mock_inventories_instance.create_tree_inventory_from_treemap.assert_called_once_with(
-            feature_masks=["road", "water"]
+            feature_masks=["road", "water"], canopy_height_map_source="Meta2024"
         )
 
     def test_default_configuration_constants(self):
@@ -181,6 +181,7 @@ class TestDefaultConfigurations:
 
         # Test tree inventory config
         assert DEFAULT_TREE_INVENTORY_CONFIG["featureMasks"] == ["road", "water"]
+        assert DEFAULT_TREE_INVENTORY_CONFIG["canopyHeightMapSource"] == "Meta2024"
 
 
 class TestConfigurationMerger:

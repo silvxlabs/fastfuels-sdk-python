@@ -102,7 +102,10 @@ DEFAULT_FEATURES_CONFIG = {
     "featureGridAttributes": ["road", "water"],
 }
 
-DEFAULT_TREE_INVENTORY_CONFIG = {"featureMasks": ["road", "water"]}
+DEFAULT_TREE_INVENTORY_CONFIG = {
+    "featureMasks": ["road", "water"],
+    "canopyHeightMapSource": "Meta2024",
+}
 
 
 def _configure_topography_builder(domain_id: str, config: Dict[str, Any]):
@@ -497,7 +500,10 @@ def export_roi(
     tree_inventory = Inventories.from_domain_id(
         domain.id
     ).create_tree_inventory_from_treemap(
-        feature_masks=["road", "water"], canopy_height_map_source="Meta2024"
+        feature_masks=merged_tree_inventory_config.get("featureMasks", []),
+        canopy_height_map_source=merged_tree_inventory_config.get(
+            "canopyHeightMapSource"
+        ),
     )
 
     # Create surface grid using configuration
