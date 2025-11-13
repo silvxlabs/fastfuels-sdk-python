@@ -153,6 +153,10 @@ class Inventories(InventoriesModel):
             - conditions: List of conditions that trees must meet
             - actions: List of actions to apply to matching trees
 
+            Conditions can be:
+            1. Simple field conditions: Compare a single field to a value
+            2. Expression-based conditions: Use arithmetic expressions combining multiple fields
+
             Example - Modify attribute:
             ```python
             {
@@ -161,16 +165,50 @@ class Inventories(InventoriesModel):
             }
             ```
 
-            Example - Remove trees:
+            Example - Remove all trees with a diameter (DIA) less than 10cm:
             ```python
             {
                 "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
-                "actions": [{"attribute": "all", "modifier": "remove"}]
+                "actions": [{"modifier": "remove"}]
             }
             ```
 
-            Available attributes: HT (height), DIA (diameter), CR (crown ratio), SPCD (species code)
+            Example - Expression-based condition (remove trees with crown length < 1m):
+            ```python
+            {
+                "conditions": [{
+                    "attribute": "expression",
+                    "expression": "HT * CR",  # Crown length calculation
+                    "operator": "lt",
+                    "value": 1.0
+                }],
+                "actions": [{"modifier": "remove"}]
+            }
+            ```
+
+            Example - Multiple conditions (remove tall, slender Douglas-fir):
+            ```python
+            {
+                "conditions": [
+                    {"attribute": "SPCD", "operator": "eq", "value": 202},
+                    {"attribute": "expression", "expression": "HT / DIA", "operator": "gt", "value": 100}
+                ],
+                "actions": [{"modifier": "remove"}]
+            }
+            ```
+
+            Available field attributes: HT (height), DIA (diameter), CR (crown ratio), SPCD (species code)
+            Available operators: eq, ne, gt, lt, ge, le
             Available modifiers: multiply, divide, add, subtract, replace, remove
+
+            Expression syntax:
+            - Fields: HT, DIA, CR
+            - Operators: +, -, *, /, ()
+            - Example expressions: "HT * CR", "HT / DIA", "(HT + DIA) / 2", "HT * (1 - CR)"
+            - Common patterns:
+              * Crown length: HT * CR
+              * Crown base height: HT * (1 - CR)
+              * Slenderness ratio: HT / DIA
 
         treatments : dict or list[dict], optional
             List of silvicultural treatments to apply. Supports:
@@ -278,8 +316,10 @@ class Inventories(InventoriesModel):
         response = get_tree_inventory_api().create_tree_inventory(
             self.domain_id, request_body
         )
+        # Copy attributes directly from response to avoid re-serialization
         tree_inventory = TreeInventory(
-            domain_id=self.domain_id, **response.model_dump()
+            domain_id=self.domain_id,
+            **{field: getattr(response, field) for field in response.model_fields},
         )
         if in_place:
             self.tree = tree_inventory
@@ -336,8 +376,11 @@ class Inventories(InventoriesModel):
 
         modifications : dict or list[dict], optional
             Rules for modifying or removing tree attributes. Each modification includes:
-            - conditions: List of criteria that trees must meet
+            - conditions: List of criteria that trees must meet (all must be true - AND logic)
             - actions: Changes to apply to matching trees
+
+            Conditions support both simple field comparisons and arithmetic expressions
+            combining multiple fields.
 
             Example - Modify attribute:
             ```python
@@ -347,21 +390,51 @@ class Inventories(InventoriesModel):
             }
             ```
 
-            Example - Remove trees:
+            Example - Remove trees (simplified syntax):
             ```python
             {
                 "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
-                "actions": [{"attribute": "all", "modifier": "remove"}]
+                "actions": [{"modifier": "remove"}]
             }
             ```
 
-            Available attributes:
+            Example - Expression-based (remove trees with short crowns):
+            ```python
+            {
+                "conditions": [{
+                    "attribute": "expression",
+                    "expression": "HT * CR",  # Crown length
+                    "operator": "lt",
+                    "value": 1.0
+                }],
+                "actions": [{"modifier": "remove"}]
+            }
+            ```
+
+            Example - Multiple conditions (remove unrealistic slender trees):
+            ```python
+            {
+                "conditions": [
+                    {"attribute": "expression", "expression": "HT / DIA", "operator": "gt", "value": 100},
+                    {"attribute": "HT", "operator": "gt", "value": 5}
+                ],
+                "actions": [{"modifier": "remove"}]
+            }
+            ```
+
+            Available field attributes:
             - HT: Height (meters)
             - DIA: Diameter at breast height (centimeters)
             - CR: Crown ratio (0-1)
             - SPCD: Species code (integer)
 
+            Available operators: eq, ne, gt, lt, ge, le
             Available modifiers: multiply, divide, add, subtract, replace, remove
+
+            Expression syntax (for expression-based conditions):
+            - Fields: HT, DIA, CR
+            - Operators: +, -, *, /, ()
+            - Common patterns: "HT * CR" (crown length), "HT / DIA" (slenderness), "HT * (1 - CR)" (crown base height)
 
         treatments : dict or list[dict], optional
             Silvicultural treatments to apply. Supports:
@@ -588,8 +661,13 @@ class Inventories(InventoriesModel):
             if upload_response.status_code != 200:
                 raise ValueError(f"Failed to upload file: {upload_response.text}")
 
+        # Copy attributes directly from response to avoid re-serialization
         tree_inventory = TreeInventory(
-            domain_id=self.domain_id, **signed_url_response.model_dump()
+            domain_id=self.domain_id,
+            **{
+                field: getattr(signed_url_response, field)
+                for field in signed_url_response.model_fields
+            },
         )
 
         return tree_inventory
@@ -708,7 +786,11 @@ class TreeInventory(TreeInventoryModel):
           for processing to finish
         """
         response = get_tree_inventory_api().get_tree_inventory(domain_id=domain_id)
-        return cls(domain_id=domain_id, **response.model_dump())
+        # Copy attributes directly from response to avoid re-serialization
+        return cls(
+            domain_id=domain_id,
+            **{field: getattr(response, field) for field in response.model_fields},
+        )
 
     def get(self, in_place: bool = False):
         """
@@ -774,11 +856,15 @@ class TreeInventory(TreeInventoryModel):
         """
         response = get_tree_inventory_api().get_tree_inventory(domain_id=self.domain_id)
         if in_place:
-            # Update all attributes of current instance
-            for key, value in response.model_dump().items():
-                setattr(self, key, value)
+            # Update all attributes of current instance from response
+            for field in response.model_fields:
+                setattr(self, field, getattr(response, field))
             return self
-        return TreeInventory(domain_id=self.domain_id, **response.model_dump())
+        # Copy attributes directly from response to avoid re-serialization
+        return TreeInventory(
+            domain_id=self.domain_id,
+            **{field: getattr(response, field) for field in response.model_fields},
+        )
 
     def wait_until_completed(
         self,

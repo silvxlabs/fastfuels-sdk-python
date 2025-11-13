@@ -108,11 +108,69 @@ tree_inventory = inventories.create_tree_inventory_from_treemap(
         },
         {
             "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
-            "actions": [{"attribute": "all", "modifier": "remove"}]
+            "actions": [{"modifier": "remove"}]
         }
     ]
 )
 ```
+
+### Using Expression-Based Conditions
+
+For more complex filtering, you can use arithmetic expressions that combine multiple tree fields. This eliminates the need to download, filter with pandas, and re-upload data.
+
+**Remove trees with short crowns** (crown length < 1m):
+
+```python
+tree_inventory = inventories.create_tree_inventory_from_treemap(
+    modifications={
+        "conditions": [{
+            "attribute": "expression",
+            "expression": "HT * CR",  # Crown length = height × crown ratio
+            "operator": "lt",
+            "value": 1.0
+        }],
+        "actions": [{"modifier": "remove"}]
+    }
+)
+```
+
+**Remove unrealistic slender trees** (height/diameter ratio > 100):
+
+```python
+tree_inventory = inventories.create_tree_inventory_from_treemap(
+    modifications={
+        "conditions": [{
+            "attribute": "expression",
+            "expression": "HT / DIA",  # Slenderness ratio
+            "operator": "gt",
+            "value": 100.0
+        }],
+        "actions": [{"modifier": "remove"}]
+    }
+)
+```
+
+**Combine field and expression conditions** (remove tall, slender Douglas-fir):
+
+```python
+tree_inventory = inventories.create_tree_inventory_from_treemap(
+    modifications={
+        "conditions": [
+            {"attribute": "SPCD", "operator": "eq", "value": 202},  # Douglas-fir
+            {"attribute": "expression", "expression": "HT / DIA", "operator": "gt", "value": 100}
+        ],
+        "actions": [{"modifier": "remove"}]
+    }
+)
+```
+
+**Supported expression fields**: `HT` (height), `DIA` (diameter), `CR` (crown ratio)
+**Supported operators**: `+`, `-`, `*`, `/`, `()`
+**Common patterns**:
+- Crown length: `HT * CR`
+- Crown base height: `HT * (1 - CR)`
+- Slenderness ratio: `HT / DIA`
+- Average metric: `(HT + DIA) / 2`
 
 ## How to Apply Forest Management Treatments
 

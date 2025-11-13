@@ -199,14 +199,29 @@ class TestCreateTreeInventory:
                 assert condition["attribute"] == mod_condition["attribute"]
                 assert condition["operator"] == mod_condition["operator"]
                 assert condition["value"] == mod_condition["value"]
+                # Check expression field if present
+                if "expression" in condition:
+                    assert condition["expression"] == mod_condition["expression"]
 
             for action, mod_action in zip(modification["actions"], mod["actions"]):
-                assert action["attribute"] == mod_action["attribute"]
-                assert action["modifier"] == mod_action["modifier"]
-                if action["modifier"] != "remove":
-                    assert action["value"] == mod_action["value"]
-                else:
+                # Handle both old and new remove syntax
+                if action["modifier"] == "remove":
+                    assert action["modifier"] == mod_action["modifier"]
+                    # attribute field is optional for remove actions
+                    # API normalizes "all" to None
+                    if "attribute" in action:
+                        expected_attr = action["attribute"]
+                        actual_attr = mod_action.get("attribute")
+                        # Accept either "all" or None for remove actions
+                        if expected_attr == "all":
+                            assert actual_attr in ["all", None]
+                        else:
+                            assert expected_attr == actual_attr
                     assert "value" not in mod_action
+                else:
+                    assert action["attribute"] == mod_action["attribute"]
+                    assert action["modifier"] == mod_action["modifier"]
+                    assert action["value"] == mod_action["value"]
 
     def test_modifications_single(self, test_inventories):
         """Tests single modification"""
@@ -245,6 +260,88 @@ class TestCreateTreeInventory:
         self.assert_data_validity(tree_inventory, test_inventories.domain_id)
         assert len(tree_inventory.modifications) == 2
         self.validate_modifications(tree_inventory, modifications)
+
+    def test_modifications_expression_crown_length(self, test_inventories):
+        """Tests expression-based condition for crown length filtering"""
+        modification = {
+            "conditions": [
+                {
+                    "attribute": "expression",
+                    "expression": "HT * CR",
+                    "operator": "lt",
+                    "value": 1.0,
+                }
+            ],
+            "actions": [{"modifier": "remove"}],
+        }
+
+        tree_inventory = test_inventories.create_tree_inventory(
+            sources="TreeMap", modifications=modification
+        )
+
+        self.assert_data_validity(tree_inventory, test_inventories.domain_id)
+        assert len(tree_inventory.modifications) == 1
+        self.validate_modifications(tree_inventory, [modification])
+
+    def test_modifications_expression_slenderness_ratio(self, test_inventories):
+        """Tests expression-based condition for slenderness ratio"""
+        modification = {
+            "conditions": [
+                {
+                    "attribute": "expression",
+                    "expression": "HT / DIA",
+                    "operator": "gt",
+                    "value": 100.0,
+                }
+            ],
+            "actions": [{"modifier": "remove"}],
+        }
+
+        tree_inventory = test_inventories.create_tree_inventory(
+            sources="TreeMap", modifications=modification
+        )
+
+        self.assert_data_validity(tree_inventory, test_inventories.domain_id)
+        assert len(tree_inventory.modifications) == 1
+        self.validate_modifications(tree_inventory, [modification])
+
+    def test_modifications_expression_with_field_condition(self, test_inventories):
+        """Tests expression condition combined with field condition"""
+        modification = {
+            "conditions": [
+                {"attribute": "SPCD", "operator": "eq", "value": 202},
+                {
+                    "attribute": "expression",
+                    "expression": "HT / DIA",
+                    "operator": "gt",
+                    "value": 100.0,
+                },
+            ],
+            "actions": [{"modifier": "remove"}],
+        }
+
+        tree_inventory = test_inventories.create_tree_inventory(
+            sources="TreeMap", modifications=modification
+        )
+
+        self.assert_data_validity(tree_inventory, test_inventories.domain_id)
+        assert len(tree_inventory.modifications) == 1
+        self.validate_modifications(tree_inventory, [modification])
+
+    def test_modifications_simplified_remove_syntax(self, test_inventories):
+        """Tests simplified remove action syntax without attribute field"""
+        modification = {
+            "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
+            "actions": [{"modifier": "remove"}],
+        }
+
+        tree_inventory = test_inventories.create_tree_inventory(
+            sources="TreeMap", modifications=modification
+        )
+
+        self.assert_data_validity(tree_inventory, test_inventories.domain_id)
+        assert len(tree_inventory.modifications) == 1
+        self.validate_modifications(tree_inventory, [modification])
 
     def test_treatments_single(self, test_inventories):
         """Tests single treatment"""
