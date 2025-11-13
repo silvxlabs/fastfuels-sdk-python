@@ -17,37 +17,40 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictFloat,
+    StrictInt,
+    StrictStr,
+    field_validator,
+)
+from typing import Any, ClassVar, Dict, List, Union
+from typing_extensions import Annotated
+from fastfuels_sdk.client_library.models.operator import Operator
 from typing import Optional, Set
 from typing_extensions import Self
 
-class TreeInventoryModificationRemoveAction(BaseModel):
-    """
-    Remove all trees matching the conditions.  Supports two syntaxes: - New (simplified): {\"modifier\": \"remove\"} - Legacy (backwards compatible): {\"attribute\": \"all\", \"modifier\": \"remove\"}  Note: The 'attribute' field is automatically normalized to None internally.
-    """ # noqa: E501
-    attribute: Optional[StrictStr] = None
-    modifier: Optional[StrictStr] = Field(default='remove', description="Remove trees matching conditions")
-    __properties: ClassVar[List[str]] = ["attribute", "modifier"]
 
-    @field_validator('attribute')
+class TreeInventoryModificationExpressionCondition(BaseModel):
+    """
+    Expression-based condition for filtering trees based on computed values.  Supports arithmetic expressions combining tree fields: - Fields: HT, DIA, CR - Operators: +, -, *, /, () - Examples: \"HT * (1 - CR)\", \"HT / DIA\", \"(HT + DIA) / 2\"
+    """  # noqa: E501
+
+    attribute: StrictStr
+    operator: Operator
+    value: Union[StrictFloat, StrictInt]
+    expression: Annotated[str, Field(min_length=1, strict=True, max_length=200)] = (
+        Field(description="Arithmetic expression using tree fields (HT, DIA, CR)")
+    )
+    __properties: ClassVar[List[str]] = ["attribute", "operator", "value", "expression"]
+
+    @field_validator("attribute")
     def attribute_validate_enum(cls, value):
         """Validates the enum"""
-        if value is None:
-            return value
-
-        if value not in set(['all']):
-            raise ValueError("must be one of enum values ('all')")
-        return value
-
-    @field_validator('modifier')
-    def modifier_validate_enum(cls, value):
-        """Validates the enum"""
-        if value is None:
-            return value
-
-        if value not in set(['remove']):
-            raise ValueError("must be one of enum values ('remove')")
+        if value not in set(["expression"]):
+            raise ValueError("must be one of enum values ('expression')")
         return value
 
     model_config = ConfigDict(
@@ -55,7 +58,6 @@ class TreeInventoryModificationRemoveAction(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -68,7 +70,7 @@ class TreeInventoryModificationRemoveAction(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of TreeInventoryModificationRemoveAction from a JSON string"""
+        """Create an instance of TreeInventoryModificationExpressionCondition from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -81,34 +83,31 @@ class TreeInventoryModificationRemoveAction(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
+            mode="json",
             by_alias=True,
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if attribute (nullable) is None
-        # and model_fields_set contains the field
-        if self.attribute is None and "attribute" in self.model_fields_set:
-            _dict['attribute'] = None
-
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of TreeInventoryModificationRemoveAction from a dict"""
+        """Create an instance of TreeInventoryModificationExpressionCondition from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "attribute": obj.get("attribute"),
-            "modifier": obj.get("modifier") if obj.get("modifier") is not None else 'remove'
-        })
+        _obj = cls.model_validate(
+            {
+                "attribute": obj.get("attribute"),
+                "operator": obj.get("operator"),
+                "value": obj.get("value"),
+                "expression": obj.get("expression"),
+            }
+        )
         return _obj
-
-

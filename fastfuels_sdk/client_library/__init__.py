@@ -147,6 +147,7 @@ __all__ = [
     "TreeInventoryModificationCondition",
     "TreeInventoryModificationDIAAction",
     "TreeInventoryModificationDIACondition",
+    "TreeInventoryModificationExpressionCondition",
     "TreeInventoryModificationHTAction",
     "TreeInventoryModificationHTCondition",
     "TreeInventoryModificationRemoveAction",
@@ -300,6 +301,7 @@ from fastfuels_sdk.client_library.models.tree_inventory_modification_cr_conditio
 from fastfuels_sdk.client_library.models.tree_inventory_modification_condition import TreeInventoryModificationCondition as TreeInventoryModificationCondition
 from fastfuels_sdk.client_library.models.tree_inventory_modification_dia_action import TreeInventoryModificationDIAAction as TreeInventoryModificationDIAAction
 from fastfuels_sdk.client_library.models.tree_inventory_modification_dia_condition import TreeInventoryModificationDIACondition as TreeInventoryModificationDIACondition
+from fastfuels_sdk.client_library.models.tree_inventory_modification_expression_condition import TreeInventoryModificationExpressionCondition as TreeInventoryModificationExpressionCondition
 from fastfuels_sdk.client_library.models.tree_inventory_modification_ht_action import TreeInventoryModificationHTAction as TreeInventoryModificationHTAction
 from fastfuels_sdk.client_library.models.tree_inventory_modification_ht_condition import TreeInventoryModificationHTCondition as TreeInventoryModificationHTCondition
 from fastfuels_sdk.client_library.models.tree_inventory_modification_remove_action import TreeInventoryModificationRemoveAction as TreeInventoryModificationRemoveAction

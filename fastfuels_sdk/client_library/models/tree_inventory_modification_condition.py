@@ -19,17 +19,18 @@ from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, f
 from typing import Any, List, Optional
 from fastfuels_sdk.client_library.models.tree_inventory_modification_cr_condition import TreeInventoryModificationCRCondition
 from fastfuels_sdk.client_library.models.tree_inventory_modification_dia_condition import TreeInventoryModificationDIACondition
+from fastfuels_sdk.client_library.models.tree_inventory_modification_expression_condition import TreeInventoryModificationExpressionCondition
 from fastfuels_sdk.client_library.models.tree_inventory_modification_ht_condition import TreeInventoryModificationHTCondition
 from fastfuels_sdk.client_library.models.tree_inventory_modification_spcd_condition import TreeInventoryModificationSPCDCondition
 from pydantic import StrictStr, Field
 from typing import Union, List, Set, Optional, Dict
 from typing_extensions import Literal, Self
 
-TREEINVENTORYMODIFICATIONCONDITION_ONE_OF_SCHEMAS = ["TreeInventoryModificationCRCondition", "TreeInventoryModificationDIACondition", "TreeInventoryModificationHTCondition", "TreeInventoryModificationSPCDCondition"]
+TREEINVENTORYMODIFICATIONCONDITION_ONE_OF_SCHEMAS = ["TreeInventoryModificationCRCondition", "TreeInventoryModificationDIACondition", "TreeInventoryModificationExpressionCondition", "TreeInventoryModificationHTCondition", "TreeInventoryModificationSPCDCondition"]
 
 class TreeInventoryModificationCondition(BaseModel):
     """
-    The conditions for the tree inventory modification.
+    Conditions for filtering trees. Supports single fields (HT, DIA, CR, SPCD) or arithmetic expressions.
     """
     # data type: TreeInventoryModificationSPCDCondition
     oneof_schema_1_validator: Optional[TreeInventoryModificationSPCDCondition] = None
@@ -39,8 +40,10 @@ class TreeInventoryModificationCondition(BaseModel):
     oneof_schema_3_validator: Optional[TreeInventoryModificationDIACondition] = None
     # data type: TreeInventoryModificationCRCondition
     oneof_schema_4_validator: Optional[TreeInventoryModificationCRCondition] = None
-    actual_instance: Optional[Union[TreeInventoryModificationCRCondition, TreeInventoryModificationDIACondition, TreeInventoryModificationHTCondition, TreeInventoryModificationSPCDCondition]] = None
-    one_of_schemas: Set[str] = { "TreeInventoryModificationCRCondition", "TreeInventoryModificationDIACondition", "TreeInventoryModificationHTCondition", "TreeInventoryModificationSPCDCondition" }
+    # data type: TreeInventoryModificationExpressionCondition
+    oneof_schema_5_validator: Optional[TreeInventoryModificationExpressionCondition] = None
+    actual_instance: Optional[Union[TreeInventoryModificationCRCondition, TreeInventoryModificationDIACondition, TreeInventoryModificationExpressionCondition, TreeInventoryModificationHTCondition, TreeInventoryModificationSPCDCondition]] = None
+    one_of_schemas: Set[str] = { "TreeInventoryModificationCRCondition", "TreeInventoryModificationDIACondition", "TreeInventoryModificationExpressionCondition", "TreeInventoryModificationHTCondition", "TreeInventoryModificationSPCDCondition" }
 
     model_config = ConfigDict(
         validate_assignment=True,
@@ -86,12 +89,17 @@ class TreeInventoryModificationCondition(BaseModel):
             error_messages.append(f"Error! Input type `{type(v)}` is not `TreeInventoryModificationCRCondition`")
         else:
             match += 1
+        # validate data type: TreeInventoryModificationExpressionCondition
+        if not isinstance(v, TreeInventoryModificationExpressionCondition):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `TreeInventoryModificationExpressionCondition`")
+        else:
+            match += 1
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in TreeInventoryModificationCondition with oneOf schemas: TreeInventoryModificationCRCondition, TreeInventoryModificationDIACondition, TreeInventoryModificationHTCondition, TreeInventoryModificationSPCDCondition. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when setting `actual_instance` in TreeInventoryModificationCondition with oneOf schemas: TreeInventoryModificationCRCondition, TreeInventoryModificationDIACondition, TreeInventoryModificationExpressionCondition, TreeInventoryModificationHTCondition, TreeInventoryModificationSPCDCondition. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in TreeInventoryModificationCondition with oneOf schemas: TreeInventoryModificationCRCondition, TreeInventoryModificationDIACondition, TreeInventoryModificationHTCondition, TreeInventoryModificationSPCDCondition. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting `actual_instance` in TreeInventoryModificationCondition with oneOf schemas: TreeInventoryModificationCRCondition, TreeInventoryModificationDIACondition, TreeInventoryModificationExpressionCondition, TreeInventoryModificationHTCondition, TreeInventoryModificationSPCDCondition. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -130,13 +138,19 @@ class TreeInventoryModificationCondition(BaseModel):
             match += 1
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
+        # deserialize data into TreeInventoryModificationExpressionCondition
+        try:
+            instance.actual_instance = TreeInventoryModificationExpressionCondition.from_json(json_str)
+            match += 1
+        except (ValidationError, ValueError) as e:
+            error_messages.append(str(e))
 
         if match > 1:
             # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into TreeInventoryModificationCondition with oneOf schemas: TreeInventoryModificationCRCondition, TreeInventoryModificationDIACondition, TreeInventoryModificationHTCondition, TreeInventoryModificationSPCDCondition. Details: " + ", ".join(error_messages))
+            raise ValueError("Multiple matches found when deserializing the JSON string into TreeInventoryModificationCondition with oneOf schemas: TreeInventoryModificationCRCondition, TreeInventoryModificationDIACondition, TreeInventoryModificationExpressionCondition, TreeInventoryModificationHTCondition, TreeInventoryModificationSPCDCondition. Details: " + ", ".join(error_messages))
         elif match == 0:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into TreeInventoryModificationCondition with oneOf schemas: TreeInventoryModificationCRCondition, TreeInventoryModificationDIACondition, TreeInventoryModificationHTCondition, TreeInventoryModificationSPCDCondition. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into TreeInventoryModificationCondition with oneOf schemas: TreeInventoryModificationCRCondition, TreeInventoryModificationDIACondition, TreeInventoryModificationExpressionCondition, TreeInventoryModificationHTCondition, TreeInventoryModificationSPCDCondition. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -150,7 +164,7 @@ class TreeInventoryModificationCondition(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], TreeInventoryModificationCRCondition, TreeInventoryModificationDIACondition, TreeInventoryModificationHTCondition, TreeInventoryModificationSPCDCondition]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], TreeInventoryModificationCRCondition, TreeInventoryModificationDIACondition, TreeInventoryModificationExpressionCondition, TreeInventoryModificationHTCondition, TreeInventoryModificationSPCDCondition]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None
