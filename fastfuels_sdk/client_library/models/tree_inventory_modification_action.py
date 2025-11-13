@@ -13,45 +13,47 @@
 
 
 from __future__ import annotations
+from inspect import getfullargspec
 import json
 import pprint
+import re  # noqa: F401
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
-from typing import Any, List, Optional
+from typing import Optional
 from fastfuels_sdk.client_library.models.tree_inventory_modification_cr_action import TreeInventoryModificationCRAction
 from fastfuels_sdk.client_library.models.tree_inventory_modification_dia_action import TreeInventoryModificationDIAAction
 from fastfuels_sdk.client_library.models.tree_inventory_modification_ht_action import TreeInventoryModificationHTAction
 from fastfuels_sdk.client_library.models.tree_inventory_modification_remove_action import TreeInventoryModificationRemoveAction
 from fastfuels_sdk.client_library.models.tree_inventory_modification_spcd_action import TreeInventoryModificationSPCDAction
-from pydantic import StrictStr, Field
-from typing import Union, List, Set, Optional, Dict
+from typing import Union, Any, List, Set, TYPE_CHECKING, Optional, Dict
 from typing_extensions import Literal, Self
+from pydantic import Field
 
-TREEINVENTORYMODIFICATIONACTION_ONE_OF_SCHEMAS = ["TreeInventoryModificationCRAction", "TreeInventoryModificationDIAAction", "TreeInventoryModificationHTAction", "TreeInventoryModificationRemoveAction", "TreeInventoryModificationSPCDAction"]
+TREEINVENTORYMODIFICATIONACTION_ANY_OF_SCHEMAS = ["TreeInventoryModificationCRAction", "TreeInventoryModificationDIAAction", "TreeInventoryModificationHTAction", "TreeInventoryModificationRemoveAction", "TreeInventoryModificationSPCDAction"]
 
 class TreeInventoryModificationAction(BaseModel):
     """
-    The actions for the tree inventory modification.
+    Actions to apply to trees. Use modifier='remove' to remove trees.
     """
+
     # data type: TreeInventoryModificationSPCDAction
-    oneof_schema_1_validator: Optional[TreeInventoryModificationSPCDAction] = None
+    anyof_schema_1_validator: Optional[TreeInventoryModificationSPCDAction] = None
     # data type: TreeInventoryModificationHTAction
-    oneof_schema_2_validator: Optional[TreeInventoryModificationHTAction] = None
+    anyof_schema_2_validator: Optional[TreeInventoryModificationHTAction] = None
     # data type: TreeInventoryModificationDIAAction
-    oneof_schema_3_validator: Optional[TreeInventoryModificationDIAAction] = None
+    anyof_schema_3_validator: Optional[TreeInventoryModificationDIAAction] = None
     # data type: TreeInventoryModificationCRAction
-    oneof_schema_4_validator: Optional[TreeInventoryModificationCRAction] = None
+    anyof_schema_4_validator: Optional[TreeInventoryModificationCRAction] = None
     # data type: TreeInventoryModificationRemoveAction
-    oneof_schema_5_validator: Optional[TreeInventoryModificationRemoveAction] = None
-    actual_instance: Optional[Union[TreeInventoryModificationCRAction, TreeInventoryModificationDIAAction, TreeInventoryModificationHTAction, TreeInventoryModificationRemoveAction, TreeInventoryModificationSPCDAction]] = None
-    one_of_schemas: Set[str] = { "TreeInventoryModificationCRAction", "TreeInventoryModificationDIAAction", "TreeInventoryModificationHTAction", "TreeInventoryModificationRemoveAction", "TreeInventoryModificationSPCDAction" }
+    anyof_schema_5_validator: Optional[TreeInventoryModificationRemoveAction] = None
+    if TYPE_CHECKING:
+        actual_instance: Optional[Union[TreeInventoryModificationCRAction, TreeInventoryModificationDIAAction, TreeInventoryModificationHTAction, TreeInventoryModificationRemoveAction, TreeInventoryModificationSPCDAction]] = None
+    else:
+        actual_instance: Any = None
+    any_of_schemas: Set[str] = { "TreeInventoryModificationCRAction", "TreeInventoryModificationDIAAction", "TreeInventoryModificationHTAction", "TreeInventoryModificationRemoveAction", "TreeInventoryModificationSPCDAction" }
 
-    model_config = ConfigDict(
-        validate_assignment=True,
-        protected_namespaces=(),
-    )
-
-
-    discriminator_value_class_map: Dict[str, str] = {
+    model_config = {
+        "validate_assignment": True,
+        "protected_namespaces": (),
     }
 
     def __init__(self, *args, **kwargs) -> None:
@@ -65,46 +67,47 @@ class TreeInventoryModificationAction(BaseModel):
             super().__init__(**kwargs)
 
     @field_validator('actual_instance')
-    def actual_instance_must_validate_oneof(cls, v):
+    def actual_instance_must_validate_anyof(cls, v):
         instance = TreeInventoryModificationAction.model_construct()
         error_messages = []
-        match = 0
         # validate data type: TreeInventoryModificationSPCDAction
         if not isinstance(v, TreeInventoryModificationSPCDAction):
             error_messages.append(f"Error! Input type `{type(v)}` is not `TreeInventoryModificationSPCDAction`")
         else:
-            match += 1
+            return v
+
         # validate data type: TreeInventoryModificationHTAction
         if not isinstance(v, TreeInventoryModificationHTAction):
             error_messages.append(f"Error! Input type `{type(v)}` is not `TreeInventoryModificationHTAction`")
         else:
-            match += 1
+            return v
+
         # validate data type: TreeInventoryModificationDIAAction
         if not isinstance(v, TreeInventoryModificationDIAAction):
             error_messages.append(f"Error! Input type `{type(v)}` is not `TreeInventoryModificationDIAAction`")
         else:
-            match += 1
+            return v
+
         # validate data type: TreeInventoryModificationCRAction
         if not isinstance(v, TreeInventoryModificationCRAction):
             error_messages.append(f"Error! Input type `{type(v)}` is not `TreeInventoryModificationCRAction`")
         else:
-            match += 1
+            return v
+
         # validate data type: TreeInventoryModificationRemoveAction
         if not isinstance(v, TreeInventoryModificationRemoveAction):
             error_messages.append(f"Error! Input type `{type(v)}` is not `TreeInventoryModificationRemoveAction`")
         else:
-            match += 1
-        if match > 1:
-            # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in TreeInventoryModificationAction with oneOf schemas: TreeInventoryModificationCRAction, TreeInventoryModificationDIAAction, TreeInventoryModificationHTAction, TreeInventoryModificationRemoveAction, TreeInventoryModificationSPCDAction. Details: " + ", ".join(error_messages))
-        elif match == 0:
+            return v
+
+        if error_messages:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in TreeInventoryModificationAction with oneOf schemas: TreeInventoryModificationCRAction, TreeInventoryModificationDIAAction, TreeInventoryModificationHTAction, TreeInventoryModificationRemoveAction, TreeInventoryModificationSPCDAction. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting the actual_instance in TreeInventoryModificationAction with anyOf schemas: TreeInventoryModificationCRAction, TreeInventoryModificationDIAAction, TreeInventoryModificationHTAction, TreeInventoryModificationRemoveAction, TreeInventoryModificationSPCDAction. Details: " + ", ".join(error_messages))
         else:
             return v
 
     @classmethod
-    def from_dict(cls, obj: Union[str, Dict[str, Any]]) -> Self:
+    def from_dict(cls, obj: Dict[str, Any]) -> Self:
         return cls.from_json(json.dumps(obj))
 
     @classmethod
@@ -112,45 +115,40 @@ class TreeInventoryModificationAction(BaseModel):
         """Returns the object represented by the json string"""
         instance = cls.model_construct()
         error_messages = []
-        match = 0
-
-        # deserialize data into TreeInventoryModificationSPCDAction
+        # anyof_schema_1_validator: Optional[TreeInventoryModificationSPCDAction] = None
         try:
             instance.actual_instance = TreeInventoryModificationSPCDAction.from_json(json_str)
-            match += 1
+            return instance
         except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
-        # deserialize data into TreeInventoryModificationHTAction
+             error_messages.append(str(e))
+        # anyof_schema_2_validator: Optional[TreeInventoryModificationHTAction] = None
         try:
             instance.actual_instance = TreeInventoryModificationHTAction.from_json(json_str)
-            match += 1
+            return instance
         except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
-        # deserialize data into TreeInventoryModificationDIAAction
+             error_messages.append(str(e))
+        # anyof_schema_3_validator: Optional[TreeInventoryModificationDIAAction] = None
         try:
             instance.actual_instance = TreeInventoryModificationDIAAction.from_json(json_str)
-            match += 1
+            return instance
         except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
-        # deserialize data into TreeInventoryModificationCRAction
+             error_messages.append(str(e))
+        # anyof_schema_4_validator: Optional[TreeInventoryModificationCRAction] = None
         try:
             instance.actual_instance = TreeInventoryModificationCRAction.from_json(json_str)
-            match += 1
+            return instance
         except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
-        # deserialize data into TreeInventoryModificationRemoveAction
+             error_messages.append(str(e))
+        # anyof_schema_5_validator: Optional[TreeInventoryModificationRemoveAction] = None
         try:
             instance.actual_instance = TreeInventoryModificationRemoveAction.from_json(json_str)
-            match += 1
+            return instance
         except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
+             error_messages.append(str(e))
 
-        if match > 1:
-            # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into TreeInventoryModificationAction with oneOf schemas: TreeInventoryModificationCRAction, TreeInventoryModificationDIAAction, TreeInventoryModificationHTAction, TreeInventoryModificationRemoveAction, TreeInventoryModificationSPCDAction. Details: " + ", ".join(error_messages))
-        elif match == 0:
+        if error_messages:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into TreeInventoryModificationAction with oneOf schemas: TreeInventoryModificationCRAction, TreeInventoryModificationDIAAction, TreeInventoryModificationHTAction, TreeInventoryModificationRemoveAction, TreeInventoryModificationSPCDAction. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into TreeInventoryModificationAction with anyOf schemas: TreeInventoryModificationCRAction, TreeInventoryModificationDIAAction, TreeInventoryModificationHTAction, TreeInventoryModificationRemoveAction, TreeInventoryModificationSPCDAction. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -172,7 +170,6 @@ class TreeInventoryModificationAction(BaseModel):
         if hasattr(self.actual_instance, "to_dict") and callable(self.actual_instance.to_dict):
             return self.actual_instance.to_dict()
         else:
-            # primitive type
             return self.actual_instance
 
     def to_str(self) -> str:
