@@ -103,6 +103,7 @@ DEFAULT_FEATURES_CONFIG = {
 }
 
 DEFAULT_TREE_INVENTORY_CONFIG = {
+    "version": "2022",
     "featureMasks": ["road", "water"],
     "canopyHeightMapSource": "Meta2024",
 }
@@ -366,7 +367,23 @@ def export_roi(
         Structure::
 
             {
-                "featureMasks": ["road", "water"]  # Features to mask out
+                "featureMasks": ["road", "water"],  # Features to mask out
+                "canopyHeightMapSource": "Meta2024",  # High-resolution canopy height map
+                "version": "2022",  # TreeMap version
+                "seed": 42,  # Random seed for reproducibility
+                "modifications": [  # Tree attribute modifications
+                    {
+                        "conditions": [{"attribute": "CR", "operator": "gt", "value": 0.1}],
+                        "actions": [{"attribute": "CR", "modifier": "multiply", "value": 0.9}]
+                    }
+                ],
+                "treatments": [  # Silvicultural treatments
+                    {
+                        "method": "proportionalThinning",
+                        "targetMetric": "basalArea",
+                        "targetValue": 25.0
+                    }
+                ]
             }
 
     Returns
@@ -415,6 +432,43 @@ def export_roi(
     ...     features_config=features_config
     ... )
 
+    Apply tree inventory modifications to reduce crown ratio:
+
+    >>> tree_inventory_config = {
+    ...     "modifications": [
+    ...         {
+    ...             "conditions": [{"attribute": "CR", "operator": "gt", "value": 0.1}],
+    ...             "actions": [{"attribute": "CR", "modifier": "multiply", "value": 0.9}]
+    ...         }
+    ...     ]
+    ... }
+    >>> export = export_roi(
+    ...     roi, "modified_trees.zip",
+    ...     tree_inventory_config=tree_inventory_config
+    ... )
+
+    Apply silvicultural treatments and remove small trees:
+
+    >>> tree_inventory_config = {
+    ...     "modifications": [
+    ...         {
+    ...             "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
+    ...             "actions": [{"attribute": "all", "modifier": "remove"}]
+    ...         }
+    ...     ],
+    ...     "treatments": [
+    ...         {
+    ...             "method": "proportionalThinning",
+    ...             "targetMetric": "basalArea",
+    ...             "targetValue": 25.0
+    ...         }
+    ...     ]
+    ... }
+    >>> export = export_roi(
+    ...     roi, "thinned_forest.zip",
+    ...     tree_inventory_config=tree_inventory_config
+    ... )
+
     Notes
     -----
     This function performs the complete export workflow:
@@ -431,6 +485,26 @@ def export_roi(
     All configuration parameters support partial overrides - only specify the
     values you want to change from the defaults. The function will merge your
     configuration with sensible defaults for all other parameters.
+
+    **Tree Inventory Modifications and Treatments:**
+
+    When both modifications and treatments are specified in tree_inventory_config,
+    they are applied in the following order:
+
+    1. **Modifications** are applied first to adjust or remove individual trees
+       based on their attributes (height, diameter, crown ratio, species)
+    2. **Treatments** are then applied to the modified inventory to achieve
+       target stand-level metrics (basal area, density)
+
+    Use modifications when you want to:
+    - Adjust specific tree attributes (e.g., multiply heights by 0.9)
+    - Remove trees matching certain criteria (e.g., diameter < 10 cm)
+    - Apply expression-based conditions (e.g., crown length < 1 m)
+
+    Use treatments when you want to:
+    - Apply silvicultural operations (proportional or directional thinning)
+    - Achieve target stand metrics (e.g., basal area of 25 m²/ha)
+    - Simulate forest management scenarios
     """
     # Validate export format
     supported_formats = ["QUIC-Fire", "zarr"]
@@ -500,10 +574,14 @@ def export_roi(
     tree_inventory = Inventories.from_domain_id(
         domain.id
     ).create_tree_inventory_from_treemap(
-        feature_masks=merged_tree_inventory_config.get("featureMasks", []),
+        version=merged_tree_inventory_config.get("version", "2022"),
+        seed=merged_tree_inventory_config.get("seed"),
         canopy_height_map_source=merged_tree_inventory_config.get(
             "canopyHeightMapSource"
         ),
+        modifications=merged_tree_inventory_config.get("modifications"),
+        treatments=merged_tree_inventory_config.get("treatments"),
+        feature_masks=merged_tree_inventory_config.get("featureMasks", []),
     )
 
     # Create surface grid using configuration

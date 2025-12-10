@@ -150,7 +150,12 @@ class TestDefaultConfigurations:
 
         # Verify tree inventory was created with current masks
         mock_inventories_instance.create_tree_inventory_from_treemap.assert_called_once_with(
-            feature_masks=["road", "water"], canopy_height_map_source="Meta2024"
+            version="2022",
+            seed=None,
+            canopy_height_map_source="Meta2024",
+            modifications=None,
+            treatments=None,
+            feature_masks=["road", "water"],
         )
 
     def test_default_configuration_constants(self):
@@ -923,4 +928,373 @@ class TestExportRoiFormats:
             features_config=None,
             tree_inventory_config=None,
         )
+        assert result == mock_export
+
+
+class TestTreeInventoryModificationsAndTreatments:
+    """Test that modifications and treatments are properly passed through to tree inventory."""
+
+    @patch("fastfuels_sdk.convenience.Domain")
+    @patch("fastfuels_sdk.convenience.Features")
+    @patch("fastfuels_sdk.convenience.TopographyGridBuilder")
+    @patch("fastfuels_sdk.convenience.SurfaceGridBuilder")
+    @patch("fastfuels_sdk.convenience.TreeGridBuilder")
+    @patch("fastfuels_sdk.convenience.Grids")
+    @patch("fastfuels_sdk.convenience.Inventories")
+    def test_modifications_passed_to_tree_inventory(
+        self,
+        mock_inventories,
+        mock_grids,
+        mock_tree_builder,
+        mock_surface_builder,
+        mock_topo_builder,
+        mock_features,
+        mock_domain,
+        sample_roi,
+    ):
+        """Test that modifications config is passed to create_tree_inventory_from_treemap."""
+        # Setup basic mocks
+        mock_domain.from_geodataframe.return_value.id = "test-domain"
+        mock_features_instance = Mock()
+        mock_features.from_domain_id.return_value = mock_features_instance
+
+        # Mock builders
+        mock_topo_instance = Mock()
+        mock_topo_builder.return_value = mock_topo_instance
+        mock_topo_instance.with_elevation_from_3dep.return_value = mock_topo_instance
+        mock_topo_instance.build.return_value = Mock()
+
+        mock_surface_instance = Mock()
+        mock_surface_builder.return_value = mock_surface_instance
+        mock_surface_instance.with_fuel_load_from_landfire.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.with_fuel_depth_from_landfire.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.with_uniform_fuel_moisture.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.build.return_value = Mock()
+
+        mock_tree_instance = Mock()
+        mock_tree_builder.return_value = mock_tree_instance
+        mock_tree_instance.with_bulk_density_from_tree_inventory.return_value = (
+            mock_tree_instance
+        )
+        mock_tree_instance.with_uniform_fuel_moisture.return_value = mock_tree_instance
+        mock_tree_instance.build.return_value = Mock()
+
+        mock_grids_instance = Mock()
+        mock_grids.from_domain_id.return_value = mock_grids_instance
+        mock_export = Mock()
+        mock_export.status = "completed"
+        mock_grids_instance.create_export.return_value = mock_export
+        mock_grids_instance.create_feature_grid.return_value = Mock()
+
+        # Setup inventories mock
+        mock_inventories_instance = Mock()
+        mock_inventories.from_domain_id.return_value = mock_inventories_instance
+        mock_tree_inventory = Mock()
+        mock_inventories_instance.create_tree_inventory_from_treemap.return_value = (
+            mock_tree_inventory
+        )
+
+        # Define modifications configuration
+        modifications_config = [
+            {
+                "conditions": [{"attribute": "CR", "operator": "gt", "value": 0.1}],
+                "actions": [{"attribute": "CR", "modifier": "multiply", "value": 0.9}],
+            }
+        ]
+
+        tree_inventory_config = {"modifications": modifications_config}
+
+        # Call export_roi with modifications
+        result = export_roi_to_quicfire(
+            sample_roi, "/tmp/test", tree_inventory_config=tree_inventory_config
+        )
+
+        # Verify create_tree_inventory_from_treemap was called with modifications
+        mock_inventories_instance.create_tree_inventory_from_treemap.assert_called_once()
+        call_kwargs = (
+            mock_inventories_instance.create_tree_inventory_from_treemap.call_args[1]
+        )
+
+        assert "modifications" in call_kwargs
+        assert call_kwargs["modifications"] == modifications_config
+        assert result == mock_export
+
+    @patch("fastfuels_sdk.convenience.Domain")
+    @patch("fastfuels_sdk.convenience.Features")
+    @patch("fastfuels_sdk.convenience.TopographyGridBuilder")
+    @patch("fastfuels_sdk.convenience.SurfaceGridBuilder")
+    @patch("fastfuels_sdk.convenience.TreeGridBuilder")
+    @patch("fastfuels_sdk.convenience.Grids")
+    @patch("fastfuels_sdk.convenience.Inventories")
+    def test_treatments_passed_to_tree_inventory(
+        self,
+        mock_inventories,
+        mock_grids,
+        mock_tree_builder,
+        mock_surface_builder,
+        mock_topo_builder,
+        mock_features,
+        mock_domain,
+        sample_roi,
+    ):
+        """Test that treatments config is passed to create_tree_inventory_from_treemap."""
+        # Setup basic mocks (same as above)
+        mock_domain.from_geodataframe.return_value.id = "test-domain"
+        mock_features_instance = Mock()
+        mock_features.from_domain_id.return_value = mock_features_instance
+
+        mock_topo_instance = Mock()
+        mock_topo_builder.return_value = mock_topo_instance
+        mock_topo_instance.with_elevation_from_3dep.return_value = mock_topo_instance
+        mock_topo_instance.build.return_value = Mock()
+
+        mock_surface_instance = Mock()
+        mock_surface_builder.return_value = mock_surface_instance
+        mock_surface_instance.with_fuel_load_from_landfire.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.with_fuel_depth_from_landfire.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.with_uniform_fuel_moisture.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.build.return_value = Mock()
+
+        mock_tree_instance = Mock()
+        mock_tree_builder.return_value = mock_tree_instance
+        mock_tree_instance.with_bulk_density_from_tree_inventory.return_value = (
+            mock_tree_instance
+        )
+        mock_tree_instance.with_uniform_fuel_moisture.return_value = mock_tree_instance
+        mock_tree_instance.build.return_value = Mock()
+
+        mock_grids_instance = Mock()
+        mock_grids.from_domain_id.return_value = mock_grids_instance
+        mock_export = Mock()
+        mock_export.status = "completed"
+        mock_grids_instance.create_export.return_value = mock_export
+        mock_grids_instance.create_feature_grid.return_value = Mock()
+
+        mock_inventories_instance = Mock()
+        mock_inventories.from_domain_id.return_value = mock_inventories_instance
+        mock_tree_inventory = Mock()
+        mock_inventories_instance.create_tree_inventory_from_treemap.return_value = (
+            mock_tree_inventory
+        )
+
+        # Define treatments configuration
+        treatments_config = [
+            {
+                "method": "proportionalThinning",
+                "targetMetric": "basalArea",
+                "targetValue": 25.0,
+            }
+        ]
+
+        tree_inventory_config = {"treatments": treatments_config}
+
+        # Call export_roi with treatments
+        result = export_roi_to_quicfire(
+            sample_roi, "/tmp/test", tree_inventory_config=tree_inventory_config
+        )
+
+        # Verify create_tree_inventory_from_treemap was called with treatments
+        mock_inventories_instance.create_tree_inventory_from_treemap.assert_called_once()
+        call_kwargs = (
+            mock_inventories_instance.create_tree_inventory_from_treemap.call_args[1]
+        )
+
+        assert "treatments" in call_kwargs
+        assert call_kwargs["treatments"] == treatments_config
+        assert result == mock_export
+
+    @patch("fastfuels_sdk.convenience.Domain")
+    @patch("fastfuels_sdk.convenience.Features")
+    @patch("fastfuels_sdk.convenience.TopographyGridBuilder")
+    @patch("fastfuels_sdk.convenience.SurfaceGridBuilder")
+    @patch("fastfuels_sdk.convenience.TreeGridBuilder")
+    @patch("fastfuels_sdk.convenience.Grids")
+    @patch("fastfuels_sdk.convenience.Inventories")
+    def test_modifications_and_treatments_together(
+        self,
+        mock_inventories,
+        mock_grids,
+        mock_tree_builder,
+        mock_surface_builder,
+        mock_topo_builder,
+        mock_features,
+        mock_domain,
+        sample_roi,
+    ):
+        """Test that both modifications and treatments can be used together."""
+        # Setup basic mocks
+        mock_domain.from_geodataframe.return_value.id = "test-domain"
+        mock_features_instance = Mock()
+        mock_features.from_domain_id.return_value = mock_features_instance
+
+        mock_topo_instance = Mock()
+        mock_topo_builder.return_value = mock_topo_instance
+        mock_topo_instance.with_elevation_from_3dep.return_value = mock_topo_instance
+        mock_topo_instance.build.return_value = Mock()
+
+        mock_surface_instance = Mock()
+        mock_surface_builder.return_value = mock_surface_instance
+        mock_surface_instance.with_fuel_load_from_landfire.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.with_fuel_depth_from_landfire.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.with_uniform_fuel_moisture.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.build.return_value = Mock()
+
+        mock_tree_instance = Mock()
+        mock_tree_builder.return_value = mock_tree_instance
+        mock_tree_instance.with_bulk_density_from_tree_inventory.return_value = (
+            mock_tree_instance
+        )
+        mock_tree_instance.with_uniform_fuel_moisture.return_value = mock_tree_instance
+        mock_tree_instance.build.return_value = Mock()
+
+        mock_grids_instance = Mock()
+        mock_grids.from_domain_id.return_value = mock_grids_instance
+        mock_export = Mock()
+        mock_export.status = "completed"
+        mock_grids_instance.create_export.return_value = mock_export
+        mock_grids_instance.create_feature_grid.return_value = Mock()
+
+        mock_inventories_instance = Mock()
+        mock_inventories.from_domain_id.return_value = mock_inventories_instance
+        mock_tree_inventory = Mock()
+        mock_inventories_instance.create_tree_inventory_from_treemap.return_value = (
+            mock_tree_inventory
+        )
+
+        # Define both modifications and treatments
+        modifications_config = [
+            {
+                "conditions": [{"attribute": "DIA", "operator": "lt", "value": 10}],
+                "actions": [{"modifier": "remove"}],
+            }
+        ]
+
+        treatments_config = [
+            {
+                "method": "proportionalThinning",
+                "targetMetric": "basalArea",
+                "targetValue": 25.0,
+            }
+        ]
+
+        tree_inventory_config = {
+            "modifications": modifications_config,
+            "treatments": treatments_config,
+            "seed": 42,
+        }
+
+        # Call export_roi with both modifications and treatments
+        result = export_roi_to_quicfire(
+            sample_roi, "/tmp/test", tree_inventory_config=tree_inventory_config
+        )
+
+        # Verify create_tree_inventory_from_treemap was called with both
+        mock_inventories_instance.create_tree_inventory_from_treemap.assert_called_once()
+        call_kwargs = (
+            mock_inventories_instance.create_tree_inventory_from_treemap.call_args[1]
+        )
+
+        assert "modifications" in call_kwargs
+        assert call_kwargs["modifications"] == modifications_config
+        assert "treatments" in call_kwargs
+        assert call_kwargs["treatments"] == treatments_config
+        assert "seed" in call_kwargs
+        assert call_kwargs["seed"] == 42
+        assert result == mock_export
+
+    @patch("fastfuels_sdk.convenience.Domain")
+    @patch("fastfuels_sdk.convenience.Features")
+    @patch("fastfuels_sdk.convenience.TopographyGridBuilder")
+    @patch("fastfuels_sdk.convenience.SurfaceGridBuilder")
+    @patch("fastfuels_sdk.convenience.TreeGridBuilder")
+    @patch("fastfuels_sdk.convenience.Grids")
+    @patch("fastfuels_sdk.convenience.Inventories")
+    def test_no_modifications_or_treatments_by_default(
+        self,
+        mock_inventories,
+        mock_grids,
+        mock_tree_builder,
+        mock_surface_builder,
+        mock_topo_builder,
+        mock_features,
+        mock_domain,
+        sample_roi,
+    ):
+        """Test that modifications and treatments are None by default."""
+        # Setup basic mocks
+        mock_domain.from_geodataframe.return_value.id = "test-domain"
+        mock_features_instance = Mock()
+        mock_features.from_domain_id.return_value = mock_features_instance
+
+        mock_topo_instance = Mock()
+        mock_topo_builder.return_value = mock_topo_instance
+        mock_topo_instance.with_elevation_from_3dep.return_value = mock_topo_instance
+        mock_topo_instance.build.return_value = Mock()
+
+        mock_surface_instance = Mock()
+        mock_surface_builder.return_value = mock_surface_instance
+        mock_surface_instance.with_fuel_load_from_landfire.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.with_fuel_depth_from_landfire.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.with_uniform_fuel_moisture.return_value = (
+            mock_surface_instance
+        )
+        mock_surface_instance.build.return_value = Mock()
+
+        mock_tree_instance = Mock()
+        mock_tree_builder.return_value = mock_tree_instance
+        mock_tree_instance.with_bulk_density_from_tree_inventory.return_value = (
+            mock_tree_instance
+        )
+        mock_tree_instance.with_uniform_fuel_moisture.return_value = mock_tree_instance
+        mock_tree_instance.build.return_value = Mock()
+
+        mock_grids_instance = Mock()
+        mock_grids.from_domain_id.return_value = mock_grids_instance
+        mock_export = Mock()
+        mock_export.status = "completed"
+        mock_grids_instance.create_export.return_value = mock_export
+        mock_grids_instance.create_feature_grid.return_value = Mock()
+
+        mock_inventories_instance = Mock()
+        mock_inventories.from_domain_id.return_value = mock_inventories_instance
+        mock_tree_inventory = Mock()
+        mock_inventories_instance.create_tree_inventory_from_treemap.return_value = (
+            mock_tree_inventory
+        )
+
+        # Call export_roi without tree_inventory_config
+        result = export_roi_to_quicfire(sample_roi, "/tmp/test")
+
+        # Verify create_tree_inventory_from_treemap was called with None for modifications and treatments
+        mock_inventories_instance.create_tree_inventory_from_treemap.assert_called_once()
+        call_kwargs = (
+            mock_inventories_instance.create_tree_inventory_from_treemap.call_args[1]
+        )
+
+        assert "modifications" in call_kwargs
+        assert call_kwargs["modifications"] is None
+        assert "treatments" in call_kwargs
+        assert call_kwargs["treatments"] is None
         assert result == mock_export
