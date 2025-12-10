@@ -397,9 +397,47 @@ features_config = {
 
 ```python
 tree_inventory_config = {
-    "featureMasks": ["road", "water"]  # Features to mask from inventory
+    "version": "2022",  # TreeMap version: "2014", "2016", "2020", "2022"
+    "seed": 42,  # Random seed for reproducibility (optional)
+    "featureMasks": ["road", "water"],  # Features to mask from inventory
+    "canopyHeightMapSource": "Meta2024",  # High-resolution canopy height data
+
+    # Tree attribute modifications (optional)
+    "modifications": [
+        {
+            "conditions": [
+                {"attribute": "CR", "operator": "gt", "value": 0.1}
+            ],
+            "actions": [
+                {"attribute": "CR", "modifier": "multiply", "value": 0.9}
+            ]
+        }
+    ],
+
+    # Silvicultural treatments (optional)
+    "treatments": [
+        {
+            "method": "proportionalThinning",
+            "targetMetric": "basalArea",
+            "targetValue": 25.0
+        }
+    ]
 }
 ```
+
+**Available modification attributes:**
+- `HT`: Height (meters)
+- `DIA`: Diameter at breast height (centimeters)
+- `CR`: Crown ratio (0-1) - crown length = height × crown ratio
+- `SPCD`: Species code (integer)
+
+**Available operators:** `eq`, `ne`, `gt`, `lt`, `ge`, `le`
+
+**Available modifiers:** `multiply`, `divide`, `add`, `subtract`, `replace`, `remove`
+
+**Treatment methods:**
+- `proportionalThinning`: Thin to target basal area (m²/ha)
+- `directionalThinning`: Remove trees above/below size threshold
 
 #### Advanced Configuration Examples
 
