@@ -12,8 +12,8 @@ from fastfuels_sdk.grids.surface_grid import SurfaceGrid
 from fastfuels_sdk.client_library.models import (
     SurfaceGridAttribute,
     SurfaceGridModification,
-    SurfaceGridFuelLoadSource,
-    SurfaceGridFuelDepthSource,
+    Fuelload,
+    Fueldepth,
     SurfaceGridFuelMoistureSource,
     SurfaceGridSAVRSource,
     SurfaceGridFBFMSource,
@@ -23,6 +23,8 @@ from fastfuels_sdk.client_library.models import (
     SurfaceGridUniformValueBySizeClass,
     SurfaceGridModificationCondition,
     SurfaceGridModificationAction,
+    SurfaceGridLandfireFCCSFuelLoadSource,
+    SurfaceGridLandfireFCCSSource,
 )
 
 
@@ -51,7 +53,7 @@ class SurfaceGridBuilder:
         >>> builder = SurfaceGridBuilder("abc123")
         >>> builder.with_uniform_fuel_load(value=0.5, feature_masks=["road", "water"])
         """
-        self.config["fuel_load"] = SurfaceGridFuelLoadSource.from_dict(
+        self.config["fuel_load"] = Fuelload.from_dict(
             {"source": "uniform", "value": value, "featureMasks": feature_masks}
         ).to_dict()
         self.attributes.append(SurfaceGridAttribute.FUELLOAD)
@@ -146,7 +148,7 @@ class SurfaceGridBuilder:
         Parameters
         ----------
         product : str
-            LANDFIRE product name ("FBFM40" or "FBFM13")
+            LANDFIRE product name ("FBFM40", "FBFM13", or "FCCS")
         version : str, optional
             LANDFIRE version, default "2022"
         interpolation_method : str, optional
@@ -176,19 +178,33 @@ class SurfaceGridBuilder:
         ...     remove_non_burnable=["NB1", "NB2"]
         ... )
         """
-        self.config["fuel_load"] = SurfaceGridLandfireFBFM40FuelLoadSource.from_dict(
-            {
-                "source": "LANDFIRE",
-                "product": product,
-                "version": version,
-                "interpolationMethod": interpolation_method,
-                "curingLiveHerbaceous": curing_live_herbaceous,
-                "curingLiveWoody": curing_live_woody,
-                "groups": groups,
-                "featureMasks": feature_masks,
-                "removeNonBurnable": remove_non_burnable,
-            }
-        ).to_dict()
+        if product == "FBFM40":
+            self.config["fuel_load"] = (
+                SurfaceGridLandfireFBFM40FuelLoadSource.from_dict(
+                    {
+                        "source": "LANDFIRE",
+                        "product": product,
+                        "version": version,
+                        "interpolationMethod": interpolation_method,
+                        "curingLiveHerbaceous": curing_live_herbaceous,
+                        "curingLiveWoody": curing_live_woody,
+                        "groups": groups,
+                        "featureMasks": feature_masks,
+                        "removeNonBurnable": remove_non_burnable,
+                    }
+                ).to_dict()
+            )
+        elif product == "FCCS":
+            self.config["fuel_load"] = SurfaceGridLandfireFCCSFuelLoadSource.from_dict(
+                {
+                    "source": "LANDFIRE",
+                    "product": product,
+                    "version": version,
+                    "interpolationMethod": interpolation_method,
+                    "groups": groups,
+                    "featureMasks": feature_masks,
+                }
+            )
         self.attributes.append(SurfaceGridAttribute.FUELLOAD)
 
         return self
@@ -212,7 +228,7 @@ class SurfaceGridBuilder:
         >>> builder = SurfaceGridBuilder("abc123")
         >>> builder.with_uniform_fuel_depth(value=0.3, feature_masks=["road", "water"])
         """
-        self.config["fuel_depth"] = SurfaceGridFuelDepthSource.from_dict(
+        self.config["fuel_depth"] = Fueldepth.from_dict(
             {"source": "uniform", "value": value, "featureMasks": feature_masks}
         ).to_dict()
         self.attributes.append(SurfaceGridAttribute.FUELDEPTH)
@@ -232,7 +248,7 @@ class SurfaceGridBuilder:
         Parameters
         ----------
         product : str
-            LANDFIRE product name ("FBFM40" or "FBFM13")
+            LANDFIRE product name ("FBFM40", "FBFM13", or "FCCS)
         version : str, optional
             LANDFIRE version, default "2022"
         interpolation_method : str, optional
@@ -253,16 +269,27 @@ class SurfaceGridBuilder:
         ...     remove_non_burnable=["NB1", "NB2"]
         ... )
         """
-        self.config["fuel_depth"] = SurfaceGridLandfireFBFM40Source.from_dict(
-            {
-                "source": "LANDFIRE",
-                "product": product,
-                "version": version,
-                "interpolationMethod": interpolation_method,
-                "featureMasks": feature_masks,
-                "removeNonBurnable": remove_non_burnable,
-            }
-        ).to_dict()
+        if product == "FBFM40":
+            self.config["fuel_depth"] = SurfaceGridLandfireFBFM40Source.from_dict(
+                {
+                    "source": "LANDFIRE",
+                    "product": product,
+                    "version": version,
+                    "interpolationMethod": interpolation_method,
+                    "featureMasks": feature_masks,
+                    "removeNonBurnable": remove_non_burnable,
+                }
+            ).to_dict()
+        elif product == "FCCS":
+            self.config["fuel_depth"] = SurfaceGridLandfireFCCSSource.from_dict(
+                {
+                    "source": "LANDFIRE",
+                    "product": product,
+                    "version": version,
+                    "interpolationMethod": interpolation_method,
+                    "featureMasks": feature_masks,
+                }
+            )
         self.attributes.append(SurfaceGridAttribute.FUELDEPTH)
 
         return self

@@ -268,7 +268,7 @@ class TestFuelLoad:
         }
         test_groups = ["oneHour"]
 
-    class TestLandfire(BaseLandfireTest):
+    class TestLandfireFBFM40(BaseLandfireTest):
         attribute = SurfaceGridAttribute.FUELLOAD
         attribute_snake_case = "fuel_load"
         method_name = "with_fuel_load_from_landfire"
@@ -278,6 +278,18 @@ class TestFuelLoad:
             "hundredHour",
             "liveHerbaceous",
             "liveWoody",
+        ]
+
+    class TestLandfireFCCS(BaseLandfireTest):
+        attribute = SurfaceGridAttribute.FUELLOAD
+        attribute_snake_case = "fuel_load"
+        method_name = "with_fuel_load_from_landfire"
+        test_products = ["FCCS"]
+        versions = ["2023"]
+        test_groups = [
+            "oneHour",
+            "tenHour",
+            "hundredHour",
         ]
 
 
@@ -290,10 +302,17 @@ class TestFuelDepth:
         method_name = "with_uniform_fuel_depth"
         test_value = 0.3
 
-    class TestLandfire(BaseLandfireTest):
+    class TestLandfireFBFM40(BaseLandfireTest):
         attribute = SurfaceGridAttribute.FUELDEPTH
         attribute_snake_case = "fuel_depth"
         method_name = "with_fuel_depth_from_landfire"
+
+    class TestLandfireFCCS(BaseLandfireTest):
+        attribute = SurfaceGridAttribute.FUELDEPTH
+        attribute_snake_case = "fuel_depth"
+        method_name = "with_fuel_depth_from_landfire"
+        test_products = ["FCCS"]
+        versions = ["2023"]
 
 
 class TestFuelMoisture:

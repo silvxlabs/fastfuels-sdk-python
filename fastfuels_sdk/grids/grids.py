@@ -25,8 +25,8 @@ from fastfuels_sdk.grids.topography_grid import TopographyGrid
 from fastfuels_sdk.client_library.models import (
     Grids as GridsModel,
     CreateSurfaceGridRequest,
-    SurfaceGridFuelLoadSource,
-    SurfaceGridFuelDepthSource,
+    Fuelload,
+    Fueldepth,
     SurfaceGridFuelMoistureSource,
     SurfaceGridSAVRSource,
     SurfaceGridFBFMSource,
@@ -243,12 +243,8 @@ class Grids(GridsModel):
         """
         request = CreateSurfaceGridRequest(
             attributes=attributes,  # type: ignore # pydantic handles this for us
-            fuelLoad=(
-                SurfaceGridFuelLoadSource.from_dict(fuel_load) if fuel_load else None
-            ),
-            fuelDepth=(
-                SurfaceGridFuelDepthSource.from_dict(fuel_depth) if fuel_depth else None
-            ),
+            fuelLoad=(Fuelload.from_dict(fuel_load) if fuel_load else None),
+            fuelDepth=(Fueldepth.from_dict(fuel_depth) if fuel_depth else None),
             fuelMoisture=(
                 SurfaceGridFuelMoistureSource.from_dict(fuel_moisture)
                 if fuel_moisture
