@@ -17,21 +17,20 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class UploadResponse(BaseModel):
+class ApiResourcesInventoriesTreeSchemaProcessingError(BaseModel):
     """
-    Upload response model to provide all necessary information and updates for file upload process.
+    Structured error information for user feedback, matching the uploader service error format.
     """ # noqa: E501
-    message: Optional[StrictStr]
-    method: Optional[StrictStr] = None
-    url: Optional[StrictStr] = None
-    headers: Optional[Dict[str, StrictStr]] = None
-    curl: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["message", "method", "url", "headers", "curl"]
+    code: StrictStr = Field(description="A unique error code identifying the type of error that occurred.")
+    message: StrictStr = Field(description="A user-friendly error message describing what went wrong.")
+    details: StrictStr = Field(description="Technical details about the error for debugging purposes.")
+    suggestions: Optional[StrictStr] = None
+    __properties: ClassVar[List[str]] = ["code", "message", "details", "suggestions"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -51,7 +50,7 @@ class UploadResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of UploadResponse from a JSON string"""
+        """Create an instance of ApiResourcesInventoriesTreeSchemaProcessingError from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,36 +71,16 @@ class UploadResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if message (nullable) is None
+        # set to None if suggestions (nullable) is None
         # and model_fields_set contains the field
-        if self.message is None and "message" in self.model_fields_set:
-            _dict['message'] = None
-
-        # set to None if method (nullable) is None
-        # and model_fields_set contains the field
-        if self.method is None and "method" in self.model_fields_set:
-            _dict['method'] = None
-
-        # set to None if url (nullable) is None
-        # and model_fields_set contains the field
-        if self.url is None and "url" in self.model_fields_set:
-            _dict['url'] = None
-
-        # set to None if headers (nullable) is None
-        # and model_fields_set contains the field
-        if self.headers is None and "headers" in self.model_fields_set:
-            _dict['headers'] = None
-
-        # set to None if curl (nullable) is None
-        # and model_fields_set contains the field
-        if self.curl is None and "curl" in self.model_fields_set:
-            _dict['curl'] = None
+        if self.suggestions is None and "suggestions" in self.model_fields_set:
+            _dict['suggestions'] = None
 
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of UploadResponse from a dict"""
+        """Create an instance of ApiResourcesInventoriesTreeSchemaProcessingError from a dict"""
         if obj is None:
             return None
 
@@ -109,11 +88,10 @@ class UploadResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
+            "code": obj.get("code"),
             "message": obj.get("message"),
-            "method": obj.get("method"),
-            "url": obj.get("url"),
-            "headers": obj.get("headers"),
-            "curl": obj.get("curl")
+            "details": obj.get("details"),
+            "suggestions": obj.get("suggestions")
         })
         return _obj
 

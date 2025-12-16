@@ -606,7 +606,7 @@ class DomainsApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> object:
+    ) -> Dict[str, object]:
         """Export Domain Data
 
         # Export Domain Data Endpoint  This endpoint exports all metadata for a domain including features, grids, and inventories. Returns domain configuration and metadata for all resources without including large data payloads.  ## Endpoint: `GET /domains/{domainId}/export`  ### Path Parameters  - **domainId**: (string) The unique identifier of the domain to export.  ### Response  The response returns a JSON object containing metadata for the domain and all its resources:  - **domain**: (object) Full domain metadata including:   - **id**: Domain identifier   - **name**: Domain name   - **description**: Domain description   - **horizontalResolution**: Grid horizontal resolution in meters   - **verticalResolution**: Grid vertical resolution in meters   - **crs**: Coordinate reference system   - **features**: Domain boundary geometry   - **createdOn**: Creation timestamp   - **modifiedOn**: Last modification timestamp   - **tags**: Associated tags  - **features**: (object) Feature metadata (excluding GeoJSON data):   - **road**: Road feature configuration, sources, status, timestamps   - **water**: Water feature configuration, sources, status, timestamps  - **grids**: (object) Grid metadata (excluding array data):   - **tree**: Tree grid configuration, attributes, sources, status   - **surface**: Surface grid configuration, attributes, sources, modifications   - **topography**: Topography grid configuration, attributes, sources   - **feature**: Feature grid configuration, attributes  - **inventories**: (object) Inventory metadata (excluding tree records):   - **tree**: Tree inventory configuration, sources, modifications, treatments  ### What is Excluded  The following large data payloads are excluded to keep the response size manageable. Use dedicated endpoints to access this data:  - **Feature GeoJSON**: Use `/features/{type}/exports/geojson` - **Grid array data**: Use `/grids/exports/zarr` or `/grids/{type}/{attribute}/data` - **Tree inventory records**: Use `/inventories/tree/exports/{format}`  ### Use Cases  - Backup domain configuration and settings - Audit domain state and resource creation - Compare domains and their configurations - Debug configuration issues - Export for documentation or sharing  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found: domains/{domainId}\"   - **Detail**: \"Unauthorized access for: domains/{domainId}\"  ### Example Response  ```json {   \"domain\": {     \"id\": \"abc123\",     \"name\": \"My Domain\",     \"description\": \"Test domain\",     \"horizontalResolution\": 10.0,     \"verticalResolution\": 2.0,     ...   },   \"features\": {     \"road\": {       \"status\": \"completed\",       \"sources\": [\"OSM\"],       ...     }   },   \"grids\": {     \"tree\": {       \"status\": \"completed\",       \"attributes\": [\"bulkDensity\", \"fuelMoisture\"],       ...     }   },   \"inventories\": {     \"tree\": {       \"status\": \"completed\",       \"sources\": [\"TreeMap\"],       ...     }   } } ```
@@ -644,7 +644,7 @@ class DomainsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "object",
+            '200': "Dict[str, object]",
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -674,7 +674,7 @@ class DomainsApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[object]:
+    ) -> ApiResponse[Dict[str, object]]:
         """Export Domain Data
 
         # Export Domain Data Endpoint  This endpoint exports all metadata for a domain including features, grids, and inventories. Returns domain configuration and metadata for all resources without including large data payloads.  ## Endpoint: `GET /domains/{domainId}/export`  ### Path Parameters  - **domainId**: (string) The unique identifier of the domain to export.  ### Response  The response returns a JSON object containing metadata for the domain and all its resources:  - **domain**: (object) Full domain metadata including:   - **id**: Domain identifier   - **name**: Domain name   - **description**: Domain description   - **horizontalResolution**: Grid horizontal resolution in meters   - **verticalResolution**: Grid vertical resolution in meters   - **crs**: Coordinate reference system   - **features**: Domain boundary geometry   - **createdOn**: Creation timestamp   - **modifiedOn**: Last modification timestamp   - **tags**: Associated tags  - **features**: (object) Feature metadata (excluding GeoJSON data):   - **road**: Road feature configuration, sources, status, timestamps   - **water**: Water feature configuration, sources, status, timestamps  - **grids**: (object) Grid metadata (excluding array data):   - **tree**: Tree grid configuration, attributes, sources, status   - **surface**: Surface grid configuration, attributes, sources, modifications   - **topography**: Topography grid configuration, attributes, sources   - **feature**: Feature grid configuration, attributes  - **inventories**: (object) Inventory metadata (excluding tree records):   - **tree**: Tree inventory configuration, sources, modifications, treatments  ### What is Excluded  The following large data payloads are excluded to keep the response size manageable. Use dedicated endpoints to access this data:  - **Feature GeoJSON**: Use `/features/{type}/exports/geojson` - **Grid array data**: Use `/grids/exports/zarr` or `/grids/{type}/{attribute}/data` - **Tree inventory records**: Use `/inventories/tree/exports/{format}`  ### Use Cases  - Backup domain configuration and settings - Audit domain state and resource creation - Compare domains and their configurations - Debug configuration issues - Export for documentation or sharing  ### Error Responses  - **404 Not Found**: The specified domain does not exist or the user does not have access to it.   - **Detail**: \"Resource not found: domains/{domainId}\"   - **Detail**: \"Unauthorized access for: domains/{domainId}\"  ### Example Response  ```json {   \"domain\": {     \"id\": \"abc123\",     \"name\": \"My Domain\",     \"description\": \"Test domain\",     \"horizontalResolution\": 10.0,     \"verticalResolution\": 2.0,     ...   },   \"features\": {     \"road\": {       \"status\": \"completed\",       \"sources\": [\"OSM\"],       ...     }   },   \"grids\": {     \"tree\": {       \"status\": \"completed\",       \"attributes\": [\"bulkDensity\", \"fuelMoisture\"],       ...     }   },   \"inventories\": {     \"tree\": {       \"status\": \"completed\",       \"sources\": [\"TreeMap\"],       ...     }   } } ```
@@ -712,7 +712,7 @@ class DomainsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "object",
+            '200': "Dict[str, object]",
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -780,7 +780,7 @@ class DomainsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "object",
+            '200': "Dict[str, object]",
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(

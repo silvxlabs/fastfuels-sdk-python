@@ -20,23 +20,27 @@ import json
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from fastfuels_sdk.client_library.models.geojson import Geojson
+from fastfuels_sdk.client_library.models.als_point_cloud_source import AlsPointCloudSource
+from fastfuels_sdk.client_library.models.api_resources_inventories_tree_schema_processing_error import ApiResourcesInventoriesTreeSchemaProcessingError
+from fastfuels_sdk.client_library.models.api_resources_pointclouds_als_schema_upload_response import ApiResourcesPointcloudsAlsSchemaUploadResponse
 from fastfuels_sdk.client_library.models.job_status import JobStatus
-from fastfuels_sdk.client_library.models.road_feature_source import RoadFeatureSource
+from fastfuels_sdk.client_library.models.three_dep_source import ThreeDEPSource
 from typing import Optional, Set
 from typing_extensions import Self
 
-class RoadFeature(BaseModel):
+class AlsPointCloud(BaseModel):
     """
-    Response model for road features without strict validation.
+    AlsPointCloud
     """ # noqa: E501
-    sources: List[RoadFeatureSource] = Field(description="List of sources of road features")
-    geojson: Optional[Geojson] = None
+    sources: List[AlsPointCloudSource]
+    three_dep: Optional[ThreeDEPSource] = Field(default=None, alias="ThreeDEP")
     status: Optional[JobStatus] = None
     created_on: Optional[datetime] = Field(default=None, alias="createdOn")
     modified_on: Optional[datetime] = Field(default=None, alias="modifiedOn")
     checksum: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["sources", "geojson", "status", "createdOn", "modifiedOn", "checksum"]
+    file: Optional[ApiResourcesPointcloudsAlsSchemaUploadResponse] = None
+    error: Optional[ApiResourcesInventoriesTreeSchemaProcessingError] = None
+    __properties: ClassVar[List[str]] = ["sources", "ThreeDEP", "status", "createdOn", "modifiedOn", "checksum", "file", "error"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -56,7 +60,7 @@ class RoadFeature(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of RoadFeature from a JSON string"""
+        """Create an instance of AlsPointCloud from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -77,18 +81,19 @@ class RoadFeature(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of geojson
-        if self.geojson:
-            _dict['geojson'] = self.geojson.to_dict()
-        # set to None if geojson (nullable) is None
+        # override the default output from pydantic by calling `to_dict()` of three_dep
+        if self.three_dep:
+            _dict['ThreeDEP'] = self.three_dep.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of file
+        if self.file:
+            _dict['file'] = self.file.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of error
+        if self.error:
+            _dict['error'] = self.error.to_dict()
+        # set to None if three_dep (nullable) is None
         # and model_fields_set contains the field
-        if self.geojson is None and "geojson" in self.model_fields_set:
-            _dict['geojson'] = None
-
-        # set to None if status (nullable) is None
-        # and model_fields_set contains the field
-        if self.status is None and "status" in self.model_fields_set:
-            _dict['status'] = None
+        if self.three_dep is None and "three_dep" in self.model_fields_set:
+            _dict['ThreeDEP'] = None
 
         # set to None if created_on (nullable) is None
         # and model_fields_set contains the field
@@ -105,11 +110,21 @@ class RoadFeature(BaseModel):
         if self.checksum is None and "checksum" in self.model_fields_set:
             _dict['checksum'] = None
 
+        # set to None if file (nullable) is None
+        # and model_fields_set contains the field
+        if self.file is None and "file" in self.model_fields_set:
+            _dict['file'] = None
+
+        # set to None if error (nullable) is None
+        # and model_fields_set contains the field
+        if self.error is None and "error" in self.model_fields_set:
+            _dict['error'] = None
+
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of RoadFeature from a dict"""
+        """Create an instance of AlsPointCloud from a dict"""
         if obj is None:
             return None
 
@@ -118,11 +133,13 @@ class RoadFeature(BaseModel):
 
         _obj = cls.model_validate({
             "sources": obj.get("sources"),
-            "geojson": Geojson.from_dict(obj["geojson"]) if obj.get("geojson") is not None else None,
+            "ThreeDEP": ThreeDEPSource.from_dict(obj["ThreeDEP"]) if obj.get("ThreeDEP") is not None else None,
             "status": obj.get("status"),
             "createdOn": obj.get("createdOn"),
             "modifiedOn": obj.get("modifiedOn"),
-            "checksum": obj.get("checksum")
+            "checksum": obj.get("checksum"),
+            "file": ApiResourcesPointcloudsAlsSchemaUploadResponse.from_dict(obj["file"]) if obj.get("file") is not None else None,
+            "error": ApiResourcesInventoriesTreeSchemaProcessingError.from_dict(obj["error"]) if obj.get("error") is not None else None
         })
         return _obj
 

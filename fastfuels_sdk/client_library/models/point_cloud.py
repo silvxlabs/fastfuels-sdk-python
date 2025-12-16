@@ -17,20 +17,18 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict
 from typing import Any, ClassVar, Dict, List, Optional
+from fastfuels_sdk.client_library.models.als_point_cloud import AlsPointCloud
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ProcessingError(BaseModel):
+class PointCloud(BaseModel):
     """
-    Structured error information for user feedback, matching the uploader service error format.
+    PointCloud
     """ # noqa: E501
-    code: StrictStr = Field(description="A unique error code identifying the type of error that occurred.")
-    message: StrictStr = Field(description="A user-friendly error message describing what went wrong.")
-    details: StrictStr = Field(description="Technical details about the error for debugging purposes.")
-    suggestions: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["code", "message", "details", "suggestions"]
+    als: Optional[AlsPointCloud] = None
+    __properties: ClassVar[List[str]] = ["als"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -50,7 +48,7 @@ class ProcessingError(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ProcessingError from a JSON string"""
+        """Create an instance of PointCloud from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -71,16 +69,19 @@ class ProcessingError(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if suggestions (nullable) is None
+        # override the default output from pydantic by calling `to_dict()` of als
+        if self.als:
+            _dict['als'] = self.als.to_dict()
+        # set to None if als (nullable) is None
         # and model_fields_set contains the field
-        if self.suggestions is None and "suggestions" in self.model_fields_set:
-            _dict['suggestions'] = None
+        if self.als is None and "als" in self.model_fields_set:
+            _dict['als'] = None
 
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ProcessingError from a dict"""
+        """Create an instance of PointCloud from a dict"""
         if obj is None:
             return None
 
@@ -88,10 +89,7 @@ class ProcessingError(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "code": obj.get("code"),
-            "message": obj.get("message"),
-            "details": obj.get("details"),
-            "suggestions": obj.get("suggestions")
+            "als": AlsPointCloud.from_dict(obj["als"]) if obj.get("als") is not None else None
         })
         return _obj
 

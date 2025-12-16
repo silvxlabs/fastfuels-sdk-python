@@ -17,26 +17,21 @@ import pprint
 import re  # noqa: F401
 import json
 
-from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from fastfuels_sdk.client_library.models.geojson import Geojson
-from fastfuels_sdk.client_library.models.job_status import JobStatus
-from fastfuels_sdk.client_library.models.road_feature_source import RoadFeatureSource
 from typing import Optional, Set
 from typing_extensions import Self
 
-class RoadFeature(BaseModel):
+class ApiResourcesInventoriesTreeSchemaUploadResponse(BaseModel):
     """
-    Response model for road features without strict validation.
+    Upload response model to provide all necessary information and updates for file upload process.
     """ # noqa: E501
-    sources: List[RoadFeatureSource] = Field(description="List of sources of road features")
-    geojson: Optional[Geojson] = None
-    status: Optional[JobStatus] = None
-    created_on: Optional[datetime] = Field(default=None, alias="createdOn")
-    modified_on: Optional[datetime] = Field(default=None, alias="modifiedOn")
-    checksum: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["sources", "geojson", "status", "createdOn", "modifiedOn", "checksum"]
+    message: Optional[StrictStr]
+    method: Optional[StrictStr] = None
+    url: Optional[StrictStr] = None
+    headers: Optional[Dict[str, StrictStr]] = None
+    curl: Optional[StrictStr] = None
+    __properties: ClassVar[List[str]] = ["message", "method", "url", "headers", "curl"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -56,7 +51,7 @@ class RoadFeature(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of RoadFeature from a JSON string"""
+        """Create an instance of ApiResourcesInventoriesTreeSchemaUploadResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -77,39 +72,36 @@ class RoadFeature(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of geojson
-        if self.geojson:
-            _dict['geojson'] = self.geojson.to_dict()
-        # set to None if geojson (nullable) is None
+        # set to None if message (nullable) is None
         # and model_fields_set contains the field
-        if self.geojson is None and "geojson" in self.model_fields_set:
-            _dict['geojson'] = None
+        if self.message is None and "message" in self.model_fields_set:
+            _dict['message'] = None
 
-        # set to None if status (nullable) is None
+        # set to None if method (nullable) is None
         # and model_fields_set contains the field
-        if self.status is None and "status" in self.model_fields_set:
-            _dict['status'] = None
+        if self.method is None and "method" in self.model_fields_set:
+            _dict['method'] = None
 
-        # set to None if created_on (nullable) is None
+        # set to None if url (nullable) is None
         # and model_fields_set contains the field
-        if self.created_on is None and "created_on" in self.model_fields_set:
-            _dict['createdOn'] = None
+        if self.url is None and "url" in self.model_fields_set:
+            _dict['url'] = None
 
-        # set to None if modified_on (nullable) is None
+        # set to None if headers (nullable) is None
         # and model_fields_set contains the field
-        if self.modified_on is None and "modified_on" in self.model_fields_set:
-            _dict['modifiedOn'] = None
+        if self.headers is None and "headers" in self.model_fields_set:
+            _dict['headers'] = None
 
-        # set to None if checksum (nullable) is None
+        # set to None if curl (nullable) is None
         # and model_fields_set contains the field
-        if self.checksum is None and "checksum" in self.model_fields_set:
-            _dict['checksum'] = None
+        if self.curl is None and "curl" in self.model_fields_set:
+            _dict['curl'] = None
 
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of RoadFeature from a dict"""
+        """Create an instance of ApiResourcesInventoriesTreeSchemaUploadResponse from a dict"""
         if obj is None:
             return None
 
@@ -117,12 +109,11 @@ class RoadFeature(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "sources": obj.get("sources"),
-            "geojson": Geojson.from_dict(obj["geojson"]) if obj.get("geojson") is not None else None,
-            "status": obj.get("status"),
-            "createdOn": obj.get("createdOn"),
-            "modifiedOn": obj.get("modifiedOn"),
-            "checksum": obj.get("checksum")
+            "message": obj.get("message"),
+            "method": obj.get("method"),
+            "url": obj.get("url"),
+            "headers": obj.get("headers"),
+            "curl": obj.get("curl")
         })
         return _obj
 

@@ -17,23 +17,21 @@ import pprint
 import re  # noqa: F401
 import json
 
-from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
+from typing_extensions import Annotated
+from fastfuels_sdk.client_library.models.als_point_cloud_source import AlsPointCloudSource
+from fastfuels_sdk.client_library.models.three_dep_source import ThreeDEPSource
 from typing import Optional, Set
 from typing_extensions import Self
 
-class Application(BaseModel):
+class CreateAlsPointCloudRequest(BaseModel):
     """
-    Represents an application that can access the FastFuels API on behalf of non-FastFuels users.
+    CreateAlsPointCloudRequest
     """ # noqa: E501
-    name: StrictStr = Field(description="A name for the application.")
-    description: Optional[StrictStr] = None
-    id: StrictStr = Field(description="Unique identifier for the application.")
-    owner_id: StrictStr = Field(description="Unique identifier of the user that adimisters the application.", alias="ownerId")
-    created_on: Optional[datetime] = Field(default=None, description="The date and time the application was created.", alias="createdOn")
-    modified_on: Optional[datetime] = Field(default=None, description="The date and time the application was modified.", alias="modifiedOn")
-    __properties: ClassVar[List[str]] = ["name", "description", "id", "ownerId", "createdOn", "modifiedOn"]
+    sources: Annotated[List[AlsPointCloudSource], Field(min_length=1, max_length=1)] = Field(description="List of sources of als point cloud. Currently '3DEP' or 'file'")
+    three_dep: Optional[ThreeDEPSource] = Field(default=None, alias="ThreeDEP")
+    __properties: ClassVar[List[str]] = ["sources", "ThreeDEP"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -53,7 +51,7 @@ class Application(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of Application from a JSON string"""
+        """Create an instance of CreateAlsPointCloudRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -74,16 +72,19 @@ class Application(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if description (nullable) is None
+        # override the default output from pydantic by calling `to_dict()` of three_dep
+        if self.three_dep:
+            _dict['ThreeDEP'] = self.three_dep.to_dict()
+        # set to None if three_dep (nullable) is None
         # and model_fields_set contains the field
-        if self.description is None and "description" in self.model_fields_set:
-            _dict['description'] = None
+        if self.three_dep is None and "three_dep" in self.model_fields_set:
+            _dict['ThreeDEP'] = None
 
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of Application from a dict"""
+        """Create an instance of CreateAlsPointCloudRequest from a dict"""
         if obj is None:
             return None
 
@@ -91,12 +92,8 @@ class Application(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "name": obj.get("name"),
-            "description": obj.get("description"),
-            "id": obj.get("id"),
-            "ownerId": obj.get("ownerId"),
-            "createdOn": obj.get("createdOn"),
-            "modifiedOn": obj.get("modifiedOn")
+            "sources": obj.get("sources"),
+            "ThreeDEP": ThreeDEPSource.from_dict(obj["ThreeDEP"]) if obj.get("ThreeDEP") is not None else None
         })
         return _obj
 

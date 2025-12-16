@@ -18,21 +18,21 @@ from enum import Enum
 from typing_extensions import Self
 
 
-class TreeInventorySource(str, Enum):
+class SurfaceGridLandfireFCCSGroup(str, Enum):
     """
-    TreeInventorySource
+    The size class groups available for the FCCS fuel model. FCCS supports 1-hour, 10-hour, and 100-hour timelag fuels only.
     """
 
     """
     allowed enum values
     """
-    TREEMAP = 'TreeMap'
-    FILE = 'file'
-    POINTCLOUD = 'pointcloud'
+    ONEHOUR = 'oneHour'
+    TENHOUR = 'tenHour'
+    HUNDREDHOUR = 'hundredHour'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of TreeInventorySource from a JSON string"""
+        """Create an instance of SurfaceGridLandfireFCCSGroup from a JSON string"""
         return cls(json.loads(json_str))
 
 
