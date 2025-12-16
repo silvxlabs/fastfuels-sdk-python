@@ -17,23 +17,20 @@ import pprint
 import re  # noqa: F401
 import json
 
-from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class Application(BaseModel):
+class ApiResourcesPointcloudsAlsSchemaProcessingError(BaseModel):
     """
-    Represents an application that can access the FastFuels API on behalf of non-FastFuels users.
+    Structured error information for user feedback, matching the uploader service error format.
     """ # noqa: E501
-    name: StrictStr = Field(description="A name for the application.")
-    description: Optional[StrictStr] = None
-    id: StrictStr = Field(description="Unique identifier for the application.")
-    owner_id: StrictStr = Field(description="Unique identifier of the user that adimisters the application.", alias="ownerId")
-    created_on: Optional[datetime] = Field(default=None, description="The date and time the application was created.", alias="createdOn")
-    modified_on: Optional[datetime] = Field(default=None, description="The date and time the application was modified.", alias="modifiedOn")
-    __properties: ClassVar[List[str]] = ["name", "description", "id", "ownerId", "createdOn", "modifiedOn"]
+    code: StrictStr = Field(description="A unique error code identifying the type of error that occurred.")
+    message: StrictStr = Field(description="A user-friendly error message describing what went wrong.")
+    details: StrictStr = Field(description="Technical details about the error for debugging purposes.")
+    suggestions: Optional[StrictStr] = None
+    __properties: ClassVar[List[str]] = ["code", "message", "details", "suggestions"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -53,7 +50,7 @@ class Application(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of Application from a JSON string"""
+        """Create an instance of ApiResourcesPointcloudsAlsSchemaProcessingError from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -74,16 +71,16 @@ class Application(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if description (nullable) is None
+        # set to None if suggestions (nullable) is None
         # and model_fields_set contains the field
-        if self.description is None and "description" in self.model_fields_set:
-            _dict['description'] = None
+        if self.suggestions is None and "suggestions" in self.model_fields_set:
+            _dict['suggestions'] = None
 
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of Application from a dict"""
+        """Create an instance of ApiResourcesPointcloudsAlsSchemaProcessingError from a dict"""
         if obj is None:
             return None
 
@@ -91,12 +88,10 @@ class Application(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "name": obj.get("name"),
-            "description": obj.get("description"),
-            "id": obj.get("id"),
-            "ownerId": obj.get("ownerId"),
-            "createdOn": obj.get("createdOn"),
-            "modifiedOn": obj.get("modifiedOn")
+            "code": obj.get("code"),
+            "message": obj.get("message"),
+            "details": obj.get("details"),
+            "suggestions": obj.get("suggestions")
         })
         return _obj
 

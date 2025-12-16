@@ -18,21 +18,20 @@ from enum import Enum
 from typing_extensions import Self
 
 
-class TreeInventorySource(str, Enum):
+class AlsPointCloudSource(str, Enum):
     """
-    TreeInventorySource
+    AlsPointCloudSource
     """
 
     """
     allowed enum values
     """
-    TREEMAP = 'TreeMap'
+    ENUM_3DEP = '3DEP'
     FILE = 'file'
-    POINTCLOUD = 'pointcloud'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of TreeInventorySource from a JSON string"""
+        """Create an instance of AlsPointCloudSource from a JSON string"""
         return cls(json.loads(json_str))
 
 

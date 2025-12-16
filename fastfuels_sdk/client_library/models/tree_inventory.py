@@ -21,70 +21,40 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
+from fastfuels_sdk.client_library.models.api_resources_inventories_tree_schema_upload_response import ApiResourcesInventoriesTreeSchemaUploadResponse
+from fastfuels_sdk.client_library.models.api_resources_pointclouds_als_schema_processing_error import ApiResourcesPointcloudsAlsSchemaProcessingError
 from fastfuels_sdk.client_library.models.feature_type import FeatureType
 from fastfuels_sdk.client_library.models.job_status import JobStatus
-from fastfuels_sdk.client_library.models.processing_error import ProcessingError
-from fastfuels_sdk.client_library.models.tree_inventory_modification import (
-    TreeInventoryModification,
-)
-from fastfuels_sdk.client_library.models.tree_inventory_source import (
-    TreeInventorySource,
-)
-from fastfuels_sdk.client_library.models.tree_inventory_treatment import (
-    TreeInventoryTreatment,
-)
+from fastfuels_sdk.client_library.models.tree_inventory_modification import TreeInventoryModification
+from fastfuels_sdk.client_library.models.tree_inventory_source import TreeInventorySource
+from fastfuels_sdk.client_library.models.tree_inventory_treatment import TreeInventoryTreatment
 from fastfuels_sdk.client_library.models.tree_map_source import TreeMapSource
-from fastfuels_sdk.client_library.models.upload_response import UploadResponse
 from typing import Optional, Set
 from typing_extensions import Self
-
 
 class TreeInventory(BaseModel):
     """
     TreeInventory
-    """  # noqa: E501
-
+    """ # noqa: E501
     sources: List[TreeInventorySource]
     tree_map: Optional[TreeMapSource] = Field(default=None, alias="TreeMap")
-    modifications: Optional[
-        Annotated[List[TreeInventoryModification], Field(max_length=1000)]
-    ] = Field(
-        default=None,
-        description="List of modifications to apply to the tree inventory data",
-    )
-    treatments: Optional[
-        Annotated[List[TreeInventoryTreatment], Field(max_length=1000)]
-    ] = Field(default=None, description="List of silvicultural treatments to apply.")
-    feature_masks: Optional[List[FeatureType]] = Field(
-        default=None,
-        description="List of Features to mask tree inventory data. This has the effect of removing trees that intersect with the feature.",
-        alias="featureMasks",
-    )
+    modifications: Optional[Annotated[List[TreeInventoryModification], Field(max_length=1000)]] = Field(default=None, description="List of modifications to apply to the tree inventory data")
+    treatments: Optional[Annotated[List[TreeInventoryTreatment], Field(max_length=1000)]] = Field(default=None, description="List of silvicultural treatments to apply.")
+    feature_masks: Optional[List[FeatureType]] = Field(default=None, description="List of Features to mask tree inventory data. This has the effect of removing trees that intersect with the feature.", alias="featureMasks")
     status: Optional[JobStatus] = None
     created_on: Optional[datetime] = Field(default=None, alias="createdOn")
     modified_on: Optional[datetime] = Field(default=None, alias="modifiedOn")
     checksum: Optional[StrictStr] = None
-    file: Optional[UploadResponse] = None
-    error: Optional[ProcessingError] = None
-    __properties: ClassVar[List[str]] = [
-        "sources",
-        "TreeMap",
-        "modifications",
-        "treatments",
-        "featureMasks",
-        "status",
-        "createdOn",
-        "modifiedOn",
-        "checksum",
-        "file",
-        "error",
-    ]
+    file: Optional[ApiResourcesInventoriesTreeSchemaUploadResponse] = None
+    error: Optional[ApiResourcesPointcloudsAlsSchemaProcessingError] = None
+    __properties: ClassVar[List[str]] = ["sources", "TreeMap", "modifications", "treatments", "featureMasks", "status", "createdOn", "modifiedOn", "checksum", "file", "error"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -110,66 +80,66 @@ class TreeInventory(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
-            mode="json",
             by_alias=True,
             exclude=excluded_fields,
             exclude_none=True,
         )
         # override the default output from pydantic by calling `to_dict()` of tree_map
         if self.tree_map:
-            _dict["TreeMap"] = self.tree_map.to_dict()
+            _dict['TreeMap'] = self.tree_map.to_dict()
         # override the default output from pydantic by calling `to_dict()` of each item in modifications (list)
         _items = []
         if self.modifications:
             for _item_modifications in self.modifications:
                 if _item_modifications:
                     _items.append(_item_modifications.to_dict())
-            _dict["modifications"] = _items
+            _dict['modifications'] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in treatments (list)
         _items = []
         if self.treatments:
             for _item_treatments in self.treatments:
                 if _item_treatments:
                     _items.append(_item_treatments.to_dict())
-            _dict["treatments"] = _items
+            _dict['treatments'] = _items
         # override the default output from pydantic by calling `to_dict()` of file
         if self.file:
-            _dict["file"] = self.file.to_dict()
+            _dict['file'] = self.file.to_dict()
         # override the default output from pydantic by calling `to_dict()` of error
         if self.error:
-            _dict["error"] = self.error.to_dict()
+            _dict['error'] = self.error.to_dict()
         # set to None if tree_map (nullable) is None
         # and model_fields_set contains the field
         if self.tree_map is None and "tree_map" in self.model_fields_set:
-            _dict["TreeMap"] = None
+            _dict['TreeMap'] = None
 
         # set to None if created_on (nullable) is None
         # and model_fields_set contains the field
         if self.created_on is None and "created_on" in self.model_fields_set:
-            _dict["createdOn"] = None
+            _dict['createdOn'] = None
 
         # set to None if modified_on (nullable) is None
         # and model_fields_set contains the field
         if self.modified_on is None and "modified_on" in self.model_fields_set:
-            _dict["modifiedOn"] = None
+            _dict['modifiedOn'] = None
 
         # set to None if checksum (nullable) is None
         # and model_fields_set contains the field
         if self.checksum is None and "checksum" in self.model_fields_set:
-            _dict["checksum"] = None
+            _dict['checksum'] = None
 
         # set to None if file (nullable) is None
         # and model_fields_set contains the field
         if self.file is None and "file" in self.model_fields_set:
-            _dict["file"] = None
+            _dict['file'] = None
 
         # set to None if error (nullable) is None
         # and model_fields_set contains the field
         if self.error is None and "error" in self.model_fields_set:
-            _dict["error"] = None
+            _dict['error'] = None
 
         return _dict
 
@@ -182,45 +152,19 @@ class TreeInventory(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "sources": obj.get("sources"),
-                "TreeMap": (
-                    TreeMapSource.from_dict(obj["TreeMap"])
-                    if obj.get("TreeMap") is not None
-                    else None
-                ),
-                "modifications": (
-                    [
-                        TreeInventoryModification.from_dict(_item)
-                        for _item in obj["modifications"]
-                    ]
-                    if obj.get("modifications") is not None
-                    else None
-                ),
-                "treatments": (
-                    [
-                        TreeInventoryTreatment.from_dict(_item)
-                        for _item in obj["treatments"]
-                    ]
-                    if obj.get("treatments") is not None
-                    else None
-                ),
-                "featureMasks": obj.get("featureMasks"),
-                "status": obj.get("status"),
-                "createdOn": obj.get("createdOn"),
-                "modifiedOn": obj.get("modifiedOn"),
-                "checksum": obj.get("checksum"),
-                "file": (
-                    UploadResponse.from_dict(obj["file"])
-                    if obj.get("file") is not None
-                    else None
-                ),
-                "error": (
-                    ProcessingError.from_dict(obj["error"])
-                    if obj.get("error") is not None
-                    else None
-                ),
-            }
-        )
+        _obj = cls.model_validate({
+            "sources": obj.get("sources"),
+            "TreeMap": TreeMapSource.from_dict(obj["TreeMap"]) if obj.get("TreeMap") is not None else None,
+            "modifications": [TreeInventoryModification.from_dict(_item) for _item in obj["modifications"]] if obj.get("modifications") is not None else None,
+            "treatments": [TreeInventoryTreatment.from_dict(_item) for _item in obj["treatments"]] if obj.get("treatments") is not None else None,
+            "featureMasks": obj.get("featureMasks"),
+            "status": obj.get("status"),
+            "createdOn": obj.get("createdOn"),
+            "modifiedOn": obj.get("modifiedOn"),
+            "checksum": obj.get("checksum"),
+            "file": ApiResourcesInventoriesTreeSchemaUploadResponse.from_dict(obj["file"]) if obj.get("file") is not None else None,
+            "error": ApiResourcesPointcloudsAlsSchemaProcessingError.from_dict(obj["error"]) if obj.get("error") is not None else None
+        })
         return _obj
+
+

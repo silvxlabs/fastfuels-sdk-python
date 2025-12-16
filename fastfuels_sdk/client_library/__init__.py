@@ -19,6 +19,7 @@ __version__ = "1.0.0"
 # Define package exports
 __all__ = [
     "APIKeysApi",
+    "AlsPointCloudApi",
     "ApplicationsApi",
     "CookiesApi",
     "DomainsApi",
@@ -27,6 +28,7 @@ __all__ = [
     "GridsApi",
     "IndexApi",
     "InventoriesApi",
+    "PointCloudApi",
     "RoadFeatureApi",
     "SurfaceGridApi",
     "TopographyGridApi",
@@ -43,7 +45,13 @@ __all__ = [
     "ApiAttributeError",
     "ApiException",
     "Access",
+    "AlsPointCloud",
+    "AlsPointCloudSource",
+    "ApiResourcesInventoriesTreeSchemaUploadResponse",
+    "ApiResourcesPointcloudsAlsSchemaProcessingError",
+    "ApiResourcesPointcloudsAlsSchemaUploadResponse",
     "Application",
+    "CreateAlsPointCloudRequest",
     "CreateApplicationRequest",
     "CreateDomainRequest",
     "CreateDomainRequestFeature",
@@ -90,8 +98,8 @@ __all__ = [
     "MultiPolygon",
     "Operator",
     "Point",
+    "PointCloud",
     "Polygon",
-    "ProcessingError",
     "RoadFeature",
     "RoadFeatureSource",
     "Scope",
@@ -121,6 +129,7 @@ __all__ = [
     "SurfaceGridUniformFBFM40Value",
     "SurfaceGridUniformValue",
     "SurfaceGridUniformValueBySizeClass",
+    "ThreeDEPSource",
     "TopographyGrid",
     "TopographyGrid3DEPSource",
     "TopographyGrid3DEPSourceAspect",
@@ -160,7 +169,6 @@ __all__ = [
     "TreeMapSource",
     "TreeMapVersion",
     "UpdateDomainRequest",
-    "UploadResponse",
     "ValidationError",
     "ValidationErrorLocInner",
     "WaterFeature",
@@ -169,6 +177,7 @@ __all__ = [
 
 # import apis into sdk package
 from fastfuels_sdk.client_library.api.api_keys_api import APIKeysApi as APIKeysApi
+from fastfuels_sdk.client_library.api.als_point_cloud_api import AlsPointCloudApi as AlsPointCloudApi
 from fastfuels_sdk.client_library.api.applications_api import ApplicationsApi as ApplicationsApi
 from fastfuels_sdk.client_library.api.cookies_api import CookiesApi as CookiesApi
 from fastfuels_sdk.client_library.api.domains_api import DomainsApi as DomainsApi
@@ -177,6 +186,7 @@ from fastfuels_sdk.client_library.api.features_api import FeaturesApi as Feature
 from fastfuels_sdk.client_library.api.grids_api import GridsApi as GridsApi
 from fastfuels_sdk.client_library.api.index_api import IndexApi as IndexApi
 from fastfuels_sdk.client_library.api.inventories_api import InventoriesApi as InventoriesApi
+from fastfuels_sdk.client_library.api.point_cloud_api import PointCloudApi as PointCloudApi
 from fastfuels_sdk.client_library.api.road_feature_api import RoadFeatureApi as RoadFeatureApi
 from fastfuels_sdk.client_library.api.surface_grid_api import SurfaceGridApi as SurfaceGridApi
 from fastfuels_sdk.client_library.api.topography_grid_api import TopographyGridApi as TopographyGridApi
@@ -197,7 +207,13 @@ from fastfuels_sdk.client_library.exceptions import ApiException as ApiException
 
 # import models into sdk package
 from fastfuels_sdk.client_library.models.access import Access as Access
+from fastfuels_sdk.client_library.models.als_point_cloud import AlsPointCloud as AlsPointCloud
+from fastfuels_sdk.client_library.models.als_point_cloud_source import AlsPointCloudSource as AlsPointCloudSource
+from fastfuels_sdk.client_library.models.api_resources_inventories_tree_schema_upload_response import ApiResourcesInventoriesTreeSchemaUploadResponse as ApiResourcesInventoriesTreeSchemaUploadResponse
+from fastfuels_sdk.client_library.models.api_resources_pointclouds_als_schema_processing_error import ApiResourcesPointcloudsAlsSchemaProcessingError as ApiResourcesPointcloudsAlsSchemaProcessingError
+from fastfuels_sdk.client_library.models.api_resources_pointclouds_als_schema_upload_response import ApiResourcesPointcloudsAlsSchemaUploadResponse as ApiResourcesPointcloudsAlsSchemaUploadResponse
 from fastfuels_sdk.client_library.models.application import Application as Application
+from fastfuels_sdk.client_library.models.create_als_point_cloud_request import CreateAlsPointCloudRequest as CreateAlsPointCloudRequest
 from fastfuels_sdk.client_library.models.create_application_request import CreateApplicationRequest as CreateApplicationRequest
 from fastfuels_sdk.client_library.models.create_domain_request import CreateDomainRequest as CreateDomainRequest
 from fastfuels_sdk.client_library.models.create_domain_request_feature import CreateDomainRequestFeature as CreateDomainRequestFeature
@@ -244,8 +260,8 @@ from fastfuels_sdk.client_library.models.multi_point import MultiPoint as MultiP
 from fastfuels_sdk.client_library.models.multi_polygon import MultiPolygon as MultiPolygon
 from fastfuels_sdk.client_library.models.operator import Operator as Operator
 from fastfuels_sdk.client_library.models.point import Point as Point
+from fastfuels_sdk.client_library.models.point_cloud import PointCloud as PointCloud
 from fastfuels_sdk.client_library.models.polygon import Polygon as Polygon
-from fastfuels_sdk.client_library.models.processing_error import ProcessingError as ProcessingError
 from fastfuels_sdk.client_library.models.road_feature import RoadFeature as RoadFeature
 from fastfuels_sdk.client_library.models.road_feature_source import RoadFeatureSource as RoadFeatureSource
 from fastfuels_sdk.client_library.models.scope import Scope as Scope
@@ -275,6 +291,7 @@ from fastfuels_sdk.client_library.models.surface_grid_savr_source import Surface
 from fastfuels_sdk.client_library.models.surface_grid_uniform_fbfm40_value import SurfaceGridUniformFBFM40Value as SurfaceGridUniformFBFM40Value
 from fastfuels_sdk.client_library.models.surface_grid_uniform_value import SurfaceGridUniformValue as SurfaceGridUniformValue
 from fastfuels_sdk.client_library.models.surface_grid_uniform_value_by_size_class import SurfaceGridUniformValueBySizeClass as SurfaceGridUniformValueBySizeClass
+from fastfuels_sdk.client_library.models.three_dep_source import ThreeDEPSource as ThreeDEPSource
 from fastfuels_sdk.client_library.models.topography_grid import TopographyGrid as TopographyGrid
 from fastfuels_sdk.client_library.models.topography_grid3_dep_source import TopographyGrid3DEPSource as TopographyGrid3DEPSource
 from fastfuels_sdk.client_library.models.topography_grid3_dep_source_aspect import TopographyGrid3DEPSourceAspect as TopographyGrid3DEPSourceAspect
@@ -314,7 +331,6 @@ from fastfuels_sdk.client_library.models.tree_inventory_treatment_proportional_t
 from fastfuels_sdk.client_library.models.tree_map_source import TreeMapSource as TreeMapSource
 from fastfuels_sdk.client_library.models.tree_map_version import TreeMapVersion as TreeMapVersion
 from fastfuels_sdk.client_library.models.update_domain_request import UpdateDomainRequest as UpdateDomainRequest
-from fastfuels_sdk.client_library.models.upload_response import UploadResponse as UploadResponse
 from fastfuels_sdk.client_library.models.validation_error import ValidationError as ValidationError
 from fastfuels_sdk.client_library.models.validation_error_loc_inner import ValidationErrorLocInner as ValidationErrorLocInner
 from fastfuels_sdk.client_library.models.water_feature import WaterFeature as WaterFeature

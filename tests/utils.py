@@ -24,6 +24,24 @@ def create_default_domain() -> Domain:
     return domain
 
 
+def create_default_domain_threedep() -> Domain:
+    """Creates a Domain resource with where 3dep data is available"""
+    # Load test GeoJSON data
+    with open(TEST_DATA_DIR / "threedep_domain.geojson") as f:
+        geojson = json.load(f)
+
+    # Create a domain using the GeoJSON
+    domain = Domain.from_geojson(
+        geojson,
+        name="test_threedep_domain",
+        description="Domain for testing threedep operations",
+        horizontal_resolution=1.0,
+        vertical_resolution=1.0,
+    )
+
+    return domain
+
+
 def normalize_datetime(resource):
     """Normalize datetime fields by ensuring consistent timezone handling"""
     if resource.created_on and resource.created_on.tzinfo:

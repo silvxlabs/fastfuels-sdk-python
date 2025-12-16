@@ -2,6 +2,7 @@
 
 # import apis into api package
 from fastfuels_sdk.client_library.api.api_keys_api import APIKeysApi
+from fastfuels_sdk.client_library.api.als_point_cloud_api import AlsPointCloudApi
 from fastfuels_sdk.client_library.api.applications_api import ApplicationsApi
 from fastfuels_sdk.client_library.api.cookies_api import CookiesApi
 from fastfuels_sdk.client_library.api.domains_api import DomainsApi
@@ -10,6 +11,7 @@ from fastfuels_sdk.client_library.api.features_api import FeaturesApi
 from fastfuels_sdk.client_library.api.grids_api import GridsApi
 from fastfuels_sdk.client_library.api.index_api import IndexApi
 from fastfuels_sdk.client_library.api.inventories_api import InventoriesApi
+from fastfuels_sdk.client_library.api.point_cloud_api import PointCloudApi
 from fastfuels_sdk.client_library.api.road_feature_api import RoadFeatureApi
 from fastfuels_sdk.client_library.api.surface_grid_api import SurfaceGridApi
 from fastfuels_sdk.client_library.api.topography_grid_api import TopographyGridApi
