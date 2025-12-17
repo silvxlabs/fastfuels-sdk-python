@@ -96,6 +96,17 @@ class Grids(GridsModel):
     topography: Optional[TopographyGrid]
     feature: Optional[FeatureGrid]
 
+    @staticmethod
+    def _field_values_from_api_model(api_model) -> dict:
+        """
+        Extract fields directly from a generated OpenAPI model *by attribute*.
+
+        This avoids `model_dump()`/`to_dict()` which can:
+        - turn anyOf wrappers into plain dicts
+        - switch to alias/camelCase keys
+        """
+        return {name: getattr(api_model, name) for name in api_model.model_fields}
+
     @classmethod
     def from_domain_id(cls, domain_id: str) -> Grids:
         """Retrieve the grids associated with a domain.
@@ -121,9 +132,7 @@ class Grids(GridsModel):
         ...     print("Domain has surface grid data")
         """
         grids_response = get_grids_api().get_grids(domain_id=domain_id)
-        response_data = grids_response.model_dump()
-        response_data = _convert_api_models_to_sdk_classes(domain_id, response_data)
-
+        response_data = _convert_api_models_to_sdk_classes(domain_id, grids_response)
         return cls(domain_id=domain_id, **response_data)
 
     def get(self, in_place: bool = False) -> Grids:
@@ -151,18 +160,16 @@ class Grids(GridsModel):
         >>> grids.get(in_place=True)
         """
         response = get_grids_api().get_grids(domain_id=self.domain_id)
-        response_data = response.model_dump()
-        response_data = _convert_api_models_to_sdk_classes(
-            self.domain_id, response_data
-        )
+        response_data = _convert_api_models_to_sdk_classes(self.domain_id, response)
 
-        if in_place:
-            # Update all attributes of current instance
-            for key, value in response_data.items():
-                setattr(self, key, value)
-            return self
+        if not in_place:
+            return Grids(domain_id=self.domain_id, **response_data)
 
-        return Grids(domain_id=self.domain_id, **response_data)
+        for field_name in self.model_fields:
+            if field_name == "domain_id":
+                continue
+            setattr(self, field_name, response_data.get(field_name))
+        return self
 
     def create_surface_grid(
         self,
@@ -263,16 +270,11 @@ class Grids(GridsModel):
             domain_id=self.domain_id, create_surface_grid_request=request
         )
 
-        # Create a new SurfaceGrid object with the response data.
-        surface_grid = SurfaceGrid(domain_id=self.domain_id, **response.model_dump())
-
-        # For some reason we need to explicitly set the attribute attributes of the object.
-        # I'm not sure why we need to do this, but the object doesn't serialize correctly otherwise.
-        surface_grid.fuel_load = response.fuel_load
-        surface_grid.fuel_depth = response.fuel_depth
-        surface_grid.fuel_moisture = response.fuel_moisture
-        surface_grid.savr = response.savr
-        surface_grid.fbfm = response.fbfm
+        # Copy attributes directly from response to avoid anyOf/alias serialization issues
+        surface_grid = SurfaceGrid(
+            domain_id=self.domain_id,
+            **{field: getattr(response, field) for field in response.model_fields},
+        )
 
         if in_place:
             self.surface = surface_grid
@@ -402,7 +404,8 @@ class Grids(GridsModel):
 
         # Create a new TopographyGrid object with the response data
         topography_grid = TopographyGrid(
-            domain_id=self.domain_id, **response.model_dump()
+            domain_id=self.domain_id,
+            **{field: getattr(response, field) for field in response.model_fields},
         )
 
         if in_place:
@@ -534,14 +537,10 @@ class Grids(GridsModel):
             domain_id=self.domain_id, create_tree_grid_request=request
         )
 
-        # Create a new TreeGrid object with the response data
-        tree_grid = TreeGrid(domain_id=self.domain_id, **response.model_dump())
-
-        # For consistency with surface grid, explicitly set the attributes
-        tree_grid.bulk_density = response.bulk_density
-        tree_grid.spcd = response.spcd
-        tree_grid.fuel_moisture = response.fuel_moisture
-        tree_grid.savr = response.savr
+        tree_grid = TreeGrid(
+            domain_id=self.domain_id,
+            **{field: getattr(response, field) for field in response.model_fields},
+        )
 
         if in_place:
             self.tree = tree_grid
@@ -606,8 +605,10 @@ class Grids(GridsModel):
             domain_id=self.domain_id, create_feature_grid_request=request
         )
 
-        # Create a new FeatureGrid object with the response data
-        feature_grid = FeatureGrid(domain_id=self.domain_id, **response.model_dump())
+        feature_grid = FeatureGrid(
+            domain_id=self.domain_id,
+            **{field: getattr(response, field) for field in response.model_fields},
+        )
 
         if in_place:
             self.feature = feature_grid
@@ -648,7 +649,9 @@ class Grids(GridsModel):
         response = get_grids_api().create_grid_export(
             domain_id=self.domain_id, export_format=export_format
         )
-        return Export(**response.model_dump())
+        return Export(
+            **{field: getattr(response, field) for field in response.model_fields}
+        )
 
     def get_export(self, export_format: str) -> Export:
         """Get the status of an existing export.
@@ -678,23 +681,49 @@ class Grids(GridsModel):
         response = get_grids_api().get_grid_export(
             domain_id=self.domain_id, export_format=export_format
         )
-        return Export(**response.model_dump())
+        return Export(
+            **{field: getattr(response, field) for field in response.model_fields}
+        )
 
 
-def _convert_api_models_to_sdk_classes(domain_id, response_data: dict) -> dict:
-    """Convert API models to SDK classes with domain_id."""
-    if "surface" in response_data and response_data["surface"]:
+def _convert_api_models_to_sdk_classes(domain_id, grids_response: GridsModel) -> dict:
+    """
+    Convert generated API models to SDK wrapper classes without dict serialization.
+
+    This avoids losing anyOf wrappers and avoids alias/camelCase key problems.
+    """
+    response_data = {
+        field: getattr(grids_response, field) for field in grids_response.model_fields
+    }
+
+    if response_data.get("surface"):
+        surface_obj = response_data["surface"]
         response_data["surface"] = SurfaceGrid(
-            domain_id=domain_id, **response_data["surface"]
+            domain_id=domain_id,
+            **{
+                field: getattr(surface_obj, field) for field in surface_obj.model_fields
+            },
         )
-    if "topography" in response_data and response_data["topography"]:
+
+    if response_data.get("topography"):
+        topo_obj = response_data["topography"]
         response_data["topography"] = TopographyGrid(
-            domain_id=domain_id, **response_data["topography"]
+            domain_id=domain_id,
+            **{field: getattr(topo_obj, field) for field in topo_obj.model_fields},
         )
-    if "tree" in response_data and response_data["tree"]:
-        response_data["tree"] = TreeGrid(domain_id=domain_id, **response_data["tree"])
-    if "feature" in response_data and response_data["feature"]:
+
+    if response_data.get("tree"):
+        tree_obj = response_data["tree"]
+        response_data["tree"] = TreeGrid(
+            domain_id=domain_id,
+            **{field: getattr(tree_obj, field) for field in tree_obj.model_fields},
+        )
+
+    if response_data.get("feature"):
+        feat_obj = response_data["feature"]
         response_data["feature"] = FeatureGrid(
-            domain_id=domain_id, **response_data["feature"]
+            domain_id=domain_id,
+            **{field: getattr(feat_obj, field) for field in feat_obj.model_fields},
         )
+
     return response_data

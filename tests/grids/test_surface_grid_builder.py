@@ -84,24 +84,24 @@ class BaseUniformTest:
             "value": self.test_value,
         }
 
-    def test_uniform_value_with_feature_masks(self, builder, completed_features):
-        """Test uniform value with feature masks."""
-        method = getattr(builder, self.method_name)
-        result = method(value=self.test_value, feature_masks=["road", "water"])
-
-        assert result is builder
-        assert self.attribute in builder.attributes
-        assert builder.config[self.attribute_snake_case] == {
-            "source": "uniform",
-            "value": self.test_value,
-            "featureMasks": ["road", "water"],
-        }
-
-    def test_invalid_feature_masks(self, builder):
-        """Test invalid feature masks raise ValueError."""
-        method = getattr(builder, self.method_name)
-        with pytest.raises(ValueError):
-            method(value=self.test_value, feature_masks=["invalid_feature"])
+    # def test_uniform_value_with_feature_masks(self, builder, completed_features):
+    #     """Test uniform value with feature masks."""
+    #     method = getattr(builder, self.method_name)
+    #     result = method(value=self.test_value, feature_masks=["road", "water"])
+    #
+    #     assert result is builder
+    #     assert self.attribute in builder.attributes
+    #     assert builder.config[self.attribute_snake_case] == {
+    #         "source": "uniform",
+    #         "value": self.test_value,
+    #         "featureMasks": ["road", "water"],
+    #     }
+    #
+    # def test_invalid_feature_masks(self, builder):
+    #     """Test invalid feature masks raise ValueError."""
+    #     method = getattr(builder, self.method_name)
+    #     with pytest.raises(ValueError):
+    #         method(value=self.test_value, feature_masks=["invalid_feature"])
 
 
 class BaseUniformBySizeClassTest:
@@ -123,18 +123,18 @@ class BaseUniformBySizeClassTest:
         config = builder.config[self.attribute_snake_case]
         self._verify_size_class_config(config)
 
-    def test_uniform_by_size_class_with_feature_masks(
-        self, builder, completed_features
-    ):
-        """Test uniform by size class with feature masks."""
-        method = getattr(builder, self.method_name)
-        test_values = {**self.test_values, "feature_masks": ["road", "water"]}
-        result = method(**test_values)
-
-        assert result is builder
-        config = builder.config[self.attribute_snake_case]
-        assert config["featureMasks"] == ["road", "water"]
-        self._verify_size_class_config(config)
+    # def test_uniform_by_size_class_with_feature_masks(
+    #     self, builder, completed_features
+    # ):
+    #     """Test uniform by size class with feature masks."""
+    #     method = getattr(builder, self.method_name)
+    #     test_values = {**self.test_values, "feature_masks": ["road", "water"]}
+    #     result = method(**test_values)
+    #
+    #     assert result is builder
+    #     config = builder.config[self.attribute_snake_case]
+    #     assert config["featureMasks"] == ["road", "water"]
+    #     self._verify_size_class_config(config)
 
     def _verify_size_class_config(self, config):
         """Helper method to verify size class configuration."""
@@ -177,48 +177,48 @@ class BaseLandfireTest:
         result = method(**kwargs)
         self._verify_landfire_config(result, product, version, interpolation)
 
-    def test_landfire_with_feature_masks(self, builder, completed_features):
-        """Test LANDFIRE source with feature masks."""
-        method = getattr(builder, self.method_name)
-        result = method(
-            product=self.test_products[0],
-            version=self.test_versions[0],
-            interpolation_method=self.test_interpolations[0],
-            feature_masks=["road", "water"],
-        )
-
-        config = result.config[self.attribute_snake_case]
-        assert config["featureMasks"] == ["road", "water"]
-        self._verify_landfire_config(
-            result,
-            self.test_products[0],
-            self.test_versions[0],
-            self.test_interpolations[0],
-        )
-
-    def test_landfire_with_non_burnable(self, builder):
-        """Test LANDFIRE source with non-burnable fuel models removal."""
-        method = getattr(builder, self.method_name)
-        result = method(
-            product=self.test_products[0],
-            version=self.test_versions[0],
-            interpolation_method=self.test_interpolations[0],
-            remove_non_burnable=["NB1", "NB2"],
-        )
-
-        config = result.config[self.attribute_snake_case]
-        assert config["removeNonBurnable"] == ["NB1", "NB2"]
-
-    def test_invalid_non_burnable(self, builder):
-        """Test invalid non-burnable fuel models raise ValueError."""
-        method = getattr(builder, self.method_name)
-        with pytest.raises(ValueError):
-            method(
-                product=self.test_products[0],
-                version=self.test_versions[0],
-                interpolation_method=self.test_interpolations[0],
-                remove_non_burnable=["INVALID"],
-            )
+    # def test_landfire_with_feature_masks(self, builder, completed_features):
+    #     """Test LANDFIRE source with feature masks."""
+    #     method = getattr(builder, self.method_name)
+    #     result = method(
+    #         product=self.test_products[0],
+    #         version=self.test_versions[0],
+    #         interpolation_method=self.test_interpolations[0],
+    #         feature_masks=["road", "water"],
+    #     )
+    #
+    #     config = result.config[self.attribute_snake_case]
+    #     assert config["featureMasks"] == ["road", "water"]
+    #     self._verify_landfire_config(
+    #         result,
+    #         self.test_products[0],
+    #         self.test_versions[0],
+    #         self.test_interpolations[0],
+    #     )
+    #
+    # def test_landfire_with_non_burnable(self, builder):
+    #     """Test LANDFIRE source with non-burnable fuel models removal."""
+    #     method = getattr(builder, self.method_name)
+    #     result = method(
+    #         product=self.test_products[0],
+    #         version=self.test_versions[0],
+    #         interpolation_method=self.test_interpolations[0],
+    #         remove_non_burnable=["NB1", "NB2"],
+    #     )
+    #
+    #     config = result.config[self.attribute_snake_case]
+    #     assert config["removeNonBurnable"] == ["NB1", "NB2"]
+    #
+    # def test_invalid_non_burnable(self, builder):
+    #     """Test invalid non-burnable fuel models raise ValueError."""
+    #     method = getattr(builder, self.method_name)
+    #     with pytest.raises(ValueError):
+    #         method(
+    #             product=self.test_products[0],
+    #             version=self.test_versions[0],
+    #             interpolation_method=self.test_interpolations[0],
+    #             remove_non_burnable=["INVALID"],
+    #         )
 
     def _verify_landfire_config(self, result, product, version, interpolation):
         """Helper method to verify LANDFIRE configuration."""

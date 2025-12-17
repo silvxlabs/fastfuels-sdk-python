@@ -20,6 +20,16 @@ class SurfaceGrid(SurfaceGridModel):
 
     domain_id: str
 
+    @staticmethod
+    def _field_values_from_api_model(api_model: SurfaceGridModel) -> dict:
+        """
+        Extract field values from the generated OpenAPI model *by attribute*.
+
+        Important: we intentionally DO NOT use `to_dict()` (camelCase aliases)
+        and DO NOT use `model_dump()` (which turns anyOf `actual_instance` into dicts).
+        """
+        return {name: getattr(api_model, name) for name in api_model.model_fields}
+
     @classmethod
     def from_domain_id(cls, domain_id: str) -> "SurfaceGrid":
         """Retrieve an existing surface grid for a domain.
@@ -41,7 +51,9 @@ class SurfaceGrid(SurfaceGridModel):
         'completed'
         """
         response = get_surface_grid_api().get_surface_grid(domain_id=domain_id)
-        return cls(domain_id=domain_id, **response.model_dump())
+
+        payload = cls._field_values_from_api_model(response)
+        return cls(domain_id=domain_id, **payload)
 
     def get(self, in_place: bool = False) -> "SurfaceGrid":
         """Get the latest surface grid data.
@@ -69,12 +81,19 @@ class SurfaceGrid(SurfaceGridModel):
         >>> grid.get(in_place=True)
         """
         response = get_surface_grid_api().get_surface_grid(domain_id=self.domain_id)
-        if in_place:
-            # Update all attributes of current instance
-            for key, value in response.model_dump().items():
-                setattr(self, key, value)
-            return self
-        return SurfaceGrid(domain_id=self.domain_id, **response.model_dump())
+
+        payload = self._field_values_from_api_model(response)
+
+        if not in_place:
+            return SurfaceGrid(domain_id=self.domain_id, **payload)
+
+        # Update only known fields using snake_case names (no alias keys like `fuelLoad`)
+        for field_name in self.model_fields:
+            if field_name == "domain_id":
+                continue
+            setattr(self, field_name, payload.get(field_name))
+
+        return self
 
     def wait_until_completed(
         self,
