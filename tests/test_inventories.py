@@ -8,8 +8,13 @@ import tempfile
 from pathlib import Path
 
 # Internal imports
-from tests.utils import create_default_domain, normalize_datetime
+from tests.utils import (
+    create_default_domain,
+    normalize_datetime,
+    create_default_domain_threedep,
+)
 from fastfuels_sdk.inventories import Inventories, TreeInventory
+from fastfuels_sdk.pointclouds import PointClouds
 from fastfuels_sdk.client_library.exceptions import NotFoundException, ApiException
 from fastfuels_sdk.client_library import (
     TreeInventorySource,
@@ -32,6 +37,40 @@ def test_domain():
 
     # Cleanup: Delete the domain after the tests
     domain.delete()
+
+
+@pytest.fixture(scope="module")
+def test_point_cloud_domain():
+    """Fixture that creates a test domain to be used by the tests"""
+    domain = create_default_domain_threedep()
+
+    # Return the domain for use in tests
+    yield domain
+
+    # Cleanup: Delete the domain after the tests
+    try:
+        domain.delete()
+    except NotFoundException:
+        pass
+
+
+@pytest.fixture(scope="module")
+def test_point_cloud_resource(test_point_cloud_domain):
+    """Fixture that ensures an ALS point cloud exists for the test domain"""
+    # Initialize the PointClouds interface
+    pc = PointClouds.from_domain_id(test_point_cloud_domain.id)
+
+    # Create the ALS point cloud using 3DEP (public data)
+    # We use 3DEP because it triggers a job processing workflow similar to production
+    als = pc.create_als_point_cloud(sources=["3DEP"])
+
+    # Wait for it to complete so tests don't hit 404s
+    als.wait_until_completed()
+
+    yield als
+
+    # Cleanup (Optional, as the domain deletion in test_point_cloud_domain
+    # will cascade delete this resource anyway)
 
 
 @pytest.fixture(scope="module")
@@ -826,3 +865,47 @@ class TestDeleteTreeInventory:
 
         test_inventories.get(in_place=True)
         assert test_inventories.tree is None
+
+
+class TestCreateTreeInventoryFromPointCloud:
+    def test_create_from_point_cloud(
+        self, test_point_cloud_domain, test_point_cloud_resource
+    ):
+        """Test creating a tree inventory from an existing point cloud"""
+        # 1. Initialize Inventories interface
+        # Note: We pass test_point_cloud_resource to ensure the prerequisite exists,
+        # but we use the domain ID to initialize the Inventories object.
+        inventories = Inventories.from_domain_id(test_point_cloud_domain.id)
+
+        # 2. Call the new method
+        tree_inventory = inventories.create_tree_inventory_from_point_cloud()
+
+        # 3. Validation
+        assert tree_inventory is not None
+        assert isinstance(tree_inventory, TreeInventory)
+        assert tree_inventory.domain_id == test_point_cloud_domain.id
+        # Status should start as pending/running
+        assert tree_inventory.status in ["pending", "running", "completed"]
+
+        # 4. Verify Source
+        actual_sources = [
+            src.actual_instance.value if hasattr(src, "actual_instance") else src
+            for src in tree_inventory.sources
+        ]
+        assert "pointcloud" in actual_sources
+
+    def test_in_place_true(self, test_point_cloud_domain, test_point_cloud_resource):
+        """Test creation with in_place=True"""
+        inventories = Inventories.from_domain_id(test_point_cloud_domain.id)
+        original_tree = inventories.tree
+
+        # Create with in_place=True
+        tree_inventory = inventories.create_tree_inventory_from_point_cloud(
+            in_place=True
+        )
+
+        # Verify update
+        assert inventories.tree is not None
+        assert inventories.tree is tree_inventory
+        assert inventories.tree is not original_tree
+        assert tree_inventory.domain_id == test_point_cloud_domain.id

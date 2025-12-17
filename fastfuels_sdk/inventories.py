@@ -672,6 +672,41 @@ class Inventories(InventoriesModel):
 
         return tree_inventory
 
+    def create_tree_inventory_from_point_cloud(
+            self,
+            in_place: bool = False,
+    ) -> TreeInventory:
+        """Create a tree inventory derived from the domain's point cloud data.
+        This method initiates the creation of a tree inventory by processing the
+        Airborne Laser Scanning (ALS) point cloud associated with this domain.
+        Individual trees are segmented from the point cloud to derive tree locations
+        and heights.
+        Prerequisites:
+        - The domain must have an existing ALS point cloud resource (see PointClouds).
+        - The point cloud status must be 'completed'.
+        Parameters
+        ----------
+        in_place : bool, optional
+            If True, updates this Inventories object's tree inventory (self.tree).
+            If False (default), returns a new inventory object without modifying this instance.
+        Returns
+        -------
+        TreeInventory
+            The newly created tree inventory object. Initially in 'pending' status.
+        Examples
+        --------
+        >>> from fastfuels_sdk import Inventories
+        >>> inventories = Inventories.from_domain_id("abc123")
+        >>>
+        >>> # Create tree inventory from existing point cloud
+        >>> inventory = inventories.create_tree_inventory_from_point_cloud()
+        >>> inventory.wait_until_completed()
+        """
+        return self.create_tree_inventory(
+            sources=[TreeInventorySource.POINTCLOUD],
+            in_place=in_place,
+        )
+
 
 class TreeInventory(TreeInventoryModel):
     """
