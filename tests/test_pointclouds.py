@@ -8,7 +8,7 @@ from datetime import datetime
 
 # Internal imports
 from tests.utils import create_default_domain_threedep, normalize_datetime
-from fastfuels_sdk.pointcloud import PointClouds, AlsPointCloud
+from fastfuels_sdk.pointclouds import PointClouds, AlsPointCloud
 from fastfuels_sdk.client_library.exceptions import NotFoundException
 
 # External imports

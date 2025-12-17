@@ -13,7 +13,7 @@ from fastfuels_sdk.grids import (
 )
 from fastfuels_sdk.exports import Export
 from fastfuels_sdk.convenience import export_roi, export_roi_to_quicfire
-from fastfuels_sdk.pointcloud import PointClouds, AlsPointCloud
+from fastfuels_sdk.pointclouds import PointClouds, AlsPointCloud
 
 __all__ = [
     "Domain",
