@@ -18,6 +18,8 @@ from fastfuels_sdk.client_library.api import (
     SurfaceGridApi,
     TopographyGridApi,
     FeatureGridApi,
+    PointCloudApi,
+    AlsPointCloudApi,
 )
 
 _client: Optional[ApiClient] = None
@@ -32,6 +34,8 @@ _tree_grid_api: Optional[TreeGridApi] = None
 _surface_grid_api: Optional[SurfaceGridApi] = None
 _topography_grid_api: Optional[TopographyGridApi] = None
 _feature_grid_api: Optional[FeatureGridApi] = None
+_point_cloud_api: Optional[PointCloudApi] = None
+_als_point_cloud_api: Optional[AlsPointCloudApi] = None
 
 
 def set_api_key(api_key: str) -> None:
@@ -46,6 +50,7 @@ def set_api_key(api_key: str) -> None:
     global _client, _domains_api, _inventories_api, _tree_inventory_api
     global _features_api, _road_feature_api, _water_feature_api
     global _grids_api, _tree_grid_api, _surface_grid_api, _topography_grid_api, _feature_grid_api
+    global _point_cloud_api, _als_point_cloud_api
 
     _client = None
     _domains_api = None
@@ -59,6 +64,8 @@ def set_api_key(api_key: str) -> None:
     _surface_grid_api = None
     _topography_grid_api = None
     _feature_grid_api = None
+    _point_cloud_api = None
+    _als_point_cloud_api = None
 
     os.environ["FASTFUELS_API_KEY"] = api_key
 
@@ -244,3 +251,24 @@ def get_feature_grid_api() -> FeatureGridApi:
     if _feature_grid_api is None:
         _feature_grid_api = FeatureGridApi(ensure_client())
     return _feature_grid_api
+
+def get_point_cloud_api() -> PointCloudApi:
+    """Get the cached PointCloudApi instance, creating it if necessary.
+    Returns:
+        The PointCloudApi instance
+    """
+    global _point_cloud_api
+    if _point_cloud_api is None:
+        _point_cloud_api = PointCloudApi(ensure_client())
+    return _point_cloud_api
+
+
+def get_als_point_cloud_api() -> AlsPointCloudApi:
+    """Get the cached AlsPointCloudApi instance, creating it if necessary.
+    Returns:
+        The AlsPointCloudApi instance
+    """
+    global _als_point_cloud_api
+    if _als_point_cloud_api is None:
+        _als_point_cloud_api = AlsPointCloudApi(ensure_client())
+    return _als_point_cloud_api
