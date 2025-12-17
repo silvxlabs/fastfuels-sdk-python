@@ -21,7 +21,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from fastfuels_sdk.client_library.models.als_point_cloud_source import AlsPointCloudSource
-from fastfuels_sdk.client_library.models.api_resources_inventories_tree_schema_processing_error import ApiResourcesInventoriesTreeSchemaProcessingError
+from fastfuels_sdk.client_library.models.api_resources_pointclouds_als_schema_processing_error import ApiResourcesPointcloudsAlsSchemaProcessingError
 from fastfuels_sdk.client_library.models.api_resources_pointclouds_als_schema_upload_response import ApiResourcesPointcloudsAlsSchemaUploadResponse
 from fastfuels_sdk.client_library.models.job_status import JobStatus
 from fastfuels_sdk.client_library.models.three_dep_source import ThreeDEPSource
@@ -39,7 +39,7 @@ class AlsPointCloud(BaseModel):
     modified_on: Optional[datetime] = Field(default=None, alias="modifiedOn")
     checksum: Optional[StrictStr] = None
     file: Optional[ApiResourcesPointcloudsAlsSchemaUploadResponse] = None
-    error: Optional[ApiResourcesInventoriesTreeSchemaProcessingError] = None
+    error: Optional[ApiResourcesPointcloudsAlsSchemaProcessingError] = None
     __properties: ClassVar[List[str]] = ["sources", "ThreeDEP", "status", "createdOn", "modifiedOn", "checksum", "file", "error"]
 
     model_config = ConfigDict(
@@ -139,7 +139,7 @@ class AlsPointCloud(BaseModel):
             "modifiedOn": obj.get("modifiedOn"),
             "checksum": obj.get("checksum"),
             "file": ApiResourcesPointcloudsAlsSchemaUploadResponse.from_dict(obj["file"]) if obj.get("file") is not None else None,
-            "error": ApiResourcesInventoriesTreeSchemaProcessingError.from_dict(obj["error"]) if obj.get("error") is not None else None
+            "error": ApiResourcesPointcloudsAlsSchemaProcessingError.from_dict(obj["error"]) if obj.get("error") is not None else None
         })
         return _obj
 

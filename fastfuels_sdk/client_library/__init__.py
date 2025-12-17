@@ -47,8 +47,8 @@ __all__ = [
     "Access",
     "AlsPointCloud",
     "AlsPointCloudSource",
-    "ApiResourcesInventoriesTreeSchemaProcessingError",
     "ApiResourcesInventoriesTreeSchemaUploadResponse",
+    "ApiResourcesPointcloudsAlsSchemaProcessingError",
     "ApiResourcesPointcloudsAlsSchemaUploadResponse",
     "Application",
     "CreateAlsPointCloudRequest",
@@ -212,8 +212,8 @@ from fastfuels_sdk.client_library.exceptions import ApiException as ApiException
 from fastfuels_sdk.client_library.models.access import Access as Access
 from fastfuels_sdk.client_library.models.als_point_cloud import AlsPointCloud as AlsPointCloud
 from fastfuels_sdk.client_library.models.als_point_cloud_source import AlsPointCloudSource as AlsPointCloudSource
-from fastfuels_sdk.client_library.models.api_resources_inventories_tree_schema_processing_error import ApiResourcesInventoriesTreeSchemaProcessingError as ApiResourcesInventoriesTreeSchemaProcessingError
 from fastfuels_sdk.client_library.models.api_resources_inventories_tree_schema_upload_response import ApiResourcesInventoriesTreeSchemaUploadResponse as ApiResourcesInventoriesTreeSchemaUploadResponse
+from fastfuels_sdk.client_library.models.api_resources_pointclouds_als_schema_processing_error import ApiResourcesPointcloudsAlsSchemaProcessingError as ApiResourcesPointcloudsAlsSchemaProcessingError
 from fastfuels_sdk.client_library.models.api_resources_pointclouds_als_schema_upload_response import ApiResourcesPointcloudsAlsSchemaUploadResponse as ApiResourcesPointcloudsAlsSchemaUploadResponse
 from fastfuels_sdk.client_library.models.application import Application as Application
 from fastfuels_sdk.client_library.models.create_als_point_cloud_request import CreateAlsPointCloudRequest as CreateAlsPointCloudRequest
