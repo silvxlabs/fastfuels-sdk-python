@@ -204,7 +204,7 @@ class SurfaceGridBuilder:
                     "groups": groups,
                     "featureMasks": feature_masks,
                 }
-            )
+            ).to_dict()
         self.attributes.append(SurfaceGridAttribute.FUELLOAD)
 
         return self
@@ -289,7 +289,7 @@ class SurfaceGridBuilder:
                     "interpolationMethod": interpolation_method,
                     "featureMasks": feature_masks,
                 }
-            )
+            ).to_dict()
         self.attributes.append(SurfaceGridAttribute.FUELDEPTH)
 
         return self
