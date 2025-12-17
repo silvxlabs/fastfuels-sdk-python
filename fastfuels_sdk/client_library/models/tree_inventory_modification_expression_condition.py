@@ -17,39 +17,27 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    StrictFloat,
-    StrictInt,
-    StrictStr,
-    field_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Union
 from typing_extensions import Annotated
 from fastfuels_sdk.client_library.models.operator import Operator
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class TreeInventoryModificationExpressionCondition(BaseModel):
     """
     Expression-based condition for filtering trees based on computed values.  Supports arithmetic expressions combining tree fields: - Fields: HT, DIA, CR - Operators: +, -, *, /, () - Examples: \"HT * (1 - CR)\", \"HT / DIA\", \"(HT + DIA) / 2\"
-    """  # noqa: E501
-
+    """ # noqa: E501
     attribute: StrictStr
     operator: Operator
     value: Union[StrictFloat, StrictInt]
-    expression: Annotated[str, Field(min_length=1, strict=True, max_length=200)] = (
-        Field(description="Arithmetic expression using tree fields (HT, DIA, CR)")
-    )
+    expression: Annotated[str, Field(min_length=1, strict=True, max_length=200)] = Field(description="Arithmetic expression using tree fields (HT, DIA, CR)")
     __properties: ClassVar[List[str]] = ["attribute", "operator", "value", "expression"]
 
-    @field_validator("attribute")
+    @field_validator('attribute')
     def attribute_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(["expression"]):
+        if value not in set(['expression']):
             raise ValueError("must be one of enum values ('expression')")
         return value
 
@@ -58,6 +46,7 @@ class TreeInventoryModificationExpressionCondition(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -83,10 +72,10 @@ class TreeInventoryModificationExpressionCondition(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
-            mode="json",
             by_alias=True,
             exclude=excluded_fields,
             exclude_none=True,
@@ -102,12 +91,12 @@ class TreeInventoryModificationExpressionCondition(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "attribute": obj.get("attribute"),
-                "operator": obj.get("operator"),
-                "value": obj.get("value"),
-                "expression": obj.get("expression"),
-            }
-        )
+        _obj = cls.model_validate({
+            "attribute": obj.get("attribute"),
+            "operator": obj.get("operator"),
+            "value": obj.get("value"),
+            "expression": obj.get("expression")
+        })
         return _obj
+
+
