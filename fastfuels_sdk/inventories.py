@@ -673,8 +673,8 @@ class Inventories(InventoriesModel):
         return tree_inventory
 
     def create_tree_inventory_from_point_cloud(
-            self,
-            in_place: bool = False,
+        self,
+        in_place: bool = False,
     ) -> TreeInventory:
         """Create a tree inventory derived from the domain's point cloud data.
         This method initiates the creation of a tree inventory by processing the

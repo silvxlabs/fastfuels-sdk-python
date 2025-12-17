@@ -252,6 +252,7 @@ def get_feature_grid_api() -> FeatureGridApi:
         _feature_grid_api = FeatureGridApi(ensure_client())
     return _feature_grid_api
 
+
 def get_point_cloud_api() -> PointCloudApi:
     """Get the cached PointCloudApi instance, creating it if necessary.
     Returns:
