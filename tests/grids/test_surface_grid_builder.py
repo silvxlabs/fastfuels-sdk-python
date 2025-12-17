@@ -513,23 +513,19 @@ class TestFCCSSerialization:
         This test simulates the user's reported issue where building a surface grid
         with FCCS data would fail with a JSON serialization TypeError.
         """
-        # Configure as in the user's example
         builder.with_fuel_load_from_landfire(
             product="FCCS",
             version="2023",
             interpolation_method="zipper",
             groups=["oneHour"],
-            feature_masks=["road", "water"],
         )
         builder.with_fuel_depth_from_landfire(
             product="FCCS",
             version="2023",
             interpolation_method="zipper",
-            feature_masks=["road", "water"],
         )
         builder.with_uniform_fuel_moisture(
             value=15,
-            feature_masks=["road", "water"],
         )
 
         # This should not raise a TypeError about JSON serialization
