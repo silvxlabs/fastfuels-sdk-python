@@ -47,8 +47,8 @@ __all__ = [
     "Access",
     "AlsPointCloud",
     "AlsPointCloudSource",
+    "ApiResourcesInventoriesTreeSchemaProcessingError",
     "ApiResourcesInventoriesTreeSchemaUploadResponse",
-    "ApiResourcesPointcloudsAlsSchemaProcessingError",
     "ApiResourcesPointcloudsAlsSchemaUploadResponse",
     "Application",
     "CreateAlsPointCloudRequest",
@@ -74,6 +74,8 @@ __all__ = [
     "FeatureGridAttribute",
     "FeatureType",
     "Features",
+    "Fueldepth",
+    "Fuelload",
     "GeoJSONFeature",
     "GeoJSONFeatureCollection",
     "GeoJSONStyleProperties",
@@ -106,14 +108,15 @@ __all__ = [
     "SurfaceGrid",
     "SurfaceGridAttribute",
     "SurfaceGridFBFMSource",
-    "SurfaceGridFuelDepthSource",
-    "SurfaceGridFuelLoadSource",
     "SurfaceGridFuelMoistureSource",
     "SurfaceGridInterpolationMethod",
     "SurfaceGridLandfireFBFM40FuelLoadSource",
     "SurfaceGridLandfireFBFM40Group",
     "SurfaceGridLandfireFBFM40SAVRSource",
     "SurfaceGridLandfireFBFM40Source",
+    "SurfaceGridLandfireFCCSFuelLoadSource",
+    "SurfaceGridLandfireFCCSGroup",
+    "SurfaceGridLandfireFCCSSource",
     "SurfaceGridModification",
     "SurfaceGridModificationAction",
     "SurfaceGridModificationCondition",
@@ -209,8 +212,8 @@ from fastfuels_sdk.client_library.exceptions import ApiException as ApiException
 from fastfuels_sdk.client_library.models.access import Access as Access
 from fastfuels_sdk.client_library.models.als_point_cloud import AlsPointCloud as AlsPointCloud
 from fastfuels_sdk.client_library.models.als_point_cloud_source import AlsPointCloudSource as AlsPointCloudSource
+from fastfuels_sdk.client_library.models.api_resources_inventories_tree_schema_processing_error import ApiResourcesInventoriesTreeSchemaProcessingError as ApiResourcesInventoriesTreeSchemaProcessingError
 from fastfuels_sdk.client_library.models.api_resources_inventories_tree_schema_upload_response import ApiResourcesInventoriesTreeSchemaUploadResponse as ApiResourcesInventoriesTreeSchemaUploadResponse
-from fastfuels_sdk.client_library.models.api_resources_pointclouds_als_schema_processing_error import ApiResourcesPointcloudsAlsSchemaProcessingError as ApiResourcesPointcloudsAlsSchemaProcessingError
 from fastfuels_sdk.client_library.models.api_resources_pointclouds_als_schema_upload_response import ApiResourcesPointcloudsAlsSchemaUploadResponse as ApiResourcesPointcloudsAlsSchemaUploadResponse
 from fastfuels_sdk.client_library.models.application import Application as Application
 from fastfuels_sdk.client_library.models.create_als_point_cloud_request import CreateAlsPointCloudRequest as CreateAlsPointCloudRequest
@@ -236,6 +239,8 @@ from fastfuels_sdk.client_library.models.feature_grid import FeatureGrid as Feat
 from fastfuels_sdk.client_library.models.feature_grid_attribute import FeatureGridAttribute as FeatureGridAttribute
 from fastfuels_sdk.client_library.models.feature_type import FeatureType as FeatureType
 from fastfuels_sdk.client_library.models.features import Features as Features
+from fastfuels_sdk.client_library.models.fueldepth import Fueldepth as Fueldepth
+from fastfuels_sdk.client_library.models.fuelload import Fuelload as Fuelload
 from fastfuels_sdk.client_library.models.geo_json_feature import GeoJSONFeature as GeoJSONFeature
 from fastfuels_sdk.client_library.models.geo_json_feature_collection import GeoJSONFeatureCollection as GeoJSONFeatureCollection
 from fastfuels_sdk.client_library.models.geo_json_style_properties import GeoJSONStyleProperties as GeoJSONStyleProperties
@@ -268,14 +273,15 @@ from fastfuels_sdk.client_library.models.scope import Scope as Scope
 from fastfuels_sdk.client_library.models.surface_grid import SurfaceGrid as SurfaceGrid
 from fastfuels_sdk.client_library.models.surface_grid_attribute import SurfaceGridAttribute as SurfaceGridAttribute
 from fastfuels_sdk.client_library.models.surface_grid_fbfm_source import SurfaceGridFBFMSource as SurfaceGridFBFMSource
-from fastfuels_sdk.client_library.models.surface_grid_fuel_depth_source import SurfaceGridFuelDepthSource as SurfaceGridFuelDepthSource
-from fastfuels_sdk.client_library.models.surface_grid_fuel_load_source import SurfaceGridFuelLoadSource as SurfaceGridFuelLoadSource
 from fastfuels_sdk.client_library.models.surface_grid_fuel_moisture_source import SurfaceGridFuelMoistureSource as SurfaceGridFuelMoistureSource
 from fastfuels_sdk.client_library.models.surface_grid_interpolation_method import SurfaceGridInterpolationMethod as SurfaceGridInterpolationMethod
 from fastfuels_sdk.client_library.models.surface_grid_landfire_fbfm40_fuel_load_source import SurfaceGridLandfireFBFM40FuelLoadSource as SurfaceGridLandfireFBFM40FuelLoadSource
 from fastfuels_sdk.client_library.models.surface_grid_landfire_fbfm40_group import SurfaceGridLandfireFBFM40Group as SurfaceGridLandfireFBFM40Group
 from fastfuels_sdk.client_library.models.surface_grid_landfire_fbfm40_savr_source import SurfaceGridLandfireFBFM40SAVRSource as SurfaceGridLandfireFBFM40SAVRSource
 from fastfuels_sdk.client_library.models.surface_grid_landfire_fbfm40_source import SurfaceGridLandfireFBFM40Source as SurfaceGridLandfireFBFM40Source
+from fastfuels_sdk.client_library.models.surface_grid_landfire_fccs_fuel_load_source import SurfaceGridLandfireFCCSFuelLoadSource as SurfaceGridLandfireFCCSFuelLoadSource
+from fastfuels_sdk.client_library.models.surface_grid_landfire_fccs_group import SurfaceGridLandfireFCCSGroup as SurfaceGridLandfireFCCSGroup
+from fastfuels_sdk.client_library.models.surface_grid_landfire_fccs_source import SurfaceGridLandfireFCCSSource as SurfaceGridLandfireFCCSSource
 from fastfuels_sdk.client_library.models.surface_grid_modification import SurfaceGridModification as SurfaceGridModification
 from fastfuels_sdk.client_library.models.surface_grid_modification_action import SurfaceGridModificationAction as SurfaceGridModificationAction
 from fastfuels_sdk.client_library.models.surface_grid_modification_condition import SurfaceGridModificationCondition as SurfaceGridModificationCondition

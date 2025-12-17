@@ -21,8 +21,8 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
+from fastfuels_sdk.client_library.models.api_resources_inventories_tree_schema_processing_error import ApiResourcesInventoriesTreeSchemaProcessingError
 from fastfuels_sdk.client_library.models.api_resources_inventories_tree_schema_upload_response import ApiResourcesInventoriesTreeSchemaUploadResponse
-from fastfuels_sdk.client_library.models.api_resources_pointclouds_als_schema_processing_error import ApiResourcesPointcloudsAlsSchemaProcessingError
 from fastfuels_sdk.client_library.models.feature_type import FeatureType
 from fastfuels_sdk.client_library.models.job_status import JobStatus
 from fastfuels_sdk.client_library.models.tree_inventory_modification import TreeInventoryModification
@@ -46,7 +46,7 @@ class TreeInventory(BaseModel):
     modified_on: Optional[datetime] = Field(default=None, alias="modifiedOn")
     checksum: Optional[StrictStr] = None
     file: Optional[ApiResourcesInventoriesTreeSchemaUploadResponse] = None
-    error: Optional[ApiResourcesPointcloudsAlsSchemaProcessingError] = None
+    error: Optional[ApiResourcesInventoriesTreeSchemaProcessingError] = None
     __properties: ClassVar[List[str]] = ["sources", "TreeMap", "modifications", "treatments", "featureMasks", "status", "createdOn", "modifiedOn", "checksum", "file", "error"]
 
     model_config = ConfigDict(
@@ -163,7 +163,7 @@ class TreeInventory(BaseModel):
             "modifiedOn": obj.get("modifiedOn"),
             "checksum": obj.get("checksum"),
             "file": ApiResourcesInventoriesTreeSchemaUploadResponse.from_dict(obj["file"]) if obj.get("file") is not None else None,
-            "error": ApiResourcesPointcloudsAlsSchemaProcessingError.from_dict(obj["error"]) if obj.get("error") is not None else None
+            "error": ApiResourcesInventoriesTreeSchemaProcessingError.from_dict(obj["error"]) if obj.get("error") is not None else None
         })
         return _obj
 
