@@ -464,6 +464,81 @@ class TestModifications:
         assert len(mod["conditions"]) == 0
 
 
+class TestFCCSSerialization:
+    """Test suite for FCCS serialization bug fix.
+
+    These tests verify that FCCS configurations are properly serialized
+    to dictionaries and don't cause JSON serialization errors.
+    """
+
+    def test_fccs_fuel_load_serialization(self, builder):
+        """Test that FCCS fuel load configuration is properly serialized."""
+        builder.with_fuel_load_from_landfire(
+            product="FCCS",
+            version="2023",
+            interpolation_method="zipper",
+            groups=["oneHour"],
+            feature_masks=["road", "water"],
+        )
+
+        # Verify config is a dictionary (not a model object)
+        assert isinstance(builder.config["fuel_load"], dict)
+        assert builder.config["fuel_load"]["source"] == "LANDFIRE"
+        assert builder.config["fuel_load"]["product"] == "FCCS"
+        assert builder.config["fuel_load"]["version"] == "2023"
+        assert builder.config["fuel_load"]["interpolationMethod"] == "zipper"
+        assert builder.config["fuel_load"]["groups"] == ["oneHour"]
+        assert builder.config["fuel_load"]["featureMasks"] == ["road", "water"]
+
+    def test_fccs_fuel_depth_serialization(self, builder):
+        """Test that FCCS fuel depth configuration is properly serialized."""
+        builder.with_fuel_depth_from_landfire(
+            product="FCCS",
+            version="2023",
+            interpolation_method="zipper",
+            feature_masks=["road", "water"],
+        )
+
+        # Verify config is a dictionary (not a model object)
+        assert isinstance(builder.config["fuel_depth"], dict)
+        assert builder.config["fuel_depth"]["source"] == "LANDFIRE"
+        assert builder.config["fuel_depth"]["product"] == "FCCS"
+        assert builder.config["fuel_depth"]["version"] == "2023"
+        assert builder.config["fuel_depth"]["interpolationMethod"] == "zipper"
+        assert builder.config["fuel_depth"]["featureMasks"] == ["road", "water"]
+
+    def test_fccs_complete_surface_grid_build(self, builder):
+        """Test that a complete FCCS surface grid can be built without serialization errors.
+
+        This test simulates the user's reported issue where building a surface grid
+        with FCCS data would fail with a JSON serialization TypeError.
+        """
+        # Configure as in the user's example
+        builder.with_fuel_load_from_landfire(
+            product="FCCS",
+            version="2023",
+            interpolation_method="zipper",
+            groups=["oneHour"],
+            feature_masks=["road", "water"],
+        )
+        builder.with_fuel_depth_from_landfire(
+            product="FCCS",
+            version="2023",
+            interpolation_method="zipper",
+            feature_masks=["road", "water"],
+        )
+        builder.with_uniform_fuel_moisture(
+            value=15,
+            feature_masks=["road", "water"],
+        )
+
+        # This should not raise a TypeError about JSON serialization
+        surface_grid = builder.build()
+
+        assert isinstance(surface_grid, SurfaceGrid)
+        assert surface_grid.domain_id == builder.domain_id
+
+
 class TestBuilderMethods:
     """Test suite for general builder methods."""
 
