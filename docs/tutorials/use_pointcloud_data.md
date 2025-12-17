@@ -14,27 +14,56 @@ Before starting this tutorial, make sure you have:
 By the end of this tutorial, you'll know how to:
 - Create an ALS point cloud within a FastFuels domain
 - Generate a tree inventory informed by the ALS data
-- Build tree grids using ALS-informed inventories
-- Create a Surface Grid utilizing the Fuel Characteristic Classification System
 
 ## Step 1: Create a FastFuels Domain
 
 For the polygon created by the coordinates:
 ```python
->>> from fastfuels_sdk import Inventories
-        >>> inventories = Inventories.from_domain_id("abc123")
-        >>>
-        >>> # Create tree inventory from existing point cloud
-        >>> inventory = inventories.create_tree_inventory_from_point_cloud()
-        >>> inventory.wait_until_completed()
+import geopandas as gpd
+from shapely.geometry import Polygon
+
+# Define the polygon coordinates for Lubrecht area
+coordinates = [
+    [-113.43635167116199,46.89738742250387],
+    [-113.44842074255764,46.8894785976307],
+    [-113.44763362920567,46.88740657162339],
+    [-113.44993666456837,46.8858524995899],
+    [-113.44923700825561,46.88429838253265],
+    [-113.44273603501621,46.88389988372731],
+    [-113.43538964373204,46.882365635689325],
+    [-113.42005550954369,46.88523484307359],
+    [-113.42329141999039,46.88919967571519],
+    [-113.42361209580038,46.892566564773205],
+    [-113.4263524163587,46.89527586047467],
+    [-113.42696461563226,46.895973083547176],
+    [-113.42853884233625,46.89916027357725],
+    [-113.42711037736427,46.90210825569156],
+    [-113.42798494775504,46.90336309078498],
+    [-113.42932595568779,46.903004569469715],
+    [-113.43241610440292,46.90099282206219],
+    [-113.43445676864847,46.8980248588519],
+    [-113.43635167116199,46.89738742250387]
+]
+
+# Create a GeoDataFrame
+polygon = Polygon(coordinates)
+roi = gpd.GeoDataFrame(
+    geometry=[polygon],
+    crs="EPSG:4326"  # WGS 84 coordinate system
+)
+
+from fastfuels_sdk.domains import Domain
+
+domain = Domain.from_geodataframe(
+    geodataframe=roi,
+    name="Blue Mountain ROI",
+    description="Test area in Lubrecht Experimental Forest",
+    horizontal_resolution=2.0,  # 2-meter horizontal resolution
+    vertical_resolution=1.0     # 1-meter vertical resolution
+)
+
+print(f"Created domain with ID: {domain.id}")
 ```
-Complete Steps 1–6 of the tutorial “Create and Export QUIC-Fire Inputs with FastFuels SDK”, including:
-- Authentication
-- Region of interest (ROI) - using these coordinates
-- Domain creation
-- Road and water features
-- Feature grid
-- Topography grid
 
 ## Step 2: Create an ALS point cloud within FastFuels
 
@@ -55,7 +84,7 @@ als_pointcloud.wait_until_completed()
 
 ```
 
-## Step 3: Create Tree Inventory and Grid using the point cloud data
+## Step 3: Create Tree Inventory using the point cloud data
 
 Create a tree inventory and generate the canopy fuel grid:
 
@@ -69,64 +98,6 @@ tree_inventory = Inventories.from_domain_id(
     domain.id
 ).create_tree_inventory_from_point_cloud()
 tree_inventory.wait_until_completed()
-
-# Create tree grid
-tree_grid = (
-    TreeGridBuilder(domain_id=domain.id)
-    .with_bulk_density_from_tree_inventory()
-    .build()
-)
-tree_grid.wait_until_completed()
-```
-
-## Step 4: Create Surface Grid
-
-Generate the surface fuels grid using LandFire's Fuel Characteristic Classification System
-
-```python
-from fastfuels_sdk.grids import SurfaceGridBuilder
-
-surface_grid = (
-    SurfaceGridBuilder(domain_id=domain.id)
-    .with_fuel_load_from_landfire(
-        product="FCCS",
-        version="2023",
-        interpolation_method="cubic",
-        groups=["oneHour"],
-        feature_masks=["road", "water"],
-        remove_non_burnable=["NB1", "NB2"],
-    )
-    .with_fuel_depth_from_landfire(
-        product="FCCS",
-        version="2023",
-        interpolation_method="cubic",
-        feature_masks=["road", "water"],
-        remove_non_burnable=["NB1", "NB2"],
-    )
-    .with_uniform_fuel_moisture(
-        value=0.15,
-        feature_masks=["road", "water"]
-    )
-    .build()
-)
-surface_grid.wait_until_completed()
-```
-
-## Step 5: Export to ZARR Format
-
-Create and download the zarr export:
-
-```python
-from fastfuels_sdk.grids import Grids
-from pathlib import Path
-
-# Create the export
-export = Grids.from_domain_id(domain.id).create_export("zarr")
-export.wait_until_completed()
-
-# Download to a local directory
-export_path = Path("zarr_export")
-export.to_file(export_path)
 ```
 
 ## Next Steps
