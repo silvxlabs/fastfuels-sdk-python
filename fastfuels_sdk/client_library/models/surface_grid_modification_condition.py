@@ -13,42 +13,47 @@
 
 
 from __future__ import annotations
+from inspect import getfullargspec
 import json
 import pprint
+import re  # noqa: F401
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
-from typing import Any, List, Optional
+from typing import Optional
 from fastfuels_sdk.client_library.models.surface_grid_modification_fbfm_condition import SurfaceGridModificationFBFMCondition
 from fastfuels_sdk.client_library.models.surface_grid_modification_fuel_height_condition import SurfaceGridModificationFuelHeightCondition
 from fastfuels_sdk.client_library.models.surface_grid_modification_fuel_load_condition import SurfaceGridModificationFuelLoadCondition
 from fastfuels_sdk.client_library.models.surface_grid_modification_fuel_moisture_condition import SurfaceGridModificationFuelMoistureCondition
-from pydantic import StrictStr, Field
-from typing import Union, List, Set, Optional, Dict
+from fastfuels_sdk.client_library.models.surface_grid_modification_spatial_condition import SurfaceGridModificationSpatialCondition
+from typing import Union, Any, List, Set, TYPE_CHECKING, Optional, Dict
 from typing_extensions import Literal, Self
+from pydantic import Field
 
-SURFACEGRIDMODIFICATIONCONDITION_ONE_OF_SCHEMAS = ["SurfaceGridModificationFBFMCondition", "SurfaceGridModificationFuelHeightCondition", "SurfaceGridModificationFuelLoadCondition", "SurfaceGridModificationFuelMoistureCondition"]
+SURFACEGRIDMODIFICATIONCONDITION_ANY_OF_SCHEMAS = ["SurfaceGridModificationFBFMCondition", "SurfaceGridModificationFuelHeightCondition", "SurfaceGridModificationFuelLoadCondition", "SurfaceGridModificationFuelMoistureCondition", "SurfaceGridModificationSpatialCondition"]
 
 class SurfaceGridModificationCondition(BaseModel):
     """
-    The conditions for the surface grid modification.
+    A condition for the surface grid modification. Can be either an attribute-based condition (checking attribute values) or a spatial condition (checking geographic location).
     """
+
+    # data type: SurfaceGridModificationSpatialCondition
+    anyof_schema_1_validator: Optional[SurfaceGridModificationSpatialCondition] = None
     # data type: SurfaceGridModificationFBFMCondition
-    oneof_schema_1_validator: Optional[SurfaceGridModificationFBFMCondition] = None
+    anyof_schema_2_validator: Optional[SurfaceGridModificationFBFMCondition] = None
     # data type: SurfaceGridModificationFuelLoadCondition
-    oneof_schema_2_validator: Optional[SurfaceGridModificationFuelLoadCondition] = None
+    anyof_schema_3_validator: Optional[SurfaceGridModificationFuelLoadCondition] = None
     # data type: SurfaceGridModificationFuelHeightCondition
-    oneof_schema_3_validator: Optional[SurfaceGridModificationFuelHeightCondition] = None
+    anyof_schema_4_validator: Optional[SurfaceGridModificationFuelHeightCondition] = None
     # data type: SurfaceGridModificationFuelMoistureCondition
-    oneof_schema_4_validator: Optional[SurfaceGridModificationFuelMoistureCondition] = None
-    actual_instance: Optional[Union[SurfaceGridModificationFBFMCondition, SurfaceGridModificationFuelHeightCondition, SurfaceGridModificationFuelLoadCondition, SurfaceGridModificationFuelMoistureCondition]] = None
-    one_of_schemas: Set[str] = { "SurfaceGridModificationFBFMCondition", "SurfaceGridModificationFuelHeightCondition", "SurfaceGridModificationFuelLoadCondition", "SurfaceGridModificationFuelMoistureCondition" }
+    anyof_schema_5_validator: Optional[SurfaceGridModificationFuelMoistureCondition] = None
+    if TYPE_CHECKING:
+        actual_instance: Optional[Union[SurfaceGridModificationFBFMCondition, SurfaceGridModificationFuelHeightCondition, SurfaceGridModificationFuelLoadCondition, SurfaceGridModificationFuelMoistureCondition, SurfaceGridModificationSpatialCondition]] = None
+    else:
+        actual_instance: Any = None
+    any_of_schemas: Set[str] = { "SurfaceGridModificationFBFMCondition", "SurfaceGridModificationFuelHeightCondition", "SurfaceGridModificationFuelLoadCondition", "SurfaceGridModificationFuelMoistureCondition", "SurfaceGridModificationSpatialCondition" }
 
-    model_config = ConfigDict(
-        validate_assignment=True,
-        protected_namespaces=(),
-    )
-
-
-    discriminator_value_class_map: Dict[str, str] = {
+    model_config = {
+        "validate_assignment": True,
+        "protected_namespaces": (),
     }
 
     def __init__(self, *args, **kwargs) -> None:
@@ -62,41 +67,47 @@ class SurfaceGridModificationCondition(BaseModel):
             super().__init__(**kwargs)
 
     @field_validator('actual_instance')
-    def actual_instance_must_validate_oneof(cls, v):
+    def actual_instance_must_validate_anyof(cls, v):
         instance = SurfaceGridModificationCondition.model_construct()
         error_messages = []
-        match = 0
+        # validate data type: SurfaceGridModificationSpatialCondition
+        if not isinstance(v, SurfaceGridModificationSpatialCondition):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridModificationSpatialCondition`")
+        else:
+            return v
+
         # validate data type: SurfaceGridModificationFBFMCondition
         if not isinstance(v, SurfaceGridModificationFBFMCondition):
             error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridModificationFBFMCondition`")
         else:
-            match += 1
+            return v
+
         # validate data type: SurfaceGridModificationFuelLoadCondition
         if not isinstance(v, SurfaceGridModificationFuelLoadCondition):
             error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridModificationFuelLoadCondition`")
         else:
-            match += 1
+            return v
+
         # validate data type: SurfaceGridModificationFuelHeightCondition
         if not isinstance(v, SurfaceGridModificationFuelHeightCondition):
             error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridModificationFuelHeightCondition`")
         else:
-            match += 1
+            return v
+
         # validate data type: SurfaceGridModificationFuelMoistureCondition
         if not isinstance(v, SurfaceGridModificationFuelMoistureCondition):
             error_messages.append(f"Error! Input type `{type(v)}` is not `SurfaceGridModificationFuelMoistureCondition`")
         else:
-            match += 1
-        if match > 1:
-            # more than 1 match
-            raise ValueError("Multiple matches found when setting `actual_instance` in SurfaceGridModificationCondition with oneOf schemas: SurfaceGridModificationFBFMCondition, SurfaceGridModificationFuelHeightCondition, SurfaceGridModificationFuelLoadCondition, SurfaceGridModificationFuelMoistureCondition. Details: " + ", ".join(error_messages))
-        elif match == 0:
+            return v
+
+        if error_messages:
             # no match
-            raise ValueError("No match found when setting `actual_instance` in SurfaceGridModificationCondition with oneOf schemas: SurfaceGridModificationFBFMCondition, SurfaceGridModificationFuelHeightCondition, SurfaceGridModificationFuelLoadCondition, SurfaceGridModificationFuelMoistureCondition. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting the actual_instance in SurfaceGridModificationCondition with anyOf schemas: SurfaceGridModificationFBFMCondition, SurfaceGridModificationFuelHeightCondition, SurfaceGridModificationFuelLoadCondition, SurfaceGridModificationFuelMoistureCondition, SurfaceGridModificationSpatialCondition. Details: " + ", ".join(error_messages))
         else:
             return v
 
     @classmethod
-    def from_dict(cls, obj: Union[str, Dict[str, Any]]) -> Self:
+    def from_dict(cls, obj: Dict[str, Any]) -> Self:
         return cls.from_json(json.dumps(obj))
 
     @classmethod
@@ -104,39 +115,40 @@ class SurfaceGridModificationCondition(BaseModel):
         """Returns the object represented by the json string"""
         instance = cls.model_construct()
         error_messages = []
-        match = 0
-
-        # deserialize data into SurfaceGridModificationFBFMCondition
+        # anyof_schema_1_validator: Optional[SurfaceGridModificationSpatialCondition] = None
+        try:
+            instance.actual_instance = SurfaceGridModificationSpatialCondition.from_json(json_str)
+            return instance
+        except (ValidationError, ValueError) as e:
+             error_messages.append(str(e))
+        # anyof_schema_2_validator: Optional[SurfaceGridModificationFBFMCondition] = None
         try:
             instance.actual_instance = SurfaceGridModificationFBFMCondition.from_json(json_str)
-            match += 1
+            return instance
         except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
-        # deserialize data into SurfaceGridModificationFuelLoadCondition
+             error_messages.append(str(e))
+        # anyof_schema_3_validator: Optional[SurfaceGridModificationFuelLoadCondition] = None
         try:
             instance.actual_instance = SurfaceGridModificationFuelLoadCondition.from_json(json_str)
-            match += 1
+            return instance
         except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
-        # deserialize data into SurfaceGridModificationFuelHeightCondition
+             error_messages.append(str(e))
+        # anyof_schema_4_validator: Optional[SurfaceGridModificationFuelHeightCondition] = None
         try:
             instance.actual_instance = SurfaceGridModificationFuelHeightCondition.from_json(json_str)
-            match += 1
+            return instance
         except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
-        # deserialize data into SurfaceGridModificationFuelMoistureCondition
+             error_messages.append(str(e))
+        # anyof_schema_5_validator: Optional[SurfaceGridModificationFuelMoistureCondition] = None
         try:
             instance.actual_instance = SurfaceGridModificationFuelMoistureCondition.from_json(json_str)
-            match += 1
+            return instance
         except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
+             error_messages.append(str(e))
 
-        if match > 1:
-            # more than 1 match
-            raise ValueError("Multiple matches found when deserializing the JSON string into SurfaceGridModificationCondition with oneOf schemas: SurfaceGridModificationFBFMCondition, SurfaceGridModificationFuelHeightCondition, SurfaceGridModificationFuelLoadCondition, SurfaceGridModificationFuelMoistureCondition. Details: " + ", ".join(error_messages))
-        elif match == 0:
+        if error_messages:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into SurfaceGridModificationCondition with oneOf schemas: SurfaceGridModificationFBFMCondition, SurfaceGridModificationFuelHeightCondition, SurfaceGridModificationFuelLoadCondition, SurfaceGridModificationFuelMoistureCondition. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into SurfaceGridModificationCondition with anyOf schemas: SurfaceGridModificationFBFMCondition, SurfaceGridModificationFuelHeightCondition, SurfaceGridModificationFuelLoadCondition, SurfaceGridModificationFuelMoistureCondition, SurfaceGridModificationSpatialCondition. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -150,7 +162,7 @@ class SurfaceGridModificationCondition(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], SurfaceGridModificationFBFMCondition, SurfaceGridModificationFuelHeightCondition, SurfaceGridModificationFuelLoadCondition, SurfaceGridModificationFuelMoistureCondition]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], SurfaceGridModificationFBFMCondition, SurfaceGridModificationFuelHeightCondition, SurfaceGridModificationFuelLoadCondition, SurfaceGridModificationFuelMoistureCondition, SurfaceGridModificationSpatialCondition]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None
@@ -158,7 +170,6 @@ class SurfaceGridModificationCondition(BaseModel):
         if hasattr(self.actual_instance, "to_dict") and callable(self.actual_instance.to_dict):
             return self.actual_instance.to_dict()
         else:
-            # primitive type
             return self.actual_instance
 
     def to_str(self) -> str:

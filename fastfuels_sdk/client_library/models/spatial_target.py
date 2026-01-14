@@ -18,24 +18,20 @@ from enum import Enum
 from typing_extensions import Self
 
 
-class Operator(str, Enum):
+class SpatialTarget(str, Enum):
     """
-    Comparison operators for attribute-based conditions.
+    Specifies which part of the cell/item is tested against the geometry.  - centroid: Test only the cell's centroid point against the geometry - cell: Test the entire cell bounds against the geometry
     """
 
     """
     allowed enum values
     """
-    EQ = 'eq'
-    NE = 'ne'
-    GT = 'gt'
-    LT = 'lt'
-    GE = 'ge'
-    LE = 'le'
+    CENTROID = 'centroid'
+    CELL = 'cell'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of Operator from a JSON string"""
+        """Create an instance of SpatialTarget from a JSON string"""
         return cls(json.loads(json_str))
 
 

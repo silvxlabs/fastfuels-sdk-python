@@ -20,7 +20,7 @@ from typing_extensions import Self
 
 class Modifier(str, Enum):
     """
-    Modifier
+    Modifiers for modification actions.
     """
 
     """
