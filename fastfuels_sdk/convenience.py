@@ -12,6 +12,7 @@ from fastfuels_sdk.domains import Domain
 from fastfuels_sdk.grids import Grids
 from fastfuels_sdk.features import Features
 from fastfuels_sdk.inventories import Inventories
+from fastfuels_sdk.pointclouds import PointClouds
 from fastfuels_sdk.grids import (
     TopographyGridBuilder,
     SurfaceGridBuilder,
@@ -103,6 +104,7 @@ DEFAULT_FEATURES_CONFIG = {
 }
 
 DEFAULT_TREE_INVENTORY_CONFIG = {
+    "source": "TreeMap",
     "version": "2022",
     "featureMasks": ["road", "water"],
     "canopyHeightMapSource": "Meta2024",
@@ -252,6 +254,63 @@ def _configure_tree_builder(domain_id: str, config: Dict[str, Any]):
     return builder.build()
 
 
+def _create_tree_inventory(
+    domain_id: str, config: Dict[str, Any], verbose: bool = False
+):
+    """Create tree inventory based on configuration source.
+
+    Args:
+        domain_id: The domain ID to create the inventory for
+        config: Tree inventory configuration dictionary
+        verbose: If True, prints progress messages
+
+    Returns:
+        The created tree inventory object
+    """
+    source = config.get("source", "TreeMap")
+    inventories = Inventories.from_domain_id(domain_id)
+
+    if source == "TreeMap":
+        return inventories.create_tree_inventory_from_treemap(
+            version=config.get("version", "2022"),
+            seed=config.get("seed"),
+            canopy_height_map_source=config.get("canopyHeightMapSource"),
+            modifications=config.get("modifications"),
+            treatments=config.get("treatments"),
+            feature_masks=config.get("featureMasks", []),
+        )
+
+    elif source == "pointcloud":
+        # First create the ALS point cloud
+        if verbose:
+            print("Creating ALS point cloud for the domain")
+        pc = PointClouds.from_domain_id(domain_id)
+        point_cloud_sources = config.get("pointCloudSources", ["3DEP"])
+        als = pc.create_als_point_cloud(sources=point_cloud_sources)
+        als.wait_until_completed(verbose=verbose)
+
+        # Then create tree inventory from point cloud
+        if verbose:
+            print("Creating tree inventory from point cloud")
+        return inventories.create_tree_inventory_from_point_cloud()
+
+    elif source == "file":
+        file_path = config.get("filePath")
+        if not file_path:
+            raise ValueError("filePath is required when source is 'file'")
+        if verbose:
+            print(f"Creating tree inventory from file: {file_path}")
+        return inventories.create_tree_inventory_from_file_upload(
+            file_path=Path(file_path)
+        )
+
+    else:
+        raise ValueError(
+            f"Unknown tree inventory source: {source}. "
+            f"Supported sources are: 'TreeMap', 'pointcloud', 'file'"
+        )
+
+
 def export_roi(
     roi: GeoDataFrame,
     export_path: Path | str,
@@ -367,9 +426,12 @@ def export_roi(
         Structure::
 
             {
+                "source": "TreeMap" | "pointcloud" | "file",  # Data source (default: "TreeMap")
+
+                # TreeMap options (when source="TreeMap"):
+                "version": "2022",  # TreeMap version
                 "featureMasks": ["road", "water"],  # Features to mask out
                 "canopyHeightMapSource": "Meta2024",  # High-resolution canopy height map
-                "version": "2022",  # TreeMap version
                 "seed": 42,  # Random seed for reproducibility
                 "modifications": [  # Tree attribute modifications
                     {
@@ -383,7 +445,13 @@ def export_roi(
                         "targetMetric": "basalArea",
                         "targetValue": 25.0
                     }
-                ]
+                ],
+
+                # Point cloud options (when source="pointcloud"):
+                "pointCloudSources": ["3DEP"],  # ALS data sources (default: ["3DEP"])
+
+                # File upload options (when source="file"):
+                "filePath": "/path/to/trees.csv",  # Path to CSV file (required)
             }
 
     Returns
@@ -466,6 +534,28 @@ def export_roi(
     ... }
     >>> export = export_roi(
     ...     roi, "thinned_forest.zip",
+    ...     tree_inventory_config=tree_inventory_config
+    ... )
+
+    Use ALS point cloud data for tree inventory:
+
+    >>> tree_inventory_config = {
+    ...     "source": "pointcloud",
+    ...     "pointCloudSources": ["3DEP"]
+    ... }
+    >>> export = export_roi(
+    ...     roi, "als_trees.zip",
+    ...     tree_inventory_config=tree_inventory_config
+    ... )
+
+    Use custom tree inventory from CSV file:
+
+    >>> tree_inventory_config = {
+    ...     "source": "file",
+    ...     "filePath": "/path/to/my_trees.csv"
+    ... }
+    >>> export = export_roi(
+    ...     roi, "custom_trees.zip",
     ...     tree_inventory_config=tree_inventory_config
     ... )
 
@@ -569,19 +659,10 @@ def export_roi(
         feature_grid = None
 
     # Create tree inventory using configuration
-    if verbose:
-        print("Creating tree inventory for the domain")
-    tree_inventory = Inventories.from_domain_id(
-        domain.id
-    ).create_tree_inventory_from_treemap(
-        version=merged_tree_inventory_config.get("version", "2022"),
-        seed=merged_tree_inventory_config.get("seed"),
-        canopy_height_map_source=merged_tree_inventory_config.get(
-            "canopyHeightMapSource"
-        ),
-        modifications=merged_tree_inventory_config.get("modifications"),
-        treatments=merged_tree_inventory_config.get("treatments"),
-        feature_masks=merged_tree_inventory_config.get("featureMasks", []),
+    tree_inventory = _create_tree_inventory(
+        domain_id=domain.id,
+        config=merged_tree_inventory_config,
+        verbose=verbose,
     )
 
     # Create surface grid using configuration
