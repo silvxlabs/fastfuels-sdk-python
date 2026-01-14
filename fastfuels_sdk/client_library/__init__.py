@@ -70,6 +70,7 @@ __all__ = [
     "Export",
     "ExportStatus",
     "FBFM40",
+    "FeatureDataResponse",
     "FeatureGrid",
     "FeatureGridAttribute",
     "FeatureType",
@@ -83,6 +84,7 @@ __all__ = [
     "GeoJsonCRSProperties",
     "Geojson",
     "Geometry",
+    "Geometry1",
     "GridAttributeMetadataResponse",
     "Grids",
     "HTTPValidationError",
@@ -105,6 +107,8 @@ __all__ = [
     "RoadFeature",
     "RoadFeatureSource",
     "Scope",
+    "SpatialOperator",
+    "SpatialTarget",
     "SurfaceGrid",
     "SurfaceGridAttribute",
     "SurfaceGridFBFMSource",
@@ -128,6 +132,7 @@ __all__ = [
     "SurfaceGridModificationFuelLoadCondition",
     "SurfaceGridModificationFuelMoistureAction",
     "SurfaceGridModificationFuelMoistureCondition",
+    "SurfaceGridModificationSpatialCondition",
     "SurfaceGridSAVRSource",
     "SurfaceGridUniformFBFM40Value",
     "SurfaceGridUniformValue",
@@ -235,6 +240,7 @@ from fastfuels_sdk.client_library.models.domain_sort_order import DomainSortOrde
 from fastfuels_sdk.client_library.models.export import Export as Export
 from fastfuels_sdk.client_library.models.export_status import ExportStatus as ExportStatus
 from fastfuels_sdk.client_library.models.fbfm40 import FBFM40 as FBFM40
+from fastfuels_sdk.client_library.models.feature_data_response import FeatureDataResponse as FeatureDataResponse
 from fastfuels_sdk.client_library.models.feature_grid import FeatureGrid as FeatureGrid
 from fastfuels_sdk.client_library.models.feature_grid_attribute import FeatureGridAttribute as FeatureGridAttribute
 from fastfuels_sdk.client_library.models.feature_type import FeatureType as FeatureType
@@ -248,6 +254,7 @@ from fastfuels_sdk.client_library.models.geo_json_crs import GeoJsonCRS as GeoJs
 from fastfuels_sdk.client_library.models.geo_json_crs_properties import GeoJsonCRSProperties as GeoJsonCRSProperties
 from fastfuels_sdk.client_library.models.geojson import Geojson as Geojson
 from fastfuels_sdk.client_library.models.geometry import Geometry as Geometry
+from fastfuels_sdk.client_library.models.geometry1 import Geometry1 as Geometry1
 from fastfuels_sdk.client_library.models.grid_attribute_metadata_response import GridAttributeMetadataResponse as GridAttributeMetadataResponse
 from fastfuels_sdk.client_library.models.grids import Grids as Grids
 from fastfuels_sdk.client_library.models.http_validation_error import HTTPValidationError as HTTPValidationError
@@ -270,6 +277,8 @@ from fastfuels_sdk.client_library.models.polygon import Polygon as Polygon
 from fastfuels_sdk.client_library.models.road_feature import RoadFeature as RoadFeature
 from fastfuels_sdk.client_library.models.road_feature_source import RoadFeatureSource as RoadFeatureSource
 from fastfuels_sdk.client_library.models.scope import Scope as Scope
+from fastfuels_sdk.client_library.models.spatial_operator import SpatialOperator as SpatialOperator
+from fastfuels_sdk.client_library.models.spatial_target import SpatialTarget as SpatialTarget
 from fastfuels_sdk.client_library.models.surface_grid import SurfaceGrid as SurfaceGrid
 from fastfuels_sdk.client_library.models.surface_grid_attribute import SurfaceGridAttribute as SurfaceGridAttribute
 from fastfuels_sdk.client_library.models.surface_grid_fbfm_source import SurfaceGridFBFMSource as SurfaceGridFBFMSource
@@ -293,6 +302,7 @@ from fastfuels_sdk.client_library.models.surface_grid_modification_fuel_load_act
 from fastfuels_sdk.client_library.models.surface_grid_modification_fuel_load_condition import SurfaceGridModificationFuelLoadCondition as SurfaceGridModificationFuelLoadCondition
 from fastfuels_sdk.client_library.models.surface_grid_modification_fuel_moisture_action import SurfaceGridModificationFuelMoistureAction as SurfaceGridModificationFuelMoistureAction
 from fastfuels_sdk.client_library.models.surface_grid_modification_fuel_moisture_condition import SurfaceGridModificationFuelMoistureCondition as SurfaceGridModificationFuelMoistureCondition
+from fastfuels_sdk.client_library.models.surface_grid_modification_spatial_condition import SurfaceGridModificationSpatialCondition as SurfaceGridModificationSpatialCondition
 from fastfuels_sdk.client_library.models.surface_grid_savr_source import SurfaceGridSAVRSource as SurfaceGridSAVRSource
 from fastfuels_sdk.client_library.models.surface_grid_uniform_fbfm40_value import SurfaceGridUniformFBFM40Value as SurfaceGridUniformFBFM40Value
 from fastfuels_sdk.client_library.models.surface_grid_uniform_value import SurfaceGridUniformValue as SurfaceGridUniformValue

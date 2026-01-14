@@ -18,24 +18,21 @@ from enum import Enum
 from typing_extensions import Self
 
 
-class Operator(str, Enum):
+class SpatialOperator(str, Enum):
     """
-    Comparison operators for attribute-based conditions.
+    Spatial relationship operators for geometry-based conditions.  - within: Select items whose target (centroid or cell) is inside the geometry - outside: Select items whose target is outside the geometry (inverse of within) - intersects: Select items whose target overlaps with the geometry
     """
 
     """
     allowed enum values
     """
-    EQ = 'eq'
-    NE = 'ne'
-    GT = 'gt'
-    LT = 'lt'
-    GE = 'ge'
-    LE = 'le'
+    WITHIN = 'within'
+    OUTSIDE = 'outside'
+    INTERSECTS = 'intersects'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of Operator from a JSON string"""
+        """Create an instance of SpatialOperator from a JSON string"""
         return cls(json.loads(json_str))
 
 
