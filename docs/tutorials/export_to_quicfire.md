@@ -395,8 +395,16 @@ features_config = {
 
 ##### Tree Inventory Configuration
 
+The tree inventory configuration supports three data sources:
+
+1. **TreeMap** (default): Nationwide tree data from USFS TreeMap
+2. **Point Cloud**: ALS-derived trees from 3DEP point cloud data
+3. **File Upload**: Your own tree inventory from a CSV file
+
 ```python
+# Default: TreeMap source
 tree_inventory_config = {
+    "source": "TreeMap",  # "TreeMap", "pointcloud", or "file"
     "version": "2022",  # TreeMap version: "2014", "2016", "2020", "2022"
     "seed": 42,  # Random seed for reproducibility (optional)
     "featureMasks": ["road", "water"],  # Features to mask from inventory
@@ -422,6 +430,18 @@ tree_inventory_config = {
             "targetValue": 25.0
         }
     ]
+}
+
+# ALS Point Cloud source
+tree_inventory_config = {
+    "source": "pointcloud",
+    "pointCloudSources": ["3DEP"]  # ALS data sources (default: ["3DEP"])
+}
+
+# Custom file upload
+tree_inventory_config = {
+    "source": "file",
+    "filePath": "/path/to/my_trees.csv"  # Required when source is "file"
 }
 ```
 
@@ -506,6 +526,47 @@ tree_inventory_config = {
     "featureMasks": ["road"]  # Only mask roads from tree inventory
 }
 ```
+
+**Use ALS point cloud for high-resolution tree data:**
+
+```python
+# Use ALS-derived trees from 3DEP point cloud data
+tree_inventory_config = {
+    "source": "pointcloud",
+    "pointCloudSources": ["3DEP"]
+}
+
+export = export_roi(
+    roi, "als_trees_export.zip",
+    tree_inventory_config=tree_inventory_config,
+    verbose=True  # Recommended - point cloud processing takes longer
+)
+```
+
+**Use your own tree inventory data:**
+
+```python
+# Use custom tree data from a CSV file
+tree_inventory_config = {
+    "source": "file",
+    "filePath": "/path/to/field_measurements.csv"
+}
+
+export = export_roi(
+    roi, "custom_trees_export.zip",
+    tree_inventory_config=tree_inventory_config
+)
+```
+
+Your CSV file must include these columns:
+- `TREE_ID` (Integer): Unique identifier for each tree
+- `SPCD` (Integer): FIA species code
+- `STATUSCD` (Integer): Tree status (1: Live, 2: Dead, etc.)
+- `DIA` (Float): Diameter in cm
+- `HT` (Float): Height in meters
+- `CR` (Float): Crown ratio (0-1)
+- `X` (Float): X coordinate in projected CRS
+- `Y` (Float): Y coordinate in projected CRS
 
 #### Configuration Tips
 

@@ -100,5 +100,27 @@ tree_inventory = Inventories.from_domain_id(
 tree_inventory.wait_until_completed()
 ```
 
+## Using the Convenience Function
+
+You can also use ALS point cloud data through the `export_roi()` convenience function by specifying `"pointcloud"` as the tree inventory source:
+
+```python
+from fastfuels_sdk import export_roi
+
+tree_inventory_config = {
+    "source": "pointcloud",
+    "pointCloudSources": ["3DEP"]
+}
+
+export = export_roi(
+    roi=roi,
+    export_path="als_export.zip",
+    tree_inventory_config=tree_inventory_config,
+    verbose=True  # Recommended - point cloud processing takes longer
+)
+```
+
+This handles the entire workflow (point cloud creation, tree inventory, grids, and export) in a single function call.
+
 ## Next Steps
-For additional guidance and complementary workflows, refer back to the “Create and Export QUIC-Fire Inputs with FastFuels SDK” tutorial.
+For additional guidance and complementary workflows, refer back to the "Create and Export QUIC-Fire Inputs with FastFuels SDK" tutorial.
