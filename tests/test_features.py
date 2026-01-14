@@ -9,7 +9,11 @@ from datetime import datetime
 # Internal imports
 from tests.utils import create_default_domain, normalize_datetime
 from fastfuels_sdk.features import Features, RoadFeature, WaterFeature
-from fastfuels_sdk.client_library.models import RoadFeatureSource, WaterFeatureSource
+from fastfuels_sdk.client_library.models import (
+    RoadFeatureSource,
+    WaterFeatureSource,
+    FeatureDataResponse,
+)
 from fastfuels_sdk.client_library.exceptions import NotFoundException
 
 # External imports
@@ -36,6 +40,32 @@ def test_features(test_domain):
     # Return the features for use in tests
     yield features
     # Cleanup handled by test_domain fixture
+
+
+@pytest.fixture(scope="module")
+def completed_road_feature(test_features):
+    """Fixture that creates a completed road feature for data retrieval tests"""
+    road_feature = test_features.create_road_feature(sources="OSM")
+    road_feature.wait_until_completed()
+    yield road_feature
+    # Cleanup: Delete the road feature after tests
+    try:
+        road_feature.delete()
+    except NotFoundException:
+        pass  # Already deleted by another test
+
+
+@pytest.fixture(scope="module")
+def completed_water_feature(test_features):
+    """Fixture that creates a completed water feature for data retrieval tests"""
+    water_feature = test_features.create_water_feature(sources="OSM")
+    water_feature.wait_until_completed()
+    yield water_feature
+    # Cleanup: Delete the water feature after tests
+    try:
+        water_feature.delete()
+    except NotFoundException:
+        pass  # Already deleted by another test
 
 
 class TestFeaturesFromDomain:
@@ -633,3 +663,153 @@ class TestDeleteWaterFeature:
 
         with pytest.raises(NotFoundException):
             water_feature.delete()
+
+
+class TestGetRoadFeatureData:
+    def test_get_data_default(self, completed_road_feature):
+        """Test getting road feature data with default parameters"""
+        data = completed_road_feature.get_data()
+
+        assert data is not None
+        assert isinstance(data, FeatureDataResponse)
+        assert data.type == "FeatureCollection"
+        assert isinstance(data.features, list)
+        assert isinstance(data.current_page, int)
+        assert isinstance(data.page_size, int)
+        assert isinstance(data.total_items, int)
+
+    def test_get_data_with_pagination(self, completed_road_feature):
+        """Test getting road feature data with pagination parameters"""
+        # Get first page with size 10
+        data = completed_road_feature.get_data(page=0, size=10)
+
+        assert data is not None
+        assert isinstance(data, FeatureDataResponse)
+        assert data.current_page == 0
+        assert data.page_size <= 10
+
+    def test_get_data_nonexistent_domain(self, completed_road_feature):
+        """Test error handling when domain no longer exists"""
+        # Store original domain_id
+        original_id = completed_road_feature.domain_id
+
+        # Set invalid domain_id
+        completed_road_feature.domain_id = uuid4().hex
+
+        # Verify exception raised
+        with pytest.raises(NotFoundException):
+            completed_road_feature.get_data()
+
+        # Restore original domain_id
+        completed_road_feature.domain_id = original_id
+
+
+class TestGetAllRoadFeatureData:
+    def test_get_all_data_default(self, completed_road_feature):
+        """Test getting all road feature data"""
+        data = completed_road_feature.get_all_data()
+
+        assert data is not None
+        assert isinstance(data, FeatureDataResponse)
+        assert data.type == "FeatureCollection"
+        assert isinstance(data.features, list)
+        assert len(data.features) == data.total_items
+        assert data.page_size == len(data.features)
+
+    def test_get_all_data_with_custom_size(self, completed_road_feature):
+        """Test getting all road feature data with custom page size"""
+        data = completed_road_feature.get_all_data(size=5)
+
+        assert data is not None
+        assert isinstance(data, FeatureDataResponse)
+        assert len(data.features) == data.total_items
+
+    def test_get_all_data_nonexistent_domain(self, completed_road_feature):
+        """Test error handling when domain no longer exists"""
+        # Store original domain_id
+        original_id = completed_road_feature.domain_id
+
+        # Set invalid domain_id
+        completed_road_feature.domain_id = uuid4().hex
+
+        # Verify exception raised
+        with pytest.raises(NotFoundException):
+            completed_road_feature.get_all_data()
+
+        # Restore original domain_id
+        completed_road_feature.domain_id = original_id
+
+
+class TestGetWaterFeatureData:
+    def test_get_data_default(self, completed_water_feature):
+        """Test getting water feature data with default parameters"""
+        data = completed_water_feature.get_data()
+
+        assert data is not None
+        assert isinstance(data, FeatureDataResponse)
+        assert data.type == "FeatureCollection"
+        assert isinstance(data.features, list)
+        assert isinstance(data.current_page, int)
+        assert isinstance(data.page_size, int)
+        assert isinstance(data.total_items, int)
+
+    def test_get_data_with_pagination(self, completed_water_feature):
+        """Test getting water feature data with pagination parameters"""
+        # Get first page with size 10
+        data = completed_water_feature.get_data(page=0, size=10)
+
+        assert data is not None
+        assert isinstance(data, FeatureDataResponse)
+        assert data.current_page == 0
+        assert data.page_size <= 10
+
+    def test_get_data_nonexistent_domain(self, completed_water_feature):
+        """Test error handling when domain no longer exists"""
+        # Store original domain_id
+        original_id = completed_water_feature.domain_id
+
+        # Set invalid domain_id
+        completed_water_feature.domain_id = uuid4().hex
+
+        # Verify exception raised
+        with pytest.raises(NotFoundException):
+            completed_water_feature.get_data()
+
+        # Restore original domain_id
+        completed_water_feature.domain_id = original_id
+
+
+class TestGetAllWaterFeatureData:
+    def test_get_all_data_default(self, completed_water_feature):
+        """Test getting all water feature data"""
+        data = completed_water_feature.get_all_data()
+
+        assert data is not None
+        assert isinstance(data, FeatureDataResponse)
+        assert data.type == "FeatureCollection"
+        assert isinstance(data.features, list)
+        assert len(data.features) == data.total_items
+        assert data.page_size == len(data.features)
+
+    def test_get_all_data_with_custom_size(self, completed_water_feature):
+        """Test getting all water feature data with custom page size"""
+        data = completed_water_feature.get_all_data(size=5)
+
+        assert data is not None
+        assert isinstance(data, FeatureDataResponse)
+        assert len(data.features) == data.total_items
+
+    def test_get_all_data_nonexistent_domain(self, completed_water_feature):
+        """Test error handling when domain no longer exists"""
+        # Store original domain_id
+        original_id = completed_water_feature.domain_id
+
+        # Set invalid domain_id
+        completed_water_feature.domain_id = uuid4().hex
+
+        # Verify exception raised
+        with pytest.raises(NotFoundException):
+            completed_water_feature.get_all_data()
+
+        # Restore original domain_id
+        completed_water_feature.domain_id = original_id

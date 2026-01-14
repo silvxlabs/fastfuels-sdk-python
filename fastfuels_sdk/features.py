@@ -23,6 +23,7 @@ from fastfuels_sdk.client_library.models import (
     RoadFeatureSource,
     WaterFeatureSource,
     Geojson,
+    FeatureDataResponse,
 )
 
 
@@ -577,6 +578,153 @@ class RoadFeature(RoadFeatureModel):
                 )
         return road_feature
 
+    def get_data(
+        self,
+        page: Optional[int] = None,
+        size: Optional[int] = None,
+    ) -> FeatureDataResponse:
+        """Get paginated road feature data as a GeoJSON FeatureCollection.
+
+        Retrieves the actual road geometry and attribute data for this domain.
+        The road feature must be fully processed (status "completed") before
+        data can be retrieved.
+
+        Parameters
+        ----------
+        page : int, optional
+            Zero-indexed page number. Defaults to 0 if not specified.
+        size : int, optional
+            Number of features per page. Valid range: 1-1000. Defaults to 50.
+
+        Returns
+        -------
+        FeatureDataResponse
+            A paginated GeoJSON FeatureCollection containing:
+            - type: Always "FeatureCollection"
+            - features: List of GeoJSON Feature objects with road geometries
+            - current_page: The current page number
+            - page_size: Number of features per page
+            - total_items: Total number of road features available
+            - crs: Coordinate reference system information
+
+        Raises
+        ------
+        NotFoundException
+            If the domain or road feature does not exist.
+        UnprocessableEntityError
+            If the road feature is not yet completed (status != "completed").
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
+        >>> road = features.create_road_feature_from_osm()
+        >>> road.wait_until_completed()
+        >>>
+        >>> # Get first page of data
+        >>> data = road.get_data()
+        >>> print(f"Page {data.current_page}, {len(data.features)} features")
+        >>>
+        >>> # Get specific page with custom size
+        >>> data = road.get_data(page=2, size=100)
+
+        See Also
+        --------
+        RoadFeature.get_all_data : Retrieve all road features across all pages
+        """
+        return get_road_feature_api().get_road_feature_data(
+            domain_id=self.domain_id,
+            page=page,
+            size=size,
+        )
+
+    def get_all_data(
+        self,
+        size: int = 1000,
+    ) -> FeatureDataResponse:
+        """Get all road feature data by automatically paginating through all pages.
+
+        Convenience method that retrieves all road features by iterating through
+        all pages and combining them into a single FeatureDataResponse. The road
+        feature must be fully processed (status "completed") before data can be
+        retrieved.
+
+        Parameters
+        ----------
+        size : int, optional
+            Number of features to retrieve per API call. Valid range: 1-1000.
+            Defaults to 1000 (maximum) for efficiency.
+
+        Returns
+        -------
+        FeatureDataResponse
+            A GeoJSON FeatureCollection containing all road features:
+            - type: Always "FeatureCollection"
+            - features: Complete list of all GeoJSON Feature objects
+            - current_page: Always 0 (represents combined result)
+            - page_size: Total number of features returned
+            - total_items: Total number of road features
+            - crs: Coordinate reference system information
+
+        Raises
+        ------
+        NotFoundException
+            If the domain or road feature does not exist.
+        UnprocessableEntityError
+            If the road feature is not yet completed (status != "completed").
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
+        >>> road = features.create_road_feature_from_osm()
+        >>> road.wait_until_completed()
+        >>>
+        >>> # Get all road features at once
+        >>> all_data = road.get_all_data()
+        >>> print(f"Total features: {len(all_data.features)}")
+        >>>
+        >>> # Convert to GeoDataFrame for analysis
+        >>> import geopandas as gpd
+        >>> gdf = gpd.GeoDataFrame.from_features(
+        ...     all_data.features,
+        ...     crs="EPSG:4326"
+        ... )
+
+        See Also
+        --------
+        RoadFeature.get_data : Retrieve a single page of road features
+        """
+        # Get first page to determine total items
+        first_page = get_road_feature_api().get_road_feature_data(
+            domain_id=self.domain_id,
+            page=0,
+            size=size,
+        )
+
+        all_features = list(first_page.features)
+        total_items = first_page.total_items
+
+        # Calculate remaining pages and fetch them
+        total_pages = (total_items + size - 1) // size
+        for page_num in range(1, total_pages):
+            page_data = get_road_feature_api().get_road_feature_data(
+                domain_id=self.domain_id,
+                page=page_num,
+                size=size,
+            )
+            all_features.extend(page_data.features)
+
+        # Return combined result
+        return FeatureDataResponse(
+            current_page=0,
+            page_size=len(all_features),
+            total_items=total_items,
+            crs=first_page.crs,
+            type="FeatureCollection",
+            features=all_features,
+        )
+
     def delete(self) -> None:
         """Delete these road features.
 
@@ -735,6 +883,153 @@ class WaterFeature(WaterFeatureModel):
                     f"Water features have status `{water_feature.status}` ({elapsed_time:.2f}s)"
                 )
         return water_feature
+
+    def get_data(
+        self,
+        page: Optional[int] = None,
+        size: Optional[int] = None,
+    ) -> FeatureDataResponse:
+        """Get paginated water feature data as a GeoJSON FeatureCollection.
+
+        Retrieves the actual water body geometry and attribute data for this domain.
+        The water feature must be fully processed (status "completed") before
+        data can be retrieved.
+
+        Parameters
+        ----------
+        page : int, optional
+            Zero-indexed page number. Defaults to 0 if not specified.
+        size : int, optional
+            Number of features per page. Valid range: 1-1000. Defaults to 50.
+
+        Returns
+        -------
+        FeatureDataResponse
+            A paginated GeoJSON FeatureCollection containing:
+            - type: Always "FeatureCollection"
+            - features: List of GeoJSON Feature objects with water body geometries
+            - current_page: The current page number
+            - page_size: Number of features per page
+            - total_items: Total number of water features available
+            - crs: Coordinate reference system information
+
+        Raises
+        ------
+        NotFoundException
+            If the domain or water feature does not exist.
+        UnprocessableEntityError
+            If the water feature is not yet completed (status != "completed").
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
+        >>> water = features.create_water_feature_from_osm()
+        >>> water.wait_until_completed()
+        >>>
+        >>> # Get first page of data
+        >>> data = water.get_data()
+        >>> print(f"Page {data.current_page}, {len(data.features)} features")
+        >>>
+        >>> # Get specific page with custom size
+        >>> data = water.get_data(page=2, size=100)
+
+        See Also
+        --------
+        WaterFeature.get_all_data : Retrieve all water features across all pages
+        """
+        return get_water_feature_api().get_water_feature_data(
+            domain_id=self.domain_id,
+            page=page,
+            size=size,
+        )
+
+    def get_all_data(
+        self,
+        size: int = 1000,
+    ) -> FeatureDataResponse:
+        """Get all water feature data by automatically paginating through all pages.
+
+        Convenience method that retrieves all water features by iterating through
+        all pages and combining them into a single FeatureDataResponse. The water
+        feature must be fully processed (status "completed") before data can be
+        retrieved.
+
+        Parameters
+        ----------
+        size : int, optional
+            Number of features to retrieve per API call. Valid range: 1-1000.
+            Defaults to 1000 (maximum) for efficiency.
+
+        Returns
+        -------
+        FeatureDataResponse
+            A GeoJSON FeatureCollection containing all water features:
+            - type: Always "FeatureCollection"
+            - features: Complete list of all GeoJSON Feature objects
+            - current_page: Always 0 (represents combined result)
+            - page_size: Total number of features returned
+            - total_items: Total number of water features
+            - crs: Coordinate reference system information
+
+        Raises
+        ------
+        NotFoundException
+            If the domain or water feature does not exist.
+        UnprocessableEntityError
+            If the water feature is not yet completed (status != "completed").
+
+        Examples
+        --------
+        >>> from fastfuels_sdk import Features
+        >>> features = Features.from_domain_id("abc123")
+        >>> water = features.create_water_feature_from_osm()
+        >>> water.wait_until_completed()
+        >>>
+        >>> # Get all water features at once
+        >>> all_data = water.get_all_data()
+        >>> print(f"Total features: {len(all_data.features)}")
+        >>>
+        >>> # Convert to GeoDataFrame for analysis
+        >>> import geopandas as gpd
+        >>> gdf = gpd.GeoDataFrame.from_features(
+        ...     all_data.features,
+        ...     crs="EPSG:4326"
+        ... )
+
+        See Also
+        --------
+        WaterFeature.get_data : Retrieve a single page of water features
+        """
+        # Get first page to determine total items
+        first_page = get_water_feature_api().get_water_feature_data(
+            domain_id=self.domain_id,
+            page=0,
+            size=size,
+        )
+
+        all_features = list(first_page.features)
+        total_items = first_page.total_items
+
+        # Calculate remaining pages and fetch them
+        total_pages = (total_items + size - 1) // size
+        for page_num in range(1, total_pages):
+            page_data = get_water_feature_api().get_water_feature_data(
+                domain_id=self.domain_id,
+                page=page_num,
+                size=size,
+            )
+            all_features.extend(page_data.features)
+
+        # Return combined result
+        return FeatureDataResponse(
+            current_page=0,
+            page_size=len(all_features),
+            total_items=total_items,
+            crs=first_page.crs,
+            type="FeatureCollection",
+            features=all_features,
+        )
 
     def delete(self) -> None:
         """Delete these water features.
