@@ -152,6 +152,76 @@ water = features.create_water_feature_from_osm(in_place=True)
 assert features.water is water
 ```
 
+## Retrieve Feature Data (GeoJSON)
+
+Once features are processed (status "completed"), you can retrieve the actual geometry and attribute data as GeoJSON.
+
+### Get Road Feature Data
+
+```python
+# Wait for processing to complete
+road.wait_until_completed()
+
+# Get first page of road data (default: 50 features per page)
+data = road.get_data()
+print(f"Page {data.current_page}, {len(data.features)} of {data.total_items} features")
+
+# Get specific page with custom size
+data = road.get_data(page=1, size=100)
+
+# Get ALL road features at once (handles pagination automatically)
+all_data = road.get_all_data()
+print(f"Total features: {len(all_data.features)}")
+```
+
+### Get Water Feature Data
+
+```python
+# Wait for processing to complete
+water.wait_until_completed()
+
+# Get first page of water data
+data = water.get_data()
+print(f"Page {data.current_page}, {len(data.features)} of {data.total_items} features")
+
+# Get ALL water features at once
+all_data = water.get_all_data()
+print(f"Total features: {len(all_data.features)}")
+```
+
+### Convert to GeoDataFrame
+
+The feature data can be easily converted to a GeoPandas GeoDataFrame for analysis:
+
+```python
+import geopandas as gpd
+
+# Get all road features
+all_roads = road.get_all_data()
+
+# Convert to GeoDataFrame
+gdf = gpd.GeoDataFrame.from_features(
+    [f.to_dict() for f in all_roads.features],
+    crs="EPSG:4326"
+)
+
+# Now you can use all GeoPandas functionality
+print(gdf.head())
+gdf.plot()
+```
+
+### Pagination Details
+
+- `page`: Zero-indexed page number (default: 0)
+- `size`: Number of features per page (1-1000, default: 50)
+- `get_all_data()`: Automatically iterates through all pages and returns combined results
+
+The response includes pagination metadata:
+- `current_page`: Current page number
+- `page_size`: Features per page
+- `total_items`: Total number of features available
+- `crs`: Coordinate reference system information
+
 ## Get Updated Feature Data
 
 ### Refresh All Features
@@ -234,14 +304,24 @@ road.wait_until_completed(verbose=True)
 water = features.create_water_feature_from_osm(in_place=True)
 water.wait_until_completed(verbose=True)
 
-# Get latest feature data
-features.get(in_place=True)
-
-# Process based on feature status
+# Retrieve the actual feature data as GeoJSON
 if features.road and features.road.status == "completed":
-    print("Road features ready")
+    road_data = features.road.get_all_data()
+    print(f"Retrieved {len(road_data.features)} road features")
+
 if features.water and features.water.status == "completed":
-    print("Water features ready")
+    water_data = features.water.get_all_data()
+    print(f"Retrieved {len(water_data.features)} water features")
+
+# Convert to GeoDataFrame for analysis (optional)
+import geopandas as gpd
+
+if road_data.features:
+    roads_gdf = gpd.GeoDataFrame.from_features(
+        [f.to_dict() for f in road_data.features],
+        crs="EPSG:4326"
+    )
+    print(f"Roads GeoDataFrame shape: {roads_gdf.shape}")
 
 # Clean up when done
 if features.road:

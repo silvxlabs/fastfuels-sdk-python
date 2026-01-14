@@ -1,6 +1,7 @@
 from fastfuels_sdk.domains import Domain, list_domains
 from fastfuels_sdk.inventories import Inventories, TreeInventory
 from fastfuels_sdk.features import Features, RoadFeature, WaterFeature
+from fastfuels_sdk.client_library.models import FeatureDataResponse
 from fastfuels_sdk.grids import (
     Grids,
     SurfaceGrid,
@@ -24,6 +25,7 @@ __all__ = [
     "Features",
     "RoadFeature",
     "WaterFeature",
+    "FeatureDataResponse",
     "Grids",
     "SurfaceGrid",
     "SurfaceGridBuilder",
