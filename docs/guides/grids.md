@@ -141,6 +141,74 @@ surface_grid = (SurfaceGridBuilder("abc123")
     .build())
 ```
 
+#### Spatial Modifications
+
+You can apply modifications to specific geographic areas using spatial conditions. This is useful for implementing fuel treatments, creating fuel breaks, or modifying fuels in specific zones:
+
+```python
+from fastfuels_sdk import SurfaceGridBuilder
+
+# Define a fuel break polygon (GeoJSON format)
+fuel_break = {
+    "type": "Polygon",
+    "coordinates": [[
+        [-120.5, 39.0],
+        [-120.5, 39.1],
+        [-120.4, 39.1],
+        [-120.4, 39.0],
+        [-120.5, 39.0]
+    ]]
+}
+
+# Create a surface grid with a fuel break that reduces fuel load by 50%
+surface_grid = (SurfaceGridBuilder("abc123")
+    .with_fuel_load_from_landfire(product="FBFM40")
+    .with_spatial_modification(
+        actions={"attribute": "fuelLoad", "modifier": "multiply", "value": 0.5},
+        geometry=fuel_break,
+        operator="within"
+    )
+    .build())
+```
+
+The spatial modification method supports:
+- **Operators**: `"within"` (inside geometry), `"outside"` (outside geometry), `"intersects"` (overlaps geometry)
+- **Targets**: `"centroid"` (test cell center point) or `"cell"` (test entire cell bounds)
+- **Custom CRS**: Specify a coordinate reference system for non-WGS84 geometries
+- **Combined conditions**: Add attribute-based conditions alongside spatial conditions
+
+```python
+# Example: Replace FBFM to non-burnable outside a study area
+study_area = {
+    "type": "Polygon",
+    "coordinates": [[
+        [-120.5, 39.0], [-120.5, 39.5],
+        [-120.0, 39.5], [-120.0, 39.0],
+        [-120.5, 39.0]
+    ]]
+}
+
+surface_grid = (SurfaceGridBuilder("abc123")
+    .with_fbfm_from_landfire(product="FBFM40")
+    .with_spatial_modification(
+        actions={"attribute": "FBFM", "modifier": "replace", "value": "NB1"},
+        geometry=study_area,
+        operator="outside"
+    )
+    .build())
+
+# Example: Apply treatment only to grass fuels within a specific area
+surface_grid = (SurfaceGridBuilder("abc123")
+    .with_fuel_load_from_landfire(product="FBFM40")
+    .with_spatial_modification(
+        actions={"attribute": "fuelLoad", "modifier": "multiply", "value": 0.3},
+        geometry=fuel_break,
+        operator="within",
+        additional_conditions={"attribute": "FBFM", "operator": "eq", "value": "GR2"}
+    )
+    .build())
+```
+
 ### Topography Grid Builder
 
 The TopographyGridBuilder helps create topography grids:

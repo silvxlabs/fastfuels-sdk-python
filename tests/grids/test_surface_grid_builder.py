@@ -464,6 +464,300 @@ class TestModifications:
         assert len(mod["conditions"]) == 0
 
 
+class TestSpatialModifications:
+    """Test suite for spatial grid modifications using UTM coordinates."""
+
+    @pytest.fixture(scope="class")
+    def spatial_domain(self):
+        """Create a small (~200m x 200m) UTM domain for spatial modification tests."""
+        from fastfuels_sdk.domains import Domain
+
+        # Small 200m x 200m domain in UTM Zone 11N (near Tahoe area)
+        geojson = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [255900, 4324800],
+                                [255900, 4325000],
+                                [256100, 4325000],
+                                [256100, 4324800],
+                                [255900, 4324800],
+                            ]
+                        ],
+                    },
+                }
+            ],
+            "crs": {"type": "name", "properties": {"name": "EPSG:32611"}},
+        }
+
+        domain = Domain.from_geojson(
+            geojson,
+            name="spatial_mod_test_domain",
+            description="Small UTM domain for spatial modification testing",
+            horizontal_resolution=1.0,
+            vertical_resolution=1.0,
+        )
+        yield domain
+        domain.delete()
+
+    @pytest.fixture
+    def spatial_builder(self, spatial_domain):
+        """Fixture providing a builder using the small UTM domain."""
+        return SurfaceGridBuilder(domain_id=spatial_domain.id)
+
+    @pytest.fixture
+    def sample_polygon(self):
+        """Sample polygon geometry for testing (~100m x 100m area in UTM Zone 11N)."""
+        # Polygon within the spatial_domain bounds (255900-256100, 4324800-4325000)
+        return {
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [255950, 4324850],
+                    [255950, 4324950],
+                    [256050, 4324950],
+                    [256050, 4324850],
+                    [255950, 4324850],
+                ]
+            ],
+        }
+
+    @pytest.fixture
+    def sample_multipolygon(self):
+        """Sample multipolygon geometry for testing (two ~50m x 50m areas in UTM)."""
+        return {
+            "type": "MultiPolygon",
+            "coordinates": [
+                [
+                    [
+                        [255950, 4324850],
+                        [255950, 4324900],
+                        [256000, 4324900],
+                        [256000, 4324850],
+                        [255950, 4324850],
+                    ]
+                ],
+                [
+                    [
+                        [256000, 4324900],
+                        [256000, 4324950],
+                        [256050, 4324950],
+                        [256050, 4324900],
+                        [256000, 4324900],
+                    ]
+                ],
+            ],
+        }
+
+    @pytest.fixture
+    def utm_crs(self):
+        """UTM Zone 11N CRS."""
+        return {"type": "name", "properties": {"name": "EPSG:32611"}}
+
+    def test_spatial_modification_basic(self, spatial_builder, sample_polygon, utm_crs):
+        """Test adding a basic spatial modification."""
+        result = spatial_builder.with_spatial_modification(
+            actions={"attribute": "fuelLoad", "modifier": "multiply", "value": 0.5},
+            geometry=sample_polygon,
+            crs=utm_crs,
+        )
+
+        assert result is spatial_builder
+        assert "modifications" in spatial_builder.config
+        assert len(spatial_builder.config["modifications"]) == 1
+
+        mod = spatial_builder.config["modifications"][0]
+        assert len(mod["actions"]) == 1
+        assert len(mod["conditions"]) == 1
+
+        # Verify spatial condition
+        condition = mod["conditions"][0]
+        assert condition["operator"] == "within"
+        assert condition["geometry"] == sample_polygon
+
+    def test_spatial_modification_with_operator(
+        self, spatial_builder, sample_polygon, utm_crs
+    ):
+        """Test spatial modification with different operators."""
+        for operator in ["within", "outside", "intersects"]:
+            spatial_builder.clear()
+            spatial_builder.with_spatial_modification(
+                actions={"attribute": "fuelLoad", "modifier": "multiply", "value": 0.5},
+                geometry=sample_polygon,
+                operator=operator,
+                crs=utm_crs,
+            )
+
+            mod = spatial_builder.config["modifications"][0]
+            condition = mod["conditions"][0]
+            assert condition["operator"] == operator
+
+    def test_spatial_modification_with_target(
+        self, spatial_builder, sample_polygon, utm_crs
+    ):
+        """Test spatial modification with target specification."""
+        for target in ["centroid", "cell"]:
+            spatial_builder.clear()
+            spatial_builder.with_spatial_modification(
+                actions={"attribute": "fuelLoad", "modifier": "multiply", "value": 0.5},
+                geometry=sample_polygon,
+                target=target,
+                crs=utm_crs,
+            )
+
+            mod = spatial_builder.config["modifications"][0]
+            condition = mod["conditions"][0]
+            assert condition["target"] == target
+
+    def test_spatial_modification_with_crs(self, spatial_builder, sample_polygon):
+        """Test spatial modification with custom CRS."""
+        crs = {"type": "name", "properties": {"name": "EPSG:32611"}}
+        spatial_builder.with_spatial_modification(
+            actions={"attribute": "fuelLoad", "modifier": "multiply", "value": 0.5},
+            geometry=sample_polygon,
+            crs=crs,
+        )
+
+        mod = spatial_builder.config["modifications"][0]
+        condition = mod["conditions"][0]
+        assert condition["crs"] == crs
+
+    def test_spatial_modification_with_additional_conditions(
+        self, spatial_builder, sample_polygon, utm_crs
+    ):
+        """Test spatial modification with additional attribute conditions."""
+        spatial_builder.with_spatial_modification(
+            actions={"attribute": "fuelLoad", "modifier": "multiply", "value": 0.5},
+            geometry=sample_polygon,
+            crs=utm_crs,
+            additional_conditions={
+                "attribute": "FBFM",
+                "operator": "eq",
+                "value": "GR2",
+            },
+        )
+
+        mod = spatial_builder.config["modifications"][0]
+        assert len(mod["conditions"]) == 2
+
+        # First condition should be spatial
+        spatial_condition = mod["conditions"][0]
+        assert spatial_condition["operator"] == "within"
+        assert spatial_condition["geometry"] == sample_polygon
+
+        # Second condition should be attribute-based
+        attr_condition = mod["conditions"][1]
+        assert attr_condition["attribute"] == "FBFM"
+        assert attr_condition["operator"] == "eq"
+        assert attr_condition["value"] == "GR2"
+
+    def test_spatial_modification_with_multiple_additional_conditions(
+        self, spatial_builder, sample_polygon, utm_crs
+    ):
+        """Test spatial modification with multiple additional conditions."""
+        spatial_builder.with_spatial_modification(
+            actions={"attribute": "fuelLoad", "modifier": "multiply", "value": 0.5},
+            geometry=sample_polygon,
+            crs=utm_crs,
+            additional_conditions=[
+                {"attribute": "FBFM", "operator": "eq", "value": "GR2"},
+                {"attribute": "fuelLoad", "operator": "gt", "value": 0.3},
+            ],
+        )
+
+        mod = spatial_builder.config["modifications"][0]
+        assert len(mod["conditions"]) == 3  # 1 spatial + 2 attribute conditions
+
+    def test_spatial_modification_with_multipolygon(
+        self, spatial_builder, sample_multipolygon, utm_crs
+    ):
+        """Test spatial modification with MultiPolygon geometry."""
+        spatial_builder.with_spatial_modification(
+            actions={"attribute": "fuelLoad", "modifier": "multiply", "value": 0.5},
+            geometry=sample_multipolygon,
+            crs=utm_crs,
+        )
+
+        mod = spatial_builder.config["modifications"][0]
+        condition = mod["conditions"][0]
+        assert condition["geometry"]["type"] == "MultiPolygon"
+
+    def test_spatial_modification_with_multiple_actions(
+        self, spatial_builder, sample_polygon, utm_crs
+    ):
+        """Test spatial modification with multiple actions."""
+        spatial_builder.with_spatial_modification(
+            actions=[
+                {"attribute": "fuelLoad", "modifier": "multiply", "value": 0.5},
+                {"attribute": "fuelMoisture", "modifier": "multiply", "value": 1.2},
+            ],
+            geometry=sample_polygon,
+            crs=utm_crs,
+        )
+
+        mod = spatial_builder.config["modifications"][0]
+        assert len(mod["actions"]) == 2
+
+    def test_multiple_spatial_modifications(
+        self, spatial_builder, sample_polygon, utm_crs
+    ):
+        """Test adding multiple spatial modifications."""
+        # First spatial modification - fuel break
+        spatial_builder.with_spatial_modification(
+            actions={"attribute": "fuelLoad", "modifier": "multiply", "value": 0.5},
+            geometry=sample_polygon,
+            operator="within",
+            crs=utm_crs,
+        )
+
+        # Second spatial modification - different area within domain bounds
+        other_polygon = {
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [255950, 4324950],
+                    [255950, 4325000],
+                    [256000, 4325000],
+                    [256000, 4324950],
+                    [255950, 4324950],
+                ]
+            ],
+        }
+        spatial_builder.with_spatial_modification(
+            actions={"attribute": "FBFM", "modifier": "replace", "value": "NB1"},
+            geometry=other_polygon,
+            operator="within",
+            crs=utm_crs,
+        )
+
+        assert len(spatial_builder.config["modifications"]) == 2
+
+    def test_spatial_modification_chaining(
+        self, spatial_builder, sample_polygon, utm_crs
+    ):
+        """Test that spatial modifications can be chained with other builder methods."""
+        result = (
+            spatial_builder.with_uniform_fuel_load(0.5)
+            .with_spatial_modification(
+                actions={"attribute": "fuelLoad", "modifier": "multiply", "value": 0.5},
+                geometry=sample_polygon,
+                crs=utm_crs,
+            )
+            .with_uniform_fuel_moisture(15.0)
+        )
+
+        assert result is spatial_builder
+        assert "fuel_load" in spatial_builder.config
+        assert "fuel_moisture" in spatial_builder.config
+        assert "modifications" in spatial_builder.config
+
+
 class TestFCCSSerialization:
     """Test suite for FCCS serialization bug fix.
 

@@ -633,6 +633,130 @@ class SurfaceGridBuilder:
         )
         return self
 
+    def with_spatial_modification(
+        self,
+        actions: (
+            dict
+            | list[dict]
+            | SurfaceGridModificationAction
+            | list[SurfaceGridModificationAction]
+        ),
+        geometry: dict,
+        operator: str = "within",
+        target: str = None,
+        crs: dict = None,
+        additional_conditions: (
+            dict
+            | list[dict]
+            | SurfaceGridModificationCondition
+            | list[SurfaceGridModificationCondition]
+        ) = None,
+    ) -> "SurfaceGridBuilder":
+        """Add a spatial modification to the surface grid.
+
+        Spatial modifications allow you to modify surface grid attributes based on
+        geographic areas defined by GeoJSON geometries. This is useful for applying
+        treatments to specific areas, such as reducing fuel load within a fuel break
+        polygon or increasing moisture in riparian zones.
+
+        Parameters
+        ----------
+        actions : dict or list[dict] or SurfaceGridModificationAction or list[SurfaceGridModificationAction]
+            Action(s) to apply to cells matching the spatial condition.
+        geometry : dict
+            GeoJSON geometry (Polygon or MultiPolygon) defining the spatial area.
+            Must include "type" and "coordinates" keys.
+        operator : str, optional
+            Spatial relationship to test. Options are:
+            - "within": Select cells inside the geometry (default)
+            - "outside": Select cells outside the geometry
+            - "intersects": Select cells that overlap the geometry
+        target : str, optional
+            Which part of the cell to test against the geometry:
+            - "centroid": Test the cell's center point (default)
+            - "cell": Test the entire cell bounds
+        crs : dict, optional
+            Coordinate reference system for the geometry. If not specified,
+            WGS84 (EPSG:4326) is assumed. Format: {"type": "name", "properties": {"name": "EPSG:XXXX"}}
+        additional_conditions : dict or list[dict] or SurfaceGridModificationCondition or list[SurfaceGridModificationCondition], optional
+            Additional attribute-based conditions to combine with the spatial condition.
+            The modification will only apply to cells matching both the spatial and
+            attribute conditions.
+
+        Returns
+        -------
+        SurfaceGridBuilder
+            Returns self for method chaining.
+
+        Examples
+        --------
+        Reduce fuel load by 50% within a fuel break polygon:
+
+        >>> builder = SurfaceGridBuilder("abc123")
+        >>> fuel_break = {
+        ...     "type": "Polygon",
+        ...     "coordinates": [[[-120.5, 39.0], [-120.5, 39.1], [-120.4, 39.1], [-120.4, 39.0], [-120.5, 39.0]]]
+        ... }
+        >>> builder.with_spatial_modification(
+        ...     actions={"attribute": "fuelLoad", "modifier": "multiply", "value": 0.5},
+        ...     geometry=fuel_break,
+        ...     operator="within"
+        ... )
+
+        Replace FBFM to non-burnable outside a study area:
+
+        >>> study_area = {
+        ...     "type": "Polygon",
+        ...     "coordinates": [[[-120.5, 39.0], [-120.5, 39.5], [-120.0, 39.5], [-120.0, 39.0], [-120.5, 39.0]]]
+        ... }
+        >>> builder.with_spatial_modification(
+        ...     actions={"attribute": "FBFM", "modifier": "replace", "value": "NB1"},
+        ...     geometry=study_area,
+        ...     operator="outside"
+        ... )
+
+        Increase fuel moisture in specific areas with UTM coordinates:
+
+        >>> riparian_zone = {
+        ...     "type": "Polygon",
+        ...     "coordinates": [[[500000, 4300000], [500000, 4301000], [501000, 4301000], [501000, 4300000], [500000, 4300000]]]
+        ... }
+        >>> builder.with_spatial_modification(
+        ...     actions={"attribute": "fuelMoisture", "modifier": "multiply", "value": 1.5},
+        ...     geometry=riparian_zone,
+        ...     operator="within",
+        ...     crs={"type": "name", "properties": {"name": "EPSG:32610"}}
+        ... )
+
+        Combine spatial and attribute conditions:
+
+        >>> builder.with_spatial_modification(
+        ...     actions={"attribute": "fuelLoad", "modifier": "multiply", "value": 0.3},
+        ...     geometry=fuel_break,
+        ...     operator="within",
+        ...     additional_conditions={"attribute": "FBFM", "operator": "eq", "value": "GR2"}
+        ... )  # Only reduces fuel load for GR2 cells within the fuel break
+        """
+        # Build the spatial condition
+        spatial_condition = {
+            "operator": operator,
+            "geometry": geometry,
+        }
+        if target is not None:
+            spatial_condition["target"] = target
+        if crs is not None:
+            spatial_condition["crs"] = crs
+
+        # Combine spatial condition with any additional attribute conditions
+        conditions = [spatial_condition]
+        if additional_conditions is not None:
+            if isinstance(additional_conditions, list):
+                conditions.extend(additional_conditions)
+            else:
+                conditions.append(additional_conditions)
+
+        return self.with_modification(actions=actions, conditions=conditions)
+
     def build(self) -> "SurfaceGrid":
         """Create the surface grid with configured attributes.
 
