@@ -829,6 +829,143 @@ class TestFCCSSerialization:
         assert surface_grid.domain_id == builder.domain_id
 
 
+class TestModificationsSerialization:
+    """Test that modifications are correctly serialized when passed to CreateSurfaceGridRequest.
+
+    This covers the bug where create_surface_grid passed the entire modifications
+    list to SurfaceGridModification.from_dict() instead of converting each dict
+    individually, causing a pydantic ValidationError.
+    """
+
+    def test_single_modification_request_construction(self):
+        """Test that a single modification can be serialized into a CreateSurfaceGridRequest."""
+        from fastfuels_sdk.client_library.models import (
+            CreateSurfaceGridRequest,
+            SurfaceGridModification,
+            Fuelload,
+        )
+
+        modifications = [
+            {
+                "actions": [
+                    {"attribute": "fuelLoad", "modifier": "multiply", "value": 0.5}
+                ],
+                "conditions": [],
+            },
+        ]
+
+        request = CreateSurfaceGridRequest(
+            attributes=["fuelLoad"],
+            fuelLoad=Fuelload.from_dict({"source": "uniform", "value": 0.5}),
+            modifications=[SurfaceGridModification.from_dict(m) for m in modifications],
+        )
+
+        assert request.modifications is not None
+        assert len(request.modifications) == 1
+
+    def test_multiple_modifications_request_construction(self):
+        """Test that multiple modifications can be serialized into a CreateSurfaceGridRequest.
+
+        This is the exact scenario that triggered the original bug: a list of
+        modification dicts was passed to SurfaceGridModification.from_dict()
+        instead of being iterated over.
+        """
+        from fastfuels_sdk.client_library.models import (
+            CreateSurfaceGridRequest,
+            SurfaceGridModification,
+            Fuelload,
+        )
+
+        modifications = [
+            {
+                "actions": [
+                    {"attribute": "fuelLoad", "modifier": "replace", "value": 0.0}
+                ],
+                "conditions": [],
+            },
+            {
+                "actions": [
+                    {"attribute": "fuelDepth", "modifier": "replace", "value": 0.0}
+                ],
+                "conditions": [],
+            },
+        ]
+
+        request = CreateSurfaceGridRequest(
+            attributes=["fuelLoad"],
+            fuelLoad=Fuelload.from_dict({"source": "uniform", "value": 0.5}),
+            modifications=[SurfaceGridModification.from_dict(m) for m in modifications],
+        )
+
+        assert request.modifications is not None
+        assert len(request.modifications) == 2
+
+    def test_spatial_modifications_request_construction(self):
+        """Test that spatial modifications with geometry conditions serialize correctly."""
+        from fastfuels_sdk.client_library.models import (
+            CreateSurfaceGridRequest,
+            SurfaceGridModification,
+            Fuelload,
+        )
+
+        polygon = {
+            "type": "Polygon",
+            "coordinates": [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]],
+        }
+
+        modifications = [
+            {
+                "actions": [
+                    {"attribute": "fuelLoad", "modifier": "multiply", "value": 1.2}
+                ],
+                "conditions": [{"operator": "within", "geometry": polygon}],
+            },
+            {
+                "actions": [
+                    {"attribute": "fuelDepth", "modifier": "replace", "value": 1.5}
+                ],
+                "conditions": [{"operator": "within", "geometry": polygon}],
+            },
+        ]
+
+        request = CreateSurfaceGridRequest(
+            attributes=["fuelLoad"],
+            fuelLoad=Fuelload.from_dict({"source": "uniform", "value": 0.5}),
+            modifications=[SurfaceGridModification.from_dict(m) for m in modifications],
+        )
+
+        assert request.modifications is not None
+        assert len(request.modifications) == 2
+
+    def test_build_with_single_modification(self, builder):
+        """Test that build() succeeds with a single modification (integration test)."""
+        builder.with_uniform_fuel_load(0.5)
+        builder.with_modification(
+            actions={"attribute": "fuelLoad", "modifier": "multiply", "value": 1.1},
+        )
+
+        surface_grid = builder.build()
+        assert isinstance(surface_grid, SurfaceGrid)
+
+    def test_build_with_multiple_modifications(self, builder):
+        """Test that build() succeeds with multiple modifications (integration test).
+
+        This is the exact user-reported scenario: multiple spatial modifications
+        applied to the same builder before calling build().
+        """
+        builder.with_uniform_fuel_load(0.5)
+        builder.with_uniform_fuel_depth(0.3)
+        builder.with_modification(
+            actions={"attribute": "fuelLoad", "modifier": "multiply", "value": 1.2},
+        )
+        builder.with_modification(
+            actions={"attribute": "fuelDepth", "modifier": "replace", "value": 1.5},
+        )
+
+        surface_grid = builder.build()
+        assert isinstance(surface_grid, SurfaceGrid)
+
+
 class TestBuilderMethods:
     """Test suite for general builder methods."""
 

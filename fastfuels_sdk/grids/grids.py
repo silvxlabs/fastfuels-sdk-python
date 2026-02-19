@@ -260,7 +260,7 @@ class Grids(GridsModel):
             SAVR=SurfaceGridSAVRSource.from_dict(savr) if savr else None,
             FBFM=SurfaceGridFBFMSource.from_dict(fbfm) if fbfm else None,
             modifications=(
-                SurfaceGridModification.from_dict(modifications)
+                [SurfaceGridModification.from_dict(m) for m in modifications]
                 if modifications
                 else None
             ),
