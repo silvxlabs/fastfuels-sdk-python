@@ -40,6 +40,7 @@ from fastfuels_sdk.client_library.models import (
     TreeGridSPCDSource,
     TreeGridBulkDensitySource,
     TreeGridSAVRSource,
+    TreeGridInventorySource,
     CreateFeatureGridRequest,
 )
 
@@ -420,6 +421,7 @@ class Grids(GridsModel):
         spcd: Optional[dict] = None,
         fuel_moisture: Optional[dict] = None,
         savr: Optional[dict] = None,
+        tree_id: Optional[dict] = None,
         in_place: bool = False,
     ) -> TreeGrid:
         """Create a tree grid for the current domain.
@@ -437,6 +439,7 @@ class Grids(GridsModel):
             - "SPCD": Species code
             - "fuelMoisture": Moisture content
             - "SAVR": Surface area to volume ratio
+            - "TREE_ID": Unique tree identifier per voxel
 
         bulk_density : dict, optional
             Configuration for bulk density attribute. Sources available:
@@ -531,6 +534,7 @@ class Grids(GridsModel):
                 TreeGridUniformValue.from_dict(fuel_moisture) if fuel_moisture else None
             ),
             SAVR=(TreeGridSAVRSource.from_dict(savr) if savr else None),
+            TREE_ID=(TreeGridInventorySource.from_dict(tree_id) if tree_id else None),
         )
 
         response = get_tree_grid_api().create_tree_grid(

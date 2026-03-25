@@ -92,6 +92,24 @@ class TreeGridBuilder:
 
         return self
 
+    def with_tree_id_from_tree_inventory(self) -> "TreeGridBuilder":
+        """Add unique tree identifier (TREE_ID) attribute from tree inventory data.
+
+        Each voxel is stamped with the TREE_ID of the tree that occupies it,
+        allowing voxels to be traced back to the underlying tree inventory.
+
+        Examples
+        --------
+        >>> builder = TreeGridBuilder("abc123")
+        >>> builder.with_tree_id_from_tree_inventory()
+        """
+        self.config["tree_id"] = TreeGridInventorySource.from_dict(
+            {"source": "TreeInventory"}
+        ).to_dict()
+        self.attributes.append("TREE_ID")
+
+        return self
+
     def with_uniform_fuel_moisture(self, value: float) -> "TreeGridBuilder":
         """Set uniform fuel moisture value.
 
