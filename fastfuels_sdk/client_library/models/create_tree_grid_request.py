@@ -21,11 +21,13 @@ from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
 from fastfuels_sdk.client_library.models.tree_grid_attribute import TreeGridAttribute
 from fastfuels_sdk.client_library.models.tree_grid_bulk_density_source import TreeGridBulkDensitySource
+from fastfuels_sdk.client_library.models.tree_grid_inventory_source import TreeGridInventorySource
 from fastfuels_sdk.client_library.models.tree_grid_savr_source import TreeGridSAVRSource
 from fastfuels_sdk.client_library.models.tree_grid_spcd_source import TreeGridSPCDSource
 from fastfuels_sdk.client_library.models.tree_grid_uniform_value import TreeGridUniformValue
 from typing import Optional, Set
 from typing_extensions import Self
+from pydantic_core import to_jsonable_python
 
 class CreateTreeGridRequest(BaseModel):
     """
@@ -36,10 +38,12 @@ class CreateTreeGridRequest(BaseModel):
     fuel_moisture: Optional[TreeGridUniformValue] = Field(default=None, alias="fuelMoisture")
     spcd: Optional[TreeGridSPCDSource] = Field(default=None, alias="SPCD")
     savr: Optional[TreeGridSAVRSource] = Field(default=None, alias="SAVR")
-    __properties: ClassVar[List[str]] = ["attributes", "bulkDensity", "fuelMoisture", "SPCD", "SAVR"]
+    tree_id: Optional[TreeGridInventorySource] = Field(default=None, alias="TREE_ID")
+    __properties: ClassVar[List[str]] = ["attributes", "bulkDensity", "fuelMoisture", "SPCD", "SAVR", "TREE_ID"]
 
     model_config = ConfigDict(
-        populate_by_name=True,
+        validate_by_name=True,
+        validate_by_alias=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -51,8 +55,7 @@ class CreateTreeGridRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
-        return json.dumps(self.to_dict())
+        return json.dumps(to_jsonable_python(self.to_dict()))
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -89,6 +92,9 @@ class CreateTreeGridRequest(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of savr
         if self.savr:
             _dict['SAVR'] = self.savr.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of tree_id
+        if self.tree_id:
+            _dict['TREE_ID'] = self.tree_id.to_dict()
         # set to None if bulk_density (nullable) is None
         # and model_fields_set contains the field
         if self.bulk_density is None and "bulk_density" in self.model_fields_set:
@@ -109,6 +115,11 @@ class CreateTreeGridRequest(BaseModel):
         if self.savr is None and "savr" in self.model_fields_set:
             _dict['SAVR'] = None
 
+        # set to None if tree_id (nullable) is None
+        # and model_fields_set contains the field
+        if self.tree_id is None and "tree_id" in self.model_fields_set:
+            _dict['TREE_ID'] = None
+
         return _dict
 
     @classmethod
@@ -125,7 +136,8 @@ class CreateTreeGridRequest(BaseModel):
             "bulkDensity": TreeGridBulkDensitySource.from_dict(obj["bulkDensity"]) if obj.get("bulkDensity") is not None else None,
             "fuelMoisture": TreeGridUniformValue.from_dict(obj["fuelMoisture"]) if obj.get("fuelMoisture") is not None else None,
             "SPCD": TreeGridSPCDSource.from_dict(obj["SPCD"]) if obj.get("SPCD") is not None else None,
-            "SAVR": TreeGridSAVRSource.from_dict(obj["SAVR"]) if obj.get("SAVR") is not None else None
+            "SAVR": TreeGridSAVRSource.from_dict(obj["SAVR"]) if obj.get("SAVR") is not None else None,
+            "TREE_ID": TreeGridInventorySource.from_dict(obj["TREE_ID"]) if obj.get("TREE_ID") is not None else None
         })
         return _obj
 

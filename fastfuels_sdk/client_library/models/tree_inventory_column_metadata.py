@@ -23,16 +23,15 @@ from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
 
-class ApiResourcesPointcloudsAlsSchemaUploadResponse(BaseModel):
+class TreeInventoryColumnMetadata(BaseModel):
     """
-    Upload response model to provide all necessary information and updates for file upload process.
+    Metadata for a single column in the tree inventory data.
     """ # noqa: E501
-    message: Optional[StrictStr] = None
-    method: Optional[StrictStr] = None
-    url: Optional[StrictStr] = None
-    headers: Optional[Dict[str, StrictStr]] = None
-    curl: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["message", "method", "url", "headers", "curl"]
+    name: StrictStr
+    description: StrictStr
+    dtype: StrictStr
+    units: Optional[StrictStr] = None
+    __properties: ClassVar[List[str]] = ["name", "description", "dtype", "units"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -52,7 +51,7 @@ class ApiResourcesPointcloudsAlsSchemaUploadResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ApiResourcesPointcloudsAlsSchemaUploadResponse from a JSON string"""
+        """Create an instance of TreeInventoryColumnMetadata from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -73,36 +72,16 @@ class ApiResourcesPointcloudsAlsSchemaUploadResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if message (nullable) is None
+        # set to None if units (nullable) is None
         # and model_fields_set contains the field
-        if self.message is None and "message" in self.model_fields_set:
-            _dict['message'] = None
-
-        # set to None if method (nullable) is None
-        # and model_fields_set contains the field
-        if self.method is None and "method" in self.model_fields_set:
-            _dict['method'] = None
-
-        # set to None if url (nullable) is None
-        # and model_fields_set contains the field
-        if self.url is None and "url" in self.model_fields_set:
-            _dict['url'] = None
-
-        # set to None if headers (nullable) is None
-        # and model_fields_set contains the field
-        if self.headers is None and "headers" in self.model_fields_set:
-            _dict['headers'] = None
-
-        # set to None if curl (nullable) is None
-        # and model_fields_set contains the field
-        if self.curl is None and "curl" in self.model_fields_set:
-            _dict['curl'] = None
+        if self.units is None and "units" in self.model_fields_set:
+            _dict['units'] = None
 
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ApiResourcesPointcloudsAlsSchemaUploadResponse from a dict"""
+        """Create an instance of TreeInventoryColumnMetadata from a dict"""
         if obj is None:
             return None
 
@@ -110,11 +89,10 @@ class ApiResourcesPointcloudsAlsSchemaUploadResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "message": obj.get("message"),
-            "method": obj.get("method"),
-            "url": obj.get("url"),
-            "headers": obj.get("headers"),
-            "curl": obj.get("curl")
+            "name": obj.get("name"),
+            "description": obj.get("description"),
+            "dtype": obj.get("dtype"),
+            "units": obj.get("units")
         })
         return _obj
 

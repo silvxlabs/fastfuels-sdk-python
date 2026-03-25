@@ -51,6 +51,7 @@ __all__ = [
     "ApiResourcesInventoriesTreeSchemaUploadResponse",
     "ApiResourcesPointcloudsAlsSchemaUploadResponse",
     "Application",
+    "ChunkMetadataResponse",
     "CreateAlsPointCloudRequest",
     "CreateApplicationRequest",
     "CreateDomainRequest",
@@ -86,6 +87,7 @@ __all__ = [
     "Geometry",
     "Geometry1",
     "GridAttributeMetadataResponse",
+    "GridDataResponse",
     "Grids",
     "HTTPValidationError",
     "Inventories",
@@ -95,6 +97,7 @@ __all__ = [
     "ListApplicationsResponse",
     "ListDomainResponse",
     "ListKeysResponse",
+    "LocationInner",
     "MetaCanopyHeightMapSource",
     "Modifier",
     "MultiLineString",
@@ -157,6 +160,8 @@ __all__ = [
     "TreeGridSPCDSource",
     "TreeGridUniformValue",
     "TreeInventory",
+    "TreeInventoryAttributeMetadataResponse",
+    "TreeInventoryColumnMetadata",
     "TreeInventoryModification",
     "TreeInventoryModificationAction",
     "TreeInventoryModificationCRAction",
@@ -178,7 +183,6 @@ __all__ = [
     "TreeMapVersion",
     "UpdateDomainRequest",
     "ValidationError",
-    "ValidationErrorLocInner",
     "WaterFeature",
     "WaterFeatureSource",
 ]
@@ -221,6 +225,7 @@ from fastfuels_sdk.client_library.models.api_resources_inventories_tree_schema_p
 from fastfuels_sdk.client_library.models.api_resources_inventories_tree_schema_upload_response import ApiResourcesInventoriesTreeSchemaUploadResponse as ApiResourcesInventoriesTreeSchemaUploadResponse
 from fastfuels_sdk.client_library.models.api_resources_pointclouds_als_schema_upload_response import ApiResourcesPointcloudsAlsSchemaUploadResponse as ApiResourcesPointcloudsAlsSchemaUploadResponse
 from fastfuels_sdk.client_library.models.application import Application as Application
+from fastfuels_sdk.client_library.models.chunk_metadata_response import ChunkMetadataResponse as ChunkMetadataResponse
 from fastfuels_sdk.client_library.models.create_als_point_cloud_request import CreateAlsPointCloudRequest as CreateAlsPointCloudRequest
 from fastfuels_sdk.client_library.models.create_application_request import CreateApplicationRequest as CreateApplicationRequest
 from fastfuels_sdk.client_library.models.create_domain_request import CreateDomainRequest as CreateDomainRequest
@@ -256,6 +261,7 @@ from fastfuels_sdk.client_library.models.geojson import Geojson as Geojson
 from fastfuels_sdk.client_library.models.geometry import Geometry as Geometry
 from fastfuels_sdk.client_library.models.geometry1 import Geometry1 as Geometry1
 from fastfuels_sdk.client_library.models.grid_attribute_metadata_response import GridAttributeMetadataResponse as GridAttributeMetadataResponse
+from fastfuels_sdk.client_library.models.grid_data_response import GridDataResponse as GridDataResponse
 from fastfuels_sdk.client_library.models.grids import Grids as Grids
 from fastfuels_sdk.client_library.models.http_validation_error import HTTPValidationError as HTTPValidationError
 from fastfuels_sdk.client_library.models.inventories import Inventories as Inventories
@@ -265,6 +271,7 @@ from fastfuels_sdk.client_library.models.line_string import LineString as LineSt
 from fastfuels_sdk.client_library.models.list_applications_response import ListApplicationsResponse as ListApplicationsResponse
 from fastfuels_sdk.client_library.models.list_domain_response import ListDomainResponse as ListDomainResponse
 from fastfuels_sdk.client_library.models.list_keys_response import ListKeysResponse as ListKeysResponse
+from fastfuels_sdk.client_library.models.location_inner import LocationInner as LocationInner
 from fastfuels_sdk.client_library.models.meta_canopy_height_map_source import MetaCanopyHeightMapSource as MetaCanopyHeightMapSource
 from fastfuels_sdk.client_library.models.modifier import Modifier as Modifier
 from fastfuels_sdk.client_library.models.multi_line_string import MultiLineString as MultiLineString
@@ -327,6 +334,8 @@ from fastfuels_sdk.client_library.models.tree_grid_savr_source import TreeGridSA
 from fastfuels_sdk.client_library.models.tree_grid_spcd_source import TreeGridSPCDSource as TreeGridSPCDSource
 from fastfuels_sdk.client_library.models.tree_grid_uniform_value import TreeGridUniformValue as TreeGridUniformValue
 from fastfuels_sdk.client_library.models.tree_inventory import TreeInventory as TreeInventory
+from fastfuels_sdk.client_library.models.tree_inventory_attribute_metadata_response import TreeInventoryAttributeMetadataResponse as TreeInventoryAttributeMetadataResponse
+from fastfuels_sdk.client_library.models.tree_inventory_column_metadata import TreeInventoryColumnMetadata as TreeInventoryColumnMetadata
 from fastfuels_sdk.client_library.models.tree_inventory_modification import TreeInventoryModification as TreeInventoryModification
 from fastfuels_sdk.client_library.models.tree_inventory_modification_action import TreeInventoryModificationAction as TreeInventoryModificationAction
 from fastfuels_sdk.client_library.models.tree_inventory_modification_cr_action import TreeInventoryModificationCRAction as TreeInventoryModificationCRAction
@@ -348,7 +357,6 @@ from fastfuels_sdk.client_library.models.tree_map_source import TreeMapSource as
 from fastfuels_sdk.client_library.models.tree_map_version import TreeMapVersion as TreeMapVersion
 from fastfuels_sdk.client_library.models.update_domain_request import UpdateDomainRequest as UpdateDomainRequest
 from fastfuels_sdk.client_library.models.validation_error import ValidationError as ValidationError
-from fastfuels_sdk.client_library.models.validation_error_loc_inner import ValidationErrorLocInner as ValidationErrorLocInner
 from fastfuels_sdk.client_library.models.water_feature import WaterFeature as WaterFeature
 from fastfuels_sdk.client_library.models.water_feature_source import WaterFeatureSource as WaterFeatureSource
 

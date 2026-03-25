@@ -27,6 +27,7 @@ from fastfuels_sdk.client_library.models.topography_grid_elevation_source import
 from fastfuels_sdk.client_library.models.topography_grid_slope_source import TopographyGridSlopeSource
 from typing import Optional, Set
 from typing_extensions import Self
+from pydantic_core import to_jsonable_python
 
 class TopographyGrid(BaseModel):
     """
@@ -43,7 +44,8 @@ class TopographyGrid(BaseModel):
     __properties: ClassVar[List[str]] = ["attributes", "elevation", "aspect", "slope", "status", "createdOn", "modifiedOn", "checksum"]
 
     model_config = ConfigDict(
-        populate_by_name=True,
+        validate_by_name=True,
+        validate_by_alias=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -55,8 +57,7 @@ class TopographyGrid(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
-        return json.dumps(self.to_dict())
+        return json.dumps(to_jsonable_python(self.to_dict()))
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:

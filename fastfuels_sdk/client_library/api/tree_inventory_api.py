@@ -1,5 +1,3 @@
-# coding: utf-8
-
 """
     FastFuels API
 
@@ -11,15 +9,19 @@
     Do not edit the class manually.
 """  # noqa: E501
 
+
 import warnings
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
 from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
 
-from pydantic import StrictStr, field_validator
+from pydantic import Field, StrictStr, field_validator
+from typing import Any, List, Optional
+from typing_extensions import Annotated
 from fastfuels_sdk.client_library.models.create_tree_inventory_request import CreateTreeInventoryRequest
 from fastfuels_sdk.client_library.models.export import Export
 from fastfuels_sdk.client_library.models.tree_inventory import TreeInventory
+from fastfuels_sdk.client_library.models.tree_inventory_attribute_metadata_response import TreeInventoryAttributeMetadataResponse
 
 from fastfuels_sdk.client_library.api_client import ApiClient, RequestSerialized
 from fastfuels_sdk.client_library.api_response import ApiResponse
@@ -59,7 +61,7 @@ class TreeInventoryApi:
     ) -> TreeInventory:
         """Create Tree Inventory
 
-        # Create Tree Inventory  This endpoint creates a new tree inventory resource for a specific domain. Tree Inventory data represents a complete forest inventory that exists within the spatial context of a domain. The tree inventory data can be generated using various data products and models that provide either national coverage (e.g., TreeMap) or local coverage.  On resource creation, the tree inventory data is set to a status of \"pending\". The tree inventory data is generated in the background using the specified method (e.g., TreeMap). Once the tree inventory data is generated and available for user access, the status is updated to \"completed\".  ## Endpoint  ``` POST /v1/domains/{domainId}/inventories/tree ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain for   which you want to create the tree inventory.  ## Request Body  The request body should be a JSON object containing the following fields:  - `sources` (array of strings, required): List of data sources to be used for building the tree inventory. Currently, only one data source at a time is supported. Possible values are:   - `\"TreeMap\"`: Indicates that the tree inventory should be created using the TreeMap raster product. This approach generates a tree inventory with national coverage.   - `\"file\"`: Indicates that you will upload a file via a signed url. Please see File Source Configuration for more info.   - `\"pointcloud\"`: Indicates that the tree inventory should be created from the domain's ALS point cloud resource. This resource must exist and be in a \"completed\" state.  - `modifications` (array of objects, optional): List of modifications to apply to the tree inventory data. Maximum 1000 modifications allowed. See the Modifications section below for details.  - `treatments` (array of objects, optional): List of silvicultural treatments to apply to the tree inventory. Maximum 1000 treatments allowed. See the Treatments section below for details.  - `featureMasks` (array of strings, optional): List of Features to mask tree inventory data. Referenced features must exist and be completed before creating the tree inventory.  ### TreeMap Source Configuration  If `\"TreeMap\"` is included in the `sources`, the request body can include additional configurations for `TreeMap`:  - `TreeMap` (object, optional): Advanced configurations for the TreeMap data source.   - `version` (string, optional): The version of TreeMap to use. Default is `\"2022\"`. Possible values are:     - `\"2014\"`: Use the 2014 version of TreeMap.     - `\"2016\"`: Use the 2016 version of TreeMap.     - `\"2020\"`: Use the 2020 version of TreeMap.     - `\"2022\"`: Use the 2022 version of TreeMap.   - `seed` (integer, optional): The random seed to use for generating the tree inventory. If not provided, a random seed will be generated.   - `canopyHeightMapConfiguration` (object, optional): Canopy height map configuration for TreeMap data source. If provided, the canopy height map will be used to segment and impute the coarse 30m TreeMap data with high-resolution canopy height data. Details of this approach will be provided in an upcoming publication. Please contact support.fastfuels@silvxlabs.com for more information.     - `source` (string, required): The source of the canopy height map data. Possible values are:         - `\"Meta2024\"`: Use the Meta2024 canopy height map data. More information about this data source can be found here: https://www.sciencedirect.com/science/article/pii/S003442572300439X  ### File Source Configuration Generate Signed URL for Tree Inventory Upload  If the source is `\"file\"`, this endpoint generates a signed URL that allows users to upload a CSV file representing the tree inventory data. The signed URL is valid for 1 hour and has a maximum upload size of 500 MB.  The full work flow consists of the following steps: 1. Call this endpoint to get a signed URL 2. Perform a put request to send your file to the signed url. Here is a python example:  ```[python] with open(\"your_file_goes_here.csv\", \"rb\") as file:     upload_response = requests.put(         signed_url_response[\"file\"][\"url\"],         data=file,         headers=signed_url_response[\"file\"][\"headers\"],     ) ``` **Note**: the signed_url_response has a field named \"file\" with the relevant info for the put request.  3. Your file will be validated and processed in the background 4. The status of your upload can be retrieved via and inventory get() request  #### Required Columns  The CSV file must include the following columns with their specified data types and constraints:  1. **SPCD** (Integer)    - FIA species code    - Must be an integer    - Represents standard FIA species classifications  2. **STATUSCD** (Integer)    - Tree status code    - Must be one of these values:      - 0: No status      - 1: Live      - 2: Dead      - 3: Missing  3. **DIA** (Float)    - Diameter at breast height (DBH)    - Unit: centimeters (cm)    - Range: 0 to 1200 cm    - Measured at 1.37 meters above ground  4. **HT** (Float)    - Tree height    - Unit: meters (m)    - Range: 0 to 116 meters    - Measured from ground to tree top  5. **CR** (Float)    - Crown ratio    - Unit: ratio (dimensionless)    - Range: 0 to 1    - Represents the ratio of crown length to total tree height  6. **X** (Float)    - X coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (west to east)    - Required: Yes    - Used for spatial positioning  7. **Y** (Float)    - Y coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (south to north)    - Required: Yes    - Used for spatial positioning  ### Point Cloud Source Configuration  If `\"pointcloud\"` is included in the `sources`, the endpoint will: 1. Verify that a completed ALS point cloud resource exists for the domain. 2. Perform a spatial check to ensure the domain's bounding box intersects with the operational area of the tree generation model. 3. If validation passes, it will schedule a background job (`treecondenser`) to generate the tree inventory from the point cloud data. ### Modifications  The `modifications` field allows you to filter and adjust tree inventory data before it's finalized. Modifications are applied sequentially in the order they appear in the array, and each modification consists of:  1. **Conditions**: Criteria for selecting which trees to modify (AND logic) 2. **Actions**: Operations to perform on selected trees  #### Modification Structure  ```json {   \"conditions\": [     {/* condition 1 */},     {/* condition 2 */}   ],   \"actions\": [     {/* action 1 */},     {/* action 2 */}   ] } ```  All conditions must be true (AND logic) for a tree to be selected. Actions are then applied to all selected trees.  #### Condition Types  **1. Simple Field Conditions**  Filter trees based on individual field values:  - **Available Fields**: `HT` (height), `DIA` (diameter), `CR` (crown ratio), `SPCD` (species code) - **Operators**: `eq` (equals), `ne` (not equals), `gt` (greater than), `lt` (less than), `ge` (greater than or equal), `le` (less than or equal)  **Example**: Select trees taller than 20 meters ```json {   \"attribute\": \"HT\",   \"operator\": \"gt\",   \"value\": 20 } ```  **2. Expression-Based Conditions**  Filter trees based on arithmetic expressions combining multiple fields. This enables complex filtering logic in a single API call, replacing download-modify-upload workflows.  - **Available Fields**: `HT`, `DIA`, `CR` - **Operators**: `+`, `-`, `*`, `/`, `()` - **Comparison Operators**: Same as simple conditions (`eq`, `ne`, `gt`, `lt`, `ge`, `le`)  **Example**: Select trees where crown length (HT × CR) is less than 1 meter ```json {   \"attribute\": \"expression\",   \"expression\": \"HT * CR\",   \"operator\": \"lt\",   \"value\": 1.0 } ```  **Common Expression Use Cases:**  - **Crown length**: `HT * CR` (vertical extent of crown) - **Crown base height**: `HT * (1 - CR)` (height where crown begins) - **Height-to-diameter ratio**: `HT / DIA` (slenderness ratio) - **Average metrics**: `(HT + DIA) / 2`  **Security Notes:** - Only arithmetic operations permitted - No function calls, imports, or code execution - Validated at API level for safety  **Multiple Conditions:**  Combine multiple conditions with AND logic: ```json {   \"conditions\": [     {       \"attribute\": \"expression\",       \"expression\": \"HT * CR\",       \"operator\": \"gt\",       \"value\": 5.0     },     {       \"attribute\": \"SPCD\",       \"operator\": \"eq\",       \"value\": 202     }   ],   \"actions\": [...] } ``` This selects Douglas-fir trees (SPCD=202) with crown length > 5m.  #### Action Types  **1. Modify Field Values**  Adjust tree attributes for selected trees:  - **Available Fields**: `HT`, `DIA`, `CR`, `SPCD` - **Modifiers**:   - `multiply`: Multiply by value   - `divide`: Divide by value   - `add`: Add value   - `subtract`: Subtract value   - `replace`: Replace with value  **Example**: Reduce height of tall trees by 10% ```json {   \"attribute\": \"HT\",   \"modifier\": \"multiply\",   \"value\": 0.9 } ```  **Value Constraints**: Modifications automatically enforce valid ranges: - `HT` ≥ 0 (height cannot be negative) - `DIA` ≥ 0 (diameter cannot be negative) - `CR`: 0 ≤ CR ≤ 1 (crown ratio must be between 0 and 1)  **2. Remove Trees**  Remove selected trees from the inventory.  **New simplified syntax** (recommended): ```json {   \"modifier\": \"remove\" } ```  **Legacy syntax** (still supported): ```json {   \"attribute\": \"all\",   \"modifier\": \"remove\" } ```  Both syntaxes produce identical results and are fully backwards compatible.  **Important**: Remove action must be the only action in the actions array. Multiple actions cannot be combined with remove.  #### Complete Modification Examples  **Example 1: Remove trees with short crowns**  Replace pandas workflow: ```python # Old workflow: download CSV, filter in pandas df = df[df['HT'] * df['CR'] >= 1] # ...then re-upload ```  With single API call: ```json {   \"modifications\": [     {       \"conditions\": [         {           \"attribute\": \"expression\",           \"expression\": \"HT * CR\",           \"operator\": \"lt\",           \"value\": 1.0         }       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Example 2: Remove unrealistic trees**  Remove trees with abnormal height-to-diameter ratio: ```json {   \"modifications\": [     {       \"conditions\": [         {           \"attribute\": \"expression\",           \"expression\": \"HT / DIA\",           \"operator\": \"gt\",           \"value\": 100.0         }       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Example 3: Modify and filter**  Reduce height of tall trees, then remove small diameter trees: ```json {   \"modifications\": [     {       \"conditions\": [         {\"attribute\": \"HT\", \"operator\": \"gt\", \"value\": 30}       ],       \"actions\": [         {\"attribute\": \"HT\", \"modifier\": \"multiply\", \"value\": 0.9}       ]     },     {       \"conditions\": [         {\"attribute\": \"DIA\", \"operator\": \"lt\", \"value\": 10}       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Processing Order:** 1. Modifications are applied before treatments 2. Modifications within the array are applied sequentially 3. All conditions must be true (AND logic) for trees to be selected 4. Actions are applied to all selected trees  ### Treatments  The `treatments` field is an array of treatment objects. Each treatment object represents a silvicultural treatment to be applied to the tree inventory. Currently, there are two types of treatment types available:  1. Proportional Thinning 2. Directional Thinning  #### Proportional Thinning  - `method`: \"proportionalThinning\" (string, required) - `targetMetric`: \"basalArea\" (string, required) - `targetValue`: float (required)   - Unit: square meters per hectare (m²/ha)   - Represents the target basal area after thinning  #### Directional Thinning  - `method`: \"directionalThinning\" (string, required) - `direction`: (string, required)   - Possible values: \"below\" or \"above\"   - Indicates whether to thin from below (smallest to largest) or above (largest to smallest) - `targetMetric`: (string, required)   - Possible values: \"diameter\" or \"basalArea\" - `targetValue`: float (required)   - Units of the targetValue quantity depends on the targetMetric:     - For \"diameter\": centimeters (cm)     - For \"basalArea\": square meters per hectare (m²/ha)   - Represents the threshold for thinning (diameter) or the target basal area after thinning  Note: The order of treatments in the array determines the sequence in which they will be applied to the tree inventory.  ## Response  If the request is successful, the endpoint will return a `201 Created` status code and the created tree inventory resource in the response body. The response body will be a JSON object with the following fields:  - `status` (string): The status of the tree inventory. Will be set to `\"pending\"` initially. - `createdOn` (string): The timestamp when the tree inventory was created. - `modifiedOn` (string): The timestamp when the tree inventory was last modified. - `checksum` (string): A unique checksum for the tree inventory resource.  ## Error Responses  - `404 Not Found`: If the specified domain does not exist or the user does not have access to it. - `422 Unprocessable Entity`: If `TreeMap` is specified as a source for a domain with a \"local\" coordinate system. - `422 Unprocessable Entity`: If `featureMasks` are provided but the required features resource is not in a \"completed\" state. - `422 Unprocessable Entity`: If `pointcloud` is specified as a source but the domain's 'als' pointcloud resource is not in a \"completed\" state. - `422 Unprocessable Entity`: If `pointcloud` is specified and the domain is outside the model's operational area. - `422 Unprocessable Entity`: If an unexpected error occurs during the point cloud spatial bound check. - `500 Internal Server Error`: If the point cloud model configuration is missing required data (e.g., spatial bounds). - `503 Service Unavailable`: If the background job service (e.g., StandGen or TreeCondenser) is temporarily unavailable or exhausted.
+        # Create Tree Inventory  This endpoint creates a new tree inventory resource for a specific domain. Tree Inventory data represents a complete forest inventory that exists within the spatial context of a domain. The tree inventory data can be generated using various data products and models that provide either national coverage (e.g., TreeMap) or local coverage.  On resource creation, the tree inventory data is set to a status of \"pending\". The tree inventory data is generated in the background using the specified method (e.g., TreeMap). Once the tree inventory data is generated and available for user access, the status is updated to \"completed\".  ## Endpoint  ``` POST /v1/domains/{domainId}/inventories/tree ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain for   which you want to create the tree inventory.  ## Request Body  The request body should be a JSON object containing the following fields:  - `sources` (array of strings, required): List of data sources to be used for building the tree inventory. Currently, only one data source at a time is supported. Possible values are:   - `\"TreeMap\"`: Indicates that the tree inventory should be created using the TreeMap raster product. This approach generates a tree inventory with national coverage.   - `\"file\"`: Indicates that you will upload a file via a signed url. Please see File Source Configuration for more info.   - `\"pointcloud\"`: Indicates that the tree inventory should be created from the domain's ALS point cloud resource. This resource must exist and be in a \"completed\" state.  - `modifications` (array of objects, optional): List of modifications to apply to the tree inventory data. Maximum 1000 modifications allowed. See the Modifications section below for details.  - `treatments` (array of objects, optional): List of silvicultural treatments to apply to the tree inventory. Maximum 1000 treatments allowed. See the Treatments section below for details.  - `featureMasks` (array of strings, optional): List of Features to mask tree inventory data. Referenced features must exist and be completed before creating the tree inventory.  ### TreeMap Source Configuration  If `\"TreeMap\"` is included in the `sources`, the request body can include additional configurations for `TreeMap`:  - `TreeMap` (object, optional): Advanced configurations for the TreeMap data source.   - `version` (string, optional): The version of TreeMap to use. Default is `\"2022\"`. Possible values are:     - `\"2014\"`: Use the 2014 version of TreeMap.     - `\"2016\"`: Use the 2016 version of TreeMap.     - `\"2020\"`: Use the 2020 version of TreeMap.     - `\"2022\"`: Use the 2022 version of TreeMap.   - `seed` (integer, optional): The random seed to use for generating the tree inventory. If not provided, a random seed will be generated.   - `canopyHeightMapConfiguration` (object, optional): Canopy height map configuration for TreeMap data source. If provided, the canopy height map will be used to segment and impute the coarse 30m TreeMap data with high-resolution canopy height data. Details of this approach will be provided in an upcoming publication. Please contact support.fastfuels@silvxlabs.com for more information.     - `source` (string, required): The source of the canopy height map data. Possible values are:         - `\"Meta2024\"`: Use the Meta2024 canopy height map data. More information about this data source can be found here: https://www.sciencedirect.com/science/article/pii/S003442572300439X  ### File Source Configuration Generate Signed URL for Tree Inventory Upload  If the source is `\"file\"`, this endpoint generates a signed URL that allows users to upload a CSV file representing the tree inventory data. The signed URL is valid for 1 hour and has a maximum upload size of 500 MB.  The full work flow consists of the following steps: 1. Call this endpoint to get a signed URL 2. Perform a put request to send your file to the signed url. Here is a python example:  ```[python] with open(\"your_file_goes_here.csv\", \"rb\") as file:     upload_response = requests.put(         signed_url_response[\"file\"][\"url\"],         data=file,         headers=signed_url_response[\"file\"][\"headers\"],     ) ``` **Note**: the signed_url_response has a field named \"file\" with the relevant info for the put request.  3. Your file will be validated and processed in the background 4. The status of your upload can be retrieved via and inventory get() request  #### Required Columns  The CSV file must include the following columns with their specified data types and constraints:  1. **SPCD** (Integer)    - FIA species code    - Must be an integer    - Represents standard FIA species classifications  2. **STATUSCD** (Integer)    - Tree status code    - Must be one of these values:      - 0: No status      - 1: Live      - 2: Dead      - 3: Missing  3. **DIA** (Float)    - Diameter at breast height (DBH)    - Unit: centimeters (cm)    - Range: 0 to 1200 cm    - Measured at 1.37 meters above ground  4. **HT** (Float)    - Tree height    - Unit: meters (m)    - Range: 0 to 116 meters    - Measured from ground to tree top  5. **CR** (Float)    - Crown ratio    - Unit: ratio (dimensionless)    - Range: 0 to 1    - Represents the ratio of crown length to total tree height  6. **X** (Float)    - X coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (west to east)    - Required: Yes    - Used for spatial positioning  7. **Y** (Float)    - Y coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (south to north)    - Required: Yes    - Used for spatial positioning  #### Optional Columns  8. **CROWN_FUEL_LOAD** (Float, Optional)    - Pre-computed crown foliage biomass    - Unit: kilograms (kg)    - Must be >= 0    - When provided, this value is used directly for voxelization instead of computing biomass from allometric equations (NSVB/Jenkins)  ### Point Cloud Source Configuration  If `\"pointcloud\"` is included in the `sources`, the endpoint will: 1. Verify that a completed ALS point cloud resource exists for the domain. 2. Perform a spatial check to ensure the domain's bounding box intersects with the operational area of the tree generation model. 3. If validation passes, it will schedule a background job (`treecondenser`) to generate the tree inventory from the point cloud data. ### Modifications  The `modifications` field allows you to filter and adjust tree inventory data before it's finalized. Modifications are applied sequentially in the order they appear in the array, and each modification consists of:  1. **Conditions**: Criteria for selecting which trees to modify (AND logic) 2. **Actions**: Operations to perform on selected trees  #### Modification Structure  ```json {   \"conditions\": [     {/* condition 1 */},     {/* condition 2 */}   ],   \"actions\": [     {/* action 1 */},     {/* action 2 */}   ] } ```  All conditions must be true (AND logic) for a tree to be selected. Actions are then applied to all selected trees.  #### Condition Types  **1. Simple Field Conditions**  Filter trees based on individual field values:  - **Available Fields**: `HT` (height), `DIA` (diameter), `CR` (crown ratio), `SPCD` (species code) - **Operators**: `eq` (equals), `ne` (not equals), `gt` (greater than), `lt` (less than), `ge` (greater than or equal), `le` (less than or equal)  **Example**: Select trees taller than 20 meters ```json {   \"attribute\": \"HT\",   \"operator\": \"gt\",   \"value\": 20 } ```  **2. Expression-Based Conditions**  Filter trees based on arithmetic expressions combining multiple fields. This enables complex filtering logic in a single API call, replacing download-modify-upload workflows.  - **Available Fields**: `HT`, `DIA`, `CR` - **Operators**: `+`, `-`, `*`, `/`, `()` - **Comparison Operators**: Same as simple conditions (`eq`, `ne`, `gt`, `lt`, `ge`, `le`)  **Example**: Select trees where crown length (HT × CR) is less than 1 meter ```json {   \"attribute\": \"expression\",   \"expression\": \"HT * CR\",   \"operator\": \"lt\",   \"value\": 1.0 } ```  **Common Expression Use Cases:**  - **Crown length**: `HT * CR` (vertical extent of crown) - **Crown base height**: `HT * (1 - CR)` (height where crown begins) - **Height-to-diameter ratio**: `HT / DIA` (slenderness ratio) - **Average metrics**: `(HT + DIA) / 2`  **Security Notes:** - Only arithmetic operations permitted - No function calls, imports, or code execution - Validated at API level for safety  **Multiple Conditions:**  Combine multiple conditions with AND logic: ```json {   \"conditions\": [     {       \"attribute\": \"expression\",       \"expression\": \"HT * CR\",       \"operator\": \"gt\",       \"value\": 5.0     },     {       \"attribute\": \"SPCD\",       \"operator\": \"eq\",       \"value\": 202     }   ],   \"actions\": [...] } ``` This selects Douglas-fir trees (SPCD=202) with crown length > 5m.  #### Action Types  **1. Modify Field Values**  Adjust tree attributes for selected trees:  - **Available Fields**: `HT`, `DIA`, `CR`, `SPCD` - **Modifiers**:   - `multiply`: Multiply by value   - `divide`: Divide by value   - `add`: Add value   - `subtract`: Subtract value   - `replace`: Replace with value  **Example**: Reduce height of tall trees by 10% ```json {   \"attribute\": \"HT\",   \"modifier\": \"multiply\",   \"value\": 0.9 } ```  **Value Constraints**: Modifications automatically enforce valid ranges: - `HT` ≥ 0 (height cannot be negative) - `DIA` ≥ 0 (diameter cannot be negative) - `CR`: 0 ≤ CR ≤ 1 (crown ratio must be between 0 and 1)  **2. Remove Trees**  Remove selected trees from the inventory.  **New simplified syntax** (recommended): ```json {   \"modifier\": \"remove\" } ```  **Legacy syntax** (still supported): ```json {   \"attribute\": \"all\",   \"modifier\": \"remove\" } ```  Both syntaxes produce identical results and are fully backwards compatible.  **Important**: Remove action must be the only action in the actions array. Multiple actions cannot be combined with remove.  #### Complete Modification Examples  **Example 1: Remove trees with short crowns**  Replace pandas workflow: ```python # Old workflow: download CSV, filter in pandas df = df[df['HT'] * df['CR'] >= 1] # ...then re-upload ```  With single API call: ```json {   \"modifications\": [     {       \"conditions\": [         {           \"attribute\": \"expression\",           \"expression\": \"HT * CR\",           \"operator\": \"lt\",           \"value\": 1.0         }       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Example 2: Remove unrealistic trees**  Remove trees with abnormal height-to-diameter ratio: ```json {   \"modifications\": [     {       \"conditions\": [         {           \"attribute\": \"expression\",           \"expression\": \"HT / DIA\",           \"operator\": \"gt\",           \"value\": 100.0         }       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Example 3: Modify and filter**  Reduce height of tall trees, then remove small diameter trees: ```json {   \"modifications\": [     {       \"conditions\": [         {\"attribute\": \"HT\", \"operator\": \"gt\", \"value\": 30}       ],       \"actions\": [         {\"attribute\": \"HT\", \"modifier\": \"multiply\", \"value\": 0.9}       ]     },     {       \"conditions\": [         {\"attribute\": \"DIA\", \"operator\": \"lt\", \"value\": 10}       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Processing Order:** 1. Modifications are applied before treatments 2. Modifications within the array are applied sequentially 3. All conditions must be true (AND logic) for trees to be selected 4. Actions are applied to all selected trees  ### Treatments  The `treatments` field is an array of treatment objects. Each treatment object represents a silvicultural treatment to be applied to the tree inventory. Currently, there are two types of treatment types available:  1. Proportional Thinning 2. Directional Thinning  #### Proportional Thinning  - `method`: \"proportionalThinning\" (string, required) - `targetMetric`: \"basalArea\" (string, required) - `targetValue`: float (required)   - Unit: square meters per hectare (m²/ha)   - Represents the target basal area after thinning  #### Directional Thinning  - `method`: \"directionalThinning\" (string, required) - `direction`: (string, required)   - Possible values: \"below\" or \"above\"   - Indicates whether to thin from below (smallest to largest) or above (largest to smallest) - `targetMetric`: (string, required)   - Possible values: \"diameter\" or \"basalArea\" - `targetValue`: float (required)   - Units of the targetValue quantity depends on the targetMetric:     - For \"diameter\": centimeters (cm)     - For \"basalArea\": square meters per hectare (m²/ha)   - Represents the threshold for thinning (diameter) or the target basal area after thinning  Note: The order of treatments in the array determines the sequence in which they will be applied to the tree inventory.  ## Response  If the request is successful, the endpoint will return a `201 Created` status code and the created tree inventory resource in the response body. The response body will be a JSON object with the following fields:  - `status` (string): The status of the tree inventory. Will be set to `\"pending\"` initially. - `createdOn` (string): The timestamp when the tree inventory was created. - `modifiedOn` (string): The timestamp when the tree inventory was last modified. - `checksum` (string): A unique checksum for the tree inventory resource.  ## Error Responses  - `404 Not Found`: If the specified domain does not exist or the user does not have access to it. - `422 Unprocessable Entity`: If `TreeMap` is specified as a source for a domain with a \"local\" coordinate system. - `422 Unprocessable Entity`: If `featureMasks` are provided but the required features resource is not in a \"completed\" state. - `422 Unprocessable Entity`: If `pointcloud` is specified as a source but the domain's 'als' pointcloud resource is not in a \"completed\" state. - `422 Unprocessable Entity`: If `pointcloud` is specified and the domain is outside the model's operational area. - `422 Unprocessable Entity`: If an unexpected error occurs during the point cloud spatial bound check. - `500 Internal Server Error`: If the point cloud model configuration is missing required data (e.g., spatial bounds). - `503 Service Unavailable`: If the background job service (e.g., StandGen or TreeCondenser) is temporarily unavailable or exhausted.
 
         :param domain_id: (required)
         :type domain_id: str
@@ -131,7 +133,7 @@ class TreeInventoryApi:
     ) -> ApiResponse[TreeInventory]:
         """Create Tree Inventory
 
-        # Create Tree Inventory  This endpoint creates a new tree inventory resource for a specific domain. Tree Inventory data represents a complete forest inventory that exists within the spatial context of a domain. The tree inventory data can be generated using various data products and models that provide either national coverage (e.g., TreeMap) or local coverage.  On resource creation, the tree inventory data is set to a status of \"pending\". The tree inventory data is generated in the background using the specified method (e.g., TreeMap). Once the tree inventory data is generated and available for user access, the status is updated to \"completed\".  ## Endpoint  ``` POST /v1/domains/{domainId}/inventories/tree ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain for   which you want to create the tree inventory.  ## Request Body  The request body should be a JSON object containing the following fields:  - `sources` (array of strings, required): List of data sources to be used for building the tree inventory. Currently, only one data source at a time is supported. Possible values are:   - `\"TreeMap\"`: Indicates that the tree inventory should be created using the TreeMap raster product. This approach generates a tree inventory with national coverage.   - `\"file\"`: Indicates that you will upload a file via a signed url. Please see File Source Configuration for more info.   - `\"pointcloud\"`: Indicates that the tree inventory should be created from the domain's ALS point cloud resource. This resource must exist and be in a \"completed\" state.  - `modifications` (array of objects, optional): List of modifications to apply to the tree inventory data. Maximum 1000 modifications allowed. See the Modifications section below for details.  - `treatments` (array of objects, optional): List of silvicultural treatments to apply to the tree inventory. Maximum 1000 treatments allowed. See the Treatments section below for details.  - `featureMasks` (array of strings, optional): List of Features to mask tree inventory data. Referenced features must exist and be completed before creating the tree inventory.  ### TreeMap Source Configuration  If `\"TreeMap\"` is included in the `sources`, the request body can include additional configurations for `TreeMap`:  - `TreeMap` (object, optional): Advanced configurations for the TreeMap data source.   - `version` (string, optional): The version of TreeMap to use. Default is `\"2022\"`. Possible values are:     - `\"2014\"`: Use the 2014 version of TreeMap.     - `\"2016\"`: Use the 2016 version of TreeMap.     - `\"2020\"`: Use the 2020 version of TreeMap.     - `\"2022\"`: Use the 2022 version of TreeMap.   - `seed` (integer, optional): The random seed to use for generating the tree inventory. If not provided, a random seed will be generated.   - `canopyHeightMapConfiguration` (object, optional): Canopy height map configuration for TreeMap data source. If provided, the canopy height map will be used to segment and impute the coarse 30m TreeMap data with high-resolution canopy height data. Details of this approach will be provided in an upcoming publication. Please contact support.fastfuels@silvxlabs.com for more information.     - `source` (string, required): The source of the canopy height map data. Possible values are:         - `\"Meta2024\"`: Use the Meta2024 canopy height map data. More information about this data source can be found here: https://www.sciencedirect.com/science/article/pii/S003442572300439X  ### File Source Configuration Generate Signed URL for Tree Inventory Upload  If the source is `\"file\"`, this endpoint generates a signed URL that allows users to upload a CSV file representing the tree inventory data. The signed URL is valid for 1 hour and has a maximum upload size of 500 MB.  The full work flow consists of the following steps: 1. Call this endpoint to get a signed URL 2. Perform a put request to send your file to the signed url. Here is a python example:  ```[python] with open(\"your_file_goes_here.csv\", \"rb\") as file:     upload_response = requests.put(         signed_url_response[\"file\"][\"url\"],         data=file,         headers=signed_url_response[\"file\"][\"headers\"],     ) ``` **Note**: the signed_url_response has a field named \"file\" with the relevant info for the put request.  3. Your file will be validated and processed in the background 4. The status of your upload can be retrieved via and inventory get() request  #### Required Columns  The CSV file must include the following columns with their specified data types and constraints:  1. **SPCD** (Integer)    - FIA species code    - Must be an integer    - Represents standard FIA species classifications  2. **STATUSCD** (Integer)    - Tree status code    - Must be one of these values:      - 0: No status      - 1: Live      - 2: Dead      - 3: Missing  3. **DIA** (Float)    - Diameter at breast height (DBH)    - Unit: centimeters (cm)    - Range: 0 to 1200 cm    - Measured at 1.37 meters above ground  4. **HT** (Float)    - Tree height    - Unit: meters (m)    - Range: 0 to 116 meters    - Measured from ground to tree top  5. **CR** (Float)    - Crown ratio    - Unit: ratio (dimensionless)    - Range: 0 to 1    - Represents the ratio of crown length to total tree height  6. **X** (Float)    - X coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (west to east)    - Required: Yes    - Used for spatial positioning  7. **Y** (Float)    - Y coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (south to north)    - Required: Yes    - Used for spatial positioning  ### Point Cloud Source Configuration  If `\"pointcloud\"` is included in the `sources`, the endpoint will: 1. Verify that a completed ALS point cloud resource exists for the domain. 2. Perform a spatial check to ensure the domain's bounding box intersects with the operational area of the tree generation model. 3. If validation passes, it will schedule a background job (`treecondenser`) to generate the tree inventory from the point cloud data. ### Modifications  The `modifications` field allows you to filter and adjust tree inventory data before it's finalized. Modifications are applied sequentially in the order they appear in the array, and each modification consists of:  1. **Conditions**: Criteria for selecting which trees to modify (AND logic) 2. **Actions**: Operations to perform on selected trees  #### Modification Structure  ```json {   \"conditions\": [     {/* condition 1 */},     {/* condition 2 */}   ],   \"actions\": [     {/* action 1 */},     {/* action 2 */}   ] } ```  All conditions must be true (AND logic) for a tree to be selected. Actions are then applied to all selected trees.  #### Condition Types  **1. Simple Field Conditions**  Filter trees based on individual field values:  - **Available Fields**: `HT` (height), `DIA` (diameter), `CR` (crown ratio), `SPCD` (species code) - **Operators**: `eq` (equals), `ne` (not equals), `gt` (greater than), `lt` (less than), `ge` (greater than or equal), `le` (less than or equal)  **Example**: Select trees taller than 20 meters ```json {   \"attribute\": \"HT\",   \"operator\": \"gt\",   \"value\": 20 } ```  **2. Expression-Based Conditions**  Filter trees based on arithmetic expressions combining multiple fields. This enables complex filtering logic in a single API call, replacing download-modify-upload workflows.  - **Available Fields**: `HT`, `DIA`, `CR` - **Operators**: `+`, `-`, `*`, `/`, `()` - **Comparison Operators**: Same as simple conditions (`eq`, `ne`, `gt`, `lt`, `ge`, `le`)  **Example**: Select trees where crown length (HT × CR) is less than 1 meter ```json {   \"attribute\": \"expression\",   \"expression\": \"HT * CR\",   \"operator\": \"lt\",   \"value\": 1.0 } ```  **Common Expression Use Cases:**  - **Crown length**: `HT * CR` (vertical extent of crown) - **Crown base height**: `HT * (1 - CR)` (height where crown begins) - **Height-to-diameter ratio**: `HT / DIA` (slenderness ratio) - **Average metrics**: `(HT + DIA) / 2`  **Security Notes:** - Only arithmetic operations permitted - No function calls, imports, or code execution - Validated at API level for safety  **Multiple Conditions:**  Combine multiple conditions with AND logic: ```json {   \"conditions\": [     {       \"attribute\": \"expression\",       \"expression\": \"HT * CR\",       \"operator\": \"gt\",       \"value\": 5.0     },     {       \"attribute\": \"SPCD\",       \"operator\": \"eq\",       \"value\": 202     }   ],   \"actions\": [...] } ``` This selects Douglas-fir trees (SPCD=202) with crown length > 5m.  #### Action Types  **1. Modify Field Values**  Adjust tree attributes for selected trees:  - **Available Fields**: `HT`, `DIA`, `CR`, `SPCD` - **Modifiers**:   - `multiply`: Multiply by value   - `divide`: Divide by value   - `add`: Add value   - `subtract`: Subtract value   - `replace`: Replace with value  **Example**: Reduce height of tall trees by 10% ```json {   \"attribute\": \"HT\",   \"modifier\": \"multiply\",   \"value\": 0.9 } ```  **Value Constraints**: Modifications automatically enforce valid ranges: - `HT` ≥ 0 (height cannot be negative) - `DIA` ≥ 0 (diameter cannot be negative) - `CR`: 0 ≤ CR ≤ 1 (crown ratio must be between 0 and 1)  **2. Remove Trees**  Remove selected trees from the inventory.  **New simplified syntax** (recommended): ```json {   \"modifier\": \"remove\" } ```  **Legacy syntax** (still supported): ```json {   \"attribute\": \"all\",   \"modifier\": \"remove\" } ```  Both syntaxes produce identical results and are fully backwards compatible.  **Important**: Remove action must be the only action in the actions array. Multiple actions cannot be combined with remove.  #### Complete Modification Examples  **Example 1: Remove trees with short crowns**  Replace pandas workflow: ```python # Old workflow: download CSV, filter in pandas df = df[df['HT'] * df['CR'] >= 1] # ...then re-upload ```  With single API call: ```json {   \"modifications\": [     {       \"conditions\": [         {           \"attribute\": \"expression\",           \"expression\": \"HT * CR\",           \"operator\": \"lt\",           \"value\": 1.0         }       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Example 2: Remove unrealistic trees**  Remove trees with abnormal height-to-diameter ratio: ```json {   \"modifications\": [     {       \"conditions\": [         {           \"attribute\": \"expression\",           \"expression\": \"HT / DIA\",           \"operator\": \"gt\",           \"value\": 100.0         }       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Example 3: Modify and filter**  Reduce height of tall trees, then remove small diameter trees: ```json {   \"modifications\": [     {       \"conditions\": [         {\"attribute\": \"HT\", \"operator\": \"gt\", \"value\": 30}       ],       \"actions\": [         {\"attribute\": \"HT\", \"modifier\": \"multiply\", \"value\": 0.9}       ]     },     {       \"conditions\": [         {\"attribute\": \"DIA\", \"operator\": \"lt\", \"value\": 10}       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Processing Order:** 1. Modifications are applied before treatments 2. Modifications within the array are applied sequentially 3. All conditions must be true (AND logic) for trees to be selected 4. Actions are applied to all selected trees  ### Treatments  The `treatments` field is an array of treatment objects. Each treatment object represents a silvicultural treatment to be applied to the tree inventory. Currently, there are two types of treatment types available:  1. Proportional Thinning 2. Directional Thinning  #### Proportional Thinning  - `method`: \"proportionalThinning\" (string, required) - `targetMetric`: \"basalArea\" (string, required) - `targetValue`: float (required)   - Unit: square meters per hectare (m²/ha)   - Represents the target basal area after thinning  #### Directional Thinning  - `method`: \"directionalThinning\" (string, required) - `direction`: (string, required)   - Possible values: \"below\" or \"above\"   - Indicates whether to thin from below (smallest to largest) or above (largest to smallest) - `targetMetric`: (string, required)   - Possible values: \"diameter\" or \"basalArea\" - `targetValue`: float (required)   - Units of the targetValue quantity depends on the targetMetric:     - For \"diameter\": centimeters (cm)     - For \"basalArea\": square meters per hectare (m²/ha)   - Represents the threshold for thinning (diameter) or the target basal area after thinning  Note: The order of treatments in the array determines the sequence in which they will be applied to the tree inventory.  ## Response  If the request is successful, the endpoint will return a `201 Created` status code and the created tree inventory resource in the response body. The response body will be a JSON object with the following fields:  - `status` (string): The status of the tree inventory. Will be set to `\"pending\"` initially. - `createdOn` (string): The timestamp when the tree inventory was created. - `modifiedOn` (string): The timestamp when the tree inventory was last modified. - `checksum` (string): A unique checksum for the tree inventory resource.  ## Error Responses  - `404 Not Found`: If the specified domain does not exist or the user does not have access to it. - `422 Unprocessable Entity`: If `TreeMap` is specified as a source for a domain with a \"local\" coordinate system. - `422 Unprocessable Entity`: If `featureMasks` are provided but the required features resource is not in a \"completed\" state. - `422 Unprocessable Entity`: If `pointcloud` is specified as a source but the domain's 'als' pointcloud resource is not in a \"completed\" state. - `422 Unprocessable Entity`: If `pointcloud` is specified and the domain is outside the model's operational area. - `422 Unprocessable Entity`: If an unexpected error occurs during the point cloud spatial bound check. - `500 Internal Server Error`: If the point cloud model configuration is missing required data (e.g., spatial bounds). - `503 Service Unavailable`: If the background job service (e.g., StandGen or TreeCondenser) is temporarily unavailable or exhausted.
+        # Create Tree Inventory  This endpoint creates a new tree inventory resource for a specific domain. Tree Inventory data represents a complete forest inventory that exists within the spatial context of a domain. The tree inventory data can be generated using various data products and models that provide either national coverage (e.g., TreeMap) or local coverage.  On resource creation, the tree inventory data is set to a status of \"pending\". The tree inventory data is generated in the background using the specified method (e.g., TreeMap). Once the tree inventory data is generated and available for user access, the status is updated to \"completed\".  ## Endpoint  ``` POST /v1/domains/{domainId}/inventories/tree ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain for   which you want to create the tree inventory.  ## Request Body  The request body should be a JSON object containing the following fields:  - `sources` (array of strings, required): List of data sources to be used for building the tree inventory. Currently, only one data source at a time is supported. Possible values are:   - `\"TreeMap\"`: Indicates that the tree inventory should be created using the TreeMap raster product. This approach generates a tree inventory with national coverage.   - `\"file\"`: Indicates that you will upload a file via a signed url. Please see File Source Configuration for more info.   - `\"pointcloud\"`: Indicates that the tree inventory should be created from the domain's ALS point cloud resource. This resource must exist and be in a \"completed\" state.  - `modifications` (array of objects, optional): List of modifications to apply to the tree inventory data. Maximum 1000 modifications allowed. See the Modifications section below for details.  - `treatments` (array of objects, optional): List of silvicultural treatments to apply to the tree inventory. Maximum 1000 treatments allowed. See the Treatments section below for details.  - `featureMasks` (array of strings, optional): List of Features to mask tree inventory data. Referenced features must exist and be completed before creating the tree inventory.  ### TreeMap Source Configuration  If `\"TreeMap\"` is included in the `sources`, the request body can include additional configurations for `TreeMap`:  - `TreeMap` (object, optional): Advanced configurations for the TreeMap data source.   - `version` (string, optional): The version of TreeMap to use. Default is `\"2022\"`. Possible values are:     - `\"2014\"`: Use the 2014 version of TreeMap.     - `\"2016\"`: Use the 2016 version of TreeMap.     - `\"2020\"`: Use the 2020 version of TreeMap.     - `\"2022\"`: Use the 2022 version of TreeMap.   - `seed` (integer, optional): The random seed to use for generating the tree inventory. If not provided, a random seed will be generated.   - `canopyHeightMapConfiguration` (object, optional): Canopy height map configuration for TreeMap data source. If provided, the canopy height map will be used to segment and impute the coarse 30m TreeMap data with high-resolution canopy height data. Details of this approach will be provided in an upcoming publication. Please contact support.fastfuels@silvxlabs.com for more information.     - `source` (string, required): The source of the canopy height map data. Possible values are:         - `\"Meta2024\"`: Use the Meta2024 canopy height map data. More information about this data source can be found here: https://www.sciencedirect.com/science/article/pii/S003442572300439X  ### File Source Configuration Generate Signed URL for Tree Inventory Upload  If the source is `\"file\"`, this endpoint generates a signed URL that allows users to upload a CSV file representing the tree inventory data. The signed URL is valid for 1 hour and has a maximum upload size of 500 MB.  The full work flow consists of the following steps: 1. Call this endpoint to get a signed URL 2. Perform a put request to send your file to the signed url. Here is a python example:  ```[python] with open(\"your_file_goes_here.csv\", \"rb\") as file:     upload_response = requests.put(         signed_url_response[\"file\"][\"url\"],         data=file,         headers=signed_url_response[\"file\"][\"headers\"],     ) ``` **Note**: the signed_url_response has a field named \"file\" with the relevant info for the put request.  3. Your file will be validated and processed in the background 4. The status of your upload can be retrieved via and inventory get() request  #### Required Columns  The CSV file must include the following columns with their specified data types and constraints:  1. **SPCD** (Integer)    - FIA species code    - Must be an integer    - Represents standard FIA species classifications  2. **STATUSCD** (Integer)    - Tree status code    - Must be one of these values:      - 0: No status      - 1: Live      - 2: Dead      - 3: Missing  3. **DIA** (Float)    - Diameter at breast height (DBH)    - Unit: centimeters (cm)    - Range: 0 to 1200 cm    - Measured at 1.37 meters above ground  4. **HT** (Float)    - Tree height    - Unit: meters (m)    - Range: 0 to 116 meters    - Measured from ground to tree top  5. **CR** (Float)    - Crown ratio    - Unit: ratio (dimensionless)    - Range: 0 to 1    - Represents the ratio of crown length to total tree height  6. **X** (Float)    - X coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (west to east)    - Required: Yes    - Used for spatial positioning  7. **Y** (Float)    - Y coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (south to north)    - Required: Yes    - Used for spatial positioning  #### Optional Columns  8. **CROWN_FUEL_LOAD** (Float, Optional)    - Pre-computed crown foliage biomass    - Unit: kilograms (kg)    - Must be >= 0    - When provided, this value is used directly for voxelization instead of computing biomass from allometric equations (NSVB/Jenkins)  ### Point Cloud Source Configuration  If `\"pointcloud\"` is included in the `sources`, the endpoint will: 1. Verify that a completed ALS point cloud resource exists for the domain. 2. Perform a spatial check to ensure the domain's bounding box intersects with the operational area of the tree generation model. 3. If validation passes, it will schedule a background job (`treecondenser`) to generate the tree inventory from the point cloud data. ### Modifications  The `modifications` field allows you to filter and adjust tree inventory data before it's finalized. Modifications are applied sequentially in the order they appear in the array, and each modification consists of:  1. **Conditions**: Criteria for selecting which trees to modify (AND logic) 2. **Actions**: Operations to perform on selected trees  #### Modification Structure  ```json {   \"conditions\": [     {/* condition 1 */},     {/* condition 2 */}   ],   \"actions\": [     {/* action 1 */},     {/* action 2 */}   ] } ```  All conditions must be true (AND logic) for a tree to be selected. Actions are then applied to all selected trees.  #### Condition Types  **1. Simple Field Conditions**  Filter trees based on individual field values:  - **Available Fields**: `HT` (height), `DIA` (diameter), `CR` (crown ratio), `SPCD` (species code) - **Operators**: `eq` (equals), `ne` (not equals), `gt` (greater than), `lt` (less than), `ge` (greater than or equal), `le` (less than or equal)  **Example**: Select trees taller than 20 meters ```json {   \"attribute\": \"HT\",   \"operator\": \"gt\",   \"value\": 20 } ```  **2. Expression-Based Conditions**  Filter trees based on arithmetic expressions combining multiple fields. This enables complex filtering logic in a single API call, replacing download-modify-upload workflows.  - **Available Fields**: `HT`, `DIA`, `CR` - **Operators**: `+`, `-`, `*`, `/`, `()` - **Comparison Operators**: Same as simple conditions (`eq`, `ne`, `gt`, `lt`, `ge`, `le`)  **Example**: Select trees where crown length (HT × CR) is less than 1 meter ```json {   \"attribute\": \"expression\",   \"expression\": \"HT * CR\",   \"operator\": \"lt\",   \"value\": 1.0 } ```  **Common Expression Use Cases:**  - **Crown length**: `HT * CR` (vertical extent of crown) - **Crown base height**: `HT * (1 - CR)` (height where crown begins) - **Height-to-diameter ratio**: `HT / DIA` (slenderness ratio) - **Average metrics**: `(HT + DIA) / 2`  **Security Notes:** - Only arithmetic operations permitted - No function calls, imports, or code execution - Validated at API level for safety  **Multiple Conditions:**  Combine multiple conditions with AND logic: ```json {   \"conditions\": [     {       \"attribute\": \"expression\",       \"expression\": \"HT * CR\",       \"operator\": \"gt\",       \"value\": 5.0     },     {       \"attribute\": \"SPCD\",       \"operator\": \"eq\",       \"value\": 202     }   ],   \"actions\": [...] } ``` This selects Douglas-fir trees (SPCD=202) with crown length > 5m.  #### Action Types  **1. Modify Field Values**  Adjust tree attributes for selected trees:  - **Available Fields**: `HT`, `DIA`, `CR`, `SPCD` - **Modifiers**:   - `multiply`: Multiply by value   - `divide`: Divide by value   - `add`: Add value   - `subtract`: Subtract value   - `replace`: Replace with value  **Example**: Reduce height of tall trees by 10% ```json {   \"attribute\": \"HT\",   \"modifier\": \"multiply\",   \"value\": 0.9 } ```  **Value Constraints**: Modifications automatically enforce valid ranges: - `HT` ≥ 0 (height cannot be negative) - `DIA` ≥ 0 (diameter cannot be negative) - `CR`: 0 ≤ CR ≤ 1 (crown ratio must be between 0 and 1)  **2. Remove Trees**  Remove selected trees from the inventory.  **New simplified syntax** (recommended): ```json {   \"modifier\": \"remove\" } ```  **Legacy syntax** (still supported): ```json {   \"attribute\": \"all\",   \"modifier\": \"remove\" } ```  Both syntaxes produce identical results and are fully backwards compatible.  **Important**: Remove action must be the only action in the actions array. Multiple actions cannot be combined with remove.  #### Complete Modification Examples  **Example 1: Remove trees with short crowns**  Replace pandas workflow: ```python # Old workflow: download CSV, filter in pandas df = df[df['HT'] * df['CR'] >= 1] # ...then re-upload ```  With single API call: ```json {   \"modifications\": [     {       \"conditions\": [         {           \"attribute\": \"expression\",           \"expression\": \"HT * CR\",           \"operator\": \"lt\",           \"value\": 1.0         }       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Example 2: Remove unrealistic trees**  Remove trees with abnormal height-to-diameter ratio: ```json {   \"modifications\": [     {       \"conditions\": [         {           \"attribute\": \"expression\",           \"expression\": \"HT / DIA\",           \"operator\": \"gt\",           \"value\": 100.0         }       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Example 3: Modify and filter**  Reduce height of tall trees, then remove small diameter trees: ```json {   \"modifications\": [     {       \"conditions\": [         {\"attribute\": \"HT\", \"operator\": \"gt\", \"value\": 30}       ],       \"actions\": [         {\"attribute\": \"HT\", \"modifier\": \"multiply\", \"value\": 0.9}       ]     },     {       \"conditions\": [         {\"attribute\": \"DIA\", \"operator\": \"lt\", \"value\": 10}       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Processing Order:** 1. Modifications are applied before treatments 2. Modifications within the array are applied sequentially 3. All conditions must be true (AND logic) for trees to be selected 4. Actions are applied to all selected trees  ### Treatments  The `treatments` field is an array of treatment objects. Each treatment object represents a silvicultural treatment to be applied to the tree inventory. Currently, there are two types of treatment types available:  1. Proportional Thinning 2. Directional Thinning  #### Proportional Thinning  - `method`: \"proportionalThinning\" (string, required) - `targetMetric`: \"basalArea\" (string, required) - `targetValue`: float (required)   - Unit: square meters per hectare (m²/ha)   - Represents the target basal area after thinning  #### Directional Thinning  - `method`: \"directionalThinning\" (string, required) - `direction`: (string, required)   - Possible values: \"below\" or \"above\"   - Indicates whether to thin from below (smallest to largest) or above (largest to smallest) - `targetMetric`: (string, required)   - Possible values: \"diameter\" or \"basalArea\" - `targetValue`: float (required)   - Units of the targetValue quantity depends on the targetMetric:     - For \"diameter\": centimeters (cm)     - For \"basalArea\": square meters per hectare (m²/ha)   - Represents the threshold for thinning (diameter) or the target basal area after thinning  Note: The order of treatments in the array determines the sequence in which they will be applied to the tree inventory.  ## Response  If the request is successful, the endpoint will return a `201 Created` status code and the created tree inventory resource in the response body. The response body will be a JSON object with the following fields:  - `status` (string): The status of the tree inventory. Will be set to `\"pending\"` initially. - `createdOn` (string): The timestamp when the tree inventory was created. - `modifiedOn` (string): The timestamp when the tree inventory was last modified. - `checksum` (string): A unique checksum for the tree inventory resource.  ## Error Responses  - `404 Not Found`: If the specified domain does not exist or the user does not have access to it. - `422 Unprocessable Entity`: If `TreeMap` is specified as a source for a domain with a \"local\" coordinate system. - `422 Unprocessable Entity`: If `featureMasks` are provided but the required features resource is not in a \"completed\" state. - `422 Unprocessable Entity`: If `pointcloud` is specified as a source but the domain's 'als' pointcloud resource is not in a \"completed\" state. - `422 Unprocessable Entity`: If `pointcloud` is specified and the domain is outside the model's operational area. - `422 Unprocessable Entity`: If an unexpected error occurs during the point cloud spatial bound check. - `500 Internal Server Error`: If the point cloud model configuration is missing required data (e.g., spatial bounds). - `503 Service Unavailable`: If the background job service (e.g., StandGen or TreeCondenser) is temporarily unavailable or exhausted.
 
         :param domain_id: (required)
         :type domain_id: str
@@ -203,7 +205,7 @@ class TreeInventoryApi:
     ) -> RESTResponseType:
         """Create Tree Inventory
 
-        # Create Tree Inventory  This endpoint creates a new tree inventory resource for a specific domain. Tree Inventory data represents a complete forest inventory that exists within the spatial context of a domain. The tree inventory data can be generated using various data products and models that provide either national coverage (e.g., TreeMap) or local coverage.  On resource creation, the tree inventory data is set to a status of \"pending\". The tree inventory data is generated in the background using the specified method (e.g., TreeMap). Once the tree inventory data is generated and available for user access, the status is updated to \"completed\".  ## Endpoint  ``` POST /v1/domains/{domainId}/inventories/tree ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain for   which you want to create the tree inventory.  ## Request Body  The request body should be a JSON object containing the following fields:  - `sources` (array of strings, required): List of data sources to be used for building the tree inventory. Currently, only one data source at a time is supported. Possible values are:   - `\"TreeMap\"`: Indicates that the tree inventory should be created using the TreeMap raster product. This approach generates a tree inventory with national coverage.   - `\"file\"`: Indicates that you will upload a file via a signed url. Please see File Source Configuration for more info.   - `\"pointcloud\"`: Indicates that the tree inventory should be created from the domain's ALS point cloud resource. This resource must exist and be in a \"completed\" state.  - `modifications` (array of objects, optional): List of modifications to apply to the tree inventory data. Maximum 1000 modifications allowed. See the Modifications section below for details.  - `treatments` (array of objects, optional): List of silvicultural treatments to apply to the tree inventory. Maximum 1000 treatments allowed. See the Treatments section below for details.  - `featureMasks` (array of strings, optional): List of Features to mask tree inventory data. Referenced features must exist and be completed before creating the tree inventory.  ### TreeMap Source Configuration  If `\"TreeMap\"` is included in the `sources`, the request body can include additional configurations for `TreeMap`:  - `TreeMap` (object, optional): Advanced configurations for the TreeMap data source.   - `version` (string, optional): The version of TreeMap to use. Default is `\"2022\"`. Possible values are:     - `\"2014\"`: Use the 2014 version of TreeMap.     - `\"2016\"`: Use the 2016 version of TreeMap.     - `\"2020\"`: Use the 2020 version of TreeMap.     - `\"2022\"`: Use the 2022 version of TreeMap.   - `seed` (integer, optional): The random seed to use for generating the tree inventory. If not provided, a random seed will be generated.   - `canopyHeightMapConfiguration` (object, optional): Canopy height map configuration for TreeMap data source. If provided, the canopy height map will be used to segment and impute the coarse 30m TreeMap data with high-resolution canopy height data. Details of this approach will be provided in an upcoming publication. Please contact support.fastfuels@silvxlabs.com for more information.     - `source` (string, required): The source of the canopy height map data. Possible values are:         - `\"Meta2024\"`: Use the Meta2024 canopy height map data. More information about this data source can be found here: https://www.sciencedirect.com/science/article/pii/S003442572300439X  ### File Source Configuration Generate Signed URL for Tree Inventory Upload  If the source is `\"file\"`, this endpoint generates a signed URL that allows users to upload a CSV file representing the tree inventory data. The signed URL is valid for 1 hour and has a maximum upload size of 500 MB.  The full work flow consists of the following steps: 1. Call this endpoint to get a signed URL 2. Perform a put request to send your file to the signed url. Here is a python example:  ```[python] with open(\"your_file_goes_here.csv\", \"rb\") as file:     upload_response = requests.put(         signed_url_response[\"file\"][\"url\"],         data=file,         headers=signed_url_response[\"file\"][\"headers\"],     ) ``` **Note**: the signed_url_response has a field named \"file\" with the relevant info for the put request.  3. Your file will be validated and processed in the background 4. The status of your upload can be retrieved via and inventory get() request  #### Required Columns  The CSV file must include the following columns with their specified data types and constraints:  1. **SPCD** (Integer)    - FIA species code    - Must be an integer    - Represents standard FIA species classifications  2. **STATUSCD** (Integer)    - Tree status code    - Must be one of these values:      - 0: No status      - 1: Live      - 2: Dead      - 3: Missing  3. **DIA** (Float)    - Diameter at breast height (DBH)    - Unit: centimeters (cm)    - Range: 0 to 1200 cm    - Measured at 1.37 meters above ground  4. **HT** (Float)    - Tree height    - Unit: meters (m)    - Range: 0 to 116 meters    - Measured from ground to tree top  5. **CR** (Float)    - Crown ratio    - Unit: ratio (dimensionless)    - Range: 0 to 1    - Represents the ratio of crown length to total tree height  6. **X** (Float)    - X coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (west to east)    - Required: Yes    - Used for spatial positioning  7. **Y** (Float)    - Y coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (south to north)    - Required: Yes    - Used for spatial positioning  ### Point Cloud Source Configuration  If `\"pointcloud\"` is included in the `sources`, the endpoint will: 1. Verify that a completed ALS point cloud resource exists for the domain. 2. Perform a spatial check to ensure the domain's bounding box intersects with the operational area of the tree generation model. 3. If validation passes, it will schedule a background job (`treecondenser`) to generate the tree inventory from the point cloud data. ### Modifications  The `modifications` field allows you to filter and adjust tree inventory data before it's finalized. Modifications are applied sequentially in the order they appear in the array, and each modification consists of:  1. **Conditions**: Criteria for selecting which trees to modify (AND logic) 2. **Actions**: Operations to perform on selected trees  #### Modification Structure  ```json {   \"conditions\": [     {/* condition 1 */},     {/* condition 2 */}   ],   \"actions\": [     {/* action 1 */},     {/* action 2 */}   ] } ```  All conditions must be true (AND logic) for a tree to be selected. Actions are then applied to all selected trees.  #### Condition Types  **1. Simple Field Conditions**  Filter trees based on individual field values:  - **Available Fields**: `HT` (height), `DIA` (diameter), `CR` (crown ratio), `SPCD` (species code) - **Operators**: `eq` (equals), `ne` (not equals), `gt` (greater than), `lt` (less than), `ge` (greater than or equal), `le` (less than or equal)  **Example**: Select trees taller than 20 meters ```json {   \"attribute\": \"HT\",   \"operator\": \"gt\",   \"value\": 20 } ```  **2. Expression-Based Conditions**  Filter trees based on arithmetic expressions combining multiple fields. This enables complex filtering logic in a single API call, replacing download-modify-upload workflows.  - **Available Fields**: `HT`, `DIA`, `CR` - **Operators**: `+`, `-`, `*`, `/`, `()` - **Comparison Operators**: Same as simple conditions (`eq`, `ne`, `gt`, `lt`, `ge`, `le`)  **Example**: Select trees where crown length (HT × CR) is less than 1 meter ```json {   \"attribute\": \"expression\",   \"expression\": \"HT * CR\",   \"operator\": \"lt\",   \"value\": 1.0 } ```  **Common Expression Use Cases:**  - **Crown length**: `HT * CR` (vertical extent of crown) - **Crown base height**: `HT * (1 - CR)` (height where crown begins) - **Height-to-diameter ratio**: `HT / DIA` (slenderness ratio) - **Average metrics**: `(HT + DIA) / 2`  **Security Notes:** - Only arithmetic operations permitted - No function calls, imports, or code execution - Validated at API level for safety  **Multiple Conditions:**  Combine multiple conditions with AND logic: ```json {   \"conditions\": [     {       \"attribute\": \"expression\",       \"expression\": \"HT * CR\",       \"operator\": \"gt\",       \"value\": 5.0     },     {       \"attribute\": \"SPCD\",       \"operator\": \"eq\",       \"value\": 202     }   ],   \"actions\": [...] } ``` This selects Douglas-fir trees (SPCD=202) with crown length > 5m.  #### Action Types  **1. Modify Field Values**  Adjust tree attributes for selected trees:  - **Available Fields**: `HT`, `DIA`, `CR`, `SPCD` - **Modifiers**:   - `multiply`: Multiply by value   - `divide`: Divide by value   - `add`: Add value   - `subtract`: Subtract value   - `replace`: Replace with value  **Example**: Reduce height of tall trees by 10% ```json {   \"attribute\": \"HT\",   \"modifier\": \"multiply\",   \"value\": 0.9 } ```  **Value Constraints**: Modifications automatically enforce valid ranges: - `HT` ≥ 0 (height cannot be negative) - `DIA` ≥ 0 (diameter cannot be negative) - `CR`: 0 ≤ CR ≤ 1 (crown ratio must be between 0 and 1)  **2. Remove Trees**  Remove selected trees from the inventory.  **New simplified syntax** (recommended): ```json {   \"modifier\": \"remove\" } ```  **Legacy syntax** (still supported): ```json {   \"attribute\": \"all\",   \"modifier\": \"remove\" } ```  Both syntaxes produce identical results and are fully backwards compatible.  **Important**: Remove action must be the only action in the actions array. Multiple actions cannot be combined with remove.  #### Complete Modification Examples  **Example 1: Remove trees with short crowns**  Replace pandas workflow: ```python # Old workflow: download CSV, filter in pandas df = df[df['HT'] * df['CR'] >= 1] # ...then re-upload ```  With single API call: ```json {   \"modifications\": [     {       \"conditions\": [         {           \"attribute\": \"expression\",           \"expression\": \"HT * CR\",           \"operator\": \"lt\",           \"value\": 1.0         }       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Example 2: Remove unrealistic trees**  Remove trees with abnormal height-to-diameter ratio: ```json {   \"modifications\": [     {       \"conditions\": [         {           \"attribute\": \"expression\",           \"expression\": \"HT / DIA\",           \"operator\": \"gt\",           \"value\": 100.0         }       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Example 3: Modify and filter**  Reduce height of tall trees, then remove small diameter trees: ```json {   \"modifications\": [     {       \"conditions\": [         {\"attribute\": \"HT\", \"operator\": \"gt\", \"value\": 30}       ],       \"actions\": [         {\"attribute\": \"HT\", \"modifier\": \"multiply\", \"value\": 0.9}       ]     },     {       \"conditions\": [         {\"attribute\": \"DIA\", \"operator\": \"lt\", \"value\": 10}       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Processing Order:** 1. Modifications are applied before treatments 2. Modifications within the array are applied sequentially 3. All conditions must be true (AND logic) for trees to be selected 4. Actions are applied to all selected trees  ### Treatments  The `treatments` field is an array of treatment objects. Each treatment object represents a silvicultural treatment to be applied to the tree inventory. Currently, there are two types of treatment types available:  1. Proportional Thinning 2. Directional Thinning  #### Proportional Thinning  - `method`: \"proportionalThinning\" (string, required) - `targetMetric`: \"basalArea\" (string, required) - `targetValue`: float (required)   - Unit: square meters per hectare (m²/ha)   - Represents the target basal area after thinning  #### Directional Thinning  - `method`: \"directionalThinning\" (string, required) - `direction`: (string, required)   - Possible values: \"below\" or \"above\"   - Indicates whether to thin from below (smallest to largest) or above (largest to smallest) - `targetMetric`: (string, required)   - Possible values: \"diameter\" or \"basalArea\" - `targetValue`: float (required)   - Units of the targetValue quantity depends on the targetMetric:     - For \"diameter\": centimeters (cm)     - For \"basalArea\": square meters per hectare (m²/ha)   - Represents the threshold for thinning (diameter) or the target basal area after thinning  Note: The order of treatments in the array determines the sequence in which they will be applied to the tree inventory.  ## Response  If the request is successful, the endpoint will return a `201 Created` status code and the created tree inventory resource in the response body. The response body will be a JSON object with the following fields:  - `status` (string): The status of the tree inventory. Will be set to `\"pending\"` initially. - `createdOn` (string): The timestamp when the tree inventory was created. - `modifiedOn` (string): The timestamp when the tree inventory was last modified. - `checksum` (string): A unique checksum for the tree inventory resource.  ## Error Responses  - `404 Not Found`: If the specified domain does not exist or the user does not have access to it. - `422 Unprocessable Entity`: If `TreeMap` is specified as a source for a domain with a \"local\" coordinate system. - `422 Unprocessable Entity`: If `featureMasks` are provided but the required features resource is not in a \"completed\" state. - `422 Unprocessable Entity`: If `pointcloud` is specified as a source but the domain's 'als' pointcloud resource is not in a \"completed\" state. - `422 Unprocessable Entity`: If `pointcloud` is specified and the domain is outside the model's operational area. - `422 Unprocessable Entity`: If an unexpected error occurs during the point cloud spatial bound check. - `500 Internal Server Error`: If the point cloud model configuration is missing required data (e.g., spatial bounds). - `503 Service Unavailable`: If the background job service (e.g., StandGen or TreeCondenser) is temporarily unavailable or exhausted.
+        # Create Tree Inventory  This endpoint creates a new tree inventory resource for a specific domain. Tree Inventory data represents a complete forest inventory that exists within the spatial context of a domain. The tree inventory data can be generated using various data products and models that provide either national coverage (e.g., TreeMap) or local coverage.  On resource creation, the tree inventory data is set to a status of \"pending\". The tree inventory data is generated in the background using the specified method (e.g., TreeMap). Once the tree inventory data is generated and available for user access, the status is updated to \"completed\".  ## Endpoint  ``` POST /v1/domains/{domainId}/inventories/tree ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain for   which you want to create the tree inventory.  ## Request Body  The request body should be a JSON object containing the following fields:  - `sources` (array of strings, required): List of data sources to be used for building the tree inventory. Currently, only one data source at a time is supported. Possible values are:   - `\"TreeMap\"`: Indicates that the tree inventory should be created using the TreeMap raster product. This approach generates a tree inventory with national coverage.   - `\"file\"`: Indicates that you will upload a file via a signed url. Please see File Source Configuration for more info.   - `\"pointcloud\"`: Indicates that the tree inventory should be created from the domain's ALS point cloud resource. This resource must exist and be in a \"completed\" state.  - `modifications` (array of objects, optional): List of modifications to apply to the tree inventory data. Maximum 1000 modifications allowed. See the Modifications section below for details.  - `treatments` (array of objects, optional): List of silvicultural treatments to apply to the tree inventory. Maximum 1000 treatments allowed. See the Treatments section below for details.  - `featureMasks` (array of strings, optional): List of Features to mask tree inventory data. Referenced features must exist and be completed before creating the tree inventory.  ### TreeMap Source Configuration  If `\"TreeMap\"` is included in the `sources`, the request body can include additional configurations for `TreeMap`:  - `TreeMap` (object, optional): Advanced configurations for the TreeMap data source.   - `version` (string, optional): The version of TreeMap to use. Default is `\"2022\"`. Possible values are:     - `\"2014\"`: Use the 2014 version of TreeMap.     - `\"2016\"`: Use the 2016 version of TreeMap.     - `\"2020\"`: Use the 2020 version of TreeMap.     - `\"2022\"`: Use the 2022 version of TreeMap.   - `seed` (integer, optional): The random seed to use for generating the tree inventory. If not provided, a random seed will be generated.   - `canopyHeightMapConfiguration` (object, optional): Canopy height map configuration for TreeMap data source. If provided, the canopy height map will be used to segment and impute the coarse 30m TreeMap data with high-resolution canopy height data. Details of this approach will be provided in an upcoming publication. Please contact support.fastfuels@silvxlabs.com for more information.     - `source` (string, required): The source of the canopy height map data. Possible values are:         - `\"Meta2024\"`: Use the Meta2024 canopy height map data. More information about this data source can be found here: https://www.sciencedirect.com/science/article/pii/S003442572300439X  ### File Source Configuration Generate Signed URL for Tree Inventory Upload  If the source is `\"file\"`, this endpoint generates a signed URL that allows users to upload a CSV file representing the tree inventory data. The signed URL is valid for 1 hour and has a maximum upload size of 500 MB.  The full work flow consists of the following steps: 1. Call this endpoint to get a signed URL 2. Perform a put request to send your file to the signed url. Here is a python example:  ```[python] with open(\"your_file_goes_here.csv\", \"rb\") as file:     upload_response = requests.put(         signed_url_response[\"file\"][\"url\"],         data=file,         headers=signed_url_response[\"file\"][\"headers\"],     ) ``` **Note**: the signed_url_response has a field named \"file\" with the relevant info for the put request.  3. Your file will be validated and processed in the background 4. The status of your upload can be retrieved via and inventory get() request  #### Required Columns  The CSV file must include the following columns with their specified data types and constraints:  1. **SPCD** (Integer)    - FIA species code    - Must be an integer    - Represents standard FIA species classifications  2. **STATUSCD** (Integer)    - Tree status code    - Must be one of these values:      - 0: No status      - 1: Live      - 2: Dead      - 3: Missing  3. **DIA** (Float)    - Diameter at breast height (DBH)    - Unit: centimeters (cm)    - Range: 0 to 1200 cm    - Measured at 1.37 meters above ground  4. **HT** (Float)    - Tree height    - Unit: meters (m)    - Range: 0 to 116 meters    - Measured from ground to tree top  5. **CR** (Float)    - Crown ratio    - Unit: ratio (dimensionless)    - Range: 0 to 1    - Represents the ratio of crown length to total tree height  6. **X** (Float)    - X coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (west to east)    - Required: Yes    - Used for spatial positioning  7. **Y** (Float)    - Y coordinate in projected coordinate system    - Unit: meters (m)    - Range: Must fall within domain bounds (south to north)    - Required: Yes    - Used for spatial positioning  #### Optional Columns  8. **CROWN_FUEL_LOAD** (Float, Optional)    - Pre-computed crown foliage biomass    - Unit: kilograms (kg)    - Must be >= 0    - When provided, this value is used directly for voxelization instead of computing biomass from allometric equations (NSVB/Jenkins)  ### Point Cloud Source Configuration  If `\"pointcloud\"` is included in the `sources`, the endpoint will: 1. Verify that a completed ALS point cloud resource exists for the domain. 2. Perform a spatial check to ensure the domain's bounding box intersects with the operational area of the tree generation model. 3. If validation passes, it will schedule a background job (`treecondenser`) to generate the tree inventory from the point cloud data. ### Modifications  The `modifications` field allows you to filter and adjust tree inventory data before it's finalized. Modifications are applied sequentially in the order they appear in the array, and each modification consists of:  1. **Conditions**: Criteria for selecting which trees to modify (AND logic) 2. **Actions**: Operations to perform on selected trees  #### Modification Structure  ```json {   \"conditions\": [     {/* condition 1 */},     {/* condition 2 */}   ],   \"actions\": [     {/* action 1 */},     {/* action 2 */}   ] } ```  All conditions must be true (AND logic) for a tree to be selected. Actions are then applied to all selected trees.  #### Condition Types  **1. Simple Field Conditions**  Filter trees based on individual field values:  - **Available Fields**: `HT` (height), `DIA` (diameter), `CR` (crown ratio), `SPCD` (species code) - **Operators**: `eq` (equals), `ne` (not equals), `gt` (greater than), `lt` (less than), `ge` (greater than or equal), `le` (less than or equal)  **Example**: Select trees taller than 20 meters ```json {   \"attribute\": \"HT\",   \"operator\": \"gt\",   \"value\": 20 } ```  **2. Expression-Based Conditions**  Filter trees based on arithmetic expressions combining multiple fields. This enables complex filtering logic in a single API call, replacing download-modify-upload workflows.  - **Available Fields**: `HT`, `DIA`, `CR` - **Operators**: `+`, `-`, `*`, `/`, `()` - **Comparison Operators**: Same as simple conditions (`eq`, `ne`, `gt`, `lt`, `ge`, `le`)  **Example**: Select trees where crown length (HT × CR) is less than 1 meter ```json {   \"attribute\": \"expression\",   \"expression\": \"HT * CR\",   \"operator\": \"lt\",   \"value\": 1.0 } ```  **Common Expression Use Cases:**  - **Crown length**: `HT * CR` (vertical extent of crown) - **Crown base height**: `HT * (1 - CR)` (height where crown begins) - **Height-to-diameter ratio**: `HT / DIA` (slenderness ratio) - **Average metrics**: `(HT + DIA) / 2`  **Security Notes:** - Only arithmetic operations permitted - No function calls, imports, or code execution - Validated at API level for safety  **Multiple Conditions:**  Combine multiple conditions with AND logic: ```json {   \"conditions\": [     {       \"attribute\": \"expression\",       \"expression\": \"HT * CR\",       \"operator\": \"gt\",       \"value\": 5.0     },     {       \"attribute\": \"SPCD\",       \"operator\": \"eq\",       \"value\": 202     }   ],   \"actions\": [...] } ``` This selects Douglas-fir trees (SPCD=202) with crown length > 5m.  #### Action Types  **1. Modify Field Values**  Adjust tree attributes for selected trees:  - **Available Fields**: `HT`, `DIA`, `CR`, `SPCD` - **Modifiers**:   - `multiply`: Multiply by value   - `divide`: Divide by value   - `add`: Add value   - `subtract`: Subtract value   - `replace`: Replace with value  **Example**: Reduce height of tall trees by 10% ```json {   \"attribute\": \"HT\",   \"modifier\": \"multiply\",   \"value\": 0.9 } ```  **Value Constraints**: Modifications automatically enforce valid ranges: - `HT` ≥ 0 (height cannot be negative) - `DIA` ≥ 0 (diameter cannot be negative) - `CR`: 0 ≤ CR ≤ 1 (crown ratio must be between 0 and 1)  **2. Remove Trees**  Remove selected trees from the inventory.  **New simplified syntax** (recommended): ```json {   \"modifier\": \"remove\" } ```  **Legacy syntax** (still supported): ```json {   \"attribute\": \"all\",   \"modifier\": \"remove\" } ```  Both syntaxes produce identical results and are fully backwards compatible.  **Important**: Remove action must be the only action in the actions array. Multiple actions cannot be combined with remove.  #### Complete Modification Examples  **Example 1: Remove trees with short crowns**  Replace pandas workflow: ```python # Old workflow: download CSV, filter in pandas df = df[df['HT'] * df['CR'] >= 1] # ...then re-upload ```  With single API call: ```json {   \"modifications\": [     {       \"conditions\": [         {           \"attribute\": \"expression\",           \"expression\": \"HT * CR\",           \"operator\": \"lt\",           \"value\": 1.0         }       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Example 2: Remove unrealistic trees**  Remove trees with abnormal height-to-diameter ratio: ```json {   \"modifications\": [     {       \"conditions\": [         {           \"attribute\": \"expression\",           \"expression\": \"HT / DIA\",           \"operator\": \"gt\",           \"value\": 100.0         }       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Example 3: Modify and filter**  Reduce height of tall trees, then remove small diameter trees: ```json {   \"modifications\": [     {       \"conditions\": [         {\"attribute\": \"HT\", \"operator\": \"gt\", \"value\": 30}       ],       \"actions\": [         {\"attribute\": \"HT\", \"modifier\": \"multiply\", \"value\": 0.9}       ]     },     {       \"conditions\": [         {\"attribute\": \"DIA\", \"operator\": \"lt\", \"value\": 10}       ],       \"actions\": [         {\"modifier\": \"remove\"}       ]     }   ] } ```  **Processing Order:** 1. Modifications are applied before treatments 2. Modifications within the array are applied sequentially 3. All conditions must be true (AND logic) for trees to be selected 4. Actions are applied to all selected trees  ### Treatments  The `treatments` field is an array of treatment objects. Each treatment object represents a silvicultural treatment to be applied to the tree inventory. Currently, there are two types of treatment types available:  1. Proportional Thinning 2. Directional Thinning  #### Proportional Thinning  - `method`: \"proportionalThinning\" (string, required) - `targetMetric`: \"basalArea\" (string, required) - `targetValue`: float (required)   - Unit: square meters per hectare (m²/ha)   - Represents the target basal area after thinning  #### Directional Thinning  - `method`: \"directionalThinning\" (string, required) - `direction`: (string, required)   - Possible values: \"below\" or \"above\"   - Indicates whether to thin from below (smallest to largest) or above (largest to smallest) - `targetMetric`: (string, required)   - Possible values: \"diameter\" or \"basalArea\" - `targetValue`: float (required)   - Units of the targetValue quantity depends on the targetMetric:     - For \"diameter\": centimeters (cm)     - For \"basalArea\": square meters per hectare (m²/ha)   - Represents the threshold for thinning (diameter) or the target basal area after thinning  Note: The order of treatments in the array determines the sequence in which they will be applied to the tree inventory.  ## Response  If the request is successful, the endpoint will return a `201 Created` status code and the created tree inventory resource in the response body. The response body will be a JSON object with the following fields:  - `status` (string): The status of the tree inventory. Will be set to `\"pending\"` initially. - `createdOn` (string): The timestamp when the tree inventory was created. - `modifiedOn` (string): The timestamp when the tree inventory was last modified. - `checksum` (string): A unique checksum for the tree inventory resource.  ## Error Responses  - `404 Not Found`: If the specified domain does not exist or the user does not have access to it. - `422 Unprocessable Entity`: If `TreeMap` is specified as a source for a domain with a \"local\" coordinate system. - `422 Unprocessable Entity`: If `featureMasks` are provided but the required features resource is not in a \"completed\" state. - `422 Unprocessable Entity`: If `pointcloud` is specified as a source but the domain's 'als' pointcloud resource is not in a \"completed\" state. - `422 Unprocessable Entity`: If `pointcloud` is specified and the domain is outside the model's operational area. - `422 Unprocessable Entity`: If an unexpected error occurs during the point cloud spatial bound check. - `500 Internal Server Error`: If the point cloud model configuration is missing required data (e.g., spatial bounds). - `503 Service Unavailable`: If the background job service (e.g., StandGen or TreeCondenser) is temporarily unavailable or exhausted.
 
         :param domain_id: (required)
         :type domain_id: str
@@ -1127,6 +1129,605 @@ class TreeInventoryApi:
         return self.api_client.param_serialize(
             method='GET',
             resource_path='/v1/domains/{domainId}/inventories/tree',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def get_tree_inventory_attribute_metadata(
+        self,
+        domain_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> TreeInventoryAttributeMetadataResponse:
+        """Get Tree Inventory Attribute Metadata
+
+        # Get Tree Inventory Attribute Metadata  Returns metadata about the tree inventory structure including total tree count, number of partitions, and column descriptions.  ## Endpoint  ``` GET /v1/domains/{domainId}/inventories/tree/attributes ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain.  ## Response  If the request is successful, the endpoint will return a `200 OK` status code and metadata about the tree inventory structure:  - `totalTrees` (integer): Total number of trees in the inventory. - `partitions` (integer): Number of parquet partitions (spatial chunks). - `columns` (array): List of column metadata objects with:   - `name` (string): Column name   - `description` (string): Column description   - `dtype` (string): Data type   - `units` (string, optional): Units of measurement  ## Error Responses  - `404 Not Found`: The specified domain does not exist or the user does not have access to it. - `422 Unprocessable Entity`: The tree inventory does not exist or is not completed.
+
+        :param domain_id: (required)
+        :type domain_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_tree_inventory_attribute_metadata_serialize(
+            domain_id=domain_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "TreeInventoryAttributeMetadataResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def get_tree_inventory_attribute_metadata_with_http_info(
+        self,
+        domain_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[TreeInventoryAttributeMetadataResponse]:
+        """Get Tree Inventory Attribute Metadata
+
+        # Get Tree Inventory Attribute Metadata  Returns metadata about the tree inventory structure including total tree count, number of partitions, and column descriptions.  ## Endpoint  ``` GET /v1/domains/{domainId}/inventories/tree/attributes ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain.  ## Response  If the request is successful, the endpoint will return a `200 OK` status code and metadata about the tree inventory structure:  - `totalTrees` (integer): Total number of trees in the inventory. - `partitions` (integer): Number of parquet partitions (spatial chunks). - `columns` (array): List of column metadata objects with:   - `name` (string): Column name   - `description` (string): Column description   - `dtype` (string): Data type   - `units` (string, optional): Units of measurement  ## Error Responses  - `404 Not Found`: The specified domain does not exist or the user does not have access to it. - `422 Unprocessable Entity`: The tree inventory does not exist or is not completed.
+
+        :param domain_id: (required)
+        :type domain_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_tree_inventory_attribute_metadata_serialize(
+            domain_id=domain_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "TreeInventoryAttributeMetadataResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def get_tree_inventory_attribute_metadata_without_preload_content(
+        self,
+        domain_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Get Tree Inventory Attribute Metadata
+
+        # Get Tree Inventory Attribute Metadata  Returns metadata about the tree inventory structure including total tree count, number of partitions, and column descriptions.  ## Endpoint  ``` GET /v1/domains/{domainId}/inventories/tree/attributes ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain.  ## Response  If the request is successful, the endpoint will return a `200 OK` status code and metadata about the tree inventory structure:  - `totalTrees` (integer): Total number of trees in the inventory. - `partitions` (integer): Number of parquet partitions (spatial chunks). - `columns` (array): List of column metadata objects with:   - `name` (string): Column name   - `description` (string): Column description   - `dtype` (string): Data type   - `units` (string, optional): Units of measurement  ## Error Responses  - `404 Not Found`: The specified domain does not exist or the user does not have access to it. - `422 Unprocessable Entity`: The tree inventory does not exist or is not completed.
+
+        :param domain_id: (required)
+        :type domain_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_tree_inventory_attribute_metadata_serialize(
+            domain_id=domain_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "TreeInventoryAttributeMetadataResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_tree_inventory_attribute_metadata_serialize(
+        self,
+        domain_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if domain_id is not None:
+            _path_params['domainId'] = domain_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'APIKeyHeader', 
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/v1/domains/{domainId}/inventories/tree/attributes',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def get_tree_inventory_data(
+        self,
+        domain_id: StrictStr,
+        partition: Annotated[Optional[Annotated[int, Field(strict=True, ge=0)]], Field(description="Partition index (0-indexed)")] = None,
+        columns: Annotated[Optional[List[StrictStr]], Field(description="Columns to return. Valid columns: SPCD, STATUSCD, DIA, HT, CR, X, Y, CROWN_FUEL_LOAD. Returns all columns if not specified.")] = None,
+        format: Annotated[Optional[StrictStr], Field(description="Response format")] = None,
+        json_orientation: Annotated[Optional[StrictStr], Field(description="JSON orientation: 'split' (columns + data arrays, default) or 'records' (list of dicts)")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> object:
+        """Get Tree Inventory Data
+
+        # Get Tree Inventory Data  Retrieves tree inventory data for a specific partition. Data is partitioned spatially into ~1km² chunks for efficient retrieval.  ## Endpoint  ``` GET /v1/domains/{domainId}/inventories/tree/data ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain.  ## Query Parameters  - `partition` (integer, optional): Partition index (0-indexed, default 0). - `columns` (array of strings, optional): Columns to return. Valid values: SPCD, STATUSCD, DIA, HT, CR, X, Y. Returns all columns if not specified. - `format` (string, optional): Response format - \"json\" (default) or \"csv\". - `jsonOrientation` (string, optional): For JSON responses - \"split\" (default, columns + data arrays) or \"records\" (list of dicts).  ## Response (JSON split - default)  ```json {     \"partition\": 0,     \"partitionId\": \"0_0\",     \"treeCount\": 1500,     \"columns\": [\"SPCD\", \"STATUSCD\", \"DIA\", \"HT\", \"CR\", \"X\", \"Y\"],     \"data\": [[122, 1, 25.4, 18.5, 0.45, 500123.5, 4500234.2], ...] } ```  ## Response (JSON records)  ```json {     \"partition\": 0,     \"partitionId\": \"0_0\",     \"treeCount\": 1500,     \"data\": [         {\"SPCD\": 122, \"STATUSCD\": 1, \"DIA\": 25.4, \"HT\": 18.5, \"CR\": 0.45, \"X\": 500123.5, \"Y\": 4500234.2},         ...     ] } ```  ## Response (CSV)  Returns CSV content with headers: `X-Partition-Id`, `X-Tree-Count`  ``` SPCD,STATUSCD,DIA,HT,CR,X,Y 122,1,25.4,18.5,0.45,500123.5,4500234.2 ... ```  ## Error Responses  - `400 Bad Request`: Invalid column name specified. - `404 Not Found`: The specified domain does not exist, the user does not have access, or the partition does not exist. - `422 Unprocessable Entity`: The tree inventory does not exist or is not completed.
+
+        :param domain_id: (required)
+        :type domain_id: str
+        :param partition: Partition index (0-indexed)
+        :type partition: int
+        :param columns: Columns to return. Valid columns: SPCD, STATUSCD, DIA, HT, CR, X, Y, CROWN_FUEL_LOAD. Returns all columns if not specified.
+        :type columns: List[str]
+        :param format: Response format
+        :type format: str
+        :param json_orientation: JSON orientation: 'split' (columns + data arrays, default) or 'records' (list of dicts)
+        :type json_orientation: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_tree_inventory_data_serialize(
+            domain_id=domain_id,
+            partition=partition,
+            columns=columns,
+            format=format,
+            json_orientation=json_orientation,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def get_tree_inventory_data_with_http_info(
+        self,
+        domain_id: StrictStr,
+        partition: Annotated[Optional[Annotated[int, Field(strict=True, ge=0)]], Field(description="Partition index (0-indexed)")] = None,
+        columns: Annotated[Optional[List[StrictStr]], Field(description="Columns to return. Valid columns: SPCD, STATUSCD, DIA, HT, CR, X, Y, CROWN_FUEL_LOAD. Returns all columns if not specified.")] = None,
+        format: Annotated[Optional[StrictStr], Field(description="Response format")] = None,
+        json_orientation: Annotated[Optional[StrictStr], Field(description="JSON orientation: 'split' (columns + data arrays, default) or 'records' (list of dicts)")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[object]:
+        """Get Tree Inventory Data
+
+        # Get Tree Inventory Data  Retrieves tree inventory data for a specific partition. Data is partitioned spatially into ~1km² chunks for efficient retrieval.  ## Endpoint  ``` GET /v1/domains/{domainId}/inventories/tree/data ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain.  ## Query Parameters  - `partition` (integer, optional): Partition index (0-indexed, default 0). - `columns` (array of strings, optional): Columns to return. Valid values: SPCD, STATUSCD, DIA, HT, CR, X, Y. Returns all columns if not specified. - `format` (string, optional): Response format - \"json\" (default) or \"csv\". - `jsonOrientation` (string, optional): For JSON responses - \"split\" (default, columns + data arrays) or \"records\" (list of dicts).  ## Response (JSON split - default)  ```json {     \"partition\": 0,     \"partitionId\": \"0_0\",     \"treeCount\": 1500,     \"columns\": [\"SPCD\", \"STATUSCD\", \"DIA\", \"HT\", \"CR\", \"X\", \"Y\"],     \"data\": [[122, 1, 25.4, 18.5, 0.45, 500123.5, 4500234.2], ...] } ```  ## Response (JSON records)  ```json {     \"partition\": 0,     \"partitionId\": \"0_0\",     \"treeCount\": 1500,     \"data\": [         {\"SPCD\": 122, \"STATUSCD\": 1, \"DIA\": 25.4, \"HT\": 18.5, \"CR\": 0.45, \"X\": 500123.5, \"Y\": 4500234.2},         ...     ] } ```  ## Response (CSV)  Returns CSV content with headers: `X-Partition-Id`, `X-Tree-Count`  ``` SPCD,STATUSCD,DIA,HT,CR,X,Y 122,1,25.4,18.5,0.45,500123.5,4500234.2 ... ```  ## Error Responses  - `400 Bad Request`: Invalid column name specified. - `404 Not Found`: The specified domain does not exist, the user does not have access, or the partition does not exist. - `422 Unprocessable Entity`: The tree inventory does not exist or is not completed.
+
+        :param domain_id: (required)
+        :type domain_id: str
+        :param partition: Partition index (0-indexed)
+        :type partition: int
+        :param columns: Columns to return. Valid columns: SPCD, STATUSCD, DIA, HT, CR, X, Y, CROWN_FUEL_LOAD. Returns all columns if not specified.
+        :type columns: List[str]
+        :param format: Response format
+        :type format: str
+        :param json_orientation: JSON orientation: 'split' (columns + data arrays, default) or 'records' (list of dicts)
+        :type json_orientation: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_tree_inventory_data_serialize(
+            domain_id=domain_id,
+            partition=partition,
+            columns=columns,
+            format=format,
+            json_orientation=json_orientation,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def get_tree_inventory_data_without_preload_content(
+        self,
+        domain_id: StrictStr,
+        partition: Annotated[Optional[Annotated[int, Field(strict=True, ge=0)]], Field(description="Partition index (0-indexed)")] = None,
+        columns: Annotated[Optional[List[StrictStr]], Field(description="Columns to return. Valid columns: SPCD, STATUSCD, DIA, HT, CR, X, Y, CROWN_FUEL_LOAD. Returns all columns if not specified.")] = None,
+        format: Annotated[Optional[StrictStr], Field(description="Response format")] = None,
+        json_orientation: Annotated[Optional[StrictStr], Field(description="JSON orientation: 'split' (columns + data arrays, default) or 'records' (list of dicts)")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Get Tree Inventory Data
+
+        # Get Tree Inventory Data  Retrieves tree inventory data for a specific partition. Data is partitioned spatially into ~1km² chunks for efficient retrieval.  ## Endpoint  ``` GET /v1/domains/{domainId}/inventories/tree/data ```  ## Path Parameters  - `domainId` (string, required): The unique identifier of the domain.  ## Query Parameters  - `partition` (integer, optional): Partition index (0-indexed, default 0). - `columns` (array of strings, optional): Columns to return. Valid values: SPCD, STATUSCD, DIA, HT, CR, X, Y. Returns all columns if not specified. - `format` (string, optional): Response format - \"json\" (default) or \"csv\". - `jsonOrientation` (string, optional): For JSON responses - \"split\" (default, columns + data arrays) or \"records\" (list of dicts).  ## Response (JSON split - default)  ```json {     \"partition\": 0,     \"partitionId\": \"0_0\",     \"treeCount\": 1500,     \"columns\": [\"SPCD\", \"STATUSCD\", \"DIA\", \"HT\", \"CR\", \"X\", \"Y\"],     \"data\": [[122, 1, 25.4, 18.5, 0.45, 500123.5, 4500234.2], ...] } ```  ## Response (JSON records)  ```json {     \"partition\": 0,     \"partitionId\": \"0_0\",     \"treeCount\": 1500,     \"data\": [         {\"SPCD\": 122, \"STATUSCD\": 1, \"DIA\": 25.4, \"HT\": 18.5, \"CR\": 0.45, \"X\": 500123.5, \"Y\": 4500234.2},         ...     ] } ```  ## Response (CSV)  Returns CSV content with headers: `X-Partition-Id`, `X-Tree-Count`  ``` SPCD,STATUSCD,DIA,HT,CR,X,Y 122,1,25.4,18.5,0.45,500123.5,4500234.2 ... ```  ## Error Responses  - `400 Bad Request`: Invalid column name specified. - `404 Not Found`: The specified domain does not exist, the user does not have access, or the partition does not exist. - `422 Unprocessable Entity`: The tree inventory does not exist or is not completed.
+
+        :param domain_id: (required)
+        :type domain_id: str
+        :param partition: Partition index (0-indexed)
+        :type partition: int
+        :param columns: Columns to return. Valid columns: SPCD, STATUSCD, DIA, HT, CR, X, Y, CROWN_FUEL_LOAD. Returns all columns if not specified.
+        :type columns: List[str]
+        :param format: Response format
+        :type format: str
+        :param json_orientation: JSON orientation: 'split' (columns + data arrays, default) or 'records' (list of dicts)
+        :type json_orientation: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_tree_inventory_data_serialize(
+            domain_id=domain_id,
+            partition=partition,
+            columns=columns,
+            format=format,
+            json_orientation=json_orientation,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_tree_inventory_data_serialize(
+        self,
+        domain_id,
+        partition,
+        columns,
+        format,
+        json_orientation,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+            'columns': 'multi',
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if domain_id is not None:
+            _path_params['domainId'] = domain_id
+        # process the query parameters
+        if partition is not None:
+            
+            _query_params.append(('partition', partition))
+            
+        if columns is not None:
+            
+            _query_params.append(('columns', columns))
+            
+        if format is not None:
+            
+            _query_params.append(('format', format))
+            
+        if json_orientation is not None:
+            
+            _query_params.append(('jsonOrientation', json_orientation))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'APIKeyHeader', 
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/v1/domains/{domainId}/inventories/tree/data',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,

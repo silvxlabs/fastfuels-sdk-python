@@ -17,22 +17,22 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt
+from typing import Any, ClassVar, Dict, List, Union
+from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
 
-class ApiResourcesPointcloudsAlsSchemaUploadResponse(BaseModel):
+class ChunkMetadataResponse(BaseModel):
     """
-    Upload response model to provide all necessary information and updates for file upload process.
+    ChunkMetadataResponse
     """ # noqa: E501
-    message: Optional[StrictStr] = None
-    method: Optional[StrictStr] = None
-    url: Optional[StrictStr] = None
-    headers: Optional[Dict[str, StrictStr]] = None
-    curl: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["message", "method", "url", "headers", "curl"]
+    index: StrictInt = Field(description="The chunk index.")
+    shape: Annotated[List[Any], Field(min_length=2, max_length=2)] = Field(description="The shape of this chunk (may be smaller for edge chunks).")
+    offset: Annotated[List[Any], Field(min_length=2, max_length=2)] = Field(description="The pixel offset (row, col) of this chunk within the full grid.")
+    transform: Annotated[List[Union[StrictFloat, StrictInt]], Field(min_length=6, max_length=6)] = Field(description="Affine transform coefficients [a, b, c, d, e, f] for this chunk.")
+    __properties: ClassVar[List[str]] = ["index", "shape", "offset", "transform"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -52,7 +52,7 @@ class ApiResourcesPointcloudsAlsSchemaUploadResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ApiResourcesPointcloudsAlsSchemaUploadResponse from a JSON string"""
+        """Create an instance of ChunkMetadataResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -73,36 +73,11 @@ class ApiResourcesPointcloudsAlsSchemaUploadResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if message (nullable) is None
-        # and model_fields_set contains the field
-        if self.message is None and "message" in self.model_fields_set:
-            _dict['message'] = None
-
-        # set to None if method (nullable) is None
-        # and model_fields_set contains the field
-        if self.method is None and "method" in self.model_fields_set:
-            _dict['method'] = None
-
-        # set to None if url (nullable) is None
-        # and model_fields_set contains the field
-        if self.url is None and "url" in self.model_fields_set:
-            _dict['url'] = None
-
-        # set to None if headers (nullable) is None
-        # and model_fields_set contains the field
-        if self.headers is None and "headers" in self.model_fields_set:
-            _dict['headers'] = None
-
-        # set to None if curl (nullable) is None
-        # and model_fields_set contains the field
-        if self.curl is None and "curl" in self.model_fields_set:
-            _dict['curl'] = None
-
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ApiResourcesPointcloudsAlsSchemaUploadResponse from a dict"""
+        """Create an instance of ChunkMetadataResponse from a dict"""
         if obj is None:
             return None
 
@@ -110,11 +85,10 @@ class ApiResourcesPointcloudsAlsSchemaUploadResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "message": obj.get("message"),
-            "method": obj.get("method"),
-            "url": obj.get("url"),
-            "headers": obj.get("headers"),
-            "curl": obj.get("curl")
+            "index": obj.get("index"),
+            "shape": obj.get("shape"),
+            "offset": obj.get("offset"),
+            "transform": obj.get("transform")
         })
         return _obj
 
