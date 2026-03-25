@@ -591,6 +591,11 @@ class Inventories(InventoriesModel):
             - X (Float): X coordinate in projected coordinate system (nullable)
             - Y (Float): Y coordinate in projected coordinate system (nullable)
 
+            Optional columns:
+            - CROWN_FUEL_LOAD (Float): Pre-computed crown foliage biomass in kg.
+              When provided, this value is used directly for voxelization instead
+              of computing biomass from allometric equations. Must be >= 0.
+
         Returns
         -------
         TreeInventory
