@@ -1,4 +1,4 @@
-exclude: ^fastfuels_sdk/v1/client_library/
+exclude: ^fastfuels_sdk/(v1|v2)/client_library/
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0

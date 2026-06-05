@@ -1,0 +1,195 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    TypeVar,
+    cast,
+)
+
+from attrs import define as _attrs_define
+from attrs import field as _attrs_field
+
+from ..models.grid_spatial_target import GridSpatialTarget
+from ..models.spatial_operator import SpatialOperator
+from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+    from ..models.grid_geometry_spatial_condition_crs_type_0 import (
+        GridGeometrySpatialConditionCrsType0,
+    )
+    from ..models.grid_geometry_spatial_condition_geometry import (
+        GridGeometrySpatialConditionGeometry,
+    )
+
+
+T = TypeVar("T", bound="GridGeometrySpatialCondition")
+
+
+@_attrs_define
+class GridGeometrySpatialCondition:
+    """Spatial condition that tests cells against an inline GeoJSON geometry.
+
+    Use this variant when the geometry is supplied directly in the request
+    (e.g. a hand-drawn polygon). For a persisted geometry hosted as a
+    Feature resource, use ``GridFeatureSpatialCondition`` instead.
+
+        Attributes:
+            source (Literal['geometry']): Discriminator selecting this variant. Must be the literal string `"geometry"`. Use
+                `"feature"` instead to reference a persisted Feature resource by id.
+            operator (SpatialOperator): Spatial relationship operators for geometry-based conditions.
+
+                - within: Select items whose target (centroid or cell) is inside the geometry
+                - outside: Select items whose target is outside the geometry (inverse of within)
+                - intersects: Select items whose target overlaps with the geometry
+            geometry (GridGeometrySpatialConditionGeometry): Inline GeoJSON geometry. Polygon and MultiPolygon are the
+                common shapes; LineString works in combination with `target="cell"` since centroid-mode rarely matches a bare
+                line.
+            crs (GridGeometrySpatialConditionCrsType0 | None | Unset): CRS of `geometry`, expressed as a GeoJSON CRS object
+                (`{"type": "name", "properties": {"name": "EPSG:..."}}`). Defaults to the domain CRS when null.
+            buffer_m (float | None | Unset): Optional buffer distance in meters applied to the geometry (in the domain's
+                projected CRS) before testing. Use a non-zero buffer to widen the masked region beyond the literal geometry
+                (e.g. shoreline tolerance around a water polygon).
+            target (GridSpatialTarget | Unset): Specifies which part of a grid cell is tested against the geometry.
+
+                - centroid: Test only the cell's centroid point against the geometry
+                - cell: Test the entire cell bounds against the geometry
+    """
+
+    source: Literal["geometry"]
+    operator: SpatialOperator
+    geometry: GridGeometrySpatialConditionGeometry
+    crs: GridGeometrySpatialConditionCrsType0 | None | Unset = UNSET
+    buffer_m: float | None | Unset = UNSET
+    target: GridSpatialTarget | Unset = UNSET
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        from ..models.grid_geometry_spatial_condition_crs_type_0 import (
+            GridGeometrySpatialConditionCrsType0,
+        )
+
+        source = self.source
+
+        operator = self.operator.value
+
+        geometry = self.geometry.to_dict()
+
+        crs: dict[str, Any] | None | Unset
+        if isinstance(self.crs, Unset):
+            crs = UNSET
+        elif isinstance(self.crs, GridGeometrySpatialConditionCrsType0):
+            crs = self.crs.to_dict()
+        else:
+            crs = self.crs
+
+        buffer_m: float | None | Unset
+        if isinstance(self.buffer_m, Unset):
+            buffer_m = UNSET
+        else:
+            buffer_m = self.buffer_m
+
+        target: str | Unset = UNSET
+        if not isinstance(self.target, Unset):
+            target = self.target.value
+
+        field_dict: dict[str, Any] = {}
+        field_dict.update(self.additional_properties)
+        field_dict.update(
+            {
+                "source": source,
+                "operator": operator,
+                "geometry": geometry,
+            }
+        )
+        if crs is not UNSET:
+            field_dict["crs"] = crs
+        if buffer_m is not UNSET:
+            field_dict["buffer_m"] = buffer_m
+        if target is not UNSET:
+            field_dict["target"] = target
+
+        return field_dict
+
+    @classmethod
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.grid_geometry_spatial_condition_crs_type_0 import (
+            GridGeometrySpatialConditionCrsType0,
+        )
+        from ..models.grid_geometry_spatial_condition_geometry import (
+            GridGeometrySpatialConditionGeometry,
+        )
+
+        d = dict(src_dict)
+        source = cast(Literal["geometry"], d.pop("source"))
+        if source != "geometry":
+            raise ValueError(f"source must match const 'geometry', got '{source}'")
+
+        operator = SpatialOperator(d.pop("operator"))
+
+        geometry = GridGeometrySpatialConditionGeometry.from_dict(d.pop("geometry"))
+
+        def _parse_crs(
+            data: object,
+        ) -> GridGeometrySpatialConditionCrsType0 | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                crs_type_0 = GridGeometrySpatialConditionCrsType0.from_dict(data)
+
+                return crs_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(GridGeometrySpatialConditionCrsType0 | None | Unset, data)
+
+        crs = _parse_crs(d.pop("crs", UNSET))
+
+        def _parse_buffer_m(data: object) -> float | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(float | None | Unset, data)
+
+        buffer_m = _parse_buffer_m(d.pop("buffer_m", UNSET))
+
+        _target = d.pop("target", UNSET)
+        target: GridSpatialTarget | Unset
+        if isinstance(_target, Unset):
+            target = UNSET
+        else:
+            target = GridSpatialTarget(_target)
+
+        grid_geometry_spatial_condition = cls(
+            source=source,
+            operator=operator,
+            geometry=geometry,
+            crs=crs,
+            buffer_m=buffer_m,
+            target=target,
+        )
+
+        grid_geometry_spatial_condition.additional_properties = d
+        return grid_geometry_spatial_condition
+
+    @property
+    def additional_keys(self) -> list[str]:
+        return list(self.additional_properties.keys())
+
+    def __getitem__(self, key: str) -> Any:
+        return self.additional_properties[key]
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        self.additional_properties[key] = value
+
+    def __delitem__(self, key: str) -> None:
+        del self.additional_properties[key]
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.additional_properties
