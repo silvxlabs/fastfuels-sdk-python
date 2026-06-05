@@ -7,6 +7,7 @@ from .allometry_biomass_source_component_states import (
 )
 from .allometry_max_crown_radius_source import AllometryMaxCrownRadiusSource
 from .application import Application
+from .apply_modifications_request import ApplyModificationsRequest
 from .band import Band
 from .band_type import BandType
 from .base_model import BaseModel
@@ -221,6 +222,7 @@ __all__ = (
     "AllometryBiomassSourceComponentStates",
     "AllometryMaxCrownRadiusSource",
     "Application",
+    "ApplyModificationsRequest",
     "Band",
     "BandType",
     "BaseModel",

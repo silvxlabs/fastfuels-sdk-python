@@ -37,5 +37,21 @@ uvx "openapi-python-client@${OPC_VERSION}" generate \
   --output-path client_library \
   --overwrite
 
+# openapi-python-client embeds no server URL (the spec has no `servers`
+# entry, and the generated client takes base_url at construction time), so
+# record the deployment URL this client was generated against. api.py
+# imports it as the SDK default — this script is the single source of
+# truth for the URL.
+cat > client_library/base_url.py <<EOF
+"""Deployment URL of the FastFuels v2 API this client was generated against.
+
+Written by generate_client.sh (the OpenAPI spec carries no \`servers\`
+entry and openapi-python-client takes base_url at construction time, so
+the regen script records the URL alongside the client it generates).
+"""
+
+DEFAULT_BASE_URL = "$URL"
+EOF
+
 rm -f "$SPEC" "$PATCHED"
 echo "Done."
