@@ -9,49 +9,25 @@ must create its own throwaway instead. Expensive job resources (the
 completed OSM road feature; later, grids and inventories) are built once
 per session and torn down with the domain — deleting the domain cascades
 to everything created inside it.
-"""
 
-from datetime import datetime, timedelta, timezone
+Fixtures that wait on a job carry a ``completed_`` prefix; resources
+that are born complete (layerset uploads) don't need one.
+"""
 
 import pytest
 
-from fastfuels_sdk.v2.domains import list_domains
 from fastfuels_sdk.v2.features import Feature
 from tests.v2.utils import (
-    SWEEP_TAG,
     create_default_domain,
     create_default_layerset_geojson,
+    sweep_leftover_domains,
 )
 
-# Leaked resources older than this are fair game for the sweeper. The
-# age gate keeps the sweeper from deleting the live resources of another
-# run happening at the same time (e.g. local + CI).
-SWEEP_AGE = timedelta(hours=2)
-
 
 @pytest.fixture(scope="session")
-def _swept_leftover_domains():
-    """Delete test domains leaked by crashed or interrupted runs.
-
-    Teardown never runs when a session is killed mid-flight, so tagged
-    test domains can accumulate on the live account. Sweep anything
-    carrying the test fingerprint tag that is older than SWEEP_AGE.
-    """
-    cutoff = datetime.now(timezone.utc) - SWEEP_AGE
-    for domain in list_domains(size=100):
-        tags = domain.tags if isinstance(domain.tags, list) else []
-        created_on = domain.created_on
-        if (
-            SWEEP_TAG in tags
-            and isinstance(created_on, datetime)
-            and created_on < cutoff
-        ):
-            domain.delete()
-
-
-@pytest.fixture(scope="session")
-def test_domain(_swept_leftover_domains):
+def test_domain():
     """The session-wide test domain. READ-ONLY: shared by every module."""
+    sweep_leftover_domains()
     domain = create_default_domain()
     yield domain
     # Cleanup: deleting the domain also deletes its features
@@ -59,7 +35,7 @@ def test_domain(_swept_leftover_domains):
 
 
 @pytest.fixture(scope="session")
-def road_feature(test_domain):
+def completed_road_feature(test_domain):
     """A completed OSM road feature. READ-ONLY: shared by every module."""
     feature = Feature.create_osm_road(
         test_domain.id,
@@ -73,7 +49,7 @@ def road_feature(test_domain):
 
 @pytest.fixture(scope="session")
 def layerset_feature(test_domain):
-    """A layerset feature (synchronous upload). READ-ONLY: shared by every module."""
+    """A layerset feature (born completed). READ-ONLY: shared by every module."""
     return Feature.create_layerset(
         test_domain.id,
         create_default_layerset_geojson(),

@@ -3,11 +3,13 @@ tests/v2/utils.py
 """
 
 import json
-from tests import TEST_DATA_DIR
-from fastfuels_sdk.v2.domains import Domain
+from datetime import datetime, timedelta, timezone
 
-# Fingerprint tag for test-created domains, so the session-start sweeper
-# (tests/v2/conftest.py) can find resources leaked by crashed runs
+from tests import TEST_DATA_DIR
+from fastfuels_sdk.v2.domains import Domain, list_domains
+
+# Fingerprint tag for test-created domains, so the session-start sweep
+# can find resources leaked by crashed runs
 SWEEP_TAG = "sdk-test"
 
 # Required fuelbed input columns for layerset features
@@ -36,6 +38,21 @@ def create_default_domain() -> Domain:
     )
 
     return domain
+
+
+def sweep_leftover_domains(max_age: timedelta = timedelta(hours=2)) -> None:
+    """Delete test domains leaked by crashed or interrupted runs.
+
+    Teardown never runs when a session is killed mid-flight, so test
+    domains can accumulate on the live account. Deletes domains carrying
+    SWEEP_TAG that are older than ``max_age``; the age gate keeps
+    concurrent runs (e.g. local + CI) from sweeping each other's live
+    resources.
+    """
+    cutoff = datetime.now(timezone.utc) - max_age
+    for domain in list_domains(size=100):
+        if SWEEP_TAG in (domain.tags or []) and domain.created_on < cutoff:
+            domain.delete()
 
 
 def create_default_layerset_geojson() -> dict:

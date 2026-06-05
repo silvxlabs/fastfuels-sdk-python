@@ -20,7 +20,7 @@ from fastfuels_sdk.v2.exceptions import (
 import pytest
 import geopandas as gpd
 
-# The test_domain, road_feature, and layerset_feature fixtures are
+# The test_domain, completed_road_feature, and layerset_feature fixtures are
 # session-scoped and shared across modules (tests/v2/conftest.py).
 # They are READ-ONLY: tests that mutate or delete create throwaways.
 
@@ -37,13 +37,13 @@ class TestCreateOsmRoadFeature:
         assert feature.source.additional_properties["product"] == "osm"
         feature.delete()
 
-    def test_completed_fixture(self, test_domain, road_feature):
-        assert road_feature.status == JobStatus.COMPLETED
-        assert road_feature.name == "test_road"
-        assert road_feature.tags == ["test"]
+    def test_completed_fixture(self, test_domain, completed_road_feature):
+        assert completed_road_feature.status == JobStatus.COMPLETED
+        assert completed_road_feature.name == "test_road"
+        assert completed_road_feature.tags == ["test"]
         # The georeference is populated once the job completes
-        assert road_feature.georeference.crs.startswith("EPSG:")
-        assert len(road_feature.georeference.bounds) == 4
+        assert completed_road_feature.georeference.crs.startswith("EPSG:")
+        assert len(completed_road_feature.georeference.bounds) == 4
 
     def test_invalid_extent_buffer(self, test_domain):
         with pytest.raises(UnprocessableEntityException):
@@ -114,11 +114,11 @@ class TestCreateLayersetFromGeodataframe:
 
 
 class TestFromId:
-    def test_success(self, test_domain, road_feature):
-        feature = Feature.from_id(test_domain.id, road_feature.id)
-        assert feature.id == road_feature.id
+    def test_success(self, test_domain, layerset_feature):
+        feature = Feature.from_id(test_domain.id, layerset_feature.id)
+        assert feature.id == layerset_feature.id
         assert feature.domain_id == test_domain.id
-        assert feature.type_ == FeatureType.ROAD
+        assert feature.type_ == FeatureType.LAYERSET
 
     def test_not_found(self, test_domain):
         with pytest.raises(NotFoundException):
@@ -126,14 +126,14 @@ class TestFromId:
 
 
 class TestGetFeature:
-    def test_get_default(self, road_feature):
-        feature = road_feature.get()
-        assert feature.id == road_feature.id
-        assert feature is not road_feature
+    def test_get_default(self, layerset_feature):
+        feature = layerset_feature.get()
+        assert feature.id == layerset_feature.id
+        assert feature is not layerset_feature
 
-    def test_get_in_place(self, road_feature):
-        feature = road_feature.get(in_place=True)
-        assert feature is road_feature
+    def test_get_in_place(self, layerset_feature):
+        feature = layerset_feature.get(in_place=True)
+        assert feature is layerset_feature
 
 
 class TestWaitUntilCompleted:
@@ -145,8 +145,8 @@ class TestWaitUntilCompleted:
 
 
 class TestGetDataMetadata:
-    def test_metadata(self, road_feature):
-        metadata = road_feature.get_data_metadata()
+    def test_metadata(self, completed_road_feature):
+        metadata = completed_road_feature.get_data_metadata()
 
         assert metadata.total_features > 0
         assert metadata.partition_count >= 1
@@ -165,24 +165,24 @@ class TestGetDataMetadata:
 
 
 class TestGetDataPartition:
-    def test_partition(self, road_feature):
-        metadata = road_feature.get_data_metadata()
-        partition = road_feature.get_data_partition(0)
+    def test_partition(self, completed_road_feature):
+        metadata = completed_road_feature.get_data_metadata()
+        partition = completed_road_feature.get_data_partition(0)
 
         assert partition["type"] == "FeatureCollection"
         assert len(partition["features"]) == metadata.partitions[0].num_features
         assert "crs" in partition
 
-    def test_partition_out_of_range(self, road_feature):
-        metadata = road_feature.get_data_metadata()
+    def test_partition_out_of_range(self, completed_road_feature):
+        metadata = completed_road_feature.get_data_metadata()
         with pytest.raises(UnprocessableEntityException, match="out of range"):
-            road_feature.get_data_partition(metadata.partition_count)
+            completed_road_feature.get_data_partition(metadata.partition_count)
 
 
 class TestGetData:
-    def test_get_data(self, road_feature):
-        metadata = road_feature.get_data_metadata()
-        data = road_feature.get_data()
+    def test_get_data(self, completed_road_feature):
+        metadata = completed_road_feature.get_data_metadata()
+        data = completed_road_feature.get_data()
 
         assert data["type"] == "FeatureCollection"
         assert len(data["features"]) == metadata.total_features
@@ -190,39 +190,47 @@ class TestGetData:
 
 
 class TestToGeodataframe:
-    def test_to_geodataframe(self, road_feature):
-        metadata = road_feature.get_data_metadata()
-        gdf = road_feature.to_geodataframe()
+    def test_to_geodataframe(self, completed_road_feature):
+        metadata = completed_road_feature.get_data_metadata()
+        gdf = completed_road_feature.to_geodataframe()
 
         assert len(gdf) == metadata.total_features
         # The data comes back in the projected CRS reported by the
         # feature's georeference
-        assert ":".join(gdf.crs.to_authority()) == road_feature.georeference.crs
+        assert (
+            ":".join(gdf.crs.to_authority()) == completed_road_feature.georeference.crs
+        )
 
 
 class TestListFeatures:
-    def test_list_in_domain(self, test_domain, road_feature, layerset_feature):
+    def test_list_in_domain(
+        self, test_domain, completed_road_feature, layerset_feature
+    ):
         features = list_features(test_domain.id)
         feature_ids = [feature.id for feature in features]
-        assert road_feature.id in feature_ids
+        assert completed_road_feature.id in feature_ids
         assert layerset_feature.id in feature_ids
 
-    def test_list_cross_domain(self, road_feature):
+    def test_list_cross_domain(self, layerset_feature):
         # No domain_id: list features across all the user's domains
         features = list_features()
-        assert road_feature.id in [feature.id for feature in features]
+        assert layerset_feature.id in [feature.id for feature in features]
 
-    def test_filter_by_type(self, test_domain, road_feature, layerset_feature):
+    def test_filter_by_type(
+        self, test_domain, completed_road_feature, layerset_feature
+    ):
         features = list_features(test_domain.id, feature_type="road")
         feature_ids = [feature.id for feature in features]
         assert all(feature.type_ == FeatureType.ROAD for feature in features)
-        assert road_feature.id in feature_ids
+        assert completed_road_feature.id in feature_ids
         assert layerset_feature.id not in feature_ids
 
-    def test_filter_by_product(self, test_domain, road_feature, layerset_feature):
+    def test_filter_by_product(
+        self, test_domain, completed_road_feature, layerset_feature
+    ):
         features = list_features(test_domain.id, product="osm")
         feature_ids = [feature.id for feature in features]
-        assert road_feature.id in feature_ids
+        assert completed_road_feature.id in feature_ids
         assert layerset_feature.id not in feature_ids
 
     def test_filter_by_tag(self, test_domain, layerset_feature):
@@ -233,7 +241,7 @@ class TestListFeatures:
         reason="v2 API returns 500 for feature sort_by combinations; "
         "see FastFuels-API-v2#321",
     )
-    def test_sorting(self, test_domain, road_feature):
+    def test_sorting(self, test_domain, layerset_feature):
         features = list_features(
             test_domain.id, sort_by="created_on", sort_order="descending"
         )
@@ -285,11 +293,11 @@ class TestUpdateFeature:
 
 
 class TestToJson:
-    def test_to_json(self, road_feature):
-        feature_dict = json.loads(road_feature.to_json())
-        assert feature_dict["id"] == road_feature.id
-        assert feature_dict["domain_id"] == road_feature.domain_id
-        assert feature_dict["type"] == "road"
+    def test_to_json(self, layerset_feature):
+        feature_dict = json.loads(layerset_feature.to_json())
+        assert feature_dict["id"] == layerset_feature.id
+        assert feature_dict["domain_id"] == layerset_feature.domain_id
+        assert feature_dict["type"] == "layerset"
 
 
 class TestDeleteFeature:
