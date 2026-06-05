@@ -22,7 +22,8 @@ from typing import Any, List, Optional
 
 import attrs
 
-from fastfuels_sdk.v2.draft_domains_opc import _checked, get_client
+from fastfuels_sdk.v2.api import ensure_client as get_client
+from fastfuels_sdk.v2.draft_grids_opc import _checked
 
 from fastfuels_sdk.v2.client_library.api.inventories import (
     create_pim_inventory,
@@ -36,8 +37,6 @@ from fastfuels_sdk.v2.client_library.models import (
     JobStatus,
     ListInventoriesResponse,
 )
-
-V2_BASE_URL = "https://api-v2-prod-782971006568.us-west1.run.app"
 
 
 class Inventory(InventoryModel):

@@ -12,13 +12,16 @@ get/wait/delete/list lifecycle shared by all grid sources.
 
 import json
 import time
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Type, TypeVar
 
 import attrs
 
 # NOTE (comparison): one AuthenticatedClient serves every resource — no
-# per-resource API objects, so the domains draft's client is reused as-is.
-from fastfuels_sdk.v2.draft_domains_opc import _checked, get_client
+# per-resource API objects. The domains draft has been promoted to the
+# real fastfuels_sdk/v2/domains.py (built on api.py/exceptions.py); the
+# remaining drafts borrow the shared client and keep the draft-era
+# _checked() helper below until their own promotion (#178-#180).
+from fastfuels_sdk.v2.api import ensure_client as get_client
 
 from fastfuels_sdk.v2.client_library.api.grids import (
     create_3dep_topography,
@@ -33,11 +36,26 @@ from fastfuels_sdk.v2.client_library.models import (
     CreateLandfireFbfm40Request,
     CreateThreeDepTopographyRequest,
     CreateTreeMapRequest,
+    HTTPValidationError,
     JobStatus,
     ListGridsResponse,
 )
 
-V2_BASE_URL = "https://api-v2-prod-782971006568.us-west1.run.app"
+T = TypeVar("T")
+
+
+def _checked(response: Any, expected: Type[T]) -> T:
+    """Unwrap a generated sync() response, raising on error results.
+
+    Draft-era helper retained from the promoted domains draft; the real
+    wrappers use sync_detailed() + fastfuels_sdk.v2.exceptions.expect()
+    instead (see domains.py). Goes away as #178-#180 promote these drafts.
+    """
+    if isinstance(response, expected):
+        return response
+    if isinstance(response, HTTPValidationError):
+        raise RuntimeError(f"API validation error (422): {response.detail}")
+    raise RuntimeError(f"Unexpected API response: {response!r}")
 
 
 def _base_request_dict(
