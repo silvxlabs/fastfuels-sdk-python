@@ -22,7 +22,8 @@ Both subpackages read the same `FASTFUELS_API_KEY` environment variable.
 | `domain.export()` | grid exports | No domain-level export in v2; data exports hang off grids |
 | — | `Domain.preview`, `Domain.get_lattice`, `reproject_geojson` | New domain capabilities |
 | `Grids`, `SurfaceGrid`, `TreeGrid`, `TopographyGrid`, `FeatureGrid` + builders | unified `Grid` resource *(SDK module in development)* | One job-based resource per grid, distinguished by data source |
-| `Features`, `RoadFeature`, `WaterFeature` | unified `Feature` resource *(SDK module in development)* | One job-based resource for OSM road and water features |
+| `Features`, `RoadFeature`, `WaterFeature` | unified `Feature` resource | One job-based resource for OSM roads, OSM water, and custom layersets |
+| `feature.get_data()`, `feature.get_all_data()` | `feature.get_data_metadata()`, `feature.get_data_partition()`, `feature.get_data()`, `feature.to_geodataframe()` | Page-based data retrieval becomes partition-based |
 | `Inventories`, `TreeInventory` | `Inventory` resource *(SDK module in development)* | Job-based; tree inventories are generated from PIM grids |
 
 ## Domains
@@ -94,13 +95,62 @@ shares the same `status`/`progress` lifecycle.
 
 ## Features
 
-!!! note "In development"
-    The v2 features module is under development and will be documented
-    here when it ships.
+Available now — see the [Features guide](features.md) and the
+[Reference](../reference.md).
 
-What to expect from the v2 API: road and water features unify into a
-single job-based `Feature` resource sourced from OSM, with the same
-`status`/`progress` lifecycle as grids.
+### What changed from v1
+
+- **Road and water unify into one resource.** v1's `Features` container
+  with `.road`/`.water` sub-resources becomes a single job-based
+  `Feature` distinguished by its type ("road", "water", or "layerset").
+  The `Features.from_domain_id(...)` container is replaced by the
+  module-level `list_features(domain_id)`.
+- **Creation methods are classmethods on `Feature`.**
+  `features.create_road_feature_from_osm()` becomes
+  `Feature.create_osm_road(domain_id)`, and likewise for water. The new
+  `extent_buffer_m` argument buffers the OSM query extent by up to
+  100 meters.
+- **User-supplied geometry becomes layersets.** v1's road-from-GeoJSON
+  path is gone. Instead, v2 accepts custom *layersets* — fuelbed
+  polygons carrying rasterizer properties — via
+  `Feature.create_layerset` and
+  `Feature.create_layerset_from_geodataframe`. Layersets require a
+  projected CRS and upload synchronously.
+- **Data access is partitioned.** v1's `get_data(page, size)` /
+  `get_all_data()` become `get_data_metadata()` (partition layout),
+  `get_data_partition(index)` (one partition), and `get_data()` (all
+  partitions assembled) — plus `to_geodataframe()` for the common case
+  of loading everything into GeoPandas.
+- **Cross-domain listing.** `list_features()` without a domain ID lists
+  features across all your domains, with `feature_type`, `product`, and
+  `tag` filters.
+- **Typed exceptions.** Errors raise `fastfuels_sdk.v2.exceptions`
+  classes, the same as domains.
+
+### Before and after
+
+=== "v1"
+
+    ```python
+    from fastfuels_sdk import Features
+
+    features = Features.from_domain_id(domain.id)
+    road = features.create_road_feature_from_osm()
+    road.wait_until_completed(verbose=True)
+
+    data = road.get_all_data()
+    ```
+
+=== "v2"
+
+    ```python
+    from fastfuels_sdk.v2 import Feature
+
+    road = Feature.create_osm_road(domain.id)
+    road.wait_until_completed(verbose=True)
+
+    roads = road.to_geodataframe()
+    ```
 
 ## Inventories
 
