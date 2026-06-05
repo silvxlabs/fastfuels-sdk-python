@@ -55,30 +55,30 @@ Available now — see the [Domains guide](domains.md) and the
 
 ### Before and after
 
-v1:
+=== "v1"
 
-```python
-from fastfuels_sdk import Domain
+    ```python
+    from fastfuels_sdk import Domain
 
-domain = Domain.from_geojson(
-    geojson,
-    name="My Domain",
-    horizontal_resolution=2.0,
-    vertical_resolution=1.0,
-)
-```
+    domain = Domain.from_geojson(
+        geojson,
+        name="My Domain",
+        horizontal_resolution=2.0,
+        vertical_resolution=1.0,
+    )
+    ```
 
-v2:
+=== "v2"
 
-```python
-from fastfuels_sdk.v2 import Domain
+    ```python
+    from fastfuels_sdk.v2 import Domain
 
-domain = Domain.from_geojson(
-    geojson,
-    name="My Domain",
-    pad_to_resolution=2.0,
-)
-```
+    domain = Domain.from_geojson(
+        geojson,
+        name="My Domain",
+        pad_to_resolution=2.0,
+    )
+    ```
 
 ## Grids
 

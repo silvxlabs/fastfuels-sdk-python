@@ -389,7 +389,7 @@ docs = [
     { name = "mike", specifier = ">=2.2.0" },
     { name = "mkdocs" },
     { name = "mkdocs-literate-nav", specifier = "==0.6.2" },
-    { name = "mkdocs-material" },
+    { name = "mkdocs-material", specifier = ">=9.7,<10" },
     { name = "mkdocstrings" },
     { name = "mkdocstrings-python" },
 ]

@@ -27,10 +27,11 @@ jobs:
       # powers the version dropdown in the header (mkdocs-material's
       # extra.version.provider). v1 keeps the "latest" alias and is the
       # default the site root redirects to.
+      # Version labels mirror the FastFuels-Web docs (docs.fastfuels.silvxlabs.com)
       - name: Deploy v1 docs
-        run: uv run mike deploy --push --update-aliases v1 latest --title "v1 (current)"
+        run: uv run mike deploy --push --update-aliases v1 latest --title "v1"
       - name: Deploy v2 docs
-        run: uv run mike deploy --push v2 --title "v2 (preview)"
+        run: uv run mike deploy --push v2 --title "v2 (Beta)"
         env:
           DOCS_DIR: docs/v2
       - name: Set default version

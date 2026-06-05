@@ -1,11 +1,20 @@
 # How to Work with Domains in FastFuels SDK
 
-!!! warning "Preview"
-    The v2 SDK targets the new FastFuels v2 API and is under active
+!!! warning "Beta"
+    The v2 SDK targets the FastFuels v2 API and is under active
     development. The v1 SDK remains the default — import v2 explicitly
     from `fastfuels_sdk.v2`.
 
-## Authentication
+A domain is the spatial container every other FastFuels resource lives in.
+This guide covers working with domains from Python; for what domains *are*
+and how the platform treats them, see the
+[FastFuels documentation](https://docs.fastfuels.silvxlabs.com). Coming
+from the v1 SDK? Start with the [migration guide](migration.md#domains).
+
+## Prerequisites
+
+- The FastFuels SDK installed: `pip install fastfuels-sdk`
+- A FastFuels API key
 
 The v2 SDK reads your API key from the `FASTFUELS_API_KEY` environment
 variable, the same variable the v1 SDK uses:
@@ -21,9 +30,6 @@ from fastfuels_sdk.v2 import set_api_key
 
 set_api_key("your-api-key")
 ```
-
-Coming from the v1 SDK? Start with the
-[migration guide](migration.md#domains).
 
 ## Create a Domain from GeoJSON
 
