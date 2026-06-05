@@ -113,7 +113,7 @@ Shared findings (identical code in both drafts):
    (the FastFuels feature resource and geojson-pydantic's GeoJSON
    Feature). opc names classes from titles and refuses duplicates —
    without the patch it silently drops every domain endpoint.
-   `generate_clients.sh` re-titles the GeoJSON one to `GeoJsonFeature`.
+   `generate_client.sh` re-titles the GeoJSON one to `GeoJsonFeature`.
    The proper fix is in FastFuels-API-v2 (re-title the model) so the spec
    has no collision.
 2. **Dependencies**: `httpx`, `attrs`, `python-dateutil` (currently in the
@@ -144,7 +144,7 @@ Shared findings (identical code in both drafts):
 ## Regeneration
 
 ```bash
-cd fastfuels_sdk/v2 && bash generate_clients.sh   # regenerates client_library/
+cd fastfuels_sdk/v2 && bash generate_client.sh   # regenerates client_library/
 ```
 
 To reproduce the deleted openapi-generator client for re-evaluation:

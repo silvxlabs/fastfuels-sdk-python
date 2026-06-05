@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
-# Regenerate the v2 client library (openapi-python-client).
-# Run from this directory: bash generate_clients.sh
+# Regenerate the v2 client library (fastfuels_sdk/v2/client_library/) from
+# the live API spec. Run from this directory: bash generate_client.sh
 #
-# Requirements: uv (openapi-python-client is run via uvx, no install needed)
+# Generated code is committed — rerun this when the v2 API spec changes
+# and commit the diff so API-surface changes are reviewable in PRs.
+#
+# Requirements: uv (openapi-python-client is run via uvx, no install
+# needed). The generator version is pinned so regen diffs reflect API
+# changes only; bump the pin deliberately.
 set -euo pipefail
+
+OPC_VERSION="0.29.0"
 
 URL="https://api-v2-prod-782971006568.us-west1.run.app"
 SPEC=$(mktemp /tmp/v2_openapi.XXXXXX.json)
@@ -24,7 +31,7 @@ spec["components"]["schemas"]["geojson_pydantic__features__Feature"]["title"] = 
 json.dump(spec, open(sys.argv[2], "w"))
 EOF
 
-uvx openapi-python-client generate \
+uvx "openapi-python-client@${OPC_VERSION}" generate \
   --path "$PATCHED" \
   --meta none \
   --output-path client_library \
