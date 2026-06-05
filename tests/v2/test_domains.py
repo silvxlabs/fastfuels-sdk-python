@@ -19,17 +19,9 @@ from fastfuels_sdk.v2.exceptions import (
 import pytest
 import geopandas as gpd
 
-
-@pytest.fixture(scope="module")
-def test_domain():
-    """Fixture that creates a test domain to be used by the tests"""
-    domain = create_default_domain()
-
-    # Return the domain for use in tests
-    yield domain
-
-    # Cleanup: Delete the domain after the tests
-    domain.delete()
+# The test_domain fixture is session-scoped and shared across modules
+# (tests/v2/conftest.py). It is READ-ONLY: tests that mutate or delete
+# create throwaways.
 
 
 def feature_names(domain: Domain) -> set:
@@ -176,28 +168,35 @@ class TestGetDomain:
 
 
 class TestUpdateDomain:
-    def test_update_name(self, test_domain):
-        updated = test_domain.update(name="updated_name")
+    @pytest.fixture(scope="class")
+    def update_domain(self):
+        """A throwaway domain to mutate (the shared fixture is read-only)."""
+        domain = create_default_domain()
+        yield domain
+        domain.delete()
+
+    def test_update_name(self, update_domain):
+        updated = update_domain.update(name="updated_name")
         assert updated.name == "updated_name"
-        assert updated is not test_domain
+        assert updated is not update_domain
         # The remote resource reflects the update
-        assert Domain.from_id(test_domain.id).name == "updated_name"
+        assert Domain.from_id(update_domain.id).name == "updated_name"
 
-    def test_update_in_place(self, test_domain):
-        updated = test_domain.update(description="updated description", in_place=True)
-        assert updated is test_domain
-        assert test_domain.description == "updated description"
+    def test_update_in_place(self, update_domain):
+        updated = update_domain.update(description="updated description", in_place=True)
+        assert updated is update_domain
+        assert update_domain.description == "updated description"
 
-    def test_update_tags(self, test_domain):
-        updated = test_domain.update(tags=["updated"], in_place=True)
+    def test_update_tags(self, update_domain):
+        updated = update_domain.update(tags=["updated"], in_place=True)
         assert updated.tags == ["updated"]
 
-    def test_update_no_fields_makes_no_api_call(self, test_domain):
+    def test_update_no_fields_makes_no_api_call(self, update_domain):
         # No fields provided: returns a copy without touching the API
-        copy = test_domain.update()
-        assert copy is not test_domain
-        assert copy.id == test_domain.id
-        assert test_domain.update(in_place=True) is test_domain
+        copy = update_domain.update()
+        assert copy is not update_domain
+        assert copy.id == update_domain.id
+        assert update_domain.update(in_place=True) is update_domain
 
 
 class TestGetLattice:

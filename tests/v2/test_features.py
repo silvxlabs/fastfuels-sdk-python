@@ -8,7 +8,7 @@ from uuid import uuid4
 
 # Internal imports
 from tests import TEST_DATA_DIR
-from tests.v2.utils import create_default_domain, create_default_layerset_geojson
+from tests.v2.utils import create_default_layerset_geojson
 from fastfuels_sdk.v2.features import Feature, list_features
 from fastfuels_sdk.v2.client_library.models import FeatureType, JobStatus
 from fastfuels_sdk.v2.exceptions import (
@@ -20,42 +20,9 @@ from fastfuels_sdk.v2.exceptions import (
 import pytest
 import geopandas as gpd
 
-
-@pytest.fixture(scope="module")
-def test_domain():
-    """Fixture that creates a test domain to be used by the tests"""
-    domain = create_default_domain()
-
-    # Return the domain for use in tests
-    yield domain
-
-    # Cleanup: deleting the domain also deletes its features
-    domain.delete()
-
-
-@pytest.fixture(scope="module")
-def road_feature(test_domain):
-    """A completed OSM road feature shared by the read-only tests."""
-    feature = Feature.create_osm_road(
-        test_domain.id,
-        name="test_road",
-        description="Road feature for testing v2 feature operations",
-        tags=["test"],
-    )
-    feature.wait_until_completed(step=2)
-    return feature
-
-
-@pytest.fixture(scope="module")
-def layerset_feature(test_domain):
-    """A layerset feature (synchronous upload, immediately completed)."""
-    return Feature.create_layerset(
-        test_domain.id,
-        create_default_layerset_geojson(),
-        name="test_layerset",
-        description="Layerset feature for testing v2 feature operations",
-        tags=["layerset-test"],
-    )
+# The test_domain, road_feature, and layerset_feature fixtures are
+# session-scoped and shared across modules (tests/v2/conftest.py).
+# They are READ-ONLY: tests that mutate or delete create throwaways.
 
 
 class TestCreateOsmRoadFeature:
@@ -282,28 +249,39 @@ class TestListFeatures:
 
 
 class TestUpdateFeature:
-    def test_update_name(self, test_domain, road_feature):
-        updated = road_feature.update(name="updated_name")
+    @pytest.fixture(scope="class")
+    def update_feature(self, test_domain):
+        """A throwaway feature to mutate (the shared fixtures are read-only)."""
+        feature = Feature.create_layerset(
+            test_domain.id, create_default_layerset_geojson(), name="update_target"
+        )
+        yield feature
+        feature.delete()
+
+    def test_update_name(self, test_domain, update_feature):
+        updated = update_feature.update(name="updated_name")
         assert updated.name == "updated_name"
-        assert updated is not road_feature
+        assert updated is not update_feature
         # The remote resource reflects the update
-        assert Feature.from_id(test_domain.id, road_feature.id).name == "updated_name"
+        assert Feature.from_id(test_domain.id, update_feature.id).name == "updated_name"
 
-    def test_update_in_place(self, road_feature):
-        updated = road_feature.update(description="updated description", in_place=True)
-        assert updated is road_feature
-        assert road_feature.description == "updated description"
+    def test_update_in_place(self, update_feature):
+        updated = update_feature.update(
+            description="updated description", in_place=True
+        )
+        assert updated is update_feature
+        assert update_feature.description == "updated description"
 
-    def test_update_tags(self, road_feature):
-        updated = road_feature.update(tags=["updated"], in_place=True)
+    def test_update_tags(self, update_feature):
+        updated = update_feature.update(tags=["updated"], in_place=True)
         assert updated.tags == ["updated"]
 
-    def test_update_no_fields_makes_no_api_call(self, road_feature):
+    def test_update_no_fields_makes_no_api_call(self, update_feature):
         # No fields provided: returns a copy without touching the API
-        copy = road_feature.update()
-        assert copy is not road_feature
-        assert copy.id == road_feature.id
-        assert road_feature.update(in_place=True) is road_feature
+        copy = update_feature.update()
+        assert copy is not update_feature
+        assert copy.id == update_feature.id
+        assert update_feature.update(in_place=True) is update_feature
 
 
 class TestToJson:
