@@ -44,7 +44,13 @@ dev = [
     "attrs>=22.2.0",
     "python-dateutil>=2.9.0.post0",
 ]
-docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocstrings-python"]
+docs = [
+    "mike>=2.2.0",
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocstrings",
+    "mkdocstrings-python",
+]
 
 [tool.hatch.version]
 source = "vcs"

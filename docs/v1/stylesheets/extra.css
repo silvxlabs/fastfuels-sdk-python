@@ -1,0 +1,55 @@
+/* Version selector (mike + mkdocs-material). The stock theme renders the
+   selector as bare header text; style it as an explicit control.
+   (Duplicated in docs/v1 and docs/v2 — each version's site builds from its
+   own docs_dir.) */
+.md-version {
+  margin-left: 0.8rem;
+}
+
+.md-version__current {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background-color: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 2rem;
+  padding: 0.25rem 0.8rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background-color 125ms, border-color 125ms;
+}
+
+.md-version__current:hover,
+.md-version__current:focus {
+  background-color: rgba(0, 0, 0, 0.32);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.md-version__list {
+  margin-top: 0.5rem;
+  border-radius: 0.3rem;
+  box-shadow: var(--md-shadow-z3);
+  overflow: hidden;
+  min-width: 8rem;
+}
+
+.md-version__item {
+  line-height: 1;
+}
+
+.md-version__link {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  font-size: 0.7rem;
+  color: var(--md-default-fg-color);
+  transition: background-color 125ms, color 125ms;
+}
+
+.md-version__link:hover,
+.md-version__link:focus {
+  background-color: var(--md-default-fg-color--lightest);
+  color: var(--md-typeset-a-color);
+}

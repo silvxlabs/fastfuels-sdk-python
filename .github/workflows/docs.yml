@@ -3,14 +3,33 @@ name: build mkdocs
 on:
   release:
     types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Install uv
         uses: astral-sh/setup-uv@v6
       - name: Install docs dependencies
         run: uv sync --group docs
-      - run: uv run mkdocs gh-deploy --force --clean --verbose
+      - name: Configure git for mike
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      # mike deploys each version as its own site snapshot on gh-pages and
+      # powers the version dropdown in the header (mkdocs-material's
+      # extra.version.provider). v1 keeps the "latest" alias and is the
+      # default the site root redirects to.
+      - name: Deploy v1 docs
+        run: uv run mike deploy --push --update-aliases v1 latest --title "v1 (current)"
+      - name: Deploy v2 docs
+        run: uv run mike deploy --push --config-file mkdocs-v2.yml v2 --title "v2 (preview)"
+      - name: Set default version
+        run: uv run mike set-default --push latest
