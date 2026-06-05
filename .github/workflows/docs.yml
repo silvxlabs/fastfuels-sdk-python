@@ -30,6 +30,8 @@ jobs:
       - name: Deploy v1 docs
         run: uv run mike deploy --push --update-aliases v1 latest --title "v1 (current)"
       - name: Deploy v2 docs
-        run: uv run mike deploy --push --config-file mkdocs-v2.yml v2 --title "v2 (preview)"
+        run: uv run mike deploy --push v2 --title "v2 (preview)"
+        env:
+          DOCS_DIR: docs/v2
       - name: Set default version
         run: uv run mike set-default --push latest

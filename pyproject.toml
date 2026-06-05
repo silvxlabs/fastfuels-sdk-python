@@ -47,6 +47,9 @@ dev = [
 docs = [
     "mike>=2.2.0",
     "mkdocs",
+    # pinned pre-0.6.3: 0.6.3 co-installs the properdocs mkdocs-fork and
+    # warns when run under mkdocs; revisit when the fork situation settles
+    "mkdocs-literate-nav==0.6.2",
     "mkdocs-material",
     "mkdocstrings",
     "mkdocstrings-python",

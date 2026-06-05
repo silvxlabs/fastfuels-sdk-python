@@ -1,19 +1,57 @@
-# mkdocs.yml — v1 docs (see mkdocs-base.yml for the shared config and
-# an overview of the versioned-docs setup)
-INHERIT: mkdocs-base.yml
+# mkdocs.yml
+#
+# One config builds either docs version: DOCS_DIR selects the tree
+# (defaults to docs/v1; set DOCS_DIR=docs/v2 for v2), and each tree
+# defines its own nav in a SUMMARY.md (literate-nav). Versions deploy via
+# mike as independent site snapshots picked from the header version
+# selector; see .github/workflows/docs.yml. Local preview:
+#   uv run mkdocs serve                       # v1
+#   DOCS_DIR=docs/v2 uv run mkdocs serve      # v2
+site_name: FastFuels SDK Documentation
+# site_url is required for mike's version selector to keep the reader on
+# the same page when switching versions
+site_url: https://silvxlabs.github.io/fastfuels-sdk-python/
 
-docs_dir: docs/v1
+docs_dir: !ENV [DOCS_DIR, docs/v1]
 
-nav:
-  - Home: index.md
-  - How-To Guides:
-    - Authentication: guides/authentication.md
-    - Domains: guides/domains.md
-    - Inventories: guides/inventories.md
-    - Point Clouds: guides/point_clouds.md
-    - Features: guides/features.md
-    - Grids: guides/grids.md
-  - Tutorials:
-    - Export to QUIC-Fire: tutorials/export_to_quicfire.md
-    - ALS Point Cloud: tutorials/point_cloud_example.md
-  - Reference: reference.md
+theme:
+  name: "material"
+  features:
+    - content.code.copy
+
+extra:
+  version:
+    provider: mike
+    alias: true
+
+extra_css:
+  - stylesheets/extra.css
+
+plugins:
+  - search
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: numpy
+            docstring_section_style: table
+            docstring_options:
+              ignore_init_summary: true
+            show_root_heading: true
+            show_source: false
+            members_order: source
+            annotations_path: brief
+            separate_signature: true
+            show_signature_annotations: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
