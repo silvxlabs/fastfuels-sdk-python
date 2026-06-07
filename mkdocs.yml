@@ -1,22 +1,40 @@
 # mkdocs.yml
 #
-# One config builds either docs version: DOCS_DIR selects the tree
-# (defaults to docs/v1; set DOCS_DIR=docs/v2 for v2), and each tree
-# defines its own nav in a SUMMARY.md (literate-nav). Versions deploy via
-# mike as independent site snapshots picked from the header version
-# selector; see scripts/docs.sh. Local preview:
-#   uv run mkdocs serve                       # v1 only
-#   DOCS_DIR=docs/v2 uv run mkdocs serve      # v2 only
-#   ./scripts/docs.sh                         # both versions + selector
+# One docs tree: the root sections document the v1 SDK (the current
+# default interface); the "v2 (Beta)" section documents the v2
+# subpackage shipping alongside it. Site versions are point-in-time
+# release snapshots deployed by mike from .github/workflows/docs.yml on
+# each GitHub release — the header selector lists releases (e.g. 0.21)
+# with the `latest` alias as the default. Old snapshots are never
+# rebuilt. Local preview:
+#   uv run mkdocs serve
 site_name: FastFuels SDK Documentation
 # site_url is required for mike's version selector to keep the reader on
 # the same page when switching versions
 site_url: https://silvxlabs.github.io/fastfuels-sdk-python/
 
-docs_dir: !ENV [DOCS_DIR, docs/v1]
-
 repo_url: https://github.com/silvxlabs/fastfuels-sdk-python
 repo_name: silvxlabs/fastfuels-sdk-python
+
+nav:
+  - Home: index.md
+  - How-To Guides:
+      - Authentication: guides/authentication.md
+      - Domains: guides/domains.md
+      - Inventories: guides/inventories.md
+      - Point Clouds: guides/point_clouds.md
+      - Features: guides/features.md
+      - Grids: guides/grids.md
+  - Tutorials:
+      - Export to QUIC-Fire: tutorials/export_to_quicfire.md
+      - ALS Point Cloud: tutorials/point_cloud_example.md
+  - Reference: reference.md
+  - v2 (Beta):
+      - Overview: v2/index.md
+      - Migrating from v1: v2/guides/migration.md
+      - Domains: v2/guides/domains.md
+      - Features: v2/guides/features.md
+      - Reference: v2/reference.md
 
 theme:
   name: "material"
@@ -63,8 +81,6 @@ extra_css:
 
 plugins:
   - search
-  - literate-nav:
-      nav_file: SUMMARY.md
   - mkdocstrings:
       handlers:
         python:

@@ -54,16 +54,18 @@ rationale and issue references belong in `#` code comments.
 
 ### Conventions
 
-- Version labels mirror the platform docs: **"v1"** (alias `latest`) and
-  **"v2 (Beta)"** — set as mike titles in `scripts/docs.sh`, the single
-  entry point for both the local preview (`./scripts/docs.sh`) and the
-  gh-pages deploy (`./scripts/docs.sh deploy`, run by the docs workflow).
-- One `mkdocs.yml` builds both versions: `DOCS_DIR` selects `docs/v1`
-  (default) or `docs/v2`; each tree owns its nav in a `SUMMARY.md`
-  (literate-nav). Versions deploy as independent mike snapshots picked
-  from the header version selector.
-- `docs/v1/stylesheets/extra.css` and `docs/v2/stylesheets/extra.css` are
-  duplicates by construction — edit both or the version snapshots diverge.
+- One `docs/` tree, nav in `mkdocs.yml`. The root sections (guides,
+  tutorials, reference) document the v1 SDK and are frozen alongside it
+  (bugfix-level edits only); new documentation lands in `docs/v2/`
+  ("v2 (Beta)" in the nav) until v2 becomes the default interface.
+- Site versions are **release snapshots, not API surfaces**: on each
+  GitHub release the docs workflow runs mike, deploying the tree as
+  `<major.minor>` and re-pointing the `latest` alias (the pydantic
+  pattern). The platform docs version by API version because the HTTP
+  API is two deployed services; the SDK is one package shipping both
+  interfaces, so its version axis is the package release. Never publish
+  docs for code that hasn't shipped in a release.
+- Local preview: `uv run mkdocs serve`.
 - Code examples must be real: verified against the live API (the live test
   suite in `tests/` is the verification path), with realistic output —
   never hand-written response shapes.
@@ -71,5 +73,3 @@ rationale and issue references belong in `#` code comments.
   "Note:" prose; use content tabs (`=== "v1"` / `=== "v2"`) for
   side-by-side variants; v2 pages open with the `!!! warning "Beta"`
   admonition.
-- `docs/v1/` is frozen alongside the v1 SDK (bugfix-level edits only);
-  new documentation lands in `docs/v2/`.

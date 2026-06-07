@@ -472,7 +472,7 @@ class Grids(GridsModel):
                 "value": float  # moisture content in %
             }
 
-        SAVR: dict, optional
+        savr : dict, optional
             Configuration for surface area to volume ratio. Sources available:
             - Inventory:
                 {

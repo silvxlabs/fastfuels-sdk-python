@@ -4,6 +4,10 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Docs version to deploy as (major.minor), e.g. 0.21"
+        required: true
 
 permissions:
   contents: write
@@ -21,7 +25,23 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-      # scripts/docs.sh is the single source of truth for versions, titles,
-      # and aliases — the same script serves the local preview.
-      - name: Deploy versioned docs (v1 + v2)
-        run: ./scripts/docs.sh deploy
+      # The docs version is the release's major.minor (tag v0.21.1 ->
+      # 0.21); a workflow_dispatch passes it directly, e.g. to redeploy a
+      # version's docs after a docs-only fix.
+      - name: Resolve docs version
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            TAG="${{ github.event.release.tag_name }}"
+            VERSION="${TAG#v}"
+            VERSION="${VERSION%.*}"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          echo "DOCS_VERSION=$VERSION" >> "$GITHUB_ENV"
+      # mike snapshots the current docs tree as <major.minor>/ on gh-pages
+      # and re-points the `latest` alias (the site default) at it. Old
+      # release snapshots are never rebuilt.
+      - name: Deploy docs snapshot
+        run: |
+          uv run --group docs mike deploy --push --update-aliases "$DOCS_VERSION" latest
+          uv run --group docs mike set-default --push latest
