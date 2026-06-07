@@ -1,9 +1,5 @@
 # Welcome to the FastFuels Python SDK Documentation!
 
-!!! info "v2 (Beta)"
-    A new SDK targeting the FastFuels v2 API ships alongside v1 as the
-    `fastfuels_sdk.v2` subpackage — see the [v2 (Beta)](v2/index.md)
-    section and [Migrating from v1](v2/guides/migration.md).
 
 ## What is FastFuels?
 

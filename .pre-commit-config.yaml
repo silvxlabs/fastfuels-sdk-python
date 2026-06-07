@@ -4,8 +4,8 @@ repos:
     rev: v4.6.0
     hooks:
       - id: check-yaml
-        # mkdocs.yml uses material's !!python/name: tags, which plain
-        # yaml.safe_load cannot construct; --unsafe still checks syntax
+        # mkdocs.yml uses mkdocs' !ENV tag, which plain yaml.safe_load
+        # cannot construct; --unsafe still checks syntax
         args: [--unsafe]
       - id: end-of-file-fixer
       - id: trailing-whitespace
