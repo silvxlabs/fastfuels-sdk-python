@@ -4,10 +4,10 @@
 # (defaults to docs/v1; set DOCS_DIR=docs/v2 for v2), and each tree
 # defines its own nav in a SUMMARY.md (literate-nav). Versions deploy via
 # mike as independent site snapshots picked from the header version
-# selector; see scripts/docs.sh. Local preview:
+# selector; see docs/deploy.sh. Local preview:
 #   uv run mkdocs serve                       # v1 only
 #   DOCS_DIR=docs/v2 uv run mkdocs serve      # v2 only
-#   ./scripts/docs.sh                         # both versions + selector
+#   ./docs/deploy.sh                         # both versions + selector
 site_name: FastFuels SDK Documentation
 # site_url is required for mike's version selector to keep the reader on
 # the same page when switching versions

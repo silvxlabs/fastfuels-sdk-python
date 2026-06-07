@@ -2,9 +2,9 @@
 #
 # Build the versioned docs — v1 and v2 mike snapshots — and serve or publish.
 #
-#   ./scripts/docs.sh          build both versions, then serve the full site
+#   ./docs/deploy.sh          build both versions, then serve the full site
 #                              (version selector included) at localhost:8000
-#   ./scripts/docs.sh deploy   publish both versions to gh-pages on origin
+#   ./docs/deploy.sh deploy   publish both versions to gh-pages on origin
 #
 # mike snapshots each version onto the gh-pages branch and maintains the
 # versions.json that powers the header version selector; plain

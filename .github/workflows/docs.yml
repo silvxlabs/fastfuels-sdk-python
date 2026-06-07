@@ -21,7 +21,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-      # scripts/docs.sh is the single source of truth for versions, titles,
+      # docs/deploy.sh is the single source of truth for versions, titles,
       # and aliases — the same script serves the local preview.
       - name: Deploy versioned docs (v1 + v2)
-        run: ./scripts/docs.sh deploy
+        run: ./docs/deploy.sh deploy

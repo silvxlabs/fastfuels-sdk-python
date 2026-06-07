@@ -15,14 +15,14 @@ platform docs: **v1** (the current default SDK, alias `latest`) and
 | `docs/v1/SUMMARY.md`, `docs/v2/SUMMARY.md` | Each version's nav (mkdocs-literate-nav) |
 | `docs/v1/stylesheets/extra.css`, `docs/v2/stylesheets/extra.css` | Duplicates by construction — edit both |
 | `mkdocs.yml` (repo root) | One config for both versions: `DOCS_DIR` picks the tree (default `docs/v1`) |
-| `scripts/docs.sh` | The docs entry point: build, serve, deploy |
+| `docs/deploy.sh` | The docs entry point: build, serve, deploy |
 
 ## Launch the docs server
 
 The full site, version dropdown included, at <http://localhost:8000>:
 
 ```bash
-./scripts/docs.sh
+./docs/deploy.sh
 ```
 
 This builds both versions onto your **local** `gh-pages` branch and
@@ -43,7 +43,7 @@ DOCS_DIR=docs/v2 uv run mkdocs serve    # v2
 ## Deploy
 
 ```bash
-./scripts/docs.sh deploy
+./docs/deploy.sh deploy
 ```
 
 Publishes both versions to `gh-pages` on origin. The docs workflow

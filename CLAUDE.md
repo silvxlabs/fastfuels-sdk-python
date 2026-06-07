@@ -55,9 +55,9 @@ rationale and issue references belong in `#` code comments.
 ### Conventions
 
 - Version labels mirror the platform docs: **"v1"** (alias `latest`) and
-  **"v2 (Beta)"** — set as mike titles in `scripts/docs.sh`, the single
-  entry point for both the local preview (`./scripts/docs.sh`) and the
-  gh-pages deploy (`./scripts/docs.sh deploy`, run by the docs workflow).
+  **"v2 (Beta)"** — set as mike titles in `docs/deploy.sh`, the single
+  entry point for both the local preview (`./docs/deploy.sh`) and the
+  gh-pages deploy (`./docs/deploy.sh deploy`, run by the docs workflow).
 - One `mkdocs.yml` builds both versions: `DOCS_DIR` selects `docs/v1`
   (default) or `docs/v2`; each tree owns its nav in a `SUMMARY.md`
   (literate-nav). Versions deploy as independent mike snapshots picked
