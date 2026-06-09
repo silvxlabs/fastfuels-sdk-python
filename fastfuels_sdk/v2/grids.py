@@ -86,7 +86,7 @@ __all__ = [
     "create_topography_grid_from_landfire",
     "create_canopy_fuel_grid_from_landfire",
     "create_canopy_height_grid_from_meta",
-    "create_canopy_height_grid_from_naip",
+    "create_canopy_height_grid_from_naip_chm",
     "create_fuel_model_grid_from_landfire_fbfm40",
     "create_fuel_model_grid_from_landfire_fccs",
     "create_grid_from_geotiff",
@@ -793,7 +793,7 @@ def create_canopy_height_grid_from_meta(
     return Grid._from_model(expect(response, HTTPStatus.CREATED))
 
 
-def create_canopy_height_grid_from_naip(
+def create_canopy_height_grid_from_naip_chm(
     domain,
     output_resolution_m: Optional[float] = None,
     align_to=None,
@@ -805,20 +805,32 @@ def create_canopy_height_grid_from_naip(
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
 ) -> Grid:
-    """Create a canopy height grid from a NAIP-derived Canopy Height Model.
+    """Create a canopy height grid from the NAIP-CHM model.
+
+    NAIP-CHM is a 0.6 m canopy height and structure model covering the
+    contiguous US (CONUS). The grid carries a single continuous ``chm`` band
+    (above-ground height in meters).
+
+    NAIP-CHM is a surface model (nDSM): it captures the top of *all*
+    above-ground structure — vegetation **and** buildings/infrastructure — not
+    vegetation alone. To model vegetative fuels only, subtract built structures
+    with ``modifications=`` (e.g. a building-footprint mask). Coverage is
+    CONUS-only; domains outside it return no data.
 
     Parameters
     ----------
     domain : Domain or str
         The domain (or its id) to create the grid in.
     output_resolution_m : float, optional
-        Output cell size in meters, anchored to the domain origin.
+        Output cell size in meters, anchored to the domain origin. The source
+        is 0.6 m; coarser outputs are resampled.
     align_to : Grid or str, optional
         Match the lattice of an existing grid (or its id).
     align : str, optional
         Pass ``"native"`` to keep the source raster's pixel anchor.
     resampling : str, optional
-        Resampling method (e.g. "bilinear", "cubic").
+        Resampling method for the continuous height band (e.g. "bilinear",
+        "cubic").
     extent_buffer_cells : int, optional
         Result-grid cells to buffer around the domain extent (0-10, default 0).
     name, description : str, optional
@@ -832,6 +844,15 @@ def create_canopy_height_grid_from_naip(
     -------
     Grid
         The created Grid object (job status "pending" or "running").
+
+    References
+    ----------
+    Morford, S. L., Allred, B. W., Coons, S. P., Marcozzi, A. A., McCord, S. E.,
+    Smith, J. T., & Naugle, D. E. (2025). A 0.6-meter resolution canopy height
+    and structure model for the contiguous United States. bioRxiv.
+    https://doi.org/10.64898/2025.12.12.694075
+
+    Dataset and model code: https://github.com/smorf-ntsg/naip-chm
     """
     request_body = CreateNaipChmRequest(
         alignment=_build_alignment(output_resolution_m, align_to, align, resampling),

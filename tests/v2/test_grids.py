@@ -19,7 +19,7 @@ from fastfuels_sdk.v2.grids import (
     check_3dep_coverage,
     create_canopy_fuel_grid_from_landfire,
     create_canopy_height_grid_from_meta,
-    create_canopy_height_grid_from_naip,
+    create_canopy_height_grid_from_naip_chm,
     create_fuel_model_grid_from_landfire_fbfm40,
     create_fuel_model_grid_from_landfire_fccs,
     create_pim_grid_from_treemap,
@@ -216,9 +216,9 @@ class TestCreateCanopyHeightGridFromMeta:
         grid.delete()
 
 
-class TestCreateCanopyHeightGridFromNaip:
+class TestCreateCanopyHeightGridFromNaipChm:
     def test_create(self, test_domain):
-        grid = create_canopy_height_grid_from_naip(
+        grid = create_canopy_height_grid_from_naip_chm(
             test_domain, output_resolution_m=30, name="throwaway_naip_chm"
         )
         assert len(grid.id) > 0

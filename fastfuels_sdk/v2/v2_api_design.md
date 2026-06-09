@@ -157,7 +157,7 @@ alignment-translation helper (plain function, not a base class).
 | `create_landfire_topography` | `ff.grids.create_topography_grid_from_landfire(domain, version=…)` |
 | `create_landfire_canopy` | `ff.grids.create_canopy_fuel_grid_from_landfire(domain, version=…)` |
 | `create_meta_chm` | `ff.grids.create_canopy_height_grid_from_meta(domain, version=…)` |
-| `create_naip_chm` | `ff.grids.create_canopy_height_grid_from_naip(domain)` |
+| `create_naip_chm` | `ff.grids.create_canopy_height_grid_from_naip_chm(domain)` |
 | `create_landfire_fbfm40` | `ff.grids.create_fuel_model_grid_from_landfire_fbfm40(domain, version=…, remove_non_burnable=…)` |
 | `create_landfire_fccs` | `ff.grids.create_fuel_model_grid_from_landfire_fccs(domain, version=…, remove_bare_ground=…)` (⚠ no alignment — confirm) |
 | `create_treemap` | `ff.grids.create_pim_grid_from_treemap(domain, version=…, bands=[…])` (PIM = Plot Imputation Map; bands tm_id/plt_cn) |
