@@ -39,6 +39,7 @@ from fastfuels_sdk.v2.client_library.models import (
 )
 from fastfuels_sdk.v2.client_library.types import UNSET
 from fastfuels_sdk.v2.exceptions import NotFoundException
+from fastfuels_sdk.v2.modifications import mask
 
 # External imports
 import pytest
@@ -238,6 +239,48 @@ class TestCreateFuelModelGridFromLandfireFbfm40:
         )
         assert len(grid.id) > 0
         assert grid.domain_id == test_domain.id
+        assert grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
+        grid.delete()
+
+
+class TestMask:
+    def test_mask_payload_shape(self):
+        # Unit: a single band masks one feature to one replacement value
+        mod = mask("feat123", "fbfm", 91, buffer_m=5, target="cell")
+        payload = mod.to_dict()
+        assert payload["conditions"] == [
+            {
+                "source": "feature",
+                "operator": "within",
+                "feature_id": "feat123",
+                "buffer_m": 5,
+                "target": "cell",
+            }
+        ]
+        assert payload["actions"] == [
+            {"band": "fbfm", "modifier": "replace", "value": 91}
+        ]
+
+    def test_mask_multiple_bands(self):
+        # A list of bands fans out to one action per band, sharing the condition
+        mod = mask("feat999", ["fuel_load.1hr", "fuel_depth"])
+        bands = [action["band"] for action in mod.to_dict()["actions"]]
+        assert bands == ["fuel_load.1hr", "fuel_depth"]
+
+    def test_mask_accepts_feature_object(self):
+        # A Feature-like object contributes its id
+        mod = mask(SimpleNamespace(id="feat-from-object"), "fbfm")
+        assert mod.to_dict()["conditions"][0]["feature_id"] == "feat-from-object"
+
+    def test_mask_applied_to_grid_creation(self, test_domain, completed_road_feature):
+        # Live: masking an FBFM40 grid against a completed road feature
+        grid = create_fuel_model_grid_from_landfire_fbfm40(
+            test_domain,
+            output_resolution_m=30,
+            modifications=[mask(completed_road_feature, "fbfm", 91, buffer_m=5)],
+            name="throwaway_masked_fbfm40",
+        )
+        assert len(grid.id) > 0
         assert grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
         grid.delete()
 

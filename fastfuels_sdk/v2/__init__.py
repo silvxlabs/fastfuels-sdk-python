@@ -24,6 +24,7 @@ from fastfuels_sdk.v2.api import set_api_key
 from fastfuels_sdk.v2.domains import Domain, list_domains, reproject_geojson
 from fastfuels_sdk.v2.features import Feature, get_feature, list_features
 from fastfuels_sdk.v2.grids import Grid, get_grid, list_grids
+from fastfuels_sdk.v2.modifications import mask
 
 __all__ = [
     # Submodules (resource creators live here: ff.grids.create_*, ff.features.create_*)
@@ -42,6 +43,8 @@ __all__ = [
     "list_grids",
     "get_grid",
     "reproject_geojson",
+    # Modifications
+    "mask",
     # Jobs
     "wait_all",
     "JobFailedError",
