@@ -398,7 +398,7 @@ class Domain(DomainModel):
         Domain
             The previewed Domain object. Its ``id`` is always
             ``"preview"`` — not a real domain identifier, so API-backed
-            instance methods (``get``, ``update``, ``delete``,
+            instance methods (``refresh``, ``update``, ``delete``,
             ``get_lattice``) will not work on it.
 
         Raises
@@ -420,21 +420,14 @@ class Domain(DomainModel):
         )
         return cls._from_model(expect(response))
 
-    def get(self, in_place: bool = False) -> "Domain":
-        """Retrieve the latest domain data from the API.
-
-        Parameters
-        ----------
-        in_place : bool, optional
-            If True, updates the current Domain instance with the new data
-            and returns self. If False (default), returns a new Domain
-            instance with the latest data, leaving the current instance
-            unchanged.
+    def refresh(self) -> "Domain":
+        """Update this Domain in place with the latest data from the API.
 
         Returns
         -------
         Domain
-            The updated Domain object.
+            ``self``, updated with the latest data (so calls chain). To fetch
+            a fresh, separate copy instead, use :meth:`Domain.from_id`.
 
         Raises
         ------
@@ -444,24 +437,19 @@ class Domain(DomainModel):
         Examples
         --------
         >>> domain = Domain.from_id("abc123")
-        >>> updated_domain = domain.get()  # new instance
-        >>> domain.get(in_place=True)  # refresh in place
+        >>> domain.refresh()  # refresh in place
         """
         domain_id = self._require_id()
         response = get_domain.sync_detailed(client=ensure_client(), domain_id=domain_id)
-        model = expect(response)
-        if in_place:
-            return self._copy_fields_from(model)
-        return Domain._from_model(model)
+        return self._copy_fields_from(expect(response))
 
     def update(
         self,
         name: Optional[str] = None,
         description: Optional[str] = None,
         tags: Optional[List[str]] = None,
-        in_place: bool = False,
     ) -> "Domain":
-        """Update the domain's mutable properties (name, description, tags).
+        """Update the domain's mutable properties (name, description, tags) in place.
 
         Only provided fields are sent in the PATCH body (the generated
         UNSET sentinel keeps omitted fields out of the request entirely).
@@ -475,15 +463,11 @@ class Domain(DomainModel):
             New description for the domain.
         tags : List[str], optional
             New tags for the domain (replaces existing tags).
-        in_place : bool, optional
-            If True, updates the current Domain instance with the new data
-            and returns self. If False (default), returns a new Domain
-            instance, leaving the current instance unchanged.
 
         Returns
         -------
         Domain
-            The updated Domain object.
+            ``self``, updated (so calls chain).
 
         Raises
         ------
@@ -492,10 +476,10 @@ class Domain(DomainModel):
 
         Examples
         --------
-        >>> domain = domain.update(name="new name", tags=["test"])
+        >>> domain.update(name="new name", tags=["test"])
         """
         if name is None and description is None and tags is None:
-            return self if in_place else Domain.from_dict(self.to_dict())
+            return self
 
         request_body = UpdateDomainRequestBody(
             name=name if name is not None else UNSET,
@@ -506,27 +490,35 @@ class Domain(DomainModel):
         response = update_domain.sync_detailed(
             client=ensure_client(), domain_id=domain_id, body=request_body
         )
-        model = expect(response)
-        if in_place:
-            return self._copy_fields_from(model)
-        return Domain._from_model(model)
+        return self._copy_fields_from(expect(response))
 
-    def delete(self) -> None:
-        """Delete this domain and all resources associated with it.
+    def delete(self, force: bool = False) -> None:
+        """Delete this domain.
+
+        Parameters
+        ----------
+        force : bool, optional
+            If True, cascade-delete every child resource (features, grids,
+            inventories, exports) in the domain. If False (default), the API
+            rejects the request with 412 when the domain still has child
+            resources.
 
         Raises
         ------
         NotFoundException
             If the domain no longer exists.
+        ApiException
+            With ``status_code`` 412 if the domain has child resources and
+            ``force`` is False.
 
         Examples
         --------
         >>> domain = Domain.from_id("abc123")
-        >>> domain.delete()
+        >>> domain.delete(force=True)  # also deletes its grids and features
         """
         domain_id = self._require_id()
         response = delete_domain.sync_detailed(
-            client=ensure_client(), domain_id=domain_id
+            client=ensure_client(), domain_id=domain_id, force=force
         )
         expect(response, HTTPStatus.NO_CONTENT)
 

@@ -9,7 +9,15 @@ from uuid import uuid4
 # Internal imports
 from tests import TEST_DATA_DIR
 from tests.v2.utils import create_default_layerset_geojson
-from fastfuels_sdk.v2.features import Feature, list_features
+from fastfuels_sdk.v2.features import (
+    Feature,
+    create_layerset_feature_from_geodataframe,
+    create_layerset_feature_from_geojson,
+    create_road_feature_from_osm,
+    create_water_feature_from_osm,
+    get_feature,
+    list_features,
+)
 from fastfuels_sdk.v2.client_library.models import FeatureType, JobStatus
 from fastfuels_sdk.v2.exceptions import (
     NotFoundException,
@@ -27,7 +35,7 @@ import geopandas as gpd
 
 class TestCreateOsmRoadFeature:
     def test_create(self, test_domain):
-        feature = Feature.create_osm_road(test_domain.id, name="throwaway_road")
+        feature = create_road_feature_from_osm(test_domain, name="throwaway_road")
 
         # Feature generation is an asynchronous job
         assert len(feature.id) > 0
@@ -47,12 +55,12 @@ class TestCreateOsmRoadFeature:
 
     def test_invalid_extent_buffer(self, test_domain):
         with pytest.raises(UnprocessableEntityException):
-            Feature.create_osm_road(test_domain.id, extent_buffer_m=500)
+            create_road_feature_from_osm(test_domain, extent_buffer_m=500)
 
 
 class TestCreateOsmWaterFeature:
     def test_create(self, test_domain):
-        feature = Feature.create_osm_water(test_domain.id, name="throwaway_water")
+        feature = create_water_feature_from_osm(test_domain, name="throwaway_water")
 
         assert len(feature.id) > 0
         assert feature.domain_id == test_domain.id
@@ -74,7 +82,7 @@ class TestCreateLayerset:
         feature_geojson = layerset_geojson["features"][0]
         feature_geojson["crs"] = layerset_geojson["crs"]
 
-        feature = Feature.create_layerset(test_domain.id, feature_geojson)
+        feature = create_layerset_feature_from_geojson(test_domain, feature_geojson)
         assert feature.status == JobStatus.COMPLETED
         feature.delete()
 
@@ -88,12 +96,12 @@ class TestCreateLayerset:
             ]
 
         with pytest.raises(UnprocessableEntityException, match="geographic"):
-            Feature.create_layerset(test_domain.id, geojson)
+            create_layerset_feature_from_geojson(test_domain, geojson)
 
     def test_invalid_geojson_type(self, test_domain):
         with pytest.raises(ValueError, match="FeatureCollection"):
-            Feature.create_layerset(
-                test_domain.id, {"type": "Point", "coordinates": [0, 0]}
+            create_layerset_feature_from_geojson(
+                test_domain, {"type": "Point", "coordinates": [0, 0]}
             )
 
 
@@ -104,8 +112,8 @@ class TestCreateLayersetFromGeodataframe:
         gdf = gpd.read_file(json.dumps(create_default_layerset_geojson()))
         assert gdf.crs.is_projected
 
-        feature = Feature.create_layerset_from_geodataframe(
-            test_domain.id, gdf, name="gdf_layerset"
+        feature = create_layerset_feature_from_geodataframe(
+            test_domain, gdf, name="gdf_layerset"
         )
         assert feature.type_ == FeatureType.LAYERSET
         assert feature.status == JobStatus.COMPLETED
@@ -125,22 +133,25 @@ class TestFromId:
             Feature.from_id(test_domain.id, uuid4().hex)
 
 
-class TestGetFeature:
-    def test_get_default(self, layerset_feature):
-        feature = layerset_feature.get()
+class TestRefreshFeature:
+    def test_refresh_returns_self(self, layerset_feature):
+        # refresh() updates in place and returns the same object (chains)
+        refreshed = layerset_feature.refresh()
+        assert refreshed is layerset_feature
+        assert refreshed.id == layerset_feature.id
+
+    def test_get_feature_returns_new_instance(self, test_domain, layerset_feature):
+        # The "fetch a fresh, separate copy" use case is get_feature(...)
+        feature = get_feature(test_domain, layerset_feature.id)
         assert feature.id == layerset_feature.id
         assert feature is not layerset_feature
 
-    def test_get_in_place(self, layerset_feature):
-        feature = layerset_feature.get(in_place=True)
-        assert feature is layerset_feature
 
-
-class TestWaitUntilCompleted:
+class TestWait:
     def test_timeout(self, test_domain):
-        feature = Feature.create_osm_water(test_domain.id)
+        feature = create_water_feature_from_osm(test_domain)
         with pytest.raises(TimeoutError):
-            feature.wait_until_completed(timeout=0)
+            feature.wait(timeout=0)
         feature.delete()
 
 
@@ -158,7 +169,7 @@ class TestGetDataMetadata:
 
     def test_not_completed(self, test_domain):
         # Data is only available once the job is complete
-        feature = Feature.create_osm_road(test_domain.id)
+        feature = create_road_feature_from_osm(test_domain)
         with pytest.raises(UnprocessableEntityException, match="status"):
             feature.get_data_metadata()
         feature.delete()
@@ -206,20 +217,20 @@ class TestListFeatures:
     def test_list_in_domain(
         self, test_domain, completed_road_feature, layerset_feature
     ):
-        features = list_features(test_domain.id)
+        features = list_features(test_domain)
         feature_ids = [feature.id for feature in features]
         assert completed_road_feature.id in feature_ids
         assert layerset_feature.id in feature_ids
 
     def test_list_cross_domain(self, layerset_feature):
-        # No domain_id: list features across all the user's domains
+        # No domain: list features across all the user's domains
         features = list_features()
         assert layerset_feature.id in [feature.id for feature in features]
 
     def test_filter_by_type(
         self, test_domain, completed_road_feature, layerset_feature
     ):
-        features = list_features(test_domain.id, feature_type="road")
+        features = list_features(test_domain, feature_type="road")
         feature_ids = [feature.id for feature in features]
         assert all(feature.type_ == FeatureType.ROAD for feature in features)
         assert completed_road_feature.id in feature_ids
@@ -228,13 +239,13 @@ class TestListFeatures:
     def test_filter_by_product(
         self, test_domain, completed_road_feature, layerset_feature
     ):
-        features = list_features(test_domain.id, product="osm")
+        features = list_features(test_domain, product="osm")
         feature_ids = [feature.id for feature in features]
         assert completed_road_feature.id in feature_ids
         assert layerset_feature.id not in feature_ids
 
     def test_filter_by_tag(self, test_domain, layerset_feature):
-        features = list_features(test_domain.id, tag="layerset-test")
+        features = list_features(test_domain, tag="layerset-test")
         assert [feature.id for feature in features] == [layerset_feature.id]
 
     @pytest.mark.xfail(
@@ -243,7 +254,7 @@ class TestListFeatures:
     )
     def test_sorting(self, test_domain, layerset_feature):
         features = list_features(
-            test_domain.id, sort_by="created_on", sort_order="descending"
+            test_domain, sort_by="created_on", sort_order="descending"
         )
         assert len(features) > 0
 
@@ -260,36 +271,32 @@ class TestUpdateFeature:
     @pytest.fixture(scope="class")
     def update_feature(self, test_domain):
         """A throwaway feature to mutate (the shared fixtures are read-only)."""
-        feature = Feature.create_layerset(
-            test_domain.id, create_default_layerset_geojson(), name="update_target"
+        feature = create_layerset_feature_from_geojson(
+            test_domain, create_default_layerset_geojson(), name="update_target"
         )
         yield feature
         feature.delete()
 
     def test_update_name(self, test_domain, update_feature):
+        # update() mutates in place and returns self (chains)
         updated = update_feature.update(name="updated_name")
-        assert updated.name == "updated_name"
-        assert updated is not update_feature
+        assert updated is update_feature
+        assert update_feature.name == "updated_name"
         # The remote resource reflects the update
-        assert Feature.from_id(test_domain.id, update_feature.id).name == "updated_name"
+        assert get_feature(test_domain, update_feature.id).name == "updated_name"
 
-    def test_update_in_place(self, update_feature):
-        updated = update_feature.update(
-            description="updated description", in_place=True
-        )
+    def test_update_description(self, update_feature):
+        updated = update_feature.update(description="updated description")
         assert updated is update_feature
         assert update_feature.description == "updated description"
 
     def test_update_tags(self, update_feature):
-        updated = update_feature.update(tags=["updated"], in_place=True)
-        assert updated.tags == ["updated"]
+        update_feature.update(tags=["updated"])
+        assert update_feature.tags == ["updated"]
 
     def test_update_no_fields_makes_no_api_call(self, update_feature):
-        # No fields provided: returns a copy without touching the API
-        copy = update_feature.update()
-        assert copy is not update_feature
-        assert copy.id == update_feature.id
-        assert update_feature.update(in_place=True) is update_feature
+        # No fields provided: returns self without touching the API
+        assert update_feature.update() is update_feature
 
 
 class TestToJson:
@@ -302,7 +309,7 @@ class TestToJson:
 
 class TestDeleteFeature:
     def test_delete_feature(self, test_domain):
-        feature = Feature.create_osm_water(test_domain.id)
+        feature = create_water_feature_from_osm(test_domain)
         feature.delete()
 
         with pytest.raises(NotFoundException):

@@ -156,15 +156,12 @@ class TestFromId:
             Domain.from_id(uuid4().hex)
 
 
-class TestGetDomain:
-    def test_get_default(self, test_domain):
-        domain = test_domain.get()
-        assert domain.id == test_domain.id
-        assert domain is not test_domain
-
-    def test_get_in_place(self, test_domain):
-        domain = test_domain.get(in_place=True)
-        assert domain is test_domain
+class TestRefreshDomain:
+    def test_refresh_returns_self(self, test_domain):
+        # refresh() re-fetches and updates in place, returning the same object
+        refreshed = test_domain.refresh()
+        assert refreshed is test_domain
+        assert refreshed.id == test_domain.id
 
 
 class TestUpdateDomain:
@@ -176,27 +173,25 @@ class TestUpdateDomain:
         domain.delete()
 
     def test_update_name(self, update_domain):
+        # update() mutates in place and returns self (chains)
         updated = update_domain.update(name="updated_name")
-        assert updated.name == "updated_name"
-        assert updated is not update_domain
+        assert updated is update_domain
+        assert update_domain.name == "updated_name"
         # The remote resource reflects the update
         assert Domain.from_id(update_domain.id).name == "updated_name"
 
-    def test_update_in_place(self, update_domain):
-        updated = update_domain.update(description="updated description", in_place=True)
+    def test_update_description(self, update_domain):
+        updated = update_domain.update(description="updated description")
         assert updated is update_domain
         assert update_domain.description == "updated description"
 
     def test_update_tags(self, update_domain):
-        updated = update_domain.update(tags=["updated"], in_place=True)
-        assert updated.tags == ["updated"]
+        update_domain.update(tags=["updated"])
+        assert update_domain.tags == ["updated"]
 
     def test_update_no_fields_makes_no_api_call(self, update_domain):
-        # No fields provided: returns a copy without touching the API
-        copy = update_domain.update()
-        assert copy is not update_domain
-        assert copy.id == update_domain.id
-        assert update_domain.update(in_place=True) is update_domain
+        # No fields provided: returns self without touching the API
+        assert update_domain.update() is update_domain
 
 
 class TestGetLattice:

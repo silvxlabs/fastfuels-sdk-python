@@ -6,9 +6,9 @@ Session-scoped resources shared across the v2 test modules.
 These fixtures are READ-ONLY by convention: they are shared by every
 module in the session, so any test that mutates or deletes a resource
 must create its own throwaway instead. Expensive job resources (the
-completed OSM road feature; later, grids and inventories) are built once
-per session and torn down with the domain — deleting the domain cascades
-to everything created inside it.
+completed OSM road feature and the completed topography grid) are built
+once per session and torn down with the domain — deleting the domain
+cascades to everything created inside it.
 
 Fixtures that wait on a job carry a ``completed_`` prefix; resources
 that are born complete (layerset uploads) don't need one.
@@ -16,7 +16,14 @@ that are born complete (layerset uploads) don't need one.
 
 import pytest
 
-from fastfuels_sdk.v2.features import Feature
+from fastfuels_sdk.v2.features import (
+    create_layerset_feature_from_geojson,
+    create_road_feature_from_osm,
+)
+from fastfuels_sdk.v2.grids import (
+    create_fuel_model_grid_from_landfire_fbfm40,
+    create_topography_grid_from_3dep,
+)
 from tests.v2.utils import (
     create_default_domain,
     create_default_layerset_geojson,
@@ -30,30 +37,61 @@ def test_domain():
     sweep_leftover_domains()
     domain = create_default_domain()
     yield domain
-    # Cleanup: deleting the domain also deletes its features
-    domain.delete()
+    # Cleanup: force-delete cascades to the domain's features and grids
+    domain.delete(force=True)
 
 
 @pytest.fixture(scope="session")
 def completed_road_feature(test_domain):
     """A completed OSM road feature. READ-ONLY: shared by every module."""
-    feature = Feature.create_osm_road(
-        test_domain.id,
+    feature = create_road_feature_from_osm(
+        test_domain,
         name="test_road",
         description="Road feature for testing v2 feature operations",
         tags=["test"],
     )
-    feature.wait_until_completed(step=2)
+    feature.wait()
     return feature
 
 
 @pytest.fixture(scope="session")
 def layerset_feature(test_domain):
     """A layerset feature (born completed). READ-ONLY: shared by every module."""
-    return Feature.create_layerset(
-        test_domain.id,
+    return create_layerset_feature_from_geojson(
+        test_domain,
         create_default_layerset_geojson(),
         name="test_layerset",
         description="Layerset feature for testing v2 feature operations",
         tags=["layerset-test"],
     )
+
+
+@pytest.fixture(scope="session")
+def completed_topography_grid(test_domain):
+    """A completed 3DEP topography grid. READ-ONLY: shared by every module."""
+    grid = create_topography_grid_from_3dep(
+        test_domain,
+        output_resolution_m=10,
+        name="test_topography",
+        description="Topography grid for testing v2 grid operations",
+        tags=["test"],
+    )
+    grid.wait()
+    return grid
+
+
+@pytest.fixture(scope="session")
+def completed_fbfm40_grid(test_domain):
+    """A completed LANDFIRE FBFM40 fuel model grid. READ-ONLY: shared by
+    every module. Provides the FBFM40 codes that
+    ``Grid.lookup_fuel_model_values`` reads.
+    """
+    grid = create_fuel_model_grid_from_landfire_fbfm40(
+        test_domain,
+        output_resolution_m=30,
+        name="test_fbfm40",
+        description="FBFM40 grid for testing v2 grid lookup operations",
+        tags=["test"],
+    )
+    grid.wait()
+    return grid

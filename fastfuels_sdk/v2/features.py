@@ -8,7 +8,7 @@ from http import HTTPStatus
 from typing import Any, Dict, List, Optional
 
 # Internal imports
-from fastfuels_sdk.v2._jobs import wait_until_completed as _wait_until_completed
+from fastfuels_sdk.v2._jobs import wait as _wait
 from fastfuels_sdk.v2.api import ensure_client
 from fastfuels_sdk.v2.exceptions import expect
 from fastfuels_sdk.v2.client_library.api.features import (
@@ -16,7 +16,7 @@ from fastfuels_sdk.v2.client_library.api.features import (
     create_osm_road_feature,
     create_osm_water_feature,
     delete_feature,
-    get_feature,
+    get_feature as get_feature_endpoint,
     get_feature_data_metadata,
     get_feature_data_partition,
     list_features as list_features_endpoint,
@@ -31,6 +31,7 @@ from fastfuels_sdk.v2.client_library.models import (
     FeatureDataMetadata,
     FeatureSortField,
     FeatureType,
+    JobStatus,
     ListFeaturesResponse,
     SortOrder,
     UpdateFeatureRequestBody,
@@ -40,6 +41,16 @@ from fastfuels_sdk.v2.client_library.types import UNSET
 # External imports
 import attrs
 import geopandas as gpd
+
+
+def _domain_id(domain) -> str:
+    """Resolve a Domain object or a domain-id string to the id string."""
+    return getattr(domain, "id", domain)
+
+
+def _opt(value):
+    """Map ``None`` to the generated UNSET sentinel, else pass through."""
+    return value if value is not None else UNSET
 
 
 def _as_feature_collection(geojson: dict) -> dict:
@@ -111,19 +122,21 @@ class Feature(FeatureModel):
     Examples
     --------
     Create a road feature and wait for it to complete:
-    >>> feature = Feature.create_osm_road("abc123")
-    >>> feature.wait_until_completed()
+    >>> import fastfuels_sdk as ff
+    >>> feature = ff.features.create_road_feature_from_osm(domain)
+    >>> feature.wait()
     >>> roads = feature.to_geodataframe()
 
     Get a feature by ID:
-    >>> feature = Feature.from_id("abc123", "def456")
+    >>> feature = ff.get_feature(domain, "def456")
 
     See Also
     --------
-    Feature.create_osm_road : Create a road feature from OpenStreetMap.
-    Feature.create_osm_water : Create a water feature from OpenStreetMap.
-    Feature.create_layerset : Upload a custom layerset of fuelbed polygons.
+    create_road_feature_from_osm : Create a road feature from OpenStreetMap.
+    create_water_feature_from_osm : Create a water feature from OpenStreetMap.
+    create_layerset_feature_from_geojson : Upload a custom layerset of fuelbed polygons.
     Feature.to_geodataframe : Retrieve the feature data as a GeoDataFrame.
+    Feature.rasterize : Rasterize a layerset feature into a grid.
     list_features : List features in a domain or across all domains.
     """
 
@@ -143,6 +156,14 @@ class Feature(FeatureModel):
                 setattr(self, field.name, getattr(model, field.name))
         self.additional_properties = dict(model.additional_properties)
         return self
+
+    def _require_completed(self, action: str) -> None:
+        """Raise if the feature is not completed, before deriving from it."""
+        if self.status != JobStatus.COMPLETED:
+            raise ValueError(
+                f"Cannot {action} a feature with status '{self.status}'. Call "
+                ".wait() until it completes first."
+            )
 
     @classmethod
     def from_id(cls, domain_id: str, feature_id: str) -> "Feature":
@@ -172,292 +193,18 @@ class Feature(FeatureModel):
         >>> feature.id
         'def456'
         """
-        response = get_feature.sync_detailed(
+        response = get_feature_endpoint.sync_detailed(
             domain_id, feature_id, client=ensure_client()
         )
         return cls._from_model(expect(response))
 
-    @classmethod
-    def create_osm_road(
-        cls,
-        domain_id: str,
-        name: str = "",
-        description: str = "",
-        tags: Optional[List[str]] = None,
-        extent_buffer_m: float = 0.0,
-    ) -> "Feature":
-        """Create a road feature from OpenStreetMap data.
-
-        Starts a background job that extracts road geometries from
-        OpenStreetMap within the domain extent. Use
-        :meth:`wait_until_completed` to block until the data is ready.
-
-        Parameters
-        ----------
-        domain_id : str
-            The unique identifier of the domain to create the feature in.
-        name : str, optional
-            Name for the feature.
-        description : str, optional
-            Description of the feature.
-        tags : List[str], optional
-            Tags for organizing the feature.
-        extent_buffer_m : float, optional
-            Distance in meters (0-100, default 0) to buffer the domain
-            extent outward when querying OpenStreetMap.
+    def refresh(self) -> "Feature":
+        """Update this Feature in place with the latest data from the API.
 
         Returns
         -------
         Feature
-            The created Feature object (job status "pending" or
-            "running").
-
-        Raises
-        ------
-        NotFoundException
-            If the domain does not exist.
-        UnprocessableEntityException
-            If ``extent_buffer_m`` is outside the 0-100 meter range.
-
-        Examples
-        --------
-        >>> feature = Feature.create_osm_road("abc123", name="roads")
-        >>> feature.type_
-        <FeatureType.ROAD: 'road'>
-        """
-        request_body = CreateOsmRoadFeatureRequest(
-            name=name,
-            description=description,
-            tags=tags if tags is not None else UNSET,
-            extent_buffer_m=extent_buffer_m,
-        )
-        response = create_osm_road_feature.sync_detailed(
-            domain_id, client=ensure_client(), body=request_body
-        )
-        return cls._from_model(expect(response, HTTPStatus.CREATED))
-
-    @classmethod
-    def create_osm_water(
-        cls,
-        domain_id: str,
-        name: str = "",
-        description: str = "",
-        tags: Optional[List[str]] = None,
-        extent_buffer_m: float = 0.0,
-    ) -> "Feature":
-        """Create a water feature from OpenStreetMap data.
-
-        Starts a background job that extracts water-body geometries from
-        OpenStreetMap within the domain extent. Use
-        :meth:`wait_until_completed` to block until the data is ready.
-
-        Parameters
-        ----------
-        domain_id : str
-            The unique identifier of the domain to create the feature in.
-        name : str, optional
-            Name for the feature.
-        description : str, optional
-            Description of the feature.
-        tags : List[str], optional
-            Tags for organizing the feature.
-        extent_buffer_m : float, optional
-            Distance in meters (0-100, default 0) to buffer the domain
-            extent outward when querying OpenStreetMap.
-
-        Returns
-        -------
-        Feature
-            The created Feature object (job status "pending" or
-            "running").
-
-        Raises
-        ------
-        NotFoundException
-            If the domain does not exist.
-        UnprocessableEntityException
-            If ``extent_buffer_m`` is outside the 0-100 meter range.
-
-        Examples
-        --------
-        >>> feature = Feature.create_osm_water("abc123", name="water")
-        >>> feature.type_
-        <FeatureType.WATER: 'water'>
-        """
-        request_body = CreateOsmWaterFeatureRequest(
-            name=name,
-            description=description,
-            tags=tags if tags is not None else UNSET,
-            extent_buffer_m=extent_buffer_m,
-        )
-        response = create_osm_water_feature.sync_detailed(
-            domain_id, client=ensure_client(), body=request_body
-        )
-        return cls._from_model(expect(response, HTTPStatus.CREATED))
-
-    @classmethod
-    def create_layerset(
-        cls,
-        domain_id: str,
-        geojson: dict,
-        name: str = "",
-        description: str = "",
-        tags: Optional[List[str]] = None,
-    ) -> "Feature":
-        """Upload a custom layerset of fuelbed polygons.
-
-        Uploads a GeoJSON FeatureCollection where each feature is one
-        fuelbed polygon. The upload is validated and stored synchronously:
-        the returned Feature has status "completed" and its data is
-        immediately available through the data methods.
-
-        Each feature's ``properties`` must carry the fuelbed input
-        columns:
-
-        - ``fuel_type`` (str)
-        - ``fuel_loading`` (float)
-        - ``fuel_height`` (float)
-        - ``percent_cover`` (float)
-        - ``distribution`` (str): "homogeneous", "random_clusters", or
-          "uniform_random"
-
-        Optional columns: ``strata_fb``, ``patch_size``,
-        ``live_fuel_moisture``, ``dead_fuel_moisture``,
-        ``heat_of_combustion``, ``patch_std_dev``.
-
-        Parameters
-        ----------
-        domain_id : str
-            The unique identifier of the domain to create the feature in.
-        geojson : dict
-            A GeoJSON FeatureCollection or Feature (a single Feature is
-            wrapped automatically) with Polygon or MultiPolygon
-            geometries. The ``crs`` member must declare a **projected**
-            CRS (e.g. EPSG:5070); geographic coordinates are rejected.
-        name : str, optional
-            Name for the feature.
-        description : str, optional
-            Description of the feature.
-        tags : List[str], optional
-            Tags for organizing the feature.
-
-        Returns
-        -------
-        Feature
-            The created Feature object with status "completed".
-
-        Raises
-        ------
-        ValueError
-            If the GeoJSON is not a Feature or FeatureCollection.
-        NotFoundException
-            If the domain does not exist.
-        UnprocessableEntityException
-            If the CRS is missing or geographic, a geometry is not a
-            Polygon/MultiPolygon, or a feature is missing required
-            fuelbed properties.
-
-        Examples
-        --------
-        >>> feature = Feature.create_layerset("abc123", geojson)
-        >>> feature.status
-        <JobStatus.COMPLETED: 'completed'>
-        """
-        feature_collection = _as_feature_collection(geojson)
-        body = {**feature_collection, "name": name, "description": description}
-        if tags is not None:
-            body["tags"] = tags
-        request_body = CreateLayersetRequestBody.from_dict(body)
-        response = create_layerset.sync_detailed(
-            domain_id, client=ensure_client(), body=request_body
-        )
-        return cls._from_model(expect(response, HTTPStatus.CREATED))
-
-    @classmethod
-    def create_layerset_from_geodataframe(
-        cls,
-        domain_id: str,
-        geodataframe: gpd.GeoDataFrame,
-        name: str = "",
-        description: str = "",
-        tags: Optional[List[str]] = None,
-    ) -> "Feature":
-        """Upload a custom layerset from a GeoPandas GeoDataFrame.
-
-        The GeoDataFrame's CRS is forwarded to the API as the
-        FeatureCollection's ``crs`` member. The CRS must be **projected**
-        (e.g. EPSG:5070); the GeoDataFrame is not reprojected — use
-        ``geodataframe.to_crs(...)`` first if needed. Each row's columns
-        must carry the fuelbed properties described in
-        :meth:`create_layerset`.
-
-        Parameters
-        ----------
-        domain_id : str
-            The unique identifier of the domain to create the feature in.
-        geodataframe : gpd.GeoDataFrame
-            GeoDataFrame with one fuelbed polygon per row.
-        name : str, optional
-            Name for the feature.
-        description : str, optional
-            Description of the feature.
-        tags : List[str], optional
-            Tags for organizing the feature.
-
-        Returns
-        -------
-        Feature
-            The created Feature object with status "completed".
-
-        Raises
-        ------
-        ValueError
-            If the GeoDataFrame CRS has no authority code (e.g. a custom
-            CRS).
-        UnprocessableEntityException
-            Same validation errors as :meth:`create_layerset`.
-
-        Examples
-        --------
-        >>> gdf = gpd.read_file("fuelbeds.shp").to_crs(epsg=5070)
-        >>> feature = Feature.create_layerset_from_geodataframe("abc123", gdf)
-        """
-        geojson = json.loads(geodataframe.to_json())
-        if geodataframe.crs is not None:
-            authority = geodataframe.crs.to_authority()
-            if authority is None:
-                raise ValueError(
-                    "GeoDataFrame CRS has no authority code (e.g. a custom "
-                    "CRS). Reproject to a known projected CRS with "
-                    "geodataframe.to_crs(...) before creating a layerset."
-                )
-            geojson["crs"] = {
-                "type": "name",
-                "properties": {"name": ":".join(authority)},
-            }
-        return cls.create_layerset(
-            domain_id,
-            geojson,
-            name=name,
-            description=description,
-            tags=tags,
-        )
-
-    def get(self, in_place: bool = False) -> "Feature":
-        """Retrieve the latest feature data from the API.
-
-        Parameters
-        ----------
-        in_place : bool, optional
-            If True, updates the current Feature instance with the new
-            data and returns self. If False (default), returns a new
-            Feature instance with the latest data, leaving the current
-            instance unchanged.
-
-        Returns
-        -------
-        Feature
-            The updated Feature object.
+            ``self``, updated with the latest data (so calls chain).
 
         Raises
         ------
@@ -466,74 +213,54 @@ class Feature(FeatureModel):
 
         Examples
         --------
-        >>> updated_feature = feature.get()  # new instance
-        >>> feature.get(in_place=True)  # refresh in place
+        >>> feature.refresh()
         """
-        response = get_feature.sync_detailed(
+        response = get_feature_endpoint.sync_detailed(
             self.domain_id, self.id, client=ensure_client()
         )
-        model = expect(response)
-        if in_place:
-            return self._copy_fields_from(model)
-        return Feature._from_model(model)
+        return self._copy_fields_from(expect(response))
 
-    def wait_until_completed(
-        self,
-        step: float = 5,
-        timeout: float = 600,
-        in_place: bool = True,
-        verbose: bool = False,
-    ) -> "Feature":
+    def wait(self, timeout: Optional[float] = None, verbose: bool = False) -> "Feature":
         """Poll the feature job until it reaches a terminal status.
 
         Parameters
         ----------
-        step : float, optional
-            Seconds between polls (default 5).
         timeout : float, optional
-            Maximum seconds to wait before raising (default 600).
-        in_place : bool, optional
-            If True (default), updates the current Feature instance with
-            the completed data and returns self. If False, returns a new
-            Feature instance, leaving the current instance unchanged.
+            Maximum seconds to wait. ``None`` (default) waits indefinitely; the
+            job runs server-side regardless, so a bounded wait is resumable.
         verbose : bool, optional
             If True, print the job status at each poll.
 
         Returns
         -------
         Feature
-            The completed Feature object.
+            ``self``, updated to its terminal state (so calls chain).
 
         Raises
         ------
         TimeoutError
-            If the job does not reach a terminal status within
-            ``timeout`` seconds.
-        RuntimeError
+            If ``timeout`` is set and elapses before a terminal status.
+        JobFailedError
             If the job finished with status "failed".
 
         Examples
         --------
-        >>> feature = Feature.create_osm_road("abc123")
-        >>> feature.wait_until_completed(verbose=True)
+        >>> feature = create_road_feature_from_osm(domain)
+        >>> feature.wait(verbose=True)
         Feature def456: JobStatus.COMPLETED (5s)
         """
-        return _wait_until_completed(
-            self, step=step, timeout=timeout, in_place=in_place, verbose=verbose
-        )
+        return _wait(self, timeout=timeout, verbose=verbose)
 
     def update(
         self,
         name: Optional[str] = None,
         description: Optional[str] = None,
         tags: Optional[List[str]] = None,
-        in_place: bool = False,
     ) -> "Feature":
-        """Update the feature's mutable properties (name, description, tags).
+        """Update the feature's mutable metadata (name, description, tags) in place.
 
-        Only provided fields are sent in the PATCH body (the generated
-        UNSET sentinel keeps omitted fields out of the request entirely).
-        If no fields are provided, no API call is made.
+        Only provided fields are sent. If no fields are provided, no API call
+        is made.
 
         Parameters
         ----------
@@ -543,15 +270,11 @@ class Feature(FeatureModel):
             New description for the feature.
         tags : List[str], optional
             New tags for the feature (replaces existing tags).
-        in_place : bool, optional
-            If True, updates the current Feature instance with the new
-            data and returns self. If False (default), returns a new
-            Feature instance, leaving the current instance unchanged.
 
         Returns
         -------
         Feature
-            The updated Feature object.
+            ``self``, updated (so calls chain).
 
         Raises
         ------
@@ -560,23 +283,18 @@ class Feature(FeatureModel):
 
         Examples
         --------
-        >>> feature = feature.update(name="new name", tags=["test"])
+        >>> feature.update(name="new name", tags=["test"])
         """
         if name is None and description is None and tags is None:
-            return self if in_place else Feature.from_dict(self.to_dict())
+            return self
 
         request_body = UpdateFeatureRequestBody(
-            name=name if name is not None else UNSET,
-            description=description if description is not None else UNSET,
-            tags=tags if tags is not None else UNSET,
+            name=_opt(name), description=_opt(description), tags=_opt(tags)
         )
         response = update_feature.sync_detailed(
             self.domain_id, self.id, client=ensure_client(), body=request_body
         )
-        model = expect(response)
-        if in_place:
-            return self._copy_fields_from(model)
-        return Feature._from_model(model)
+        return self._copy_fields_from(expect(response))
 
     def delete(self) -> None:
         """Delete this feature and its generated data.
@@ -595,6 +313,79 @@ class Feature(FeatureModel):
             self.domain_id, self.id, client=ensure_client()
         )
         expect(response, HTTPStatus.NO_CONTENT)
+
+    def rasterize(
+        self,
+        output_resolution_m: Optional[float] = None,
+        align_to=None,
+        align: Optional[str] = None,
+        resampling: Optional[str] = None,
+        overlap_method: Optional[str] = None,
+        extent_buffer_cells: int = 0,
+        name: str = "",
+        description: str = "",
+        tags: Optional[List[str]] = None,
+        modifications: Optional[list] = None,
+    ):
+        """Rasterize this layerset feature into a grid.
+
+        Only valid for layerset features (uploaded fuelbed polygons).
+
+        Parameters
+        ----------
+        output_resolution_m : float, optional
+            Output cell size in meters, anchored to the domain origin.
+        align_to : Grid or str, optional
+            Match the lattice of an existing grid (or its id).
+        align : str, optional
+            Pass ``"native"`` to keep the source pixel anchor.
+        resampling : str, optional
+            Resampling method (e.g. "bilinear", "nearest").
+        overlap_method : str, optional
+            Per-cell reduction when polygons of the same fuel type overlap:
+            "max", "mean", or "min".
+        extent_buffer_cells : int, optional
+            Result-grid cells to buffer around the domain extent (0-10).
+        name, description : str, optional
+            Metadata for the new grid.
+        tags : List[str], optional
+            Tags for the new grid.
+        modifications : list, optional
+            Modification rules applied after the grid is built.
+
+        Returns
+        -------
+        Grid
+            The new (pending) rasterized Grid.
+        """
+        # Imported here rather than at module scope so the feature/grid
+        # modules stay decoupled (grids never imports features).
+        from fastfuels_sdk.v2.grids import Grid, _build_alignment
+        from fastfuels_sdk.v2.client_library.api.grids import create_layerset_rasterize
+        from fastfuels_sdk.v2.client_library.models import (
+            CreateLayersetRasterizeRequest,
+            OverlapMethod,
+        )
+
+        self._require_completed("rasterize")
+        request_body = CreateLayersetRasterizeRequest(
+            layerset_id=self.id,
+            alignment=_build_alignment(
+                output_resolution_m, align_to, align, resampling
+            ),
+            overlap_method=(
+                OverlapMethod(overlap_method) if overlap_method is not None else UNSET
+            ),
+            extent_buffer_cells=extent_buffer_cells,
+            name=name,
+            description=description,
+            tags=_opt(tags),
+            modifications=_opt(modifications),
+        )
+        response = create_layerset_rasterize.sync_detailed(
+            self.domain_id, client=ensure_client(), body=request_body
+        )
+        return Grid._from_model(expect(response, HTTPStatus.CREATED))
 
     def get_data_metadata(self) -> FeatureDataMetadata:
         """Get the partition layout of the feature's generated data.
@@ -723,7 +514,7 @@ class Feature(FeatureModel):
 
         Examples
         --------
-        >>> feature.wait_until_completed()
+        >>> feature.wait()
         >>> gdf = feature.to_geodataframe()
         """
         data = self.get_data()
@@ -742,8 +533,294 @@ class Feature(FeatureModel):
         return json.dumps(self.to_dict(), default=str, indent=2)
 
 
+# ---------------------------------------------------------------------------
+# Create features (module-level functions)
+# ---------------------------------------------------------------------------
+
+
+def create_road_feature_from_osm(
+    domain,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    extent_buffer_m: float = 0.0,
+) -> Feature:
+    """Create a road feature from OpenStreetMap data.
+
+    Starts a background job that extracts road geometries from
+    OpenStreetMap within the domain extent. Use :meth:`Feature.wait` to
+    block until the data is ready.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the feature in.
+    name : str, optional
+        Name for the feature.
+    description : str, optional
+        Description of the feature.
+    tags : List[str], optional
+        Tags for organizing the feature.
+    extent_buffer_m : float, optional
+        Distance in meters (0-100, default 0) to buffer the domain extent
+        outward when querying OpenStreetMap.
+
+    Returns
+    -------
+    Feature
+        The created Feature object (job status "pending" or "running").
+
+    Raises
+    ------
+    NotFoundException
+        If the domain does not exist.
+    UnprocessableEntityException
+        If ``extent_buffer_m`` is outside the 0-100 meter range.
+
+    Examples
+    --------
+    >>> feature = create_road_feature_from_osm(domain, name="roads")
+    >>> feature.type_
+    <FeatureType.ROAD: 'road'>
+    """
+    request_body = CreateOsmRoadFeatureRequest(
+        name=name,
+        description=description,
+        tags=_opt(tags),
+        extent_buffer_m=extent_buffer_m,
+    )
+    response = create_osm_road_feature.sync_detailed(
+        _domain_id(domain), client=ensure_client(), body=request_body
+    )
+    return Feature._from_model(expect(response, HTTPStatus.CREATED))
+
+
+def create_water_feature_from_osm(
+    domain,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    extent_buffer_m: float = 0.0,
+) -> Feature:
+    """Create a water feature from OpenStreetMap data.
+
+    Starts a background job that extracts water-body geometries from
+    OpenStreetMap within the domain extent. Use :meth:`Feature.wait` to
+    block until the data is ready.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the feature in.
+    name : str, optional
+        Name for the feature.
+    description : str, optional
+        Description of the feature.
+    tags : List[str], optional
+        Tags for organizing the feature.
+    extent_buffer_m : float, optional
+        Distance in meters (0-100, default 0) to buffer the domain extent
+        outward when querying OpenStreetMap.
+
+    Returns
+    -------
+    Feature
+        The created Feature object (job status "pending" or "running").
+
+    Raises
+    ------
+    NotFoundException
+        If the domain does not exist.
+    UnprocessableEntityException
+        If ``extent_buffer_m`` is outside the 0-100 meter range.
+
+    Examples
+    --------
+    >>> feature = create_water_feature_from_osm(domain, name="water")
+    >>> feature.type_
+    <FeatureType.WATER: 'water'>
+    """
+    request_body = CreateOsmWaterFeatureRequest(
+        name=name,
+        description=description,
+        tags=_opt(tags),
+        extent_buffer_m=extent_buffer_m,
+    )
+    response = create_osm_water_feature.sync_detailed(
+        _domain_id(domain), client=ensure_client(), body=request_body
+    )
+    return Feature._from_model(expect(response, HTTPStatus.CREATED))
+
+
+def create_layerset_feature_from_geojson(
+    domain,
+    geojson: dict,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+) -> Feature:
+    """Upload a custom layerset of fuelbed polygons from GeoJSON.
+
+    Uploads a GeoJSON FeatureCollection where each feature is one fuelbed
+    polygon. The upload is validated and stored synchronously: the returned
+    Feature has status "completed" and its data is immediately available
+    through the data methods.
+
+    Each feature's ``properties`` must carry the fuelbed input columns:
+
+    - ``fuel_type`` (str)
+    - ``fuel_loading`` (float)
+    - ``fuel_height`` (float)
+    - ``percent_cover`` (float)
+    - ``distribution`` (str): "homogeneous", "random_clusters", or
+      "uniform_random"
+
+    Optional columns: ``strata_fb``, ``patch_size``,
+    ``live_fuel_moisture``, ``dead_fuel_moisture``, ``heat_of_combustion``,
+    ``patch_std_dev``.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the feature in.
+    geojson : dict
+        A GeoJSON FeatureCollection or Feature (a single Feature is wrapped
+        automatically) with Polygon or MultiPolygon geometries. The ``crs``
+        member must declare a **projected** CRS (e.g. EPSG:5070); geographic
+        coordinates are rejected.
+    name : str, optional
+        Name for the feature.
+    description : str, optional
+        Description of the feature.
+    tags : List[str], optional
+        Tags for organizing the feature.
+
+    Returns
+    -------
+    Feature
+        The created Feature object with status "completed".
+
+    Raises
+    ------
+    ValueError
+        If the GeoJSON is not a Feature or FeatureCollection.
+    NotFoundException
+        If the domain does not exist.
+    UnprocessableEntityException
+        If the CRS is missing or geographic, a geometry is not a
+        Polygon/MultiPolygon, or a feature is missing required fuelbed
+        properties.
+
+    Examples
+    --------
+    >>> feature = create_layerset_feature_from_geojson(domain, geojson)
+    >>> feature.status
+    <JobStatus.COMPLETED: 'completed'>
+    """
+    feature_collection = _as_feature_collection(geojson)
+    body = {**feature_collection, "name": name, "description": description}
+    if tags is not None:
+        body["tags"] = tags
+    request_body = CreateLayersetRequestBody.from_dict(body)
+    response = create_layerset.sync_detailed(
+        _domain_id(domain), client=ensure_client(), body=request_body
+    )
+    return Feature._from_model(expect(response, HTTPStatus.CREATED))
+
+
+def create_layerset_feature_from_geodataframe(
+    domain,
+    geodataframe: gpd.GeoDataFrame,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+) -> Feature:
+    """Upload a custom layerset from a GeoPandas GeoDataFrame.
+
+    The GeoDataFrame's CRS is forwarded to the API as the FeatureCollection's
+    ``crs`` member. The CRS must be **projected** (e.g. EPSG:5070); the
+    GeoDataFrame is not reprojected — use ``geodataframe.to_crs(...)`` first if
+    needed. Each row's columns must carry the fuelbed properties described in
+    :func:`create_layerset_feature_from_geojson`.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the feature in.
+    geodataframe : gpd.GeoDataFrame
+        GeoDataFrame with one fuelbed polygon per row.
+    name : str, optional
+        Name for the feature.
+    description : str, optional
+        Description of the feature.
+    tags : List[str], optional
+        Tags for organizing the feature.
+
+    Returns
+    -------
+    Feature
+        The created Feature object with status "completed".
+
+    Raises
+    ------
+    ValueError
+        If the GeoDataFrame CRS has no authority code (e.g. a custom CRS).
+    UnprocessableEntityException
+        Same validation errors as :func:`create_layerset_feature_from_geojson`.
+
+    Examples
+    --------
+    >>> gdf = gpd.read_file("fuelbeds.shp").to_crs(epsg=5070)
+    >>> feature = create_layerset_feature_from_geodataframe(domain, gdf)
+    """
+    geojson = json.loads(geodataframe.to_json())
+    if geodataframe.crs is not None:
+        authority = geodataframe.crs.to_authority()
+        if authority is None:
+            raise ValueError(
+                "GeoDataFrame CRS has no authority code (e.g. a custom "
+                "CRS). Reproject to a known projected CRS with "
+                "geodataframe.to_crs(...) before creating a layerset."
+            )
+        geojson["crs"] = {
+            "type": "name",
+            "properties": {"name": ":".join(authority)},
+        }
+    return create_layerset_feature_from_geojson(
+        domain,
+        geojson,
+        name=name,
+        description=description,
+        tags=tags,
+    )
+
+
+def get_feature(domain, feature_id: str) -> Feature:
+    """Retrieve a single feature by its ID.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) the feature belongs to.
+    feature_id : str
+        The unique identifier of the feature.
+
+    Returns
+    -------
+    Feature
+        The requested Feature object.
+
+    Raises
+    ------
+    NotFoundException
+        If no feature exists with the given IDs, or the user does not have
+        access to it.
+    """
+    return Feature.from_id(_domain_id(domain), feature_id)
+
+
 def list_features(
-    domain_id: Optional[str] = None,
+    domain=None,
     page: int = 0,
     size: int = 100,
     sort_by: Optional[str] = None,
@@ -756,9 +833,9 @@ def list_features(
 
     Parameters
     ----------
-    domain_id : str, optional
-        The unique identifier of the domain to list features in. If
-        omitted, features from all the user's domains are listed.
+    domain : Domain or str, optional
+        The domain (or its id) to list features in. If omitted, features from
+        all the user's domains are listed.
     page : int, optional
         The page number to retrieve, zero-indexed (default 0).
     size : int, optional
@@ -768,8 +845,7 @@ def list_features(
     sort_order : str, optional
         Sort direction: "ascending" or "descending".
     feature_type : str, optional
-        Only return features of this type: "road", "water", or
-        "layerset".
+        Only return features of this type: "road", "water", or "layerset".
     product : str, optional
         Only return features from this data product (e.g. "osm").
     tag : str, optional
@@ -782,7 +858,7 @@ def list_features(
 
     Examples
     --------
-    >>> features = list_features("abc123", feature_type="road")
+    >>> features = list_features(domain, feature_type="road")
     >>> all_features = list_features()  # across all domains
     """
     kwargs = dict(
@@ -792,12 +868,12 @@ def list_features(
         sort_by=FeatureSortField(sort_by) if sort_by else UNSET,
         sort_order=SortOrder(sort_order) if sort_order else UNSET,
         type_=FeatureType(feature_type) if feature_type else UNSET,
-        product=product if product is not None else UNSET,
-        tag=tag if tag is not None else UNSET,
+        product=_opt(product),
+        tag=_opt(tag),
     )
-    if domain_id is None:
+    if domain is None:
         response = list_features_cross_domain.sync_detailed(**kwargs)
     else:
-        response = list_features_endpoint.sync_detailed(domain_id, **kwargs)
+        response = list_features_endpoint.sync_detailed(_domain_id(domain), **kwargs)
     list_response: ListFeaturesResponse = expect(response)
     return [Feature._from_model(f) for f in list_response.features]

@@ -52,7 +52,7 @@ def sweep_leftover_domains(max_age: timedelta = timedelta(hours=2)) -> None:
     cutoff = datetime.now(timezone.utc) - max_age
     for domain in list_domains(size=100):
         if SWEEP_TAG in (domain.tags or []) and domain.created_on < cutoff:
-            domain.delete()
+            domain.delete(force=True)
 
 
 def create_default_layerset_geojson() -> dict:

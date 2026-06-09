@@ -1,0 +1,212 @@
+# v2 SDK — API Design (WORKING DRAFT)
+
+> Scratch design notes for the v2 SDK refactor (umbrella #176; grids = #178).
+> **Temporary** — delete or fold into real docs before merge.
+> Captures the surface settled in the 2026-06 design discussion.
+
+## Decision: hybrid — functional creation, method-based instances
+
+Two separate decisions, each resolved differently:
+
+1. **Creation lives in module-level functions.** Every class-home was rejected:
+   classmethod on the resource (`Feature.create_osm_road(domain.id)`, the
+   original complaint), method on `Domain` (God-class), method on a collection
+   object (`domain.grids.topography.from_3dep()`, the object tree). Functions
+   are what's left, and they read cold.
+2. **Everything you do with a resource you already hold is a method** on the
+   returned record — `grid.wait()`, `grid.to_xarray()`, `trees.voxelize(...)`,
+   `grid.resample(...)`, `grid.delete()`. Methods read naturally, chain, answer
+   "what can I do with this?" via `grid.<tab>`, and are mostly what the shipped
+   class-based `domains.py`/`features.py` already have — so the migration is
+   "move creation off the classes into functions," not a rewrite, and there's
+   no split-brain.
+
+The rule a user learns: **don't have the resource yet → function from the
+domain; have it → method on it.**
+
+Rejected wholesale: fully object-navigation (`domain.grids.topography.…`),
+fully functional (free `ff.wait(grid)` / `ff.to_xarray(grid)` — loses chaining
+and the shipped methods), typed spec objects, fluent builders, a "fuelscape"
+façade.
+
+## Access pattern (locked)
+
+One import; reach everything through the package namespace (`np`/`pd`/`gpd`
+idiom):
+
+```python
+import fastfuels_sdk as ff
+```
+
+- **Creators are module-qualified functions:**
+  `ff.grids.create_topography_grid_from_3dep(domain, …)`,
+  `ff.features.create_road_feature_from_osm(domain)`. Scoped tab-completion:
+  `ff.grids.<tab>`.
+- **Held-resource ops are methods:** `grid.wait()`, `grid.to_xarray()`,
+  `trees.voxelize(…)`, `grid.resample(…)`, `grid.export(…)`, `grid.delete()`.
+- **Cross-cutting helpers are top-level functions** (operate on many / build
+  descriptors / start from nothing): `ff.wait_all([...])`, `ff.mask(...)`,
+  `ff.list_grids(domain)`, `ff.list_all_grids()`, `ff.get_grid(domain, id)`,
+  `ff.Domain`, `ff.set_api_key`. (Fuller modifications vocab — `modify`,
+  `within`, `remove`, `thin_to_*` — lives in `ff.modifications`, least-settled.)
+- `ff.<module>` is a **module, not an object** — no God-class. Not the rejected
+  object tree.
+- The resource noun stays **in the create-function name** (`…_grid_…`,
+  `…_feature_…`) even though the module repeats it, so it reads cold under a
+  bare import too.
+
+## Guiding principles
+
+1. **Read it cold** — one call, you know exactly what it does. No jargon, no
+   magic values, units in names (`_m`), real domain nouns, named arguments.
+2. **The shape encodes where the input comes from:** `create_<kind>_<resource>_from_<source>(domain, …)`
+   = external dataset; `create_<resource>_from_<file>(domain, path)` = your
+   file; `create_<resource>(domain, …)` = you supply values; `resource.<verb>()`
+   = transform something you hold.
+3. **Resource noun in every `create_*` name** (`grid`/`feature`/`inventory`).
+4. **Concrete kind nouns**, grounded in the grid's bands — never vague
+   umbrellas (`canopy` → `canopy_height` vs `canopy_fuel`).
+
+## Wait / job model (decision: A — explicit)
+
+API is async-job (create → poll → terminal). Surfaced explicitly:
+
+- **Creation never blocks, never auto-waits** — returns a *pending* record.
+  Lets you fan out and join (the v1 `export_roi` pattern).
+- `grid.wait(timeout=None, verbose=False)` — method; blocks to terminal,
+  updates & returns self (chains). `timeout=None` waits indefinitely; the job
+  runs server-side regardless, so a bounded timeout is resumable.
+- `ff.wait_all([...])` — function; join many, raises naming the first failure.
+- **Deriving from a still-pending resource raises** a clear error. No hidden
+  block.
+- Failure → `JobFailedError(code, message, suggestion)`. Progress quiet by
+  default; `verbose=True`.
+
+## Resolution & alignment (verified against the models)
+
+**v2 moved resolution off the domain and onto each grid** (v1 set it on the
+domain). `Domain` has only `pad_to_resolution` (optional footprint snapping).
+Per-creator:
+
+- **2D source/derive grids** (`topography×2`, `canopy_height×2`, `canopy_fuel`,
+  `fuel_model/fbfm40`, `resample`, `rasterize`) carry an **`alignment`** union.
+  All three targets also hold `resolution: float` (horizontal) and an optional
+  `method` (resampling). Friendly mapping:
+  - `output_resolution_m=N` → `target="domain"` (anchor to domain origin at N m) — default.
+  - `align_to=<grid>` → `target="grid"` (match that grid's lattice).
+  - `align="native"` → `target="native"` (keep source pixels).
+  - `resampling=<m>` → `method`; one of `average / bilinear / cubic /
+    cubic_spline / lanczos / min / max / median / mode / first_quartile`.
+- **`create_uniform_grid`**: direct `resolution: float` → `resolution_m=`.
+- **`voxelize`** (3D): direct `resolution: Resolution3D = {horizontal, vertical}`
+  (horizontal isotropic x/y, vertical independent), **no alignment** →
+  `horizontal_resolution_m=` + `vertical_resolution_m=`.
+- **`lookup_fuel_model_values`, geotiff/netcdf upload**: no resolution/alignment — inherit
+  the source grid's lattice (lookup) or the file (uploads).
+- ⚠️ **`landfire_fccs` carries neither `alignment` nor `resolution`** — an
+  asymmetry vs the other LANDFIRE creators. Confirm with the API team before
+  building (fixed resolution? inherits a default?).
+
+## Conventions
+
+- Every creator also accepts `name=`, `description=`, `tags=`,
+  `modifications=[...]` (applied server-side after build; `modifications` is a
+  real field on grid creators *and* `lookup_fuel_model_values`/`rasterize`).
+- **Data out (methods, hide chunk/partition plumbing + signed-URL handshake):**
+  `grid.to_xarray()`, `grid.to_numpy(band)`, `feature.to_geodataframe()`.
+- **Generic methods on any record:** `.wait()`, `.refresh()`, `.update(...)`,
+  `.delete()`.
+
+## Module layout
+
+```
+fastfuels_sdk/
+  __init__.py     set_api_key, Domain, wait_all, mask, list_*, get_*, ...
+  domains.py      Domain (record + from_* + methods), list_domains
+  features.py     create_*_feature_from_* (fns); Feature record + methods   [rewrite creation only]
+  grids.py        create_*_grid_from_* (fns); Grid record + methods
+                  (wait/to_xarray/resample/lookup_fuel_model_values/export/...)           [GREENFIELD #178]
+  inventories.py  create_tree_inventory_from_* (fns); Inventory + methods    [later]
+  exports.py      create_quicfire_export (fn); Export record + methods       [later]
+```
+
+## Features — 10 endpoints (rewrite creation only; keep instance methods)
+
+| API endpoint | SDK surface | Kind |
+|---|---|---|
+| `create_osm_road_feature` | `ff.features.create_road_feature_from_osm(domain)` | fn |
+| `create_osm_water_feature` | `ff.features.create_water_feature_from_osm(domain)` | fn |
+| `create_layerset` | `ff.features.create_layerset_feature_from_geojson(domain, geojson)` · `…_from_geodataframe(domain, gdf)` | fn |
+| `get_feature` | `ff.get_feature(domain, feature_id)` · `feature.refresh()` | fn / method |
+| `update_feature` | `feature.update(…)` | method |
+| `delete_feature` | `feature.delete()` | method |
+| `list_features` | `ff.list_features(domain)` | fn |
+| `list_features_cross_domain` | `ff.list_all_features()` | fn |
+| `get_feature_data_metadata` + `…_partition` | `feature.to_geodataframe()` | method (hides paging) |
+
+## Grids — 26 endpoints (greenfield, #178)
+
+All `create_*_grid_*` functions share an internal `_grid_request_base(...)` +
+alignment-translation helper (plain function, not a base class).
+
+**Create from external source (functions)**
+
+| API endpoint | SDK surface |
+|---|---|
+| `create_3dep_topography` | `ff.grids.create_topography_grid_from_3dep(domain, source_resolution_m=10, output_resolution_m=…)` |
+| `create_landfire_topography` | `ff.grids.create_topography_grid_from_landfire(domain, version=…)` |
+| `create_landfire_canopy` | `ff.grids.create_canopy_fuel_grid_from_landfire(domain, version=…)` |
+| `create_meta_chm` | `ff.grids.create_canopy_height_grid_from_meta(domain, version=…)` |
+| `create_naip_chm` | `ff.grids.create_canopy_height_grid_from_naip(domain)` |
+| `create_landfire_fbfm40` | `ff.grids.create_fuel_model_grid_from_landfire_fbfm40(domain, version=…, remove_non_burnable=…)` |
+| `create_landfire_fccs` | `ff.grids.create_fuel_model_grid_from_landfire_fccs(domain, version=…, remove_bare_ground=…)` (⚠ no alignment — confirm) |
+| `create_treemap` | `ff.grids.create_pim_grid_from_treemap(domain, version=…, bands=[…])` (PIM = Plot Imputation Map; bands tm_id/plt_cn) |
+
+**From your file / generated (functions)**
+
+| `create_geotiff_upload` | `ff.grids.create_grid_from_geotiff(domain, path, bands=[…])` |
+| `create_netcdf_upload` | `ff.grids.create_grid_from_netcdf(domain, path)` |
+| `create_uniform_grid` | `ff.grids.create_uniform_grid(domain, resolution_m=…, bands={…})` |
+
+**Transform a resource you hold (methods on the source)**
+
+| `create_fbfm40_lookup` | `fbfm_grid.lookup_fuel_model_values(bands=[…])` |
+| `create_tree_inventory_grid` | `inventory.voxelize(horizontal_resolution_m=…, vertical_resolution_m=…, bands=…)` |
+| `create_resample` | `grid.resample(output_resolution_m=… / align_to=…, resampling=…)` |
+| `create_layerset_rasterize` | `layerset.rasterize(output_resolution_m=…, overlap_method=…)` |
+
+**Export**
+
+| `create_grid_export` | `grid.export(format="geotiff")` → Export (method) |
+| `create_quicfire_export` | `ff.exports.create_quicfire_export(domain, topography=…, surface=…, canopy=…)` (fn — assembled from many) |
+
+**Lifecycle** · `get_grid` → `ff.get_grid(domain, grid_id)` + `grid.refresh()` · `update_grid` → `grid.update(…)` · `delete_grid` → `grid.delete()` · `list_grids` → `ff.list_grids(domain)` · `list_grids_cross_domain` → `ff.list_all_grids()`
+
+**Data out** · `get_chunk_metadata` + `get_grid_data_json` + `get_grid_data_binary` → `grid.to_xarray()` / `grid.to_numpy(band)` (chunk reassembly + signed-URL hidden)
+
+**Utility** · `check_3dep_coverage` → `ff.grids.check_3dep_coverage(domain)`
+
+(`create_treemap` is a first-class grid source — see `create_pim_grid_from_treemap` in the "Create from external source" table above. It is distinct from `create_tree_inventory_grid` → `inventory.voxelize`, which produces a 3D voxel grid from an inventory.)
+
+## v1 workflow findings (from mining `docs/v1`)
+
+- **Masking simplifies.** v1's separate feature grid + `feature_masks=["road",
+  "water"]` becomes `modifications=[ff.mask(feature)]` on the grids that need it
+  (the API `GridModification` references a Feature by id). One fewer resource.
+- **`to_geodataframe`/`to_xarray` erase the pagination ritual** — v1's
+  `get_data` → `get_all_data` → `from_features` collapses to `feature.to_geodataframe()`.
+- **Custom road/water is a model change to document:** v1 typed
+  `create_road_feature_from_geodataframe`; v2 does road/water from OSM only, so
+  bring-your-own geometry goes through `create_layerset_feature_from_*`.
+- **`export_roi` wants a v2 home** — a plain function, not a façade.
+
+## Open / flagged
+
+- ⚠ `landfire_fccs` alignment/resolution asymmetry — confirm with API team.
+- Single-grid export is a method (`grid.export`) but the QUIC-Fire bundle is a
+  function (`ff.exports.create_quicfire_export`) — consistent with the rule
+  (one held resource → method; assembled-from-many → function), but worth a look.
+- Modifications/treatments vocab (`mask`/`modify`/`within`/`thin_to_*`) — least
+  settled; built with grids since grid creators accept `modifications=`.
+- Returned-record implementation (wrap generated attrs model vs clean dataclass)
+  — parked; shows up on every record.
