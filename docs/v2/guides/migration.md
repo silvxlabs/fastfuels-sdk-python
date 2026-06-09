@@ -21,7 +21,7 @@ Both subpackages read the same `FASTFUELS_API_KEY` environment variable.
 | `Domain.from_geojson(..., horizontal_resolution=2.0, vertical_resolution=1.0)` | `Domain.from_geojson(..., pad_to_resolution=2.0)` | Resolution belongs to grids now; domains only pad their extent for grid alignment |
 | `domain.export()` | grid exports | No domain-level export in v2; data exports hang off grids |
 | — | `Domain.preview`, `Domain.get_lattice`, `reproject_geojson` | New domain capabilities |
-| `Grids`, `SurfaceGrid`, `TreeGrid`, `TopographyGrid`, `FeatureGrid` + builders | unified `Grid` resource *(SDK module in development)* | One job-based resource per grid, distinguished by data source |
+| `Grids`, `SurfaceGrid`, `TreeGrid`, `TopographyGrid`, `FeatureGrid` + builders | unified `Grid` resource | One job-based resource per grid, distinguished by data source |
 | `Features`, `RoadFeature`, `WaterFeature` | unified `Feature` resource | One job-based resource for OSM roads, OSM water, and custom layersets |
 | `feature.get_data()`, `feature.get_all_data()` | `feature.get_data_metadata()`, `feature.get_data_partition()`, `feature.get_data()`, `feature.to_geodataframe()` | Page-based data retrieval becomes partition-based |
 | `Inventories`, `TreeInventory` | `Inventory` resource *(SDK module in development)* | Job-based; tree inventories are generated from PIM grids |
@@ -83,15 +83,57 @@ Available now — see the [Domains guide](domains.md) and the
 
 ## Grids
 
-!!! note "In development"
-    The v2 grids module is under development and will be documented here
-    when it ships.
+Available now — see [Creating grids](creating-grids.md),
+[Working with grids](working-with-grids.md), and the
+[Reference](../reference.md).
 
-What to expect from the v2 API: the per-type grid resources
-(surface/tree/topography/feature) collapse into a single job-based `Grid`
-resource distinguished by its data source — LANDFIRE FBFM40 fuel models,
-TreeMap (PIM), 3DEP topography, or custom GeoTIFF uploads. Every grid
-shares the same `status`/`progress` lifecycle.
+### What changed from v1
+
+- **One unified `Grid` resource.** v1's per-type resources
+  (`SurfaceGrid`, `TreeGrid`, `TopographyGrid`, `FeatureGrid`) and their
+  builders collapse into a single job-based `Grid` distinguished by its
+  data source. The `Grids.from_domain_id(...)` container is replaced by
+  the module-level `list_grids(domain)`.
+- **Creation is a function per source.** Instead of a builder, call a
+  `create_<kind>_grid_from_<source>` function on the domain — e.g.
+  `ff.grids.create_topography_grid_from_3dep(...)` or
+  `ff.grids.create_fuel_model_grid_from_landfire_fbfm40(...)`.
+- **Alignment is explicit.** Resolution and lattice are set per grid with
+  `output_resolution_m`, `align="native"`, `align_to=<grid>`, and
+  `resampling` (see
+  [Align grids to each other](creating-grids.md#align-grids-to-each-other)).
+- **`feature_masks` becomes `modifications`.** v1's
+  `feature_masks=["road", "water"]` becomes
+  `modifications=[ff.mask(feature, band, value)]`, which overwrites the
+  cells a feature covers.
+- **Transforms are methods.** `grid.resample(...)`,
+  `grid.lookup_fuel_model_values(...)`, and `grid.export(...)` act on a
+  grid you already hold.
+
+### Before and after
+
+=== "v1"
+
+    ```python
+    from fastfuels_sdk import Grids
+
+    grids = Grids.from_domain_id(domain.id)
+    topo = grids.create_topography_grid(
+        attributes=["elevation", "slope", "aspect"]
+    )
+    topo.wait_until_completed()
+    ```
+
+=== "v2"
+
+    ```python
+    import fastfuels_sdk.v2 as ff
+
+    topo = ff.grids.create_topography_grid_from_3dep(
+        domain, output_resolution_m=10, bands=["elevation", "slope", "aspect"]
+    )
+    topo.wait()
+    ```
 
 ## Features
 
@@ -105,17 +147,18 @@ Available now — see the [Features guide](features.md) and the
   `Feature` distinguished by its type ("road", "water", or "layerset").
   The `Features.from_domain_id(...)` container is replaced by the
   module-level `list_features(domain_id)`.
-- **Creation methods are classmethods on `Feature`.**
-  `features.create_road_feature_from_osm()` becomes
-  `Feature.create_osm_road(domain_id)`, and likewise for water. The new
-  `extent_buffer_m` argument buffers the OSM query extent by up to
-  100 meters.
+- **Creation is a function per source.** The v1
+  `features.create_road_feature_from_osm()` becomes the module-level
+  `ff.features.create_road_feature_from_osm(domain)`, and likewise
+  `create_water_feature_from_osm` for water. The new `extent_buffer_m`
+  argument buffers the OSM query extent by up to 100 meters.
 - **User-supplied geometry becomes layersets.** v1's road-from-GeoJSON
   path is gone. Instead, v2 accepts custom *layersets* — fuelbed
   polygons carrying rasterizer properties — via
-  `Feature.create_layerset` and
-  `Feature.create_layerset_from_geodataframe`. Layersets require a
-  projected CRS and upload synchronously.
+  `ff.features.create_layerset_feature_from_geojson` and
+  `create_layerset_feature_from_geodataframe`. Layersets require a
+  projected CRS and upload synchronously, and a completed layerset can be
+  burned onto a grid with `feature.rasterize(...)`.
 - **Data access is partitioned.** v1's `get_data(page, size)` /
   `get_all_data()` become `get_data_metadata()` (partition layout),
   `get_data_partition(index)` (one partition), and `get_data()` (all
@@ -144,10 +187,10 @@ Available now — see the [Features guide](features.md) and the
 === "v2"
 
     ```python
-    from fastfuels_sdk.v2 import Feature
+    import fastfuels_sdk.v2 as ff
 
-    road = Feature.create_osm_road(domain.id)
-    road.wait_until_completed(verbose=True)
+    road = ff.features.create_road_feature_from_osm(domain)
+    road.wait(verbose=True)
 
     roads = road.to_geodataframe()
     ```

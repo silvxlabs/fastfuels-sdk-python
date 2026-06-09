@@ -3,4 +3,7 @@
 * How-To Guides
     * [Domains](guides/domains.md)
     * [Features](guides/features.md)
+    * Grids
+        * [Creating grids](guides/creating-grids.md)
+        * [Working with grids](guides/working-with-grids.md)
 * [Reference](reference.md)

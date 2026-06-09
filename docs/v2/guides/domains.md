@@ -97,31 +97,29 @@ domain = Domain.from_id("abc123")
 
 ## Update Domain Properties
 
-To modify a domain's name, description or tags:
+To modify a domain's name, description, or tags:
 
 ```python
-# Create new instance with updates
-updated_domain = domain.update(
+domain.update(
     name="New Name",
     description="Updated description",
     tags=["forest", "analysis"],
 )
-
-# Or update in-place
-domain.update(name="New Name", in_place=True)
 ```
 
-## Get Fresh Domain Data
+`update` changes the domain in place and returns it, so calls chain. Only
+the fields you pass are sent; passing none makes no API call.
 
-To fetch the latest data for a domain:
+## Refresh Domain Data
+
+To reload a domain's latest state from the API in place:
 
 ```python
-# Get new instance with fresh data
-fresh_domain = domain.get()
-
-# Or refresh existing instance
-domain.get(in_place=True)
+domain.refresh()
 ```
+
+`refresh` updates the domain in place and returns it. To fetch a separate
+copy by ID instead, use `Domain.from_id(domain.id)`.
 
 ## Get the Pixel Lattice for a Domain
 

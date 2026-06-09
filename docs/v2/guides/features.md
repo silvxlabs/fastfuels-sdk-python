@@ -12,6 +12,17 @@ what features *are* and how the platform treats them, see the
 [FastFuels documentation](https://docs.fastfuels.silvxlabs.com). Coming
 from the v1 SDK? Start with the [migration guide](migration.md#features).
 
+The v2 surface is functional: you **create** a feature by calling a
+`create_..._feature_from_...` function on a domain, and everything you do
+with a feature you already hold is a **method** on it.
+
+```python
+import fastfuels_sdk.v2 as ff
+
+feature = ff.features.create_road_feature_from_osm(domain)
+feature.wait()
+```
+
 ## Prerequisites
 
 - The FastFuels SDK installed: `pip install fastfuels-sdk`
@@ -23,15 +34,15 @@ from the v1 SDK? Start with the [migration guide](migration.md#features).
 To extract the road network within a domain's extent:
 
 ```python
-from fastfuels_sdk.v2 import Feature
+import fastfuels_sdk.v2 as ff
 
-feature = Feature.create_osm_road(
-    domain.id,
+feature = ff.features.create_road_feature_from_osm(
+    domain,
     name="My Roads",
     description="OSM road network",
 )
 
-print(feature.status)  # JobStatus.PENDING
+print(feature.status)  # pending
 ```
 
 Feature generation runs as a background job — the returned feature starts
@@ -39,15 +50,17 @@ in `"pending"` status. To include roads just outside the domain, buffer
 the query extent by up to 100 meters with `extent_buffer_m`:
 
 ```python
-feature = Feature.create_osm_road(domain.id, extent_buffer_m=50)
+feature = ff.features.create_road_feature_from_osm(domain, extent_buffer_m=50)
 ```
+
+The first argument accepts either a `Domain` or a bare domain id string.
 
 ## Create a Water Feature from OpenStreetMap
 
 To extract water bodies, use the same calling convention:
 
 ```python
-feature = Feature.create_osm_water(domain.id, name="My Water")
+feature = ff.features.create_water_feature_from_osm(domain, name="My Water")
 ```
 
 ## Wait for a Feature to Complete
@@ -55,7 +68,7 @@ feature = Feature.create_osm_water(domain.id, name="My Water")
 To block until a feature job finishes:
 
 ```python
-feature.wait_until_completed(verbose=True)
+feature.wait(verbose=True)
 ```
 
 ```text
@@ -64,10 +77,21 @@ Feature 36573c0205d147a08011693b7894c0fb: running (15s)
 Feature 36573c0205d147a08011693b7894c0fb: completed (20s)
 ```
 
-`wait_until_completed` raises `TimeoutError` if the job exceeds `timeout`
-seconds (default 600) and `RuntimeError` if the job fails. Once
-completed, the feature's `georeference` reports the CRS and bounds of the
-generated data:
+`wait` polls until the job reaches a terminal status and returns the
+feature (so calls chain). By default it waits indefinitely; pass `timeout`
+(seconds) to bound the wait, which raises `TimeoutError` if exceeded. A
+failed job raises `JobFailedError`, carrying the API's `code`, `message`,
+and `suggestion`. To wait on several jobs at once, use `ff.wait_all`:
+
+```python
+roads = ff.features.create_road_feature_from_osm(domain)
+water = ff.features.create_water_feature_from_osm(domain)
+
+ff.wait_all([roads, water])  # jobs run server-side in parallel
+```
+
+Once completed, the feature's `georeference` reports the CRS and bounds of
+the generated data:
 
 ```python
 print(feature.georeference.crs)     # 'EPSG:32611'
@@ -92,13 +116,16 @@ Each polygon's `properties` must carry the fuelbed input columns
 
 ```python
 import json
+import fastfuels_sdk.v2 as ff
 
 with open("fuelbeds.geojson") as f:  # projected CRS + fuelbed properties
     geojson = json.load(f)
 
-feature = Feature.create_layerset(domain.id, geojson, name="My Fuelbeds")
+feature = ff.features.create_layerset_feature_from_geojson(
+    domain, geojson, name="My Fuelbeds"
+)
 
-print(feature.status)  # JobStatus.COMPLETED
+print(feature.status)  # completed
 ```
 
 To upload from a GeoPandas GeoDataFrame instead, reproject first if
@@ -108,29 +135,46 @@ needed — the GeoDataFrame's CRS is forwarded as-is:
 import geopandas as gpd
 
 gdf = gpd.read_file("fuelbeds.shp").to_crs(epsg=5070)
-feature = Feature.create_layerset_from_geodataframe(domain.id, gdf)
+feature = ff.features.create_layerset_feature_from_geodataframe(domain, gdf)
 ```
+
+## Rasterize a Layerset into a Grid
+
+A completed layerset feature carries vector fuelbed polygons; to burn them
+onto a raster grid, call `rasterize`. It returns a pending
+[`Grid`](working-with-grids.md):
+
+```python
+grid = feature.rasterize(output_resolution_m=2.0)
+grid.wait()
+```
+
+`rasterize` takes the same alignment arguments as the grid creators
+(`output_resolution_m`, `align_to`, `align`, `resampling`) plus an
+`overlap_method` controlling how overlapping polygons resolve. See
+[Align grids to each other](creating-grids.md#align-grids-to-each-other)
+for the alignment model.
 
 ## Retrieve an Existing Feature
 
 To fetch a feature using its domain and feature IDs:
 
 ```python
-feature = Feature.from_id(domain.id, "36573c0205d147a08011693b7894c0fb")
+feature = ff.get_feature(domain, "36573c0205d147a08011693b7894c0fb")
 ```
 
-## Get Fresh Feature Data
+## Refresh Feature Data
 
-To fetch the latest state of a feature (for example, to check job
-progress yourself):
+To reload a feature's latest state from the API (for example, to check job
+progress yourself) in place:
 
 ```python
-# Get new instance with fresh data
-fresh_feature = feature.get()
-
-# Or refresh the existing instance
-feature.get(in_place=True)
+feature.refresh()
+print(feature.status)
 ```
+
+`refresh` updates the feature in place and returns it. To fetch a separate
+copy by ID instead, use `ff.get_feature(domain, feature.id)`.
 
 ## Access Feature Data
 
@@ -171,35 +215,32 @@ raise `UnprocessableEntityException`.
 To modify a feature's name, description, or tags:
 
 ```python
-# Create new instance with updates
-updated_feature = feature.update(name="New Name", tags=["roads", "osm"])
-
-# Or update in-place
-feature.update(name="New Name", in_place=True)
+feature.update(name="New Name", tags=["roads", "osm"])
 ```
+
+`update` changes the feature in place and returns it. Only the fields you
+pass are sent; passing none makes no API call.
 
 ## List Features
 
 To list features in a domain:
 
 ```python
-from fastfuels_sdk.v2 import list_features
-
-features = list_features(domain.id)
+features = ff.list_features(domain)
 ```
 
-To list features across all your domains, omit the domain ID:
+To list features across all your domains, omit the domain:
 
 ```python
-all_features = list_features()
+all_features = ff.list_features()
 ```
 
 Narrow the results with filters:
 
 ```python
-roads = list_features(domain.id, feature_type="road")
-osm_features = list_features(domain.id, product="osm")
-tagged = list_features(domain.id, tag="roads")
+roads = ff.list_features(domain, feature_type="road")
+osm_features = ff.list_features(domain, product="osm")
+tagged = ff.list_features(domain, tag="roads")
 ```
 
 ## Delete a Feature
@@ -214,18 +255,18 @@ Deleting a domain also deletes all of its features.
 
 ## Error Handling
 
-Wrapper methods raise typed exceptions from
+Wrapper functions and methods raise typed exceptions from
 `fastfuels_sdk.v2.exceptions`:
 
 ```python
-from fastfuels_sdk.v2 import Feature
+import fastfuels_sdk.v2 as ff
 from fastfuels_sdk.v2.exceptions import (
     NotFoundException,
     UnprocessableEntityException,
 )
 
 try:
-    feature = Feature.from_id(domain.id, "does-not-exist")
+    feature = ff.get_feature(domain, "does-not-exist")
 except NotFoundException:
     print("No such feature (or you don't have access to it)")
 

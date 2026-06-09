@@ -2,6 +2,12 @@
 
 ::: fastfuels_sdk.v2.features
 
+::: fastfuels_sdk.v2.grids
+
+::: fastfuels_sdk.v2.modifications
+
+::: fastfuels_sdk.v2._jobs
+
 ::: fastfuels_sdk.v2.api
 
 ::: fastfuels_sdk.v2.exceptions
