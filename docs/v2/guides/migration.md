@@ -44,8 +44,8 @@ Available now — see the [Domains guide](domains.md) and the
   GeoDataFrame's CRS to the API, so projected inputs (e.g. EPSG:5070)
   are interpreted correctly. The v1 SDK assumed EPSG:4326.
 - **No `Domain.export()`.** The v2 API has no domain export endpoint;
-  domain data is exported through grid exports instead (coming with the
-  v2 grids module).
+  data is exported through [grid and inventory exports](exports.md)
+  instead.
 - **New endpoints.** `Domain.preview` validates and projects a domain
   without creating it, `Domain.get_lattice` returns the pixel lattice
   for grid alignment, and `reproject_geojson` is a stateless
@@ -235,6 +235,47 @@ Available now — see the [Inventories guide](inventories.md) and the
 - **Voxelization is a method.** The v1 tree grid built from an inventory
   becomes `inventory.voxelize(horizontal_resolution_m=...,
   vertical_resolution_m=...)`, returning a 3D `Grid`.
+
+## Exports
+
+Available now — see the [Exports guide](exports.md) and the
+[Reference](../reference.md).
+
+### What changed from v1
+
+- **Exports hang off grids and inventories.** v1's `domain.export()` and
+  per-resource `create_export`/`get_export` pairs become
+  `grid.export(format=...)` and `inventory.export(format=...)`, each
+  returning a job-based `Export`; chain `export.wait().to_file(path)` to
+  download. The lifecycle renames match the other resources
+  (`wait_until_completed` → `wait`).
+- **`export_roi` becomes explicit creation + the QUIC-Fire bundle.** The
+  v1 convenience built every resource from an ROI and exported in one
+  call. In v2 you create the domain, grids, and inventory explicitly
+  (see the other guides), then bundle them with
+  `ff.exports.create_quicfire_export(domain, ...)` — naming the exact
+  grid and band filling each QUIC-Fire role (`canopy_bulk_density`,
+  `surface_fuel_load`, ...). The API packages the `.dat` archive
+  server-side, replacing v1's client-side zarr-to-QUIC-Fire conversion.
+- **Exports are cross-domain resources.** `ff.get_export(export_id)` and
+  `ff.list_exports(...)` address exports by ID alone, with domain,
+  source, and tag filters.
+
+### Before and after
+
+=== "v1"
+
+    ```python
+    export = tree_inventory.create_export("csv")
+    export = export.wait_until_completed()
+    export.to_file("trees.csv")
+    ```
+
+=== "v2"
+
+    ```python
+    inventory.export(format="csv").wait().to_file("trees.csv")
+    ```
 
 ### Before and after
 

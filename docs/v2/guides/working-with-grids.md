@@ -135,28 +135,18 @@ The source grid must be `completed`.
 
 ## Export a grid
 
-To start an export of a completed grid to a downloadable file format:
+To export a completed grid to a downloadable file and save it, chain the
+export job's `wait` into `to_file`:
 
 ```python
 export = grid.export(format="geotiff")  # or "netcdf", "zarr"
+export.wait().to_file("elevation.tif")
 ```
 
-The export runs as its own background job; `export` comes back pending, with
-a signed download URL that fills in once it completes and stays valid for
-seven days:
-
-```python
->>> print(export.id, export.status)
-75d6403086484d519d0968e778d17ccf pending
->>> export.signed_url   # None until the export job finishes
->>> export.expires_on
-'2026-06-16T21:31:56.325358'
-```
-
-!!! note "Export polling and download in development"
-    `grid.export` returns the raw export record today. Convenience for
-    waiting on the export and saving the file lands with the v2 exports
-    module, which is still in development.
+The export runs as its own background job; the signed download URL fills
+in once it completes and stays valid for seven days. For exporting band
+subsets, the multi-grid QUIC-Fire bundle, and managing exports, see the
+[Exports guide](exports.md).
 
 ## List grids
 

@@ -277,20 +277,18 @@ voxelizing.
 
 ## Export an inventory
 
-To export the tree records to a downloadable file, call `export` with a
-format — `"parquet"` (zipped, default), `"csv"`, `"geojson"`, or
-`"geopackage"`:
+To export the tree records to a downloadable file and save it, call
+`export` with a format — `"parquet"` (zipped, default), `"csv"`,
+`"geojson"`, or `"geopackage"` — and chain the export job's `wait` into
+`to_file`:
 
 ```python
->>> export = inventory.export(format="csv")
->>> export.status
-pending
+export = inventory.export(format="csv")
+export.wait().to_file("trees.csv")
 ```
 
-`export` returns an `Export` resource that processes as a background job;
-its `signed_url` is populated when it completes. Polling and downloading
-exports from the SDK arrives with the exports module, which is still in
-development.
+Pass `columns=` to export a column subset. For managing exports, see the
+[Exports guide](exports.md).
 
 ## Retrieve an existing inventory
 

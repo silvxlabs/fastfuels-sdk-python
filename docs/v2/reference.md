@@ -6,6 +6,8 @@
 
 ::: fastfuels_sdk.v2.inventories
 
+::: fastfuels_sdk.v2.exports
+
 ::: fastfuels_sdk.v2.modifications
 
 ::: fastfuels_sdk.v2._jobs
