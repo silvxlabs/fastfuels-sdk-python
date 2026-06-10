@@ -133,6 +133,49 @@ coarser = grid.resample(output_resolution_m=90, resampling="average")
 [Align grids to each other](creating-grids.md#align-grids-to-each-other)).
 The source grid must be `completed`.
 
+## Read grid data into Python
+
+To pull a single band's values into a NumPy array, pass the band key to
+`to_numpy`:
+
+```python
+elevation = topography.to_numpy("elevation")
+```
+
+```python
+>>> elevation.shape       # matches grid.georeference.shape
+(47, 58)
+>>> elevation.dtype
+dtype('float32')
+```
+
+The array is shaped like the grid — `(rows, cols)` for a 2D raster, or
+`(z, rows, cols)` for a 3D voxel grid. Cells with no data hold the band's
+`nodata` value, or `NaN` when the band defines none.
+
+To read every band at once into an `xarray.Dataset` — one variable per band,
+with `x`/`y` (and `z`) coordinates derived from the grid's affine transform
+and the CRS on `.attrs` — call `to_xarray`:
+
+```python
+>>> topography.to_xarray()
+<xarray.Dataset> Size: 34kB
+Dimensions:    (y: 47, x: 58)
+Coordinates:
+  * y          (y) float64 376B 5.191e+06 5.191e+06 ... 5.189e+06 5.189e+06
+  * x          (x) float64 464B 7.202e+05 7.202e+05 ... 7.219e+05 7.219e+05
+Data variables:
+    elevation  (y, x) float32 11kB 1.015e+03 1.013e+03 ... 1.02e+03 1.019e+03
+    slope      (y, x) float32 11kB 7.587 8.345 8.092 7.41 ... 3.42 3.008 3.094
+    aspect     (y, x) float32 11kB 25.29 28.79 40.35 51.47 ... 126.0 135.2 138.1
+Attributes:
+    crs:      EPSG:32611
+```
+
+Both methods download the grid's data and require a `completed` grid. To
+write the data to a file on disk instead of loading it into memory, see
+[Export a grid](#export-a-grid).
+
 ## Export a grid
 
 To export a completed grid to a downloadable file and save it, chain the
@@ -144,8 +187,10 @@ export.wait().to_file("elevation.tif")
 ```
 
 The export runs as its own background job; the signed download URL fills
-in once it completes and stays valid for seven days. For exporting band
-subsets, the multi-grid QUIC-Fire bundle, and managing exports, see the
+in once it completes and stays valid for seven days. To load a grid's
+values into memory instead of a file, see
+[Read grid data into Python](#read-grid-data-into-python). For exporting
+band subsets, the multi-grid QUIC-Fire bundle, and managing exports, see the
 [Exports guide](exports.md).
 
 ## List grids
