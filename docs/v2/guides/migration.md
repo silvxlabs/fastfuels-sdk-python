@@ -3,8 +3,8 @@
 The FastFuels v1 and v2 APIs are separate live services. Resources created
 in v1 are not visible to v2 (and vice versa) — migrating a workflow means
 creating new resources through v2. The SDK ships both interfaces as
-versioned subpackages, so you can run them side by side and migrate one
-workflow at a time:
+versioned subpackages, so you can keep v1 working while you migrate to v2
+one workflow at a time:
 
 ```python
 from fastfuels_sdk import Domain      # v1 (the default today)
@@ -13,6 +13,15 @@ from fastfuels_sdk.v2 import Domain   # v2
 ```
 
 Both subpackages read the same `FASTFUELS_API_KEY` environment variable.
+v1 and v2 are separate deployments that issue **different keys**, though, so
+a v1 key will not authenticate against v2 — set `FASTFUELS_API_KEY` to the
+key for the version you are calling.
+
+!!! warning "One key per process"
+    Because both subpackages read the single `FASTFUELS_API_KEY` variable,
+    using v1 and v2 at the same time *in one process* with different keys is
+    not supported. Migrate one workflow at a time, pointing
+    `FASTFUELS_API_KEY` at the appropriate key for each run.
 
 ## At a glance
 
