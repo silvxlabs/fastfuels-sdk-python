@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Union
 # Internal imports
 from fastfuels_sdk.v2._jobs import wait as _wait
 from fastfuels_sdk.v2.api import ensure_client
-from fastfuels_sdk.v2.exceptions import expect
+from fastfuels_sdk.v2.exceptions import expect, raise_for_response
 from fastfuels_sdk.v2.client_library.api.grids import (
     check_3dep_coverage as check_3dep_coverage_endpoint,
     create_3dep_topography,
@@ -29,6 +29,7 @@ from fastfuels_sdk.v2.client_library.api.grids import (
     create_uniform_grid as create_uniform_grid_endpoint,
     delete_grid,
     get_grid as get_grid_endpoint,
+    get_grid_data_binary,
     list_grids as list_grids_endpoint,
     list_grids_cross_domain,
     update_grid,
@@ -53,6 +54,8 @@ from fastfuels_sdk.v2.client_library.models import (
     GridAlignmentDomainTarget,
     GridAlignmentGridTarget,
     GridAlignmentNativeTarget,
+    GridDataArrayFormat,
+    GridDataOrder,
     GridExportFormat,
     GridSortField,
     JobStatus,
@@ -74,10 +77,11 @@ from fastfuels_sdk.v2.client_library.models import (
     UniformBandInput,
     UpdateGridRequestBody,
 )
-from fastfuels_sdk.v2.client_library.types import UNSET
+from fastfuels_sdk.v2.client_library.types import UNSET, Response
 
 # External imports
 import attrs
+import numpy as np
 import requests
 
 __all__ = [
@@ -167,6 +171,51 @@ def _put_upload(spec, path: str) -> None:
             spec.url, data=file_obj, headers={"Content-Type": spec.content_type}
         )
     response.raise_for_status()
+
+
+def _fill_for(dtype, nodata=None):
+    """Pick the fill value for cells a chunk does not cover.
+
+    Uses the band's ``nodata`` when defined, else NaN for floating dtypes and
+    0 for integers (NaN is not representable in an integer array).
+    """
+    if nodata is not None and nodata is not UNSET:
+        return nodata
+    return np.nan if np.issubdtype(dtype, np.floating) else 0
+
+
+def _decode_grid_chunk(content: bytes, headers):
+    """Decode one binary grid chunk into ``(offset, block)``.
+
+    The chunk endpoint returns ``application/octet-stream`` and describes the
+    payload entirely in headers (see ``get_grid_data_binary``): ``X-Data-Shape``,
+    ``X-Data-Offset``, ``X-Data-Order``, ``X-Data-Format`` and the dtype headers.
+    ``offset`` is where the block lands in the full grid; ``block`` is an
+    ``np.ndarray`` of the chunk's own shape.
+    """
+    shape = [int(s) for s in headers["X-Data-Shape"].split(",")]
+    offset = tuple(int(o) for o in headers["X-Data-Offset"].split(","))
+    order = headers.get("X-Data-Order", "C")
+
+    if headers["X-Data-Format"] == "dense":
+        dtype = np.dtype(headers["X-Data-Dtype"])
+        block = np.frombuffer(content, dtype=dtype).reshape(shape, order=order)
+        return offset, block
+
+    # Sparse: the body is the index array bytes immediately followed by the
+    # value array bytes; split at NNZ * sizeof(index_dtype).
+    nnz = int(headers["X-Data-NNZ"])
+    index_dtype = np.dtype(headers["X-Data-Index-Dtype"])
+    value_dtype = np.dtype(headers["X-Data-Value-Dtype"])
+    split = nnz * index_dtype.itemsize
+    indices = np.frombuffer(content[:split], dtype=index_dtype)
+    values = np.frombuffer(content[split:], dtype=value_dtype)
+
+    raw_fill = headers.get("X-Data-Fill-Value")
+    fill = _fill_for(value_dtype, float(raw_fill) if raw_fill else None)
+    flat = np.full(int(np.prod(shape)), fill, dtype=value_dtype)
+    flat[indices] = values
+    return offset, flat.reshape(shape, order=order)
 
 
 class Grid(GridModel):
@@ -526,6 +575,168 @@ class Grid(GridModel):
             body=request_body,
         )
         return Export._from_model(expect(response, HTTPStatus.CREATED))
+
+    def _chunk_count(self) -> int:
+        """Number of chunks the completed grid's data is split into."""
+        count = self.chunks.count if self.chunks is not None else None
+        if count is UNSET or count is None:
+            raise ValueError(
+                "Grid chunk layout is unavailable. Call .refresh() once the "
+                "job has completed before reading data."
+            )
+        return count
+
+    def _request_chunk(self, band: str, chunk_index: int, array_format: str):
+        """GET one (band, chunk) as a raw octet-stream ``httpx.Response``.
+
+        Bypasses ``get_grid_data_binary.sync_detailed()``, whose generated
+        parser JSON-decodes the binary body and raises (tracked in #184). We
+        reuse its ``_get_kwargs()`` for correct URL/param construction, then
+        issue the request through the shared client and read the bytes/headers
+        off the response directly.
+        """
+        kwargs = get_grid_data_binary._get_kwargs(
+            self.domain_id,
+            self.id,
+            band,
+            chunk_index,
+            array_format=GridDataArrayFormat(array_format),
+            order=GridDataOrder.C,
+        )
+        return ensure_client().get_httpx_client().request(**kwargs)
+
+    def _read_chunk(self, band: str, chunk_index: int, array_format: str):
+        """Fetch and decode one chunk, retrying oversized dense chunks as sparse."""
+        response = self._request_chunk(band, chunk_index, array_format)
+        if (
+            response.status_code == HTTPStatus.REQUEST_ENTITY_TOO_LARGE
+            and array_format == "dense"
+        ):
+            # The API returns 413 for an oversized dense chunk and suggests
+            # the sparse encoding; honor that hint transparently.
+            response = self._request_chunk(band, chunk_index, "sparse")
+        if response.status_code != HTTPStatus.OK:
+            raise_for_response(
+                Response(
+                    status_code=HTTPStatus(response.status_code),
+                    content=response.content,
+                    headers=response.headers,
+                    parsed=None,
+                )
+            )
+        return _decode_grid_chunk(response.content, response.headers)
+
+    def to_numpy(self, band: str) -> "np.ndarray":
+        """Read one band of this grid into an in-memory NumPy array.
+
+        Fetches every chunk of ``band`` and reassembles them into a single
+        array shaped like the full grid: 2D ``(y, x)`` for rasters, 3D
+        ``(z, y, x)`` for voxel grids. Chunks are requested in the dense
+        encoding for 2D grids and the sparse encoding for 3D grids, matching
+        how the data is stored.
+
+        Parameters
+        ----------
+        band : str
+            The band key to read (see :attr:`bands` for available keys).
+
+        Returns
+        -------
+        numpy.ndarray
+            The band's values. Cells with no data carry the band's ``nodata``
+            value, or NaN (floating dtypes) / 0 (integer dtypes) when the band
+            defines none.
+
+        Raises
+        ------
+        ValueError
+            If the grid is not completed, or ``band`` is not one of its bands.
+
+        Examples
+        --------
+        >>> grid = ff.get_grid(domain, "def456").wait()
+        >>> elevation = grid.to_numpy("elevation")
+        >>> elevation.shape
+        (1200, 1600)
+        """
+        self._require_completed("read data from")
+        band_keys = [b.key for b in self.bands]
+        if band not in band_keys:
+            raise ValueError(
+                f"Grid has no band {band!r}. Available bands: {band_keys}."
+            )
+        nodata = next(b.nodata for b in self.bands if b.key == band)
+        # 3D grids are stored sparsely; 2D rasters densely (413 falls back).
+        array_format = "sparse" if len(self.georeference.shape) == 3 else "dense"
+
+        full = None
+        for chunk_index in range(self._chunk_count()):
+            offset, block = self._read_chunk(band, chunk_index, array_format)
+            if full is None:
+                full = np.full(
+                    tuple(self.georeference.shape),
+                    _fill_for(block.dtype, nodata),
+                    dtype=block.dtype,
+                )
+            slices = tuple(slice(o, o + s) for o, s in zip(offset, block.shape))
+            full[slices] = block
+        return full
+
+    def to_xarray(self):
+        """Read this grid's bands into an in-memory :class:`xarray.Dataset`.
+
+        Each band becomes a data variable over ``(y, x)`` (2D) or
+        ``(z, y, x)`` (3D), with ``x``/``y`` (and ``z``) coordinate vectors
+        derived from the grid's affine transform and the CRS recorded on the
+        dataset's ``crs`` attribute.
+
+        Returns
+        -------
+        xarray.Dataset
+            All bands of the grid as aligned data variables.
+
+        Raises
+        ------
+        ValueError
+            If the grid is not completed.
+
+        Examples
+        --------
+        >>> grid = ff.get_grid(domain, "def456").wait()
+        >>> ds = grid.to_xarray()
+        >>> ds["elevation"].mean().item()
+        2143.7
+        """
+        import xarray as xr
+
+        self._require_completed("read data from")
+        is_3d = len(self.georeference.shape) == 3
+        dims = ("z", "y", "x") if is_3d else ("y", "x")
+        data_vars = {b.key: (dims, self.to_numpy(b.key)) for b in self.bands}
+        return xr.Dataset(
+            data_vars=data_vars,
+            coords=self._coords(is_3d),
+            attrs={"crs": self.georeference.crs},
+        )
+
+    def _coords(self, is_3d: bool) -> dict:
+        """Build x/y(/z) cell-center coordinate vectors from the georeference.
+
+        Assumes a north-up affine (no rotation), the convention for FastFuels
+        grids: ``transform`` is the six-element ``(a, b, c, d, e, f)`` mapping
+        ``x = a*col + c`` and ``y = e*row + f``.
+        """
+        geo = self.georeference
+        a, _b, c, _d, e, f = geo.transform[:6]
+        shape = geo.shape
+        ny, nx = (shape[1], shape[2]) if is_3d else (shape[0], shape[1])
+        coords = {
+            "x": c + a * (np.arange(nx) + 0.5),
+            "y": f + e * (np.arange(ny) + 0.5),
+        }
+        if is_3d:
+            coords["z"] = geo.z_origin + geo.z_resolution * (np.arange(shape[0]) + 0.5)
+        return coords
 
     def to_json(self) -> str:
         """Serialize the complete Grid object to a JSON string.

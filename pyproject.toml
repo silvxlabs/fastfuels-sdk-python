@@ -31,6 +31,7 @@ dependencies = [
     "requests",
     "scipy",
     "urllib3>=2.1.0",
+    "xarray",
     "zarr",
 ]
 
@@ -46,6 +47,8 @@ dev = [
     "httpx>=0.23.0",
     "attrs>=22.2.0",
     "python-dateutil>=2.9.0.post0",
+    # reads exported GeoTIFFs to ground-truth Grid.to_numpy against the server
+    "rasterio",
 ]
 docs = [
     "mike>=2.2.0",
