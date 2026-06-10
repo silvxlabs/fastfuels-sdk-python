@@ -545,8 +545,9 @@ class Inventory(InventoryModel):
         Returns
         -------
         Export
-            The generated Export resource (job status "pending"). Poll it until
-            completed to obtain the signed download URL.
+            The created Export object (job status "pending"). Call
+            :meth:`Export.wait` and then :meth:`Export.to_file` to download
+            the file.
 
         Raises
         ------
@@ -555,6 +556,10 @@ class Inventory(InventoryModel):
         UnprocessableEntityException
             If the inventory is not in "completed" status.
         """
+        # Lazy import so the modules stay decoupled (exports never imports
+        # inventories).
+        from fastfuels_sdk.v2.exports import Export
+
         request_body = ExportInventoryRequest(
             columns=_opt(columns),
             expiration_days=expiration_days,
@@ -569,7 +574,7 @@ class Inventory(InventoryModel):
             client=ensure_client(),
             body=request_body,
         )
-        return expect(response, HTTPStatus.CREATED)
+        return Export._from_model(expect(response, HTTPStatus.CREATED))
 
     def get_data_metadata(self) -> InventoryDataMetadata:
         """Get the partition layout of the inventory's tree records.

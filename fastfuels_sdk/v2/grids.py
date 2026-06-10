@@ -503,9 +503,14 @@ class Grid(GridModel):
         Returns
         -------
         Export
-            The generated Export resource (job status "pending"). Poll it until
-            completed to obtain the signed download URL.
+            The created Export object (job status "pending"). Call
+            :meth:`Export.wait` and then :meth:`Export.to_file` to download
+            the file.
         """
+        # Lazy import so the modules stay decoupled (exports never imports
+        # grids).
+        from fastfuels_sdk.v2.exports import Export
+
         request_body = ExportGridRequest(
             bands=_opt(bands),
             expiration_days=expiration_days,
@@ -520,7 +525,7 @@ class Grid(GridModel):
             client=ensure_client(),
             body=request_body,
         )
-        return expect(response, HTTPStatus.CREATED)
+        return Export._from_model(expect(response, HTTPStatus.CREATED))
 
     def to_json(self) -> str:
         """Serialize the complete Grid object to a JSON string.

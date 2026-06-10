@@ -18,10 +18,11 @@ package namespace::
   ``ff.list_grids``, ``ff.wait_all``, ``ff.set_api_key``.
 """
 
-from fastfuels_sdk.v2 import features, grids, inventories
+from fastfuels_sdk.v2 import exports, features, grids, inventories
 from fastfuels_sdk.v2._jobs import JobFailedError, wait_all
 from fastfuels_sdk.v2.api import set_api_key
 from fastfuels_sdk.v2.domains import Domain, list_domains, reproject_geojson
+from fastfuels_sdk.v2.exports import Export, get_export, list_exports
 from fastfuels_sdk.v2.features import Feature, get_feature, list_features
 from fastfuels_sdk.v2.grids import Grid, get_grid, list_grids
 from fastfuels_sdk.v2.inventories import Inventory, get_inventory, list_inventories
@@ -29,6 +30,7 @@ from fastfuels_sdk.v2.modifications import mask
 
 __all__ = [
     # Submodules (resource creators live here: ff.grids.create_*, ff.features.create_*)
+    "exports",
     "features",
     "grids",
     "inventories",
@@ -36,6 +38,7 @@ __all__ = [
     "set_api_key",
     # Records
     "Domain",
+    "Export",
     "Feature",
     "Grid",
     "Inventory",
@@ -47,6 +50,8 @@ __all__ = [
     "get_grid",
     "list_inventories",
     "get_inventory",
+    "list_exports",
+    "get_export",
     "reproject_geojson",
     # Modifications
     "mask",
