@@ -52,8 +52,9 @@ def get_client() -> Optional[AuthenticatedClient]:
     if _client is not None:
         return _client
 
-    # Whether v2 keeps sharing FASTFUELS_API_KEY with the v1 deployment or
-    # grows its own variable is an open decision tracked in #176.
+    # v1 and v2 are separate deployments with separate keys, but both read
+    # FASTFUELS_API_KEY: running both versions in one process with different
+    # keys is not a supported use case, so a single variable suffices.
     api_key = os.getenv("FASTFUELS_API_KEY")
     if not api_key:
         return None

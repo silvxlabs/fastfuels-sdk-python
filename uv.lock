@@ -336,10 +336,13 @@ wheels = [
 name = "fastfuels-sdk"
 source = { editable = "." }
 dependencies = [
+    { name = "attrs" },
     { name = "geopandas" },
+    { name = "httpx" },
     { name = "numpy" },
     { name = "pandas" },
     { name = "pydantic" },
+    { name = "python-dateutil" },
     { name = "requests" },
     { name = "scipy" },
     { name = "urllib3" },
@@ -366,10 +369,13 @@ docs = [
 
 [package.metadata]
 requires-dist = [
+    { name = "attrs", specifier = ">=22.2.0" },
     { name = "geopandas" },
+    { name = "httpx", specifier = ">=0.23.0" },
     { name = "numpy" },
     { name = "pandas" },
     { name = "pydantic", specifier = ">=2" },
+    { name = "python-dateutil", specifier = ">=2.9.0.post0" },
     { name = "requests" },
     { name = "scipy" },
     { name = "urllib3", specifier = ">=2.1.0" },
@@ -379,7 +385,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "attrs", specifier = ">=22.2.0" },
-    { name = "httpx", specifier = ">=0.23.0,<0.29.0" },
+    { name = "httpx", specifier = ">=0.23.0" },
     { name = "ipykernel" },
     { name = "pre-commit" },
     { name = "pytest" },
