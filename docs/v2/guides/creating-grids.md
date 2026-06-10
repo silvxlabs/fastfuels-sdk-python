@@ -189,14 +189,8 @@ naip = ff.grids.create_canopy_height_grid_from_naip_chm(domain, output_resolutio
 
 ## 3D tree fuel grids (voxelization)
 
-!!! note "Inventories module in development"
-    The PIM grid below is available today. Generating a tree inventory and
-    voxelizing it arrive with the v2 inventories module, which is still in
-    development.
-
-The 3D canopy fuel grid — per-voxel bulk density, moisture, and
-surface-area-to-volume ratio, the inputs 3D fire models consume — is built
-in three steps:
+The 3D canopy fuel grid — per-voxel bulk density, the input 3D fire models
+consume — is built in three steps:
 
 **1. Create a Plot Imputation Map (PIM) grid** that maps each cell to a
 TreeMap forest inventory plot:
@@ -212,14 +206,35 @@ By default the grid carries the TreeMap id band (`tm_id`); request the plot
 control number as well with `bands=["tm_id", "plt_cn"]`.
 
 **2. Generate a tree inventory** from the PIM grid — a table of individual
-trees imputed from the matched plots. *(Coming with the inventories
-module.)*
+trees imputed from the matched plots (see the
+[Inventories guide](inventories.md)):
 
-**3. Voxelize the inventory** with `inventory.voxelize(...)`, discretizing
-each tree's crown onto a 3D lattice and computing per-voxel fuel properties.
+```python
+inventory = ff.inventories.create_tree_inventory_from_pim_grid(
+    domain, pim, seed=42
+)
+inventory.wait()
+```
+
+**3. Voxelize the inventory**, discretizing each tree's crown onto a 3D
+lattice and computing per-voxel fuel properties:
+
+```python
+voxels = inventory.voxelize(
+    horizontal_resolution_m=2.0, vertical_resolution_m=1.0
+)
+voxels.wait()
+```
+
+```python
+>>> voxels.georeference.shape   # [layers, rows, cols]
+[37, 703, 863]
+```
+
 Because it is a 3D product, a voxel grid supports neither resampling nor
-post-hoc modifications — apply any tree modifications to the inventory
-before voxelizing. *(Coming with the inventories module.)*
+post-hoc modifications — apply any tree modifications on the inventory
+before voxelizing (see
+[Modify trees at creation](inventories.md#modify-trees-at-creation)).
 
 For the concepts behind plot imputation and voxelization, see the
 [FastFuels documentation](https://docs.fastfuels.silvxlabs.com).

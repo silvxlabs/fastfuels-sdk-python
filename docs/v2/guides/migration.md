@@ -24,7 +24,7 @@ Both subpackages read the same `FASTFUELS_API_KEY` environment variable.
 | `Grids`, `SurfaceGrid`, `TreeGrid`, `TopographyGrid`, `FeatureGrid` + builders | unified `Grid` resource | One job-based resource per grid, distinguished by data source |
 | `Features`, `RoadFeature`, `WaterFeature` | unified `Feature` resource | One job-based resource for OSM roads, OSM water, and custom layersets |
 | `feature.get_data()`, `feature.get_all_data()` | `feature.get_data_metadata()`, `feature.get_data_partition()`, `feature.get_data()`, `feature.to_geodataframe()` | Page-based data retrieval becomes partition-based |
-| `Inventories`, `TreeInventory` | `Inventory` resource *(SDK module in development)* | Job-based; tree inventories are generated from PIM grids |
+| `Inventories`, `TreeInventory` | unified `Inventory` resource | One job-based resource, created from a PIM grid, a canopy height model, or an upload |
 
 ## Domains
 
@@ -197,10 +197,70 @@ Available now — see the [Features guide](features.md) and the
 
 ## Inventories
 
-!!! note "In development"
-    The v2 inventories module is under development and will be documented
-    here when it ships.
+Available now — see the [Inventories guide](inventories.md) and the
+[Reference](../reference.md).
 
-What to expect from the v2 API: tree inventories are generated from a
-PIM (TreeMap) grid, so the workflow becomes: create a TreeMap grid, wait
-for it to complete, then create an inventory from it.
+### What changed from v1
+
+- **TreeMap generation is a two-resource workflow.** v1's
+  `create_tree_inventory_from_treemap()` did the plot matching and the
+  tree expansion in one call. v2 splits them: create a PIM grid
+  (`ff.grids.create_pim_grid_from_treemap`), wait for it, then expand it
+  with `ff.inventories.create_tree_inventory_from_pim_grid(domain, pim)`.
+  The intermediate PIM grid is reusable — expand it several times with
+  different seeds or modifications without re-matching plots.
+- **Creation is a function per source.** The `Inventories.from_domain_id`
+  container is gone; call `create_tree_inventory_from_pim_grid`,
+  `create_tree_inventory_from_chm_grid` (new — stem isolation on a canopy
+  height model), or `create_tree_inventory_from_file` on the domain.
+- **Upload columns changed.** v1 uploads required `TREE_ID`, `SPCD`,
+  `STATUSCD`, `DIA`, `HT` columns. v2 uses the roles `x`, `y`, `height`,
+  `dbh`, `crown_ratio`, `fia_species_code`, `fia_status_code`, and a
+  `columns={role: your_name}` mapping replaces renaming your file.
+- **Modifications and treatments are typed models.** v1's dict syntax
+  (`{"attribute": "HT", ...}`) becomes the generated
+  `InventoryModification` / treatment models, passed to `modifications=` /
+  `treatments=` at creation or to `inventory.apply_modifications(...)`
+  in place. v1's `feature_masks=["road", "water"]` becomes a modification
+  whose condition is a feature spatial condition
+  (`InventoryFeatureSpatialCondition`) and whose action is `RemoveAction`.
+- **Data access is direct.** v1 exposed tree records only through file
+  exports (`create_export` → `to_file`). v2 streams them from the API:
+  `get_data_metadata()` / `get_data_partition(index)` — plus
+  `to_dataframe()` for the common case of loading every tree into pandas.
+  File exports remain available via `inventory.export(...)`.
+- **Scenario branching is first-class.** `inventory.duplicate()` clones a
+  completed inventory, and `checksum` marks the data version, so derived
+  resources can detect a stale source.
+- **Voxelization is a method.** The v1 tree grid built from an inventory
+  becomes `inventory.voxelize(horizontal_resolution_m=...,
+  vertical_resolution_m=...)`, returning a 3D `Grid`.
+
+### Before and after
+
+=== "v1"
+
+    ```python
+    from fastfuels_sdk import Inventories
+
+    inventories = Inventories.from_domain_id(domain.id)
+    trees = inventories.create_tree_inventory_from_treemap(seed=42)
+    trees.wait_until_completed()
+
+    export = trees.create_export("csv")
+    export.wait_until_completed().to_file("trees.csv")  # read the file back
+    ```
+
+=== "v2"
+
+    ```python
+    import fastfuels_sdk.v2 as ff
+
+    pim = ff.grids.create_pim_grid_from_treemap(domain, output_resolution_m=30)
+    pim.wait()
+
+    trees = ff.inventories.create_tree_inventory_from_pim_grid(domain, pim, seed=42)
+    trees.wait()
+
+    data = trees.to_dataframe()
+    ```

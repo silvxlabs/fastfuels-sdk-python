@@ -6,4 +6,5 @@
     * Grids
         * [Creating grids](guides/creating-grids.md)
         * [Working with grids](guides/working-with-grids.md)
+    * [Inventories](guides/inventories.md)
 * [Reference](reference.md)
