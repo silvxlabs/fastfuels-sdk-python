@@ -13,8 +13,10 @@ from fastfuels_sdk.v2 import grids
 from fastfuels_sdk.v2.grids import (
     Grid,
     _build_alignment,
+    _decode_grid_chunk,
     _domain_id,
     _enum_list,
+    _fill_for,
     _opt,
     check_3dep_coverage,
     create_canopy_fuel_grid_from_landfire,
@@ -29,19 +31,24 @@ from fastfuels_sdk.v2.grids import (
     get_grid,
     list_grids,
 )
+from fastfuels_sdk.v2.api import ensure_client
+from fastfuels_sdk.v2.client_library.api.grids import get_grid_data_json
 from fastfuels_sdk.v2.client_library.models import (
     GridAlignmentDomainTarget,
     GridAlignmentGridTarget,
     GridAlignmentNativeTarget,
+    GridDataArrayFormat,
+    GridDataOrder,
     JobStatus,
     ResamplingMethod,
     TopographyBand,
 )
 from fastfuels_sdk.v2.client_library.types import UNSET
-from fastfuels_sdk.v2.exceptions import NotFoundException
+from fastfuels_sdk.v2.exceptions import NotFoundException, expect
 from fastfuels_sdk.v2.modifications import mask
 
 # External imports
+import numpy as np
 import pytest
 
 # The test_domain and completed_topography_grid fixtures are session-scoped
@@ -519,3 +526,182 @@ class TestDeleteGrid:
 
         with pytest.raises(NotFoundException):
             grid.delete()
+
+
+class TestDecodeGridChunk:
+    """Offline unit tests for binary chunk decoding (no API required)."""
+
+    def test_dense_c_order(self):
+        values = np.arange(6, dtype=np.float32)
+        offset, block = _decode_grid_chunk(
+            values.tobytes(),
+            {
+                "X-Data-Shape": "2,3",
+                "X-Data-Offset": "0,0",
+                "X-Data-Order": "C",
+                "X-Data-Format": "dense",
+                "X-Data-Dtype": "float32",
+            },
+        )
+        assert offset == (0, 0)
+        assert block.dtype == np.float32
+        assert np.array_equal(block, np.arange(6).reshape(2, 3))
+
+    def test_dense_f_order_with_offset(self):
+        values = np.arange(6, dtype=np.float32)
+        offset, block = _decode_grid_chunk(
+            values.tobytes(),
+            {
+                "X-Data-Shape": "2,3",
+                "X-Data-Offset": "4,8",
+                "X-Data-Order": "F",
+                "X-Data-Format": "dense",
+                "X-Data-Dtype": "float32",
+            },
+        )
+        assert offset == (4, 8)
+        assert np.array_equal(block, np.arange(6).reshape(2, 3, order="F"))
+
+    def test_sparse_with_fill_value(self):
+        content = (
+            np.array([1], dtype=np.int32).tobytes()
+            + np.array([9.0], dtype=np.float32).tobytes()
+        )
+        _, block = _decode_grid_chunk(
+            content,
+            {
+                "X-Data-Shape": "2,2",
+                "X-Data-Offset": "0,0",
+                "X-Data-Order": "C",
+                "X-Data-Format": "sparse",
+                "X-Data-NNZ": "1",
+                "X-Data-Index-Dtype": "int32",
+                "X-Data-Value-Dtype": "float32",
+                "X-Data-Fill-Value": "0",
+            },
+        )
+        assert np.array_equal(block, np.array([[0, 9], [0, 0]], dtype=np.float32))
+
+    def test_sparse_without_fill_uses_nan(self):
+        content = (
+            np.array([0, 3], dtype=np.int32).tobytes()
+            + np.array([5.0, 7.0], dtype=np.float32).tobytes()
+        )
+        _, block = _decode_grid_chunk(
+            content,
+            {
+                "X-Data-Shape": "2,2",
+                "X-Data-Offset": "0,0",
+                "X-Data-Order": "C",
+                "X-Data-Format": "sparse",
+                "X-Data-NNZ": "2",
+                "X-Data-Index-Dtype": "int32",
+                "X-Data-Value-Dtype": "float32",
+            },
+        )
+        assert block[0, 0] == 5 and block[1, 1] == 7
+        assert np.isnan(block[0, 1]) and np.isnan(block[1, 0])
+
+    def test_fill_for(self):
+        assert np.isnan(_fill_for(np.dtype("float32")))
+        assert _fill_for(np.dtype("int32")) == 0
+        assert _fill_for(np.dtype("float32"), -9999) == -9999
+        assert _fill_for(np.dtype("int32"), UNSET) == 0
+
+
+def _reassemble_band_via_json(grid, band):
+    """Reassemble one band from the JSON chunk endpoint, independently of
+    ``Grid.to_numpy``.
+
+    This shares no code with the binary path: it uses the generated client's
+    fully-typed JSON parser (``get_grid_data_json``) rather than hand-decoding
+    raw bytes. Comparing the two arrays validates the binary decode end to end
+    — dtype, byte order, sparse split, reshape order, and chunk placement.
+    """
+    is_3d = len(grid.georeference.shape) == 3
+    array_format = GridDataArrayFormat.SPARSE if is_3d else GridDataArrayFormat.DENSE
+    full = np.full(tuple(grid.georeference.shape), np.nan)
+    for chunk_index in range(grid.chunks.count):
+        response = expect(
+            get_grid_data_json.sync_detailed(
+                grid.domain_id,
+                grid.id,
+                band,
+                chunk_index,
+                client=ensure_client(),
+                array_format=array_format,
+                order=GridDataOrder.C,
+            )
+        )
+        shape = response.shape
+        order = response.order.value
+        if response.data.format_ == "dense":
+            block = np.array(response.data.values, dtype=float).reshape(
+                shape, order=order
+            )
+        else:
+            fill = response.data.fill_value
+            flat = np.full(int(np.prod(shape)), np.nan if fill is None else float(fill))
+            flat[np.array(response.data.indices, dtype=int)] = response.data.values
+            block = flat.reshape(shape, order=order)
+        slices = tuple(slice(o, o + s) for o, s in zip(response.metadata.offset, shape))
+        full[slices] = block
+    return full
+
+
+class TestDataOut:
+    """Live tests for reading grid data into memory."""
+
+    def test_to_numpy_topography(self, completed_topography_grid):
+        grid = completed_topography_grid
+        array = grid.to_numpy(grid.bands[0].key)
+        assert array.shape == tuple(grid.georeference.shape)
+        assert array.ndim == len(grid.georeference.shape)
+        assert np.isfinite(array).any()
+
+    def test_to_numpy_matches_json_transport(self, completed_topography_grid):
+        # The binary reconstruction must agree, value for value, with an
+        # independent reassembly over the JSON chunk endpoint.
+        grid = completed_topography_grid
+        band = grid.bands[0].key
+        binary = grid.to_numpy(band)
+        reference = _reassemble_band_via_json(grid, band)
+        assert binary.shape == reference.shape
+        assert np.allclose(binary, reference, equal_nan=True)
+
+    def test_topography_values_are_plausible(self, completed_topography_grid):
+        # Guards against all-zero / constant-fill / garbage decodes that a
+        # shape-only check would miss: real terrain varies and sits within
+        # Earth's elevation range (meters).
+        grid = completed_topography_grid
+        elevation = grid.to_numpy("elevation")
+        finite = elevation[np.isfinite(elevation)]
+        assert finite.size > 0
+        assert finite.std() > 0
+        assert -500 < finite.min() and finite.max() < 9000
+
+    def test_to_numpy_pim(self, completed_pim_grid):
+        # Exercises whichever encoding the PIM grid uses (3D -> sparse).
+        grid = completed_pim_grid
+        array = grid.to_numpy(grid.bands[0].key)
+        assert array.shape == tuple(grid.georeference.shape)
+
+    def test_to_numpy_unknown_band(self, completed_topography_grid):
+        with pytest.raises(ValueError):
+            completed_topography_grid.to_numpy("not_a_band")
+
+    def test_to_numpy_requires_completed(self, test_domain):
+        grid = create_topography_grid_from_3dep(test_domain, output_resolution_m=10)
+        try:
+            with pytest.raises(ValueError):
+                grid.to_numpy("elevation")
+        finally:
+            grid.delete()
+
+    def test_to_xarray(self, completed_topography_grid):
+        grid = completed_topography_grid
+        dataset = grid.to_xarray()
+        assert set(dataset.data_vars) == {band.key for band in grid.bands}
+        assert dataset.sizes["x"] == grid.georeference.shape[-1]
+        assert dataset.sizes["y"] == grid.georeference.shape[-2]
+        assert dataset.attrs["crs"] == grid.georeference.crs

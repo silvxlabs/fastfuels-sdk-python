@@ -20,7 +20,9 @@ from fastfuels_sdk.v2.client_library.models import FieldSource, JobStatus
 from fastfuels_sdk.v2.exceptions import NotFoundException
 
 # External imports
+import numpy as np
 import pytest
+import rasterio
 
 # The test_domain, completed_topography_grid, and completed_tree_inventory
 # fixtures are session-scoped and shared across modules (tests/v2/conftest.py).
@@ -75,6 +77,26 @@ class TestGridExportLifecycle:
         destination = completed_export.to_file(tmp_path)
         assert destination.parent == tmp_path
         assert destination.stat().st_size > 0
+
+    def test_geotiff_matches_grid_to_numpy(
+        self, completed_export, completed_topography_grid, tmp_path
+    ):
+        # Ground-truth check for Grid.to_numpy: the array it reconstructs from
+        # the binary chunk endpoint must match the same grid rendered to a
+        # GeoTIFF by the server and read back with rasterio -- an independent
+        # reader that applies the georeference, validating absolute orientation
+        # too. Reuses the export fixture, so it adds no export job.
+        path = completed_export.to_file(tmp_path / "topography.tif")
+        expected = completed_topography_grid.to_numpy("elevation")
+
+        with rasterio.open(path) as src:
+            band_number = src.descriptions.index("elevation") + 1
+            actual = src.read(band_number).astype(float)
+            actual[actual == src.nodata] = np.nan
+
+        valid = np.isfinite(actual) & np.isfinite(expected)
+        assert valid.any()
+        assert np.allclose(actual[valid], expected[valid], rtol=1e-4, atol=1e-2)
 
     def test_to_file_requires_completed(self, completed_topography_grid):
         export = completed_topography_grid.export(format="geotiff")

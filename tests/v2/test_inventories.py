@@ -28,6 +28,7 @@ from fastfuels_sdk.v2.client_library.models import (
 from fastfuels_sdk.v2.exceptions import NotFoundException
 
 # External imports
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -290,6 +291,42 @@ class TestInventoryData:
         subset = metadata.columns[:2]
         trees = completed_tree_inventory.to_dataframe(columns=subset)
         assert list(trees.columns) == subset
+
+    @pytest.fixture(scope="class")
+    def completed_csv_export(self, completed_tree_inventory):
+        """A completed CSV export of the shared tree inventory."""
+        export = completed_tree_inventory.export(format="csv", tags=["test"])
+        export.wait()
+        return export
+
+    def test_to_dataframe_matches_csv_export(
+        self, completed_tree_inventory, completed_csv_export, tmp_path
+    ):
+        # Ground-truth check for to_dataframe: the records it loads from the
+        # data partitions must match the same inventory the server renders to
+        # a CSV and we read back with pandas. Row order is not guaranteed and
+        # the CSV round-trips floats through text, so compare order- and
+        # precision-independently: equal row count, shared columns, and the
+        # same multiset of values per column. Reuses the export fixture.
+        path = completed_csv_export.to_file(tmp_path / "trees.csv")
+        from_csv = pd.read_csv(path)
+        from_api = completed_tree_inventory.to_dataframe()
+
+        shared = sorted(set(from_api.columns) & set(from_csv.columns))
+        assert {"x", "y", "height"} <= set(shared)
+        assert len(from_api) == len(from_csv)
+
+        for column in shared:
+            api_values = from_api[column].to_numpy()
+            if not np.issubdtype(api_values.dtype, np.number):
+                continue  # presence is already asserted via `shared`
+            assert np.allclose(
+                np.sort(api_values.astype(float)),
+                np.sort(from_csv[column].to_numpy(dtype=float)),
+                rtol=1e-4,
+                atol=1e-4,
+                equal_nan=True,
+            )
 
 
 class TestListInventories:
