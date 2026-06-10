@@ -22,8 +22,10 @@ from fastfuels_sdk.v2.features import (
 )
 from fastfuels_sdk.v2.grids import (
     create_fuel_model_grid_from_landfire_fbfm40,
+    create_pim_grid_from_treemap,
     create_topography_grid_from_3dep,
 )
+from fastfuels_sdk.v2.inventories import create_tree_inventory_from_pim_grid
 from tests.v2.utils import (
     create_default_domain,
     create_default_layerset_geojson,
@@ -95,3 +97,36 @@ def completed_fbfm40_grid(test_domain):
     )
     grid.wait()
     return grid
+
+
+@pytest.fixture(scope="session")
+def completed_pim_grid(test_domain):
+    """A completed TreeMap PIM grid. READ-ONLY: shared by every module."""
+    grid = create_pim_grid_from_treemap(
+        test_domain,
+        output_resolution_m=30,
+        resampling="nearest",
+        name="test_pim",
+        description="PIM grid for testing v2 inventory operations",
+        tags=["test"],
+    )
+    grid.wait()
+    return grid
+
+
+@pytest.fixture(scope="session")
+def completed_tree_inventory(test_domain, completed_pim_grid):
+    """A completed PIM-expanded tree inventory. READ-ONLY: shared by every
+    module. Tests that mutate (update, apply_modifications) work on a
+    duplicate or a throwaway instead.
+    """
+    inventory = create_tree_inventory_from_pim_grid(
+        test_domain,
+        completed_pim_grid,
+        seed=42,
+        name="test_inventory",
+        description="Tree inventory for testing v2 inventory operations",
+        tags=["test"],
+    )
+    inventory.wait()
+    return inventory
