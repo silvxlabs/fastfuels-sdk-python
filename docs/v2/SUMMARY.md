@@ -1,5 +1,7 @@
 * [Home](index.md)
 * [Migrating from v1](guides/migration.md)
+* Tutorials
+    * [Export QUIC-Fire inputs](tutorials/export_to_quicfire.md)
 * How-To Guides
     * [Domains](guides/domains.md)
     * [Features](guides/features.md)

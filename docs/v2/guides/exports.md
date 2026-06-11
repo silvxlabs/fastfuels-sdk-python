@@ -94,7 +94,10 @@ Here `voxels` is a [3D tree fuel grid](inventories.md#voxelize-into-a-3d-fuel-gr
 carrying bulk density and moisture bands, and `surface` is any 2D grid
 carrying the surface roles (the example above pairs naturally with a
 [uniform grid](creating-grids.md#uniform-grids) or an
-[FBFM40 lookup grid](creating-grids.md#surface-fuel-model-grids)).
+[FBFM40 lookup grid](creating-grids.md#surface-fuel-model-grids)). For an
+end-to-end walkthrough that builds all of these grids from real data sources
+and bundles them, follow the
+[Export QUIC-Fire inputs tutorial](../tutorials/export_to_quicfire.md).
 
 Two optional roles extend the bundle: `topography=(grid, "elevation")`
 adds `topo.dat`, and the SAVR pair (`canopy_savr=` + `surface_savr=`,
