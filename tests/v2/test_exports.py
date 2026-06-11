@@ -15,7 +15,11 @@ from fastfuels_sdk.v2.exports import (
     get_export,
     list_exports,
 )
-from fastfuels_sdk.v2.grids import create_uniform_grid
+from fastfuels_sdk.v2.grids import (
+    create_fuel_model_grid_from_landfire_fbfm40,
+    create_topography_grid_from_3dep,
+    create_uniform_grid,
+)
 from fastfuels_sdk.v2.client_library.models import FieldSource, JobStatus
 from fastfuels_sdk.v2.exceptions import NotFoundException
 
@@ -183,6 +187,39 @@ class TestQuicfireExport:
         grid.wait()
         return grid
 
+    @pytest.fixture(scope="class")
+    def lookup_surface_grid(self, test_domain):
+        """Surface load + depth from a real FBFM40 lookup, on the 2 m lattice.
+
+        Unlike the uniform ``surface_grid``, this is a genuine data-derived
+        grid: an FBFM40 grid built on the 2 m domain lattice, then looked up
+        into fuel-parameter bands. It must align cell-for-cell with the fire
+        grid (which defaults to the domain bbox at 2 m) for the export to
+        slice it without resampling.
+        """
+        fbfm = create_fuel_model_grid_from_landfire_fbfm40(
+            test_domain, output_resolution_m=2.0, name="qf_fbfm"
+        )
+        fbfm.wait()
+        surface = fbfm.lookup_fuel_model_values(
+            bands=["fuel_load.1hr", "fuel_depth"], name="qf_surface_lookup"
+        )
+        surface.wait()
+        return surface
+
+    @pytest.fixture(scope="class")
+    def aligned_topography_grid(self, test_domain):
+        """3DEP elevation on the 2 m lattice, so it aligns with the fire grid."""
+        grid = create_topography_grid_from_3dep(
+            test_domain,
+            source_resolution_m=10,
+            output_resolution_m=2.0,
+            bands=["elevation"],
+            name="qf_topo",
+        )
+        grid.wait()
+        return grid
+
     def test_align_to_excludes_resolution(self, test_domain, voxel_grid):
         with pytest.raises(ValueError, match="not both"):
             create_quicfire_export(
@@ -217,6 +254,48 @@ class TestQuicfireExport:
             "treesrhof.dat",
             "treesmoist.dat",
             "treesfueldepth.dat",
+            "metadata.json",
+            "domain.geojson",
+        } <= names
+        export.delete()
+
+    def test_bundle_with_lookup_surface_and_topography(
+        self,
+        test_domain,
+        voxel_grid,
+        lookup_surface_grid,
+        surface_grid,
+        aligned_topography_grid,
+        tmp_path,
+    ):
+        # The realistic QUIC-Fire workflow (and the export tutorial): surface
+        # load/depth come from a data-derived FBFM40 lookup grid rather than a
+        # uniform grid, and a 3DEP topography grid is supplied -- so the bundle
+        # must additionally contain topo.dat. Every role grid sits on the 2 m
+        # fire-grid lattice; the exporter crops but never resamples, so this
+        # also guards that an FBFM40-lookup grid and a 3DEP grid align with the
+        # voxel grid cell-for-cell.
+        export = create_quicfire_export(
+            test_domain,
+            canopy_bulk_density=(voxel_grid, "bulk_density.foliage.live"),
+            canopy_moisture=(voxel_grid, "fuel_moisture.live"),
+            surface_fuel_load=(lookup_surface_grid, "fuel_load.1hr"),
+            surface_fuel_depth=(lookup_surface_grid, "fuel_depth"),
+            surface_moisture=(surface_grid, "fuel_moisture.1hr"),
+            topography=(aligned_topography_grid, "elevation"),
+            name="qf_realistic",
+        )
+        assert isinstance(export, Export)
+        export.wait()
+
+        destination = export.to_file(tmp_path)
+        with zipfile.ZipFile(destination) as archive:
+            names = set(archive.namelist())
+        assert {
+            "treesrhof.dat",
+            "treesmoist.dat",
+            "treesfueldepth.dat",
+            "topo.dat",
             "metadata.json",
             "domain.geojson",
         } <= names
