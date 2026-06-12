@@ -8,6 +8,7 @@ from .allometry_biomass_source_component_states import (
 from .allometry_max_crown_radius_source import AllometryMaxCrownRadiusSource
 from .application import Application
 from .apply_modifications_request import ApplyModificationsRequest
+from .apply_treatments_request import ApplyTreatmentsRequest
 from .band import Band
 from .band_type import BandType
 from .base_model import BaseModel
@@ -15,10 +16,12 @@ from .biomass_component import BiomassComponent
 from .biomass_component_state import BiomassComponentState
 from .biomass_equations import BiomassEquations
 from .biomass_unit import BiomassUnit
+from .categorical_band_summary import CategoricalBandSummary
 from .chunks import Chunks
 from .chunks_count_by_axis_type_0 import ChunksCountByAxisType0
 from .column import Column
 from .column_type import ColumnType
+from .continuous_band_summary import ContinuousBandSummary
 from .create_application_request import CreateApplicationRequest
 from .create_chm_inventory_request import CreateChmInventoryRequest
 from .create_domain_request_body import CreateDomainRequestBody
@@ -39,6 +42,7 @@ from .create_netcdf_upload_request import CreateNetcdfUploadRequest
 from .create_osm_road_feature_request import CreateOsmRoadFeatureRequest
 from .create_osm_water_feature_request import CreateOsmWaterFeatureRequest
 from .create_pim_inventory_request import CreatePimInventoryRequest
+from .create_point_cloud_upload_request import CreatePointCloudUploadRequest
 from .create_resample_request import CreateResampleRequest
 from .create_resample_request_method_overrides import (
     CreateResampleRequestMethodOverrides,
@@ -55,6 +59,7 @@ from .domain_lattice import DomainLattice
 from .domain_sort_field import DomainSortField
 from .domain_sort_order import DomainSortOrder
 from .domain_style import DomainStyle
+from .duplicate_grid_request import DuplicateGridRequest
 from .duplicate_inventory_request import DuplicateInventoryRequest
 from .export import Export
 from .export_grid_request import ExportGridRequest
@@ -104,6 +109,7 @@ from .grid_source import GridSource
 from .grid_spatial_target import GridSpatialTarget
 from .grid_upload_created_response import GridUploadCreatedResponse
 from .grid_upload_spec import GridUploadSpec
+from .grid_upload_spec_headers import GridUploadSpecHeaders
 from .http_validation_error import HTTPValidationError
 from .inventory import Inventory
 from .inventory_attribute import InventoryAttribute
@@ -149,6 +155,7 @@ from .inventory_type import InventoryType
 from .inventory_upload_created_response import InventoryUploadCreatedResponse
 from .inventory_upload_format import InventoryUploadFormat
 from .inventory_upload_spec import InventoryUploadSpec
+from .inventory_upload_spec_headers import InventoryUploadSpecHeaders
 from .job_error import JobError
 from .job_progress import JobProgress
 from .job_status import JobStatus
@@ -170,6 +177,7 @@ from .list_features_response import ListFeaturesResponse
 from .list_grids_response import ListGridsResponse
 from .list_inventories_response import ListInventoriesResponse
 from .list_keys_response import ListKeysResponse
+from .list_point_clouds_response import ListPointCloudsResponse
 from .max_crown_radius_unit import MaxCrownRadiusUnit
 from .meta_chm_version import MetaCHMVersion
 from .modifier import Modifier
@@ -181,6 +189,15 @@ from .non_burnable_fuel_model import NonBurnableFuelModel
 from .operator import Operator
 from .overlap_method import OverlapMethod
 from .point import Point
+from .point_cloud import PointCloud
+from .point_cloud_georeference import PointCloudGeoreference
+from .point_cloud_sort_field import PointCloudSortField
+from .point_cloud_source import PointCloudSource
+from .point_cloud_summary import PointCloudSummary
+from .point_cloud_type import PointCloudType
+from .point_cloud_upload_created_response import PointCloudUploadCreatedResponse
+from .point_cloud_upload_spec import PointCloudUploadSpec
+from .point_cloud_upload_spec_headers import PointCloudUploadSpecHeaders
 from .point_process import PointProcess
 from .polygon import Polygon
 from .quic_fire_export_alignment_domain_target import (
@@ -213,6 +230,7 @@ from .update_export_request_body import UpdateExportRequestBody
 from .update_feature_request_body import UpdateFeatureRequestBody
 from .update_grid_request_body import UpdateGridRequestBody
 from .update_inventory_request_body import UpdateInventoryRequestBody
+from .update_point_cloud_request_body import UpdatePointCloudRequestBody
 from .upload_band_definition import UploadBandDefinition
 from .validation_error import ValidationError
 
@@ -223,6 +241,7 @@ __all__ = (
     "AllometryMaxCrownRadiusSource",
     "Application",
     "ApplyModificationsRequest",
+    "ApplyTreatmentsRequest",
     "Band",
     "BandType",
     "BaseModel",
@@ -230,10 +249,12 @@ __all__ = (
     "BiomassComponentState",
     "BiomassEquations",
     "BiomassUnit",
+    "CategoricalBandSummary",
     "Chunks",
     "ChunksCountByAxisType0",
     "Column",
     "ColumnType",
+    "ContinuousBandSummary",
     "CreateApplicationRequest",
     "CreateChmInventoryRequest",
     "CreateDomainRequestBody",
@@ -254,6 +275,7 @@ __all__ = (
     "CreateOsmRoadFeatureRequest",
     "CreateOsmWaterFeatureRequest",
     "CreatePimInventoryRequest",
+    "CreatePointCloudUploadRequest",
     "CreateResampleRequest",
     "CreateResampleRequestMethodOverrides",
     "CreateThreeDepTopographyRequest",
@@ -268,6 +290,7 @@ __all__ = (
     "DomainSortField",
     "DomainSortOrder",
     "DomainStyle",
+    "DuplicateGridRequest",
     "DuplicateInventoryRequest",
     "Export",
     "ExportGridRequest",
@@ -313,6 +336,7 @@ __all__ = (
     "GridSpatialTarget",
     "GridUploadCreatedResponse",
     "GridUploadSpec",
+    "GridUploadSpecHeaders",
     "HTTPValidationError",
     "Inventory",
     "InventoryAttribute",
@@ -348,6 +372,7 @@ __all__ = (
     "InventoryUploadCreatedResponse",
     "InventoryUploadFormat",
     "InventoryUploadSpec",
+    "InventoryUploadSpecHeaders",
     "JobError",
     "JobProgress",
     "JobStatus",
@@ -369,6 +394,7 @@ __all__ = (
     "ListGridsResponse",
     "ListInventoriesResponse",
     "ListKeysResponse",
+    "ListPointCloudsResponse",
     "MaxCrownRadiusUnit",
     "MetaCHMVersion",
     "Modifier",
@@ -380,6 +406,15 @@ __all__ = (
     "Operator",
     "OverlapMethod",
     "Point",
+    "PointCloud",
+    "PointCloudGeoreference",
+    "PointCloudSortField",
+    "PointCloudSource",
+    "PointCloudSummary",
+    "PointCloudType",
+    "PointCloudUploadCreatedResponse",
+    "PointCloudUploadSpec",
+    "PointCloudUploadSpecHeaders",
     "PointProcess",
     "Polygon",
     "QUICFireExportAlignmentDomainTarget",
@@ -410,6 +445,7 @@ __all__ = (
     "UpdateFeatureRequestBody",
     "UpdateGridRequestBody",
     "UpdateInventoryRequestBody",
+    "UpdatePointCloudRequestBody",
     "UploadBandDefinition",
     "ValidationError",
 )

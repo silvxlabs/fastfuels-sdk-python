@@ -10,6 +10,9 @@ from ..models.landfire_fccs_version import LandfireFccsVersion
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
+    from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
+    from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
+    from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
     from ..models.grid_modification import GridModification
 
 
@@ -36,6 +39,15 @@ class CreateLandfireFccsRequest:
                 and `target` (`centroid` or `cell`) to choose which part of the cell is tested. Actions modify band values via
                 `replace`, `multiply`, `divide`, `add`, or `subtract`. See the `GridModification` schema for the full field
                 reference and worked examples.
+            extent_buffer_cells (int | Unset): Number of result-grid cells included as a buffer around the domain extent in
+                the stored grid. The buffer is measured after the source raster is projected into the domain CRS, so a cell
+                means one cell in the returned grid rather than one source raster cell. Provides context for later operations
+                (resample, reproject, focal filters, derivative calculations) that are sensitive to edges. Default 0 adds no
+                buffer. Maximum: 10 cells. Default: 0.
+            alignment (GridAlignmentDomainTarget | GridAlignmentGridTarget | GridAlignmentNativeTarget | Unset): Per-fetch
+                alignment target. Default `target="domain"` anchors output cells to the domain origin so cross-source
+                composition works by construction. `target="native"` preserves the source pixel anchor. `target="grid"` aligns
+                to an existing grid by id.
             version (LandfireFccsVersion | Unset): Available LANDFIRE FCCS data versions.
             remove_bare_ground (bool | Unset):  Default: False.
     """
@@ -44,11 +56,21 @@ class CreateLandfireFccsRequest:
     description: str | Unset = ""
     tags: list[str] | Unset = UNSET
     modifications: list[GridModification] | Unset = UNSET
+    extent_buffer_cells: int | Unset = 0
+    alignment: (
+        GridAlignmentDomainTarget
+        | GridAlignmentGridTarget
+        | GridAlignmentNativeTarget
+        | Unset
+    ) = UNSET
     version: LandfireFccsVersion | Unset = UNSET
     remove_bare_ground: bool | Unset = False
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
+        from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
+
         name = self.name
 
         description = self.description
@@ -63,6 +85,18 @@ class CreateLandfireFccsRequest:
             for modifications_item_data in self.modifications:
                 modifications_item = modifications_item_data.to_dict()
                 modifications.append(modifications_item)
+
+        extent_buffer_cells = self.extent_buffer_cells
+
+        alignment: dict[str, Any] | Unset
+        if isinstance(self.alignment, Unset):
+            alignment = UNSET
+        elif isinstance(self.alignment, GridAlignmentDomainTarget):
+            alignment = self.alignment.to_dict()
+        elif isinstance(self.alignment, GridAlignmentNativeTarget):
+            alignment = self.alignment.to_dict()
+        else:
+            alignment = self.alignment.to_dict()
 
         version: str | Unset = UNSET
         if not isinstance(self.version, Unset):
@@ -81,6 +115,10 @@ class CreateLandfireFccsRequest:
             field_dict["tags"] = tags
         if modifications is not UNSET:
             field_dict["modifications"] = modifications
+        if extent_buffer_cells is not UNSET:
+            field_dict["extent_buffer_cells"] = extent_buffer_cells
+        if alignment is not UNSET:
+            field_dict["alignment"] = alignment
         if version is not UNSET:
             field_dict["version"] = version
         if remove_bare_ground is not UNSET:
@@ -90,6 +128,9 @@ class CreateLandfireFccsRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
+        from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
+        from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
         from ..models.grid_modification import GridModification
 
         d = dict(src_dict)
@@ -108,6 +149,42 @@ class CreateLandfireFccsRequest:
 
                 modifications.append(modifications_item)
 
+        extent_buffer_cells = d.pop("extent_buffer_cells", UNSET)
+
+        def _parse_alignment(
+            data: object,
+        ) -> (
+            GridAlignmentDomainTarget
+            | GridAlignmentGridTarget
+            | GridAlignmentNativeTarget
+            | Unset
+        ):
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                alignment_type_0 = GridAlignmentDomainTarget.from_dict(data)
+
+                return alignment_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                alignment_type_1 = GridAlignmentNativeTarget.from_dict(data)
+
+                return alignment_type_1
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            if not isinstance(data, dict):
+                raise TypeError()
+            alignment_type_2 = GridAlignmentGridTarget.from_dict(data)
+
+            return alignment_type_2
+
+        alignment = _parse_alignment(d.pop("alignment", UNSET))
+
         _version = d.pop("version", UNSET)
         version: LandfireFccsVersion | Unset
         if isinstance(_version, Unset):
@@ -122,6 +199,8 @@ class CreateLandfireFccsRequest:
             description=description,
             tags=tags,
             modifications=modifications,
+            extent_buffer_cells=extent_buffer_cells,
+            alignment=alignment,
             version=version,
             remove_bare_ground=remove_bare_ground,
         )

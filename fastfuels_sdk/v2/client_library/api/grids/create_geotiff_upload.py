@@ -70,12 +70,19 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: CreateGeoTIFFUploadRequest,
 ) -> Response[GridUploadCreatedResponse | HTTPValidationError]:
-    """Create a grid from a direct GeoTIFF upload
+    r"""Create a grid from a direct GeoTIFF upload
 
      # Create Upload Grid (GeoTIFF)
 
     Creates a grid resource and returns a signed URL for uploading a GeoTIFF
-    directly to GCS. The upload must use HTTP PUT with Content-Type: image/tiff.
+    directly to GCS. Upload with HTTP PUT, sending **every header in the
+    response's `upload.headers`** exactly as given — the signed URL commits to
+    them, and the upload is rejected if any is missing or altered. For example:
+
+    ```bash
+    curl -X PUT --upload-file grid.tif       -H \"Content-Type: image/tiff\"       -H \"x-goog-content-
+    length-range: 0,1073741824\"       \"<upload.url>\"
+    ```
 
     When the upload completes, the uploader service processes the file
     automatically via Eventarc and updates the grid status to `completed`
@@ -134,12 +141,19 @@ def sync(
     client: AuthenticatedClient,
     body: CreateGeoTIFFUploadRequest,
 ) -> GridUploadCreatedResponse | HTTPValidationError | None:
-    """Create a grid from a direct GeoTIFF upload
+    r"""Create a grid from a direct GeoTIFF upload
 
      # Create Upload Grid (GeoTIFF)
 
     Creates a grid resource and returns a signed URL for uploading a GeoTIFF
-    directly to GCS. The upload must use HTTP PUT with Content-Type: image/tiff.
+    directly to GCS. Upload with HTTP PUT, sending **every header in the
+    response's `upload.headers`** exactly as given — the signed URL commits to
+    them, and the upload is rejected if any is missing or altered. For example:
+
+    ```bash
+    curl -X PUT --upload-file grid.tif       -H \"Content-Type: image/tiff\"       -H \"x-goog-content-
+    length-range: 0,1073741824\"       \"<upload.url>\"
+    ```
 
     When the upload completes, the uploader service processes the file
     automatically via Eventarc and updates the grid status to `completed`
@@ -193,12 +207,19 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: CreateGeoTIFFUploadRequest,
 ) -> Response[GridUploadCreatedResponse | HTTPValidationError]:
-    """Create a grid from a direct GeoTIFF upload
+    r"""Create a grid from a direct GeoTIFF upload
 
      # Create Upload Grid (GeoTIFF)
 
     Creates a grid resource and returns a signed URL for uploading a GeoTIFF
-    directly to GCS. The upload must use HTTP PUT with Content-Type: image/tiff.
+    directly to GCS. Upload with HTTP PUT, sending **every header in the
+    response's `upload.headers`** exactly as given — the signed URL commits to
+    them, and the upload is rejected if any is missing or altered. For example:
+
+    ```bash
+    curl -X PUT --upload-file grid.tif       -H \"Content-Type: image/tiff\"       -H \"x-goog-content-
+    length-range: 0,1073741824\"       \"<upload.url>\"
+    ```
 
     When the upload completes, the uploader service processes the file
     automatically via Eventarc and updates the grid status to `completed`
@@ -255,12 +276,19 @@ async def asyncio(
     client: AuthenticatedClient,
     body: CreateGeoTIFFUploadRequest,
 ) -> GridUploadCreatedResponse | HTTPValidationError | None:
-    """Create a grid from a direct GeoTIFF upload
+    r"""Create a grid from a direct GeoTIFF upload
 
      # Create Upload Grid (GeoTIFF)
 
     Creates a grid resource and returns a signed URL for uploading a GeoTIFF
-    directly to GCS. The upload must use HTTP PUT with Content-Type: image/tiff.
+    directly to GCS. Upload with HTTP PUT, sending **every header in the
+    response's `upload.headers`** exactly as given — the signed URL commits to
+    them, and the upload is rejected if any is missing or altered. For example:
+
+    ```bash
+    curl -X PUT --upload-file grid.tif       -H \"Content-Type: image/tiff\"       -H \"x-goog-content-
+    length-range: 0,1073741824\"       \"<upload.url>\"
+    ```
 
     When the upload completes, the uploader service processes the file
     automatically via Eventarc and updates the grid status to `completed`

@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime
 from collections.abc import Mapping
 from typing import (
+    TYPE_CHECKING,
     Any,
     Literal,
     TypeVar,
@@ -14,6 +15,10 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
+if TYPE_CHECKING:
+    from ..models.grid_upload_spec_headers import GridUploadSpecHeaders
+
+
 T = TypeVar("T", bound="GridUploadSpec")
 
 
@@ -22,6 +27,7 @@ class GridUploadSpec:
     """
     Attributes:
         url (str):
+        headers (GridUploadSpecHeaders):
         content_type (str):
         expires_at (datetime.datetime):
         max_size_bytes (int):
@@ -29,6 +35,7 @@ class GridUploadSpec:
     """
 
     url: str
+    headers: GridUploadSpecHeaders
     content_type: str
     expires_at: datetime.datetime
     max_size_bytes: int
@@ -37,6 +44,8 @@ class GridUploadSpec:
 
     def to_dict(self) -> dict[str, Any]:
         url = self.url
+
+        headers = self.headers.to_dict()
 
         content_type = self.content_type
 
@@ -51,6 +60,7 @@ class GridUploadSpec:
         field_dict.update(
             {
                 "url": url,
+                "headers": headers,
                 "content_type": content_type,
                 "expires_at": expires_at,
                 "max_size_bytes": max_size_bytes,
@@ -63,8 +73,12 @@ class GridUploadSpec:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.grid_upload_spec_headers import GridUploadSpecHeaders
+
         d = dict(src_dict)
         url = d.pop("url")
+
+        headers = GridUploadSpecHeaders.from_dict(d.pop("headers"))
 
         content_type = d.pop("content_type")
 
@@ -78,6 +92,7 @@ class GridUploadSpec:
 
         grid_upload_spec = cls(
             url=url,
+            headers=headers,
             content_type=content_type,
             expires_at=expires_at,
             max_size_bytes=max_size_bytes,

@@ -70,13 +70,20 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: CreateInventoryUploadRequest,
 ) -> Response[HTTPValidationError | InventoryUploadCreatedResponse]:
-    """Create an inventory from a direct file upload
+    r"""Create an inventory from a direct file upload
 
      # Create Upload Inventory
 
     Creates an inventory resource and returns a signed URL for uploading the
-    source file directly to GCS. The upload must use HTTP PUT with the
-    Content-Type header matching the value in the response.
+    source file directly to GCS. Upload with HTTP PUT, sending **every header
+    in the response's `upload.headers`** exactly as given — the signed URL
+    commits to them, and the upload is rejected if any is missing or altered.
+    For example:
+
+    ```bash
+    curl -X PUT --upload-file trees.csv       -H \"Content-Type: text/csv\"       -H \"x-goog-content-
+    length-range: 0,524288000\"       \"<upload.url>\"
+    ```
 
     When the upload completes, the uploader service processes the file
     automatically via Eventarc and updates the inventory status to
@@ -126,13 +133,20 @@ def sync(
     client: AuthenticatedClient,
     body: CreateInventoryUploadRequest,
 ) -> HTTPValidationError | InventoryUploadCreatedResponse | None:
-    """Create an inventory from a direct file upload
+    r"""Create an inventory from a direct file upload
 
      # Create Upload Inventory
 
     Creates an inventory resource and returns a signed URL for uploading the
-    source file directly to GCS. The upload must use HTTP PUT with the
-    Content-Type header matching the value in the response.
+    source file directly to GCS. Upload with HTTP PUT, sending **every header
+    in the response's `upload.headers`** exactly as given — the signed URL
+    commits to them, and the upload is rejected if any is missing or altered.
+    For example:
+
+    ```bash
+    curl -X PUT --upload-file trees.csv       -H \"Content-Type: text/csv\"       -H \"x-goog-content-
+    length-range: 0,524288000\"       \"<upload.url>\"
+    ```
 
     When the upload completes, the uploader service processes the file
     automatically via Eventarc and updates the inventory status to
@@ -177,13 +191,20 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: CreateInventoryUploadRequest,
 ) -> Response[HTTPValidationError | InventoryUploadCreatedResponse]:
-    """Create an inventory from a direct file upload
+    r"""Create an inventory from a direct file upload
 
      # Create Upload Inventory
 
     Creates an inventory resource and returns a signed URL for uploading the
-    source file directly to GCS. The upload must use HTTP PUT with the
-    Content-Type header matching the value in the response.
+    source file directly to GCS. Upload with HTTP PUT, sending **every header
+    in the response's `upload.headers`** exactly as given — the signed URL
+    commits to them, and the upload is rejected if any is missing or altered.
+    For example:
+
+    ```bash
+    curl -X PUT --upload-file trees.csv       -H \"Content-Type: text/csv\"       -H \"x-goog-content-
+    length-range: 0,524288000\"       \"<upload.url>\"
+    ```
 
     When the upload completes, the uploader service processes the file
     automatically via Eventarc and updates the inventory status to
@@ -231,13 +252,20 @@ async def asyncio(
     client: AuthenticatedClient,
     body: CreateInventoryUploadRequest,
 ) -> HTTPValidationError | InventoryUploadCreatedResponse | None:
-    """Create an inventory from a direct file upload
+    r"""Create an inventory from a direct file upload
 
      # Create Upload Inventory
 
     Creates an inventory resource and returns a signed URL for uploading the
-    source file directly to GCS. The upload must use HTTP PUT with the
-    Content-Type header matching the value in the response.
+    source file directly to GCS. Upload with HTTP PUT, sending **every header
+    in the response's `upload.headers`** exactly as given — the signed URL
+    commits to them, and the upload is rejected if any is missing or altered.
+    For example:
+
+    ```bash
+    curl -X PUT --upload-file trees.csv       -H \"Content-Type: text/csv\"       -H \"x-goog-content-
+    length-range: 0,524288000\"       \"<upload.url>\"
+    ```
 
     When the upload completes, the uploader service processes the file
     automatically via Eventarc and updates the inventory status to

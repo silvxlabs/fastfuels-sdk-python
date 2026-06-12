@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.band_type import BandType
 from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+    from ..models.categorical_band_summary import CategoricalBandSummary
+    from ..models.continuous_band_summary import ContinuousBandSummary
+
 
 T = TypeVar("T", bound="Band")
 
@@ -28,6 +33,7 @@ class Band:
         nodata (float | int | None | Unset): Value marking missing pixels in this band; pixels equal to it carry no data
             and should be excluded from analysis. `null` when the band has no missing pixels, or when they are represented
             as floating-point NaN.
+        summary (CategoricalBandSummary | ContinuousBandSummary | None | Unset):
     """
 
     key: str
@@ -37,9 +43,13 @@ class Band:
     description: None | str | Unset = UNSET
     unit: None | str | Unset = UNSET
     nodata: float | int | None | Unset = UNSET
+    summary: CategoricalBandSummary | ContinuousBandSummary | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.categorical_band_summary import CategoricalBandSummary
+        from ..models.continuous_band_summary import ContinuousBandSummary
+
         key = self.key
 
         type_ = self.type_.value
@@ -70,6 +80,16 @@ class Band:
         else:
             nodata = self.nodata
 
+        summary: dict[str, Any] | None | Unset
+        if isinstance(self.summary, Unset):
+            summary = UNSET
+        elif isinstance(self.summary, ContinuousBandSummary):
+            summary = self.summary.to_dict()
+        elif isinstance(self.summary, CategoricalBandSummary):
+            summary = self.summary.to_dict()
+        else:
+            summary = self.summary
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -87,11 +107,16 @@ class Band:
             field_dict["unit"] = unit
         if nodata is not UNSET:
             field_dict["nodata"] = nodata
+        if summary is not UNSET:
+            field_dict["summary"] = summary
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.categorical_band_summary import CategoricalBandSummary
+        from ..models.continuous_band_summary import ContinuousBandSummary
+
         d = dict(src_dict)
         key = d.pop("key")
 
@@ -135,6 +160,35 @@ class Band:
 
         nodata = _parse_nodata(d.pop("nodata", UNSET))
 
+        def _parse_summary(
+            data: object,
+        ) -> CategoricalBandSummary | ContinuousBandSummary | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                summary_type_0_type_0 = ContinuousBandSummary.from_dict(data)
+
+                return summary_type_0_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                summary_type_0_type_1 = CategoricalBandSummary.from_dict(data)
+
+                return summary_type_0_type_1
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(
+                CategoricalBandSummary | ContinuousBandSummary | None | Unset, data
+            )
+
+        summary = _parse_summary(d.pop("summary", UNSET))
+
         band = cls(
             key=key,
             type_=type_,
@@ -143,6 +197,7 @@ class Band:
             description=description,
             unit=unit,
             nodata=nodata,
+            summary=summary,
         )
 
         band.additional_properties = d

@@ -75,8 +75,15 @@ def sync_detailed(
      # Create Upload Grid (netCDF)
 
     Creates a grid resource and returns a signed URL for uploading a
-    CF-conformant netCDF directly to GCS. The upload must use HTTP PUT
-    with `Content-Type: application/x-netcdf`.
+    CF-conformant netCDF directly to GCS. Upload with HTTP PUT, sending
+    **every header in the response's `upload.headers`** exactly as given —
+    the signed URL commits to them, and the upload is rejected if any is
+    missing or altered. For example:
+
+    ```bash
+    curl -X PUT --upload-file grid.nc       -H \"Content-Type: application/x-netcdf\"       -H \"x-goog-
+    content-length-range: 0,1073741824\"       \"<upload.url>\"
+    ```
 
     When the upload completes, the uploader service processes the file
     automatically via Eventarc and updates the grid status to `completed`
@@ -162,8 +169,15 @@ def sync(
      # Create Upload Grid (netCDF)
 
     Creates a grid resource and returns a signed URL for uploading a
-    CF-conformant netCDF directly to GCS. The upload must use HTTP PUT
-    with `Content-Type: application/x-netcdf`.
+    CF-conformant netCDF directly to GCS. Upload with HTTP PUT, sending
+    **every header in the response's `upload.headers`** exactly as given —
+    the signed URL commits to them, and the upload is rejected if any is
+    missing or altered. For example:
+
+    ```bash
+    curl -X PUT --upload-file grid.nc       -H \"Content-Type: application/x-netcdf\"       -H \"x-goog-
+    content-length-range: 0,1073741824\"       \"<upload.url>\"
+    ```
 
     When the upload completes, the uploader service processes the file
     automatically via Eventarc and updates the grid status to `completed`
@@ -244,8 +258,15 @@ async def asyncio_detailed(
      # Create Upload Grid (netCDF)
 
     Creates a grid resource and returns a signed URL for uploading a
-    CF-conformant netCDF directly to GCS. The upload must use HTTP PUT
-    with `Content-Type: application/x-netcdf`.
+    CF-conformant netCDF directly to GCS. Upload with HTTP PUT, sending
+    **every header in the response's `upload.headers`** exactly as given —
+    the signed URL commits to them, and the upload is rejected if any is
+    missing or altered. For example:
+
+    ```bash
+    curl -X PUT --upload-file grid.nc       -H \"Content-Type: application/x-netcdf\"       -H \"x-goog-
+    content-length-range: 0,1073741824\"       \"<upload.url>\"
+    ```
 
     When the upload completes, the uploader service processes the file
     automatically via Eventarc and updates the grid status to `completed`
@@ -329,8 +350,15 @@ async def asyncio(
      # Create Upload Grid (netCDF)
 
     Creates a grid resource and returns a signed URL for uploading a
-    CF-conformant netCDF directly to GCS. The upload must use HTTP PUT
-    with `Content-Type: application/x-netcdf`.
+    CF-conformant netCDF directly to GCS. Upload with HTTP PUT, sending
+    **every header in the response's `upload.headers`** exactly as given —
+    the signed URL commits to them, and the upload is rejected if any is
+    missing or altered. For example:
+
+    ```bash
+    curl -X PUT --upload-file grid.nc       -H \"Content-Type: application/x-netcdf\"       -H \"x-goog-
+    content-length-range: 0,1073741824\"       \"<upload.url>\"
+    ```
 
     When the upload completes, the uploader service processes the file
     automatically via Eventarc and updates the grid status to `completed`
