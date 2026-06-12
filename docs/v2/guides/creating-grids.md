@@ -149,14 +149,13 @@ Characteristic Classification System (FCCS), skipping the lookup step:
 
 ```python
 grid = ff.grids.create_fuel_model_grid_from_landfire_fccs(
-    domain, remove_bare_ground=True
+    domain, remove_bare_ground=True, output_resolution_m=30
 )
 ```
 
-FCCS grids currently come back on their native lattice, so this creator
-takes no alignment arguments;
-[resample](working-with-grids.md#resample-a-grid) the result if you need a
-different resolution.
+FCCS takes the same alignment arguments as the other source grids
+(`output_resolution_m`, `align_to`, `align`, `resampling`) — see
+[Align grids to each other](#align-grids-to-each-other).
 
 ## Canopy grids
 

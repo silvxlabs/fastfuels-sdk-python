@@ -139,21 +139,21 @@ class TestHelpers:
 
 
 class TestFccsSignature:
-    """The FCCS request model has no alignment field, so the SDK creator
-    exposes no alignment kwargs (unlike the other LANDFIRE creators)."""
+    """FCCS create reached alignment parity with the other LANDFIRE creators
+    (FastFuels-API-v2 #358), so the SDK creator exposes the same kwargs."""
 
-    def test_fccs_has_no_alignment_kwargs(self):
+    def test_fccs_exposes_alignment_kwargs(self):
         params = inspect.signature(
             grids.create_fuel_model_grid_from_landfire_fccs
         ).parameters
-        for forbidden in (
+        for expected in (
             "output_resolution_m",
             "align_to",
             "align",
             "resampling",
             "extent_buffer_cells",
         ):
-            assert forbidden not in params
+            assert expected in params
 
     def test_fbfm40_has_alignment_kwargs(self):
         params = inspect.signature(
@@ -295,12 +295,21 @@ class TestMask:
 
 class TestCreateFuelModelGridFromLandfireFccs:
     def test_create(self, test_domain):
-        # FCCS is alignment-free; only metadata and remove_bare_ground apply
         grid = create_fuel_model_grid_from_landfire_fccs(
             test_domain, remove_bare_ground=True, name="throwaway_fccs"
         )
         assert len(grid.id) > 0
         assert grid.domain_id == test_domain.id
+        assert grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
+        grid.delete()
+
+    def test_create_with_alignment(self, test_domain):
+        # #358 brought FCCS to alignment parity; output_resolution_m anchors
+        # output cells to the domain origin, like the other LANDFIRE creators.
+        grid = create_fuel_model_grid_from_landfire_fccs(
+            test_domain, output_resolution_m=30, name="throwaway_fccs_aligned"
+        )
+        assert len(grid.id) > 0
         assert grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
         grid.delete()
 

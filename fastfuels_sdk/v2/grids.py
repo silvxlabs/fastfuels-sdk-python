@@ -1109,6 +1109,11 @@ def create_fuel_model_grid_from_landfire_fccs(
     domain,
     version: Optional[str] = None,
     remove_bare_ground: bool = False,
+    output_resolution_m: Optional[float] = None,
+    align_to=None,
+    align: Optional[str] = None,
+    resampling: Optional[str] = None,
+    extent_buffer_cells: int = 0,
     name: str = "",
     description: str = "",
     tags: Optional[List[str]] = None,
@@ -1125,6 +1130,16 @@ def create_fuel_model_grid_from_landfire_fccs(
         current version.
     remove_bare_ground : bool, optional
         Drop bare-ground fuelbeds (default False).
+    output_resolution_m : float, optional
+        Output cell size in meters, anchored to the domain origin.
+    align_to : Grid or str, optional
+        Match the lattice of an existing grid (or its id).
+    align : str, optional
+        Pass ``"native"`` to keep the source raster's pixel anchor.
+    resampling : str, optional
+        Resampling method (e.g. "nearest" for categorical fuelbeds).
+    extent_buffer_cells : int, optional
+        Result-grid cells to buffer around the domain extent (0-10, default 0).
     name, description : str, optional
         Metadata for the grid.
     tags : List[str], optional
@@ -1137,13 +1152,11 @@ def create_fuel_model_grid_from_landfire_fccs(
     Grid
         The created Grid object (job status "pending" or "running").
     """
-    # FCCS is alignment-free: CreateLandfireFccsRequest has no `alignment` or
-    # `extent_buffer_cells` field, unlike the other LANDFIRE creators, so there
-    # are no output_resolution_m/align_to/align/resampling kwargs here.
-    # See fastfuels_sdk/v2/v2_api_design.md.
     request_body = CreateLandfireFccsRequest(
         version=LandfireFccsVersion(version) if version is not None else UNSET,
         remove_bare_ground=remove_bare_ground,
+        alignment=_build_alignment(output_resolution_m, align_to, align, resampling),
+        extent_buffer_cells=extent_buffer_cells,
         name=name,
         description=description,
         tags=_opt(tags),

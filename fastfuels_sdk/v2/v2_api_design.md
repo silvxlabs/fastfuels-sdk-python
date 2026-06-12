@@ -103,9 +103,9 @@ Per-creator:
   `horizontal_resolution_m=` + `vertical_resolution_m=`.
 - **`create_fuel_grid_from_fbfm40_lookup`, geotiff/netcdf upload**: no resolution/alignment — inherit
   the source grid's lattice (lookup) or the file (uploads).
-- ⚠️ **`landfire_fccs` carries neither `alignment` nor `resolution`** — an
-  asymmetry vs the other LANDFIRE creators. Confirm with the API team before
-  building (fixed resolution? inherits a default?).
+- **`landfire_fccs`** reached alignment parity with the other LANDFIRE creators
+  in FastFuels-API-v2 #358 (it now carries `alignment` + `extent_buffer_cells`),
+  resolving the earlier asymmetry.
 
 ## Conventions
 
@@ -159,7 +159,7 @@ alignment-translation helper (plain function, not a base class).
 | `create_meta_chm` | `ff.grids.create_canopy_height_grid_from_meta(domain, version=…)` |
 | `create_naip_chm` | `ff.grids.create_canopy_height_grid_from_naip_chm(domain)` |
 | `create_landfire_fbfm40` | `ff.grids.create_fuel_model_grid_from_landfire_fbfm40(domain, version=…, remove_non_burnable=…)` |
-| `create_landfire_fccs` | `ff.grids.create_fuel_model_grid_from_landfire_fccs(domain, version=…, remove_bare_ground=…)` (⚠ no alignment — confirm) |
+| `create_landfire_fccs` | `ff.grids.create_fuel_model_grid_from_landfire_fccs(domain, version=…, remove_bare_ground=…, output_resolution_m=…)` |
 | `create_treemap` | `ff.grids.create_pim_grid_from_treemap(domain, version=…, bands=[…])` (PIM = Plot Imputation Map; bands tm_id/plt_cn) |
 
 **From your file / generated (functions)**
@@ -209,7 +209,8 @@ lookup is the only such case today: it needs a grid carrying `fbfm` codes.
 
 ## Open / flagged
 
-- ⚠ `landfire_fccs` alignment/resolution asymmetry — confirm with API team.
+- ~~`landfire_fccs` alignment/resolution asymmetry~~ — resolved (FastFuels-API-v2
+  #358 added `alignment` + `extent_buffer_cells`; the SDK creator now exposes them).
 - Single-grid export is a method (`grid.export`) but the QUIC-Fire bundle is a
   function (`ff.exports.create_quicfire_export`) — consistent with the rule
   (one held resource → method; assembled-from-many → function), but worth a look.
