@@ -22,6 +22,7 @@ from fastfuels_sdk.v2.grids import (
     create_canopy_fuel_grid_from_landfire,
     create_canopy_height_grid_from_meta,
     create_canopy_height_grid_from_naip_chm,
+    create_fuel_grid_from_fbfm40_lookup,
     create_fuel_model_grid_from_landfire_fbfm40,
     create_fuel_model_grid_from_landfire_fccs,
     create_pim_grid_from_treemap,
@@ -444,10 +445,12 @@ class TestResample:
         grid.delete()
 
 
-class TestLookupFuelModelValues:
+class TestFbfm40Lookup:
     def test_lookup_returns_new_pending_grid(self, completed_fbfm40_grid):
-        fuel_grid = completed_fbfm40_grid.lookup_fuel_model_values(
-            bands=["fuel_load.1hr", "fuel_depth"], name="throwaway_lookup"
+        fuel_grid = create_fuel_grid_from_fbfm40_lookup(
+            completed_fbfm40_grid,
+            bands=["fuel_load.1hr", "fuel_depth"],
+            name="throwaway_lookup",
         )
         assert isinstance(fuel_grid, Grid)
         assert fuel_grid.id != completed_fbfm40_grid.id
@@ -463,8 +466,16 @@ class TestLookupFuelModelValues:
             grid.delete()
             pytest.skip("grid completed too quickly to test the guard")
         with pytest.raises(ValueError, match="look up fuel"):
-            grid.lookup_fuel_model_values(bands=["fuel_load.1hr"])
+            create_fuel_grid_from_fbfm40_lookup(grid, bands=["fuel_load.1hr"])
         grid.delete()
+
+    def test_lookup_rejects_non_fbfm_grid(self, completed_topography_grid):
+        # A topography grid has no `fbfm` band; the guard rejects it before any
+        # API call, naming the missing band and the right creator to use.
+        with pytest.raises(ValueError, match="fbfm"):
+            create_fuel_grid_from_fbfm40_lookup(
+                completed_topography_grid, bands=["fuel_load.1hr"]
+            )
 
 
 class TestExport:

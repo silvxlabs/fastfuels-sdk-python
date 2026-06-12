@@ -198,7 +198,9 @@ With the FBFM40 codes in hand, we look up the actual fuel quantities QUIC-Fire
 consumes — 1-hour fuel load and fuel-bed depth — which produces a new grid:
 
 ```python
-surface = fbfm.lookup_fuel_model_values(bands=["fuel_load.1hr", "fuel_depth"])
+surface = ff.grids.create_fuel_grid_from_fbfm40_lookup(
+    fbfm, bands=["fuel_load.1hr", "fuel_depth"]
+)
 ```
 
 ```python

@@ -101,7 +101,7 @@ Per-creator:
 - **`voxelize`** (3D): direct `resolution: Resolution3D = {horizontal, vertical}`
   (horizontal isotropic x/y, vertical independent), **no alignment** →
   `horizontal_resolution_m=` + `vertical_resolution_m=`.
-- **`lookup_fuel_model_values`, geotiff/netcdf upload**: no resolution/alignment — inherit
+- **`create_fuel_grid_from_fbfm40_lookup`, geotiff/netcdf upload**: no resolution/alignment — inherit
   the source grid's lattice (lookup) or the file (uploads).
 - ⚠️ **`landfire_fccs` carries neither `alignment` nor `resolution`** — an
   asymmetry vs the other LANDFIRE creators. Confirm with the API team before
@@ -111,7 +111,7 @@ Per-creator:
 
 - Every creator also accepts `name=`, `description=`, `tags=`,
   `modifications=[...]` (applied server-side after build; `modifications` is a
-  real field on grid creators *and* `lookup_fuel_model_values`/`rasterize`).
+  real field on grid creators *and* the FBFM40 lookup / `rasterize`).
 - **Data out (methods, hide chunk/partition plumbing + signed-URL handshake):**
   `grid.to_xarray()`, `grid.to_numpy(band)`, `feature.to_geodataframe()`.
 - **Generic methods on any record:** `.wait()`, `.refresh()`, `.update(...)`,
@@ -124,8 +124,8 @@ fastfuels_sdk/
   __init__.py     set_api_key, Domain, wait_all, mask, list_*, get_*, ...
   domains.py      Domain (record + from_* + methods), list_domains
   features.py     create_*_feature_from_* (fns); Feature record + methods   [rewrite creation only]
-  grids.py        create_*_grid_from_* (fns); Grid record + methods
-                  (wait/to_xarray/resample/lookup_fuel_model_values/export/...)           [GREENFIELD #178]
+  grids.py        create_*_grid_from_* (fns; incl. create_fuel_grid_from_fbfm40_lookup);
+                  Grid record + methods (wait/to_xarray/resample/export/...)   [GREENFIELD #178]
   inventories.py  create_tree_inventory_from_* (fns); Inventory + methods    [later]
   exports.py      create_quicfire_export (fn); Export record + methods       [later]
 ```
@@ -168,12 +168,19 @@ alignment-translation helper (plain function, not a base class).
 | `create_netcdf_upload` | `ff.grids.create_grid_from_netcdf(domain, path)` |
 | `create_uniform_grid` | `ff.grids.create_uniform_grid(domain, resolution_m=…, bands={…})` |
 
-**Transform a resource you hold (methods on the source)**
+**Transform a resource you hold**
 
-| `create_fbfm40_lookup` | `fbfm_grid.lookup_fuel_model_values(bands=[…])` |
-| `create_tree_inventory_grid` | `inventory.voxelize(horizontal_resolution_m=…, vertical_resolution_m=…, bands=…)` |
-| `create_resample` | `grid.resample(output_resolution_m=… / align_to=…, resampling=…)` |
-| `create_layerset_rasterize` | `layerset.rasterize(output_resolution_m=…, overlap_method=…)` |
+A transform is a *method* when it applies to any instance of the resource
+(every grid can resample/export; every inventory can voxelize). A transform
+that only makes sense for a *particular kind* of grid is a **function** instead,
+so it never appears on a grid that cannot perform it (the alternative — a method
+that raises for the wrong grid type — is the wart this avoids). The FBFM40
+lookup is the only such case today: it needs a grid carrying `fbfm` codes.
+
+| `create_fbfm40_lookup` | `ff.grids.create_fuel_grid_from_fbfm40_lookup(fbfm_grid, bands=[…])` (fn — FBFM40-only) |
+| `create_tree_inventory_grid` | `inventory.voxelize(horizontal_resolution_m=…, vertical_resolution_m=…, bands=…)` (method) |
+| `create_resample` | `grid.resample(output_resolution_m=… / align_to=…, resampling=…)` (method) |
+| `create_layerset_rasterize` | `layerset.rasterize(output_resolution_m=…, overlap_method=…)` (method) |
 
 **Export**
 

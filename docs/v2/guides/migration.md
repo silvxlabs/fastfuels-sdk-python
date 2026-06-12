@@ -115,9 +115,11 @@ Available now — see [Creating grids](creating-grids.md),
   `feature_masks=["road", "water"]` becomes
   `modifications=[ff.mask(feature, band, value)]`, which overwrites the
   cells a feature covers.
-- **Transforms are methods.** `grid.resample(...)`,
-  `grid.lookup_fuel_model_values(...)`, and `grid.export(...)` act on a
-  grid you already hold.
+- **Universal transforms are methods; type-specific ones are functions.**
+  Transforms that apply to any grid you hold are methods —
+  `grid.resample(...)`, `grid.export(...)`. Deriving a fuel-parameter grid
+  from FBFM40 codes only applies to FBFM40 grids, so it is a function:
+  `ff.grids.create_fuel_grid_from_fbfm40_lookup(fbfm_grid, ...)`.
 
 ### Before and after
 

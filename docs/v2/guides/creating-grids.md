@@ -124,15 +124,15 @@ grid = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
 
 The `fbfm` band holds codes, not the quantities a fire model consumes. To
 turn the codes into fuel parameters — loadings by size class, fuel-bed depth,
-surface-area-to-volume ratios — call `lookup_fuel_model_values` on the
-completed grid. It returns a new grid whose bands are the requested
-parameters:
+surface-area-to-volume ratios — pass the completed grid to
+`ff.grids.create_fuel_grid_from_fbfm40_lookup`. It returns a new grid whose
+bands are the requested parameters:
 
 ```python
 grid.wait()
 
-fuels = grid.lookup_fuel_model_values(
-    bands=["fuel_load.1hr", "fuel_load.10hr", "fuel_depth"]
+fuels = ff.grids.create_fuel_grid_from_fbfm40_lookup(
+    grid, bands=["fuel_load.1hr", "fuel_load.10hr", "fuel_depth"]
 )
 fuels.wait()
 ```

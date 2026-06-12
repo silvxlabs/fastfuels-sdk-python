@@ -16,6 +16,7 @@ from fastfuels_sdk.v2.exports import (
     list_exports,
 )
 from fastfuels_sdk.v2.grids import (
+    create_fuel_grid_from_fbfm40_lookup,
     create_fuel_model_grid_from_landfire_fbfm40,
     create_topography_grid_from_3dep,
     create_uniform_grid,
@@ -201,8 +202,8 @@ class TestQuicfireExport:
             test_domain, output_resolution_m=2.0, name="qf_fbfm"
         )
         fbfm.wait()
-        surface = fbfm.lookup_fuel_model_values(
-            bands=["fuel_load.1hr", "fuel_depth"], name="qf_surface_lookup"
+        surface = create_fuel_grid_from_fbfm40_lookup(
+            fbfm, bands=["fuel_load.1hr", "fuel_depth"], name="qf_surface_lookup"
         )
         surface.wait()
         return surface

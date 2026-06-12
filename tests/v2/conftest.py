@@ -86,7 +86,7 @@ def completed_topography_grid(test_domain):
 def completed_fbfm40_grid(test_domain):
     """A completed LANDFIRE FBFM40 fuel model grid. READ-ONLY: shared by
     every module. Provides the FBFM40 codes that
-    ``Grid.lookup_fuel_model_values`` reads.
+    ``create_fuel_grid_from_fbfm40_lookup`` reads.
     """
     grid = create_fuel_model_grid_from_landfire_fbfm40(
         test_domain,

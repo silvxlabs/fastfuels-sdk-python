@@ -93,9 +93,11 @@ __all__ = [
     "create_canopy_height_grid_from_naip_chm",
     "create_fuel_model_grid_from_landfire_fbfm40",
     "create_fuel_model_grid_from_landfire_fccs",
+    "create_pim_grid_from_treemap",
     "create_grid_from_geotiff",
     "create_grid_from_netcdf",
     "create_uniform_grid",
+    "create_fuel_grid_from_fbfm40_lookup",
     "list_grids",
     "get_grid",
     "check_3dep_coverage",
@@ -475,51 +477,6 @@ class Grid(GridModel):
             modifications=_opt(modifications),
         )
         response = create_resample.sync_detailed(
-            self.domain_id, client=ensure_client(), body=request_body
-        )
-        return Grid._from_model(expect(response, HTTPStatus.CREATED))
-
-    def lookup_fuel_model_values(
-        self,
-        bands: list,
-        source_band: str = "fbfm",
-        name: str = "",
-        description: str = "",
-        tags: Optional[List[str]] = None,
-        modifications: Optional[list] = None,
-    ) -> "Grid":
-        """Create a fuel-parameter grid by looking up FBFM40 codes in this grid.
-
-        Parameters
-        ----------
-        bands : list
-            The FBFM40 lookup bands to produce (``Fbfm40LookupBand`` members or
-            their string keys, e.g. "fuel_load_1hr").
-        source_band : str, optional
-            The band in this grid that holds FBFM40 codes (default "fbfm").
-        name, description : str, optional
-            Metadata for the new grid.
-        tags : List[str], optional
-            Tags for the new grid.
-        modifications : list, optional
-            Modification rules applied after the grid is built.
-
-        Returns
-        -------
-        Grid
-            The new (pending) fuel-parameter Grid.
-        """
-        self._require_completed("look up fuel parameters from")
-        request_body = CreateFbfm40LookupRequest(
-            source_grid_id=self.id,
-            bands=_enum_list(bands, Fbfm40LookupBand),
-            source_band=source_band,
-            name=name,
-            description=description,
-            tags=_opt(tags),
-            modifications=_opt(modifications),
-        )
-        response = create_fbfm40_lookup.sync_detailed(
             self.domain_id, client=ensure_client(), body=request_body
         )
         return Grid._from_model(expect(response, HTTPStatus.CREATED))
@@ -1422,6 +1379,85 @@ def create_uniform_grid(
     )
     response = create_uniform_grid_endpoint.sync_detailed(
         _domain_id(domain), client=ensure_client(), body=request_body
+    )
+    return Grid._from_model(expect(response, HTTPStatus.CREATED))
+
+
+# ---------------------------------------------------------------------------
+# Derive a grid from a grid you hold (source-specific transforms)
+# ---------------------------------------------------------------------------
+#
+# Universal transforms that apply to *any* grid are methods on ``Grid``
+# (``resample``, ``export``). Transforms that only make sense for a particular
+# kind of grid are functions here instead — keeping them off ``Grid`` so they
+# never appear on a grid that cannot perform them.
+
+
+def create_fuel_grid_from_fbfm40_lookup(
+    source_grid: "Grid",
+    bands: list,
+    source_band: str = "fbfm",
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    modifications: Optional[list] = None,
+) -> Grid:
+    """Create a fuel-parameter grid by looking up FBFM40 codes in a grid.
+
+    The `fbfm` band of an FBFM40 fuel model grid holds categorical fuel-model
+    codes, not the quantities a fire model consumes. This translates those
+    codes into fuel parameters (loadings by size class, fuel-bed depth,
+    surface-area-to-volume ratios), returning a new grid whose bands are the
+    requested parameters.
+
+    Parameters
+    ----------
+    source_grid : Grid
+        A completed grid carrying FBFM40 codes (produced by
+        :func:`create_fuel_model_grid_from_landfire_fbfm40`).
+    bands : list
+        The FBFM40 lookup bands to produce (``Fbfm40LookupBand`` members or
+        their string keys, e.g. "fuel_load.1hr", "fuel_depth").
+    source_band : str, optional
+        The band in ``source_grid`` that holds FBFM40 codes (default "fbfm").
+    name, description : str, optional
+        Metadata for the new grid.
+    tags : List[str], optional
+        Tags for the new grid.
+    modifications : list, optional
+        Modification rules applied after the grid is built.
+
+    Returns
+    -------
+    Grid
+        The new (pending) fuel-parameter Grid.
+
+    Raises
+    ------
+    ValueError
+        If ``source_grid`` is not completed, or carries no ``source_band`` band
+        to look up (i.e. it is not an FBFM40 fuel model grid).
+    """
+    source_grid._require_completed("look up fuel parameters from")
+    band_keys = [b.key for b in source_grid.bands]
+    if source_band not in band_keys:
+        raise ValueError(
+            f"Grid {source_grid.id} has no {source_band!r} band to look up; pass "
+            "an FBFM40 fuel model grid (see "
+            f"create_fuel_model_grid_from_landfire_fbfm40). Available bands: "
+            f"{band_keys}."
+        )
+    request_body = CreateFbfm40LookupRequest(
+        source_grid_id=source_grid.id,
+        bands=_enum_list(bands, Fbfm40LookupBand),
+        source_band=source_band,
+        name=name,
+        description=description,
+        tags=_opt(tags),
+        modifications=_opt(modifications),
+    )
+    response = create_fbfm40_lookup.sync_detailed(
+        source_grid.domain_id, client=ensure_client(), body=request_body
     )
     return Grid._from_model(expect(response, HTTPStatus.CREATED))
 
