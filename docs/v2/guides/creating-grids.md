@@ -324,6 +324,10 @@ thin geometry covers whole cells. See `ff.mask` in the
 [Reference](../reference.md) for masking multiple bands and the `operator`
 and `target` options.
 
+The same masks apply to a grid you already hold via
+[`grid.apply_modifications`](working-with-grids.md#apply-modifications-to-a-grid),
+which re-derives the grid in place.
+
 ## Error handling
 
 Creators raise typed exceptions from `fastfuels_sdk.v2.exceptions` on invalid

@@ -13,6 +13,7 @@ from fastfuels_sdk.v2._uploads import put_upload
 from fastfuels_sdk.v2.api import ensure_client
 from fastfuels_sdk.v2.exceptions import expect, raise_for_response
 from fastfuels_sdk.v2.client_library.api.grids import (
+    apply_grid_modifications as apply_grid_modifications_endpoint,
     check_3dep_coverage as check_3dep_coverage_endpoint,
     create_3dep_topography,
     create_fbfm40_lookup,
@@ -37,6 +38,7 @@ from fastfuels_sdk.v2.client_library.api.grids import (
 )
 from fastfuels_sdk.v2.client_library.models import (
     Grid as GridModel,
+    ApplyGridModificationsRequest,
     CreateFbfm40LookupRequest,
     CreateGeoTIFFUploadRequest,
     CreateLandfireCanopyRequest,
@@ -471,6 +473,49 @@ class Grid(GridModel):
             self.domain_id, client=ensure_client(), body=request_body
         )
         return Grid._from_model(expect(response, HTTPStatus.CREATED))
+
+    def apply_modifications(self, modifications: list) -> "Grid":
+        """Apply modification rules to this grid in place.
+
+        The grid keeps its ID; the submitted rules are appended to its
+        cumulative ``modifications`` list and the data is re-derived as a
+        background job — the grid returns to "pending" status, so call
+        :meth:`wait` before using its data. Unlike a creator's
+        ``modifications=`` argument (applied while the grid is first built),
+        this modifies a grid you already hold.
+
+        Parameters
+        ----------
+        modifications : list
+            Modification rules (``GridModification``). Build feature masks with
+            :func:`fastfuels_sdk.v2.modifications.mask` (``ff.mask``); each rule
+            pairs conditions (spatial or band-value tests, ANDed) with actions
+            that rewrite band values for the matching cells.
+
+        Returns
+        -------
+        Grid
+            ``self``, updated (so calls chain).
+
+        Raises
+        ------
+        ValueError
+            If the grid is not completed.
+        NotFoundException
+            If the grid no longer exists.
+
+        Examples
+        --------
+        >>> import fastfuels_sdk.v2 as ff
+        >>> grid.apply_modifications([ff.mask(roads, "fbfm", 91, buffer_m=5)])
+        >>> grid.wait()
+        """
+        self._require_completed("apply modifications to")
+        request_body = ApplyGridModificationsRequest(modifications=list(modifications))
+        response = apply_grid_modifications_endpoint.sync_detailed(
+            self.domain_id, self.id, client=ensure_client(), body=request_body
+        )
+        return self._copy_fields_from(expect(response))
 
     def export(
         self,

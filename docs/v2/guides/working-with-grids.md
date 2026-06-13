@@ -133,6 +133,23 @@ coarser = grid.resample(output_resolution_m=90, resampling="average")
 [Align grids to each other](creating-grids.md#align-grids-to-each-other)).
 The source grid must be `completed`.
 
+## Apply modifications to a grid
+
+To modify a grid you already hold — rather than at creation — call
+`apply_modifications` with the same `ff.mask(...)` rules a creator's
+`modifications=` argument accepts. The rules are appended to the grid's
+cumulative modifications and the data is re-derived **in place**: the grid
+keeps its ID and returns to `"pending"` while it rebuilds.
+
+```python
+grid.apply_modifications([ff.mask(roads, "fbfm", 91, buffer_m=5)])
+grid.wait()
+```
+
+The grid must be `completed` first. Re-deriving overwrites the grid's data, so
+to keep the original, build a fresh grid instead. See
+[Mask out features](creating-grids.md#mask-out-features) for the masking model.
+
 ## Read grid data into Python
 
 To pull a single band's values into a NumPy array, pass the band key to

@@ -43,7 +43,13 @@ from fastfuels_sdk.v2.client_library.models import (
     GridAlignmentNativeTarget,
     GridDataArrayFormat,
     GridDataOrder,
+    GridModification,
+    GridModificationAction,
+    GridModificationCondition,
+    GridSource,
     JobStatus,
+    Modifier,
+    Operator,
     ResamplingMethod,
     TopographyBand,
     UploadBandDefinition,
@@ -490,6 +496,58 @@ class TestResample:
             pytest.skip("grid completed too quickly to test the guard")
         with pytest.raises(ValueError, match="resample"):
             grid.resample(output_resolution_m=30)
+        grid.delete()
+
+
+class TestApplyModifications:
+    def test_apply_modifications_requires_completed(self):
+        # Pure guard: a non-completed grid raises before any API call.
+        grid = Grid(
+            id="g",
+            domain_id="d",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        with pytest.raises(ValueError, match="apply modifications"):
+            grid.apply_modifications([])
+
+    def test_apply_modifications_rederives_in_place(self, test_domain):
+        # A throwaway uniform grid -- grids have no duplicate yet (#16) and the
+        # shared fixture is read-only. A value-based modification (band > 0,
+        # matching every cell) avoids needing a feature.
+        grid = create_uniform_grid(
+            test_domain,
+            resolution_m=30,
+            bands={"fuel_load.1hr": 0.5},
+            name="grid_modify_test",
+        )
+        grid.wait()
+        original_checksum = grid.checksum
+
+        modification = GridModification(
+            conditions=[
+                GridModificationCondition(
+                    band="fuel_load.1hr", operator=Operator.GT, value=0
+                )
+            ],
+            actions=[
+                GridModificationAction(
+                    band="fuel_load.1hr", modifier=Modifier.MULTIPLY, value=0.9
+                )
+            ],
+        )
+        modified = grid.apply_modifications([modification])
+
+        assert modified is grid  # in place: same object, same id
+        assert modified.id == grid.id
+        # The grid re-derives in place; once it settles its content has
+        # changed (the multiply-by-0.9 action), so the checksum differs. (The
+        # `modifications` list is not echoed in the immediate pending response,
+        # unlike inventories.)
+        grid.wait()
+        assert grid.status == JobStatus.COMPLETED
+        assert grid.checksum != original_checksum
         grid.delete()
 
 
