@@ -17,6 +17,7 @@ from fastfuels_sdk.v2.client_library.api.inventories import (
     apply_modifications as apply_modifications_endpoint,
     apply_treatments as apply_treatments_endpoint,
     create_chm_inventory,
+    create_gdam_inventory,
     create_inventory_export,
     create_inventory_upload,
     create_pim_inventory,
@@ -34,6 +35,8 @@ from fastfuels_sdk.v2.client_library.models import (
     ApplyModificationsRequest,
     ApplyTreatmentsRequest,
     CreateChmInventoryRequest,
+    CreateGdamInventoryRequest,
+    CreateGdamInventoryRequestImputeColumnsItem,
     CreateInventoryUploadRequest,
     CreatePimInventoryRequest,
     CreateTreeInventoryRequest,
@@ -65,6 +68,7 @@ __all__ = [
     "create_tree_inventory_from_pim_grid",
     "create_tree_inventory_from_chm_grid",
     "create_tree_inventory_from_file",
+    "create_tree_inventory_from_gdam",
     "list_inventories",
     "get_inventory",
 ]
@@ -961,6 +965,71 @@ def create_tree_inventory_from_file(
     created = expect(response, HTTPStatus.CREATED)
     put_upload(created.upload, path)
     return Inventory._from_model(created.inventory)
+
+
+def create_tree_inventory_from_gdam(
+    domain,
+    source_inventory,
+    impute_columns: Optional[list] = None,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+) -> Inventory:
+    """Create a tree inventory by imputing morphology with GDAM allometry.
+
+    GDAM fills in missing per-tree morphology — diameter at breast height,
+    crown ratio, and FIA species code — for a completed source tree inventory
+    (for example one uploaded with coordinates and heights only). Existing
+    values are preserved; only missing cells are imputed. The result is a new
+    inventory; the source is left unchanged.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the inventory in.
+    source_inventory : Inventory or str
+        A completed tree inventory (or its id) whose missing morphology
+        columns GDAM will fill in.
+    impute_columns : list, optional
+        Which morphology columns to impute
+        (``CreateGdamInventoryRequestImputeColumnsItem`` members or their
+        string keys: "dbh", "crown_ratio", "fia_species_code"). Defaults to all
+        three. Narrow it to impute fewer columns; columns left out keep the
+        source's values.
+    name, description : str, optional
+        Metadata for the inventory.
+    tags : List[str], optional
+        Tags for the inventory.
+
+    Returns
+    -------
+    Inventory
+        The created Inventory object (job status "pending"). Call
+        :meth:`Inventory.wait` to block until imputation finishes.
+
+    Examples
+    --------
+    >>> import fastfuels_sdk as ff
+    >>> sparse = ff.inventories.create_tree_inventory_from_file(
+    ...     domain, "stems.csv"  # x, y, height only
+    ... )
+    >>> sparse.wait()
+    >>> full = ff.inventories.create_tree_inventory_from_gdam(domain, sparse)
+    >>> full.wait()
+    """
+    request_body = CreateGdamInventoryRequest(
+        source_tree_inventory_id=_domain_id(source_inventory),
+        impute_columns=_enum_list(
+            impute_columns, CreateGdamInventoryRequestImputeColumnsItem
+        ),
+        name=name,
+        description=description,
+        tags=_opt(tags),
+    )
+    response = create_gdam_inventory.sync_detailed(
+        _domain_id(domain), client=ensure_client(), body=request_body
+    )
+    return Inventory._from_model(expect(response, HTTPStatus.CREATED))
 
 
 # ---------------------------------------------------------------------------

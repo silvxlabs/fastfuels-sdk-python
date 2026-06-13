@@ -133,6 +133,24 @@ background job — `wait()` before reading data back:
 2  721075.0  5190169.0    15.2  ...         0.35               202                1
 ```
 
+## Impute missing morphology with GDAM
+
+An uploaded inventory may carry only some columns — coordinates and heights,
+say, without diameters or species. `create_tree_inventory_from_gdam` fills in
+the missing morphology (`dbh`, `crown_ratio`, `fia_species_code`) for a
+completed inventory using GDAM allometry, producing a new inventory:
+
+```python
+sparse = ff.inventories.create_tree_inventory_from_file(domain, "stems.csv")
+sparse.wait()
+
+full = ff.inventories.create_tree_inventory_from_gdam(domain, sparse)
+full.wait()
+```
+
+Existing values are preserved — only missing cells are imputed. Pass
+`impute_columns=["fia_species_code"]` to impute just a subset.
+
 ## Wait for an inventory to finish
 
 `wait` polls until the job reaches a terminal status and returns the

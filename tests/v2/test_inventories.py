@@ -12,6 +12,7 @@ from fastfuels_sdk.v2.grids import Grid
 from fastfuels_sdk.v2.inventories import (
     Inventory,
     create_tree_inventory_from_file,
+    create_tree_inventory_from_gdam,
     create_tree_inventory_from_pim_grid,
     get_inventory,
     list_inventories,
@@ -106,6 +107,30 @@ class TestCreateTreeInventoryFromFile:
         assert inventory.status == JobStatus.COMPLETED
         assert len(inventory.to_dataframe()) == 2
         inventory.delete()
+
+
+class TestCreateTreeInventoryFromGdam:
+    def test_create_returns_new_pending_inventory(
+        self, test_domain, completed_tree_inventory
+    ):
+        imputed = create_tree_inventory_from_gdam(
+            test_domain,
+            completed_tree_inventory,
+            impute_columns=["dbh", "crown_ratio"],
+            name="throwaway_gdam",
+        )
+        assert isinstance(imputed, Inventory)
+        assert imputed.id != completed_tree_inventory.id
+        assert imputed.domain_id == test_domain.id
+        assert imputed.status in (JobStatus.PENDING, JobStatus.RUNNING)
+        imputed.delete()
+
+    def test_accepts_inventory_id_string(self, test_domain, completed_tree_inventory):
+        imputed = create_tree_inventory_from_gdam(
+            test_domain, completed_tree_inventory.id
+        )
+        assert imputed.domain_id == test_domain.id
+        imputed.delete()
 
 
 class TestFromId:
