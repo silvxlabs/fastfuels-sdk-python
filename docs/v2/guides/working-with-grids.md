@@ -133,6 +133,17 @@ coarser = grid.resample(output_resolution_m=90, resampling="average")
 [Align grids to each other](creating-grids.md#align-grids-to-each-other)).
 The source grid must be `completed`.
 
+## Duplicate a grid
+
+To branch from a completed grid, `duplicate` makes an independent copy under a
+new ID. The finished data is byte-copied rather than re-derived, so the copy
+carries the source's `checksum` verbatim — only its `id` and timestamps differ:
+
+```python
+copy = grid.duplicate(name="Scenario A")
+copy.wait()
+```
+
 ## Apply modifications to a grid
 
 To modify a grid you already hold — rather than at creation — call
@@ -147,8 +158,9 @@ grid.wait()
 ```
 
 The grid must be `completed` first. Re-deriving overwrites the grid's data, so
-to keep the original, build a fresh grid instead. See
-[Mask out features](creating-grids.md#mask-out-features) for the masking model.
+to keep the original, [`duplicate`](#duplicate-a-grid) it first and modify the
+copy. See [Mask out features](creating-grids.md#mask-out-features) for the
+masking model.
 
 ## Read grid data into Python
 

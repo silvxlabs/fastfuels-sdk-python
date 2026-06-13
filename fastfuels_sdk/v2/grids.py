@@ -30,6 +30,7 @@ from fastfuels_sdk.v2.client_library.api.grids import (
     create_treemap,
     create_uniform_grid as create_uniform_grid_endpoint,
     delete_grid,
+    duplicate_grid as duplicate_grid_endpoint,
     get_grid as get_grid_endpoint,
     get_grid_data_binary,
     list_grids as list_grids_endpoint,
@@ -52,6 +53,7 @@ from fastfuels_sdk.v2.client_library.models import (
     CreateThreeDepTopographyRequest,
     CreateTreeMapRequest,
     CreateUniformRequest,
+    DuplicateGridRequest,
     ExportGridRequest,
     Fbfm40LookupBand,
     GridAlignmentDomainTarget,
@@ -418,6 +420,48 @@ class Grid(GridModel):
             self.domain_id, self.id, client=ensure_client()
         )
         expect(response, HTTPStatus.NO_CONTENT)
+
+    def duplicate(
+        self,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+    ) -> "Grid":
+        """Create an independent copy of this grid under a new ID.
+
+        The copy is a true clone — the finished data is byte-copied, not
+        re-derived — carrying over the source's ``source``, ``modifications``,
+        ``georeference``, and ``checksum`` verbatim; only its ``id`` and
+        timestamps differ. Use this to branch from a grid before modifying the
+        copy while the original stays untouched.
+
+        Parameters
+        ----------
+        name : str, optional
+            Name for the copy. Defaults to the source's name.
+        description : str, optional
+            Description for the copy. Defaults to the source's description.
+        tags : List[str], optional
+            Tags for the copy. Defaults to the source's tags.
+
+        Returns
+        -------
+        Grid
+            The new Grid object (job status "pending" while the data is
+            copied; call :meth:`wait` before using it).
+
+        Raises
+        ------
+        NotFoundException
+            If the grid no longer exists.
+        """
+        request_body = DuplicateGridRequest(
+            name=_opt(name), description=_opt(description), tags=_opt(tags)
+        )
+        response = duplicate_grid_endpoint.sync_detailed(
+            self.domain_id, self.id, client=ensure_client(), body=request_body
+        )
+        return Grid._from_model(expect(response, HTTPStatus.CREATED))
 
     def resample(
         self,

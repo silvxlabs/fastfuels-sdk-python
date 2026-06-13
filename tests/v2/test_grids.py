@@ -645,6 +645,20 @@ class TestDeleteGrid:
             grid.delete()
 
 
+class TestDuplicateGrid:
+    def test_duplicate_is_a_clone(self, completed_topography_grid):
+        # Duplicating creates a new grid (the shared fixture is not mutated),
+        # byte-copying the data so the copy carries the same checksum.
+        copy = completed_topography_grid.duplicate(name="grid_duplicate_test")
+        assert copy.id != completed_topography_grid.id
+        assert copy.name == "grid_duplicate_test"
+        assert copy.domain_id == completed_topography_grid.domain_id
+        copy.wait()
+        assert copy.status == JobStatus.COMPLETED
+        assert copy.checksum == completed_topography_grid.checksum
+        copy.delete()
+
+
 class TestDecodeGridChunk:
     """Offline unit tests for binary chunk decoding (no API required)."""
 
