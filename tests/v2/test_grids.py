@@ -37,7 +37,9 @@ from fastfuels_sdk.v2.grids import (
 from fastfuels_sdk.v2.api import ensure_client
 from fastfuels_sdk.v2.client_library.api.grids import get_grid_data_json
 from fastfuels_sdk.v2.client_library.models import (
+    Band,
     BandType,
+    ContinuousBandSummary,
     GridAlignmentDomainTarget,
     GridAlignmentGridTarget,
     GridAlignmentNativeTarget,
@@ -836,3 +838,52 @@ class TestDataOut:
         assert dataset.sizes["x"] == grid.georeference.shape[-1]
         assert dataset.sizes["y"] == grid.georeference.shape[-2]
         assert dataset.attrs["crs"] == grid.georeference.crs
+
+
+class TestBandSummary:
+    """Unit tests for the band-summary accessor (no API), plus a live check."""
+
+    def _grid_with_band(self, band):
+        return Grid(
+            id="g",
+            domain_id="d",
+            status=JobStatus.COMPLETED,
+            source=GridSource(),
+            bands=[band],
+        )
+
+    def test_returns_band_summary(self):
+        summary = ContinuousBandSummary(
+            type_="continuous",
+            count=10,
+            nodata_count=0,
+            min_=1.0,
+            max_=5.0,
+            mean=3.0,
+            std=1.0,
+        )
+        grid = self._grid_with_band(
+            Band(key="elevation", type_=BandType.CONTINUOUS, index=0, summary=summary)
+        )
+        assert grid.band_summary("elevation") is summary
+        assert grid.band_summary("elevation").mean == 3.0
+
+    def test_none_when_not_computed(self):
+        # summary defaults to UNSET (e.g. a pending grid) -> normalized to None
+        grid = self._grid_with_band(
+            Band(key="elevation", type_=BandType.CONTINUOUS, index=0)
+        )
+        assert grid.band_summary("elevation") is None
+
+    def test_unknown_band_raises(self):
+        grid = self._grid_with_band(
+            Band(key="elevation", type_=BandType.CONTINUOUS, index=0)
+        )
+        with pytest.raises(ValueError, match="no band"):
+            grid.band_summary("nope")
+
+    def test_continuous_summary_live(self, completed_topography_grid):
+        summary = completed_topography_grid.band_summary("elevation")
+        assert summary.type_ == "continuous"
+        assert summary.count > 0
+        assert summary.mean is not None

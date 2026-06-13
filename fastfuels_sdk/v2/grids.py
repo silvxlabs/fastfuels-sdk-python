@@ -298,6 +298,14 @@ class Grid(GridModel):
                 ".wait() until it completes first."
             )
 
+    def _band(self, band: str):
+        """Return the :class:`Band` with key ``band``, or raise if absent."""
+        for grid_band in self.bands:
+            if grid_band.key == band:
+                return grid_band
+        keys = [b.key for b in self.bands]
+        raise ValueError(f"Grid has no band {band!r}. Available bands: {keys}.")
+
     @classmethod
     def from_id(cls, domain_id: str, grid_id: str) -> "Grid":
         """Retrieve an existing Grid resource by its ID.
@@ -663,6 +671,41 @@ class Grid(GridModel):
             )
         return _decode_grid_chunk(response.content, response.headers)
 
+    def band_summary(self, band: str):
+        """Return summary statistics for one band, without downloading the data.
+
+        The server computes a per-band summary when the grid completes, so this
+        is a cheap overview that does not fetch the grid's cells (unlike
+        :meth:`to_numpy`).
+
+        Parameters
+        ----------
+        band : str
+            The band key to summarize (see :attr:`bands` for available keys).
+
+        Returns
+        -------
+        ContinuousBandSummary or CategoricalBandSummary or None
+            The band's summary, discriminated by its ``type_``:
+            ``"continuous"`` carries ``count``, ``nodata_count``, ``min_``,
+            ``max_``, ``mean``, and ``std``; ``"categorical"`` carries
+            ``count``, ``nodata_count``, and ``unique_count``. ``None`` until
+            the grid completes (call :meth:`wait` first).
+
+        Raises
+        ------
+        ValueError
+            If ``band`` is not one of the grid's bands.
+
+        Examples
+        --------
+        >>> grid = ff.get_grid(domain, "def456").wait()
+        >>> grid.band_summary("elevation").mean
+        2143.7
+        """
+        summary = self._band(band).summary
+        return None if summary is UNSET else summary
+
     def to_numpy(self, band: str) -> "np.ndarray":
         """Read one band of this grid into an in-memory NumPy array.
 
@@ -697,12 +740,7 @@ class Grid(GridModel):
         (1200, 1600)
         """
         self._require_completed("read data from")
-        band_keys = [b.key for b in self.bands]
-        if band not in band_keys:
-            raise ValueError(
-                f"Grid has no band {band!r}. Available bands: {band_keys}."
-            )
-        nodata = next(b.nodata for b in self.bands if b.key == band)
+        nodata = self._band(band).nodata
         # 3D grids are stored sparsely; 2D rasters densely (413 falls back).
         array_format = "sparse" if len(self.georeference.shape) == 3 else "dense"
 

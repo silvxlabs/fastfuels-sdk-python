@@ -93,6 +93,23 @@ output:
 Two grids built on the same domain at the same resolution share this
 georeference, which is what lets them overlay cell-for-cell.
 
+## Summarize a band without downloading it
+
+Once a grid completes, the server attaches summary statistics to each band, so
+you can get a quick overview without fetching the cells (which is what
+[`to_numpy`](#read-grid-data-into-python) does). Pass a band key to
+`band_summary`:
+
+```python
+summary = topography.band_summary("elevation")
+```
+
+A continuous band reports `count`, `nodata_count`, `min_`, `max_`, `mean`, and
+`std`; a categorical band reports `count`, `nodata_count`, and `unique_count`.
+The `type_` field (`"continuous"` or `"categorical"`) tells you which.
+`band_summary` returns `None` until the grid completes — call
+[`wait`](#wait-for-a-grid-to-finish) first.
+
 ## Retrieve a grid by id
 
 To fetch an existing grid using its domain and grid IDs:
