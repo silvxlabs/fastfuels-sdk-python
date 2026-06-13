@@ -7,6 +7,7 @@ from .allometry_biomass_source_component_states import (
 )
 from .allometry_max_crown_radius_source import AllometryMaxCrownRadiusSource
 from .application import Application
+from .apply_grid_modifications_request import ApplyGridModificationsRequest
 from .apply_modifications_request import ApplyModificationsRequest
 from .apply_treatments_request import ApplyTreatmentsRequest
 from .band import Band
@@ -26,6 +27,10 @@ from .create_application_request import CreateApplicationRequest
 from .create_chm_inventory_request import CreateChmInventoryRequest
 from .create_domain_request_body import CreateDomainRequestBody
 from .create_fbfm_40_lookup_request import CreateFbfm40LookupRequest
+from .create_gdam_inventory_request import CreateGdamInventoryRequest
+from .create_gdam_inventory_request_impute_columns_item import (
+    CreateGdamInventoryRequestImputeColumnsItem,
+)
 from .create_geo_tiff_upload_request import CreateGeoTIFFUploadRequest
 from .create_inventory_upload_request import CreateInventoryUploadRequest
 from .create_key_request import CreateKeyRequest
@@ -240,6 +245,7 @@ __all__ = (
     "AllometryBiomassSourceComponentStates",
     "AllometryMaxCrownRadiusSource",
     "Application",
+    "ApplyGridModificationsRequest",
     "ApplyModificationsRequest",
     "ApplyTreatmentsRequest",
     "Band",
@@ -259,6 +265,8 @@ __all__ = (
     "CreateChmInventoryRequest",
     "CreateDomainRequestBody",
     "CreateFbfm40LookupRequest",
+    "CreateGdamInventoryRequest",
+    "CreateGdamInventoryRequestImputeColumnsItem",
     "CreateGeoTIFFUploadRequest",
     "CreateInventoryUploadRequest",
     "CreateKeyRequest",
