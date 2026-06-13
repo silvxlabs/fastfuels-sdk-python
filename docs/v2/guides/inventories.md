@@ -191,87 +191,32 @@ layout first:
 Data is only available once the inventory is `"completed"` — earlier calls
 raise `UnprocessableEntityException`.
 
-## Modify trees at creation
+## Reshape the trees
 
-Every creator accepts `modifications=` — rules applied while the inventory
-is derived. Each rule filters trees by conditions (ANDed together) and
-applies actions to the matching rows. To thin from below by removing every
-tree under 10 cm DBH:
+Every creator accepts `modifications=` (rules that filter trees by conditions
+and act on them) and `treatments=` (silvicultural thinning to a target), and
+you can reshape an inventory you already hold with `apply_modifications` /
+`apply_treatments`. See
+[Modify and treat tree inventories](modify-treat-inventories.md) for the full
+workflow.
 
-```python
-from fastfuels_sdk.v2.client_library.models import (
-    InventoryAttribute,
-    InventoryModification,
-    InventoryModificationCondition,
-    Operator,
-    RemoveAction,
-)
+## Duplicate an inventory
 
-thinned = ff.inventories.create_tree_inventory_from_pim_grid(
-    domain,
-    pim,
-    seed=42,
-    modifications=[
-        InventoryModification(
-            conditions=[
-                InventoryModificationCondition(
-                    attribute=InventoryAttribute.DBH,
-                    operator=Operator.LT,
-                    value=10.0,
-                )
-            ],
-            actions=[RemoveAction()],
-        )
-    ],
-    name="Thinned",
-)
-```
-
-With `seed=42` the unthinned expansion above produced 71,619 trees; the
-same expansion with this rule keeps 40,620. Besides `RemoveAction`, an
-`InventoryModificationAction` can `replace`, `multiply`, `divide`, `add`,
-or `subtract` an attribute's value. Creators also accept `treatments=` —
-silvicultural thinning prescriptions built with `ff.basal_area_treatment(...)`
-(thin to a residual basal area) or `ff.diameter_treatment(...)` (thin to a
-diameter limit), applied after modifications.
-
-## Branch a scenario
-
-To compare scenarios — say, a thinned stand against the original — keep
-the original inventory untouched and work on copies. `duplicate` creates
-an independent copy under a new ID by byte-copying the finished data, not
-re-deriving it:
+`duplicate` makes an independent copy under a new ID, byte-copying the finished
+data rather than re-deriving it, so the copy starts identical to the source:
 
 ```python
->>> copy = inventory.duplicate(name="Thinning scenario")
+>>> copy = inventory.duplicate(name="Scenario A")
 >>> copy.wait()
 >>> copy.checksum == inventory.checksum
 True
 ```
 
-The `checksum` is a version marker for an inventory's content: it changes
-each time the data is rebuilt and is unaffected by metadata-only edits, so
-an identical checksum means identical trees.
-
-To modify an inventory you already hold — appending rules to its
-cumulative `modifications` list and re-deriving the data in place — call
-`apply_modifications`. The inventory keeps its ID and returns to
-`"pending"` while it rebuilds:
-
-```python
-copy.apply_modifications([modification])
-copy.wait()
-```
-
-`apply_treatments` works the same way for silvicultural thinning: it appends
-prescriptions to the inventory's cumulative `treatments` list and re-derives in
-place. Build them with `ff.basal_area_treatment` (thin to a residual basal
-area) or `ff.diameter_treatment` (thin to a diameter limit):
-
-```python
-copy.apply_treatments([ff.basal_area_treatment("from_below", 25.0)])
-copy.wait()
-```
+The `checksum` is a version marker for an inventory's content: it changes each
+time the data is rebuilt and is unaffected by metadata-only edits, so an
+identical checksum means identical trees. Duplicate before reshaping to keep
+the original untouched (see
+[Branch a scenario](modify-treat-inventories.md#branch-a-scenario)).
 
 ## Voxelize into a 3D fuel grid
 

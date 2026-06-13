@@ -331,7 +331,8 @@ QUIC-Fire archive — masking roads out of the fuels along the way.
 - Mask water (and other features) into the fuels the same way we masked
   roads — see [Mask out features](../guides/creating-grids.md#mask-out-features).
 - Tune the tree inventory before voxelizing — thinning, treatments, and
-  modifications — see [Modify trees at creation](../guides/inventories.md#modify-trees-at-creation).
+  modifications — see
+  [Modify and treat tree inventories](../guides/modify-treat-inventories.md).
 - Define the fire grid from an existing grid's lattice, or change its
   resolution, with the export's alignment options — see
   [Bundle grids for QUIC-Fire](../guides/exports.md#bundle-grids-for-quic-fire).

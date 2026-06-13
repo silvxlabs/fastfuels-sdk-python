@@ -233,7 +233,7 @@ voxels.wait()
 Because it is a 3D product, a voxel grid supports neither resampling nor
 post-hoc modifications — apply any tree modifications on the inventory
 before voxelizing (see
-[Modify trees at creation](inventories.md#modify-trees-at-creation)).
+[Modify and treat tree inventories](modify-treat-inventories.md)).
 
 For the concepts behind plot imputation and voxelization, see the
 [FastFuels documentation](https://docs.fastfuels.silvxlabs.com).
