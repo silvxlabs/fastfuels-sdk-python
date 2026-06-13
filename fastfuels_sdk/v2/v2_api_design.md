@@ -221,11 +221,12 @@ lookup is the only such case today: it needs a grid carrying `fbfm` codes.
 - Single-grid export is a method (`grid.export`) but the QUIC-Fire bundle is a
   function (`ff.exports.create_quicfire_export`) — consistent with the rule
   (one held resource → method; assembled-from-many → function), but worth a look.
-- Modifications/treatments vocab (`mask`/`modify`/`within`/`thin_to_*`) — partly
-  settled: `mask` (grids) and `basal_area_treatment`/`diameter_treatment`
-  (inventories) ship as builders; inventory *modifications* are still hand-built
-  models (no `ff.modify` vocab yet — tracked as a follow-up). Spatial
-  *conditions* for treatments are a raw pass-through; no condition builders yet.
+- Modifications/treatments vocab (`mask`/`modify`/`within`/`thin_to_*`) — now
+  settled: builders ship for all three — `mask` (grids), `basal_area_treatment`/
+  `diameter_treatment` (inventory treatments), and `tree_attribute`/`tree_within`/
+  `remove_trees`/`modify_trees` (inventory modifications). `tree_within` builds an
+  `InventoryFeatureSpatialCondition`, which treatments' `conditions=` also accept;
+  geometry/expression conditions remain a raw pass-through.
 - Returned-record implementation (wrap generated attrs model vs clean dataclass)
   — parked; shows up on every record.
 

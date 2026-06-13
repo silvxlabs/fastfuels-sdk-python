@@ -26,7 +26,13 @@ from fastfuels_sdk.v2.exports import Export, get_export, list_exports
 from fastfuels_sdk.v2.features import Feature, get_feature, list_features
 from fastfuels_sdk.v2.grids import Grid, get_grid, list_grids
 from fastfuels_sdk.v2.inventories import Inventory, get_inventory, list_inventories
-from fastfuels_sdk.v2.modifications import mask
+from fastfuels_sdk.v2.modifications import (
+    mask,
+    modify_trees,
+    remove_trees,
+    tree_attribute,
+    tree_within,
+)
 from fastfuels_sdk.v2.point_clouds import (
     PointCloud,
     get_point_cloud,
@@ -65,6 +71,10 @@ __all__ = [
     "reproject_geojson",
     # Modifications
     "mask",
+    "tree_attribute",
+    "tree_within",
+    "remove_trees",
+    "modify_trees",
     # Treatments
     "basal_area_treatment",
     "diameter_treatment",

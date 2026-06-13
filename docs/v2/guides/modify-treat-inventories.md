@@ -27,39 +27,30 @@ both. For creating and reading inventories in the first place, see
 ## Modifications
 
 A modification is a rule with two parts: `conditions` (all ANDed — a tree must
-satisfy every one) and `actions` (applied to the trees that match). To thin
-from below by removing every tree under 10 cm DBH:
+satisfy every one) and `actions` (applied to the matching trees). Build
+conditions with `ff.tree_attribute` (a per-tree attribute test) or
+`ff.tree_within` (trees inside a feature), then assemble the rule with
+`ff.remove_trees` (drop the matching trees) or `ff.modify_trees` (change an
+attribute on them):
 
 ```python
-from fastfuels_sdk.v2.client_library.models import (
-    InventoryAttribute,
-    InventoryModification,
-    InventoryModificationCondition,
-    Operator,
-    RemoveAction,
-)
+import fastfuels_sdk.v2 as ff
 
-modification = InventoryModification(
-    conditions=[
-        InventoryModificationCondition(
-            attribute=InventoryAttribute.DBH,
-            operator=Operator.LT,
-            value=10.0,
-        )
-    ],
-    actions=[RemoveAction()],
+# Remove every tree under 10 cm DBH
+ff.remove_trees(ff.tree_attribute("dbh", "<", 10))
+
+# Shrink crowns on the largest trees inside a stand boundary
+ff.modify_trees(
+    "crown_ratio", "multiply", 0.8,
+    ff.tree_attribute("dbh", ">", 40),
+    ff.tree_within(stand),
 )
 ```
 
-Conditions test an `InventoryAttribute` (`dbh`, `height`, `crown_ratio`, …)
-with an `Operator` (`lt`, `gt`, `gte`, …). Besides `RemoveAction`, an
-`InventoryModificationAction` can `replace`, `multiply`, `divide`, `add`, or
-`subtract` an attribute's value.
-
-!!! note
-    Modification rules are still hand-built from the generated models above;
-    there is no `ff.modify(...)` builder yet (unlike treatments and the grid
-    [`ff.mask`](creating-grids.md#mask-out-features)).
+`tree_attribute` takes an attribute (`"dbh"`, `"height"`, `"crown_ratio"`,
+`"fia_species_code"`) and a comparison (`"<"`, `"<="`, `">"`, `">="`, `"=="`,
+`"!="`); pass several conditions to AND them. `modify_trees`'s modifier is
+`"replace"`, `"add"`, `"subtract"`, `"multiply"`, or `"divide"`.
 
 ## Treatments
 
@@ -91,8 +82,8 @@ thinned = ff.inventories.create_tree_inventory_from_pim_grid(
     domain,
     pim,
     seed=42,
-    modifications=[modification],
-    treatments=[treatment],
+    modifications=[ff.remove_trees(ff.tree_attribute("dbh", "<", 10))],
+    treatments=[ff.basal_area_treatment("from_below", 25.0)],
     name="Thinned",
 )
 thinned.wait()
@@ -109,7 +100,7 @@ job — the inventory returns to `"pending"`, so `wait()` before using it again.
 inventory.apply_treatments([ff.basal_area_treatment("from_below", 25.0)])
 inventory.wait()
 
-inventory.apply_modifications([modification])
+inventory.apply_modifications([ff.remove_trees(ff.tree_attribute("dbh", "<", 10))])
 inventory.wait()
 ```
 

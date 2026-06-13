@@ -18,6 +18,7 @@ from fastfuels_sdk.v2.inventories import (
     list_inventories,
 )
 from fastfuels_sdk.v2.treatments import basal_area_treatment, diameter_treatment
+from fastfuels_sdk.v2.modifications import remove_trees, tree_attribute
 from fastfuels_sdk.v2.client_library.models import (
     InventoryAttribute,
     InventoryModification,
@@ -267,6 +268,30 @@ class TestApplyTreatments:
         with pytest.raises(ValueError, match="apply treatments"):
             inventory.apply_treatments([diameter_treatment("from_below", 10.0)])
         inventory.delete()
+
+
+class TestModificationBuilders:
+    def test_remove_trees_at_creation(
+        self, test_domain, completed_pim_grid, completed_tree_inventory
+    ):
+        # In-place apply_modifications is #333-blocked, so verify the builders
+        # via the create-time path (which works). Same seed as the unmodified
+        # fixture, so removing dbh < 10 must yield strictly fewer trees.
+        modified = create_tree_inventory_from_pim_grid(
+            test_domain,
+            completed_pim_grid,
+            seed=42,
+            modifications=[remove_trees(tree_attribute("dbh", "<", 10))],
+            name="throwaway_modified",
+        )
+        modified.wait()
+        assert modified.status == JobStatus.COMPLETED
+        assert (
+            0
+            < len(modified.to_dataframe())
+            < len(completed_tree_inventory.to_dataframe())
+        )
+        modified.delete()
 
 
 class TestVoxelize:
