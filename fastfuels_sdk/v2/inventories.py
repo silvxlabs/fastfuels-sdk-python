@@ -10,6 +10,7 @@ from typing import List, Optional
 
 # Internal imports
 from fastfuels_sdk.v2._jobs import wait as _wait
+from fastfuels_sdk.v2._uploads import put_upload
 from fastfuels_sdk.v2.api import ensure_client
 from fastfuels_sdk.v2.exceptions import expect
 from fastfuels_sdk.v2.client_library.api.inventories import (
@@ -56,7 +57,6 @@ from fastfuels_sdk.v2.client_library.types import UNSET
 # External imports
 import attrs
 import pandas as pd
-import requests
 
 __all__ = [
     "Inventory",
@@ -90,18 +90,6 @@ def _enum_list(values, enum_cls):
 def _opt(value):
     """Map ``None`` to the generated UNSET sentinel, else pass through."""
     return value if value is not None else UNSET
-
-
-def _put_upload(spec, path: str) -> None:
-    """Upload a local file to a signed upload URL with HTTP PUT."""
-    headers = {
-        "Content-Type": spec.content_type,
-        # The signed URL covers this header; GCS rejects the PUT without it
-        "x-goog-content-length-range": f"0,{spec.max_size_bytes}",
-    }
-    with open(path, "rb") as file_obj:
-        response = requests.put(spec.url, data=file_obj, headers=headers)
-    response.raise_for_status()
 
 
 class Inventory(InventoryModel):
@@ -927,7 +915,7 @@ def create_tree_inventory_from_file(
         _domain_id(domain), client=ensure_client(), body=request_body
     )
     created = expect(response, HTTPStatus.CREATED)
-    _put_upload(created.upload, path)
+    put_upload(created.upload, path)
     return Inventory._from_model(created.inventory)
 
 

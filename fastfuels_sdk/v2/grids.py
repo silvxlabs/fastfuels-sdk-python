@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Union
 
 # Internal imports
 from fastfuels_sdk.v2._jobs import wait as _wait
+from fastfuels_sdk.v2._uploads import put_upload
 from fastfuels_sdk.v2.api import ensure_client
 from fastfuels_sdk.v2.exceptions import expect, raise_for_response
 from fastfuels_sdk.v2.client_library.api.grids import (
@@ -82,7 +83,6 @@ from fastfuels_sdk.v2.client_library.types import UNSET, Response
 # External imports
 import attrs
 import numpy as np
-import requests
 
 __all__ = [
     "Grid",
@@ -164,15 +164,6 @@ def _build_alignment(
             resolution=_opt(output_resolution_m), method=method
         )
     return UNSET
-
-
-def _put_upload(spec, path: str) -> None:
-    """Upload a local file to a signed upload URL with HTTP PUT."""
-    with open(path, "rb") as file_obj:
-        response = requests.put(
-            spec.url, data=file_obj, headers={"Content-Type": spec.content_type}
-        )
-    response.raise_for_status()
 
 
 def _fill_for(dtype, nodata=None):
@@ -1291,7 +1282,7 @@ def create_grid_from_geotiff(
         _domain_id(domain), client=ensure_client(), body=request_body
     )
     created = expect(response, HTTPStatus.CREATED)
-    _put_upload(created.upload, path)
+    put_upload(created.upload, path)
     return Grid._from_model(created.grid)
 
 
@@ -1337,7 +1328,7 @@ def create_grid_from_netcdf(
         _domain_id(domain), client=ensure_client(), body=request_body
     )
     created = expect(response, HTTPStatus.CREATED)
-    _put_upload(created.upload, path)
+    put_upload(created.upload, path)
     return Grid._from_model(created.grid)
 
 

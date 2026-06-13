@@ -5,6 +5,7 @@ tests/v2/test_grids.py
 # Core imports
 import inspect
 import json
+import math
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -25,6 +26,7 @@ from fastfuels_sdk.v2.grids import (
     create_fuel_grid_from_fbfm40_lookup,
     create_fuel_model_grid_from_landfire_fbfm40,
     create_fuel_model_grid_from_landfire_fccs,
+    create_grid_from_geotiff,
     create_pim_grid_from_treemap,
     create_topography_grid_from_3dep,
     create_topography_grid_from_landfire,
@@ -35,6 +37,7 @@ from fastfuels_sdk.v2.grids import (
 from fastfuels_sdk.v2.api import ensure_client
 from fastfuels_sdk.v2.client_library.api.grids import get_grid_data_json
 from fastfuels_sdk.v2.client_library.models import (
+    BandType,
     GridAlignmentDomainTarget,
     GridAlignmentGridTarget,
     GridAlignmentNativeTarget,
@@ -43,6 +46,7 @@ from fastfuels_sdk.v2.client_library.models import (
     JobStatus,
     ResamplingMethod,
     TopographyBand,
+    UploadBandDefinition,
 )
 from fastfuels_sdk.v2.client_library.types import UNSET
 from fastfuels_sdk.v2.exceptions import NotFoundException, expect
@@ -51,6 +55,8 @@ from fastfuels_sdk.v2.modifications import mask
 # External imports
 import numpy as np
 import pytest
+import rasterio
+from rasterio.transform import from_origin
 
 # The test_domain and completed_topography_grid fixtures are session-scoped
 # and shared across modules (tests/v2/conftest.py). They are READ-ONLY:
@@ -330,18 +336,51 @@ class TestCreatePimGridFromTreemap:
 
 class TestUploadCreators:
     """The GeoTIFF/NetCDF upload creators need a binary raster whose CRS
-    matches the domain CRS. There is no committed raster fixture and no
-    raster dependency (rasterio/xarray) in the test environment to build
-    one on the fly, so these paths are deferred rather than mocked.
+    matches the domain CRS. The GeoTIFF path builds one on the fly with
+    rasterio; the NetCDF path is deferred (no on-the-fly NetCDF writer here).
     """
 
-    @pytest.mark.skip(
-        reason="needs a committed GeoTIFF fixture matching the domain CRS"
-    )
-    def test_create_grid_from_geotiff(self, test_domain):
-        pass
+    def test_create_grid_from_geotiff(self, test_domain, tmp_path):
+        # Build a single-band float GeoTIFF on the domain's lattice and CRS,
+        # upload it, and confirm it processes to completion. This exercises the
+        # signed-upload header contract end-to-end (the unit-level check lives
+        # in tests/v2/test_uploads.py); the grid upload path was missing the
+        # GCS x-goog-content-length-range header until that was centralized.
+        minx, miny, maxx, maxy = test_domain.bbox
+        crs = test_domain.get_lattice(resolution=30.0).crs
+        res = 30.0
+        width = max(1, math.ceil((maxx - minx) / res))
+        height = max(1, math.ceil((maxy - miny) / res))
+        data = np.arange(width * height, dtype="float32").reshape(height, width)
+        path = tmp_path / "elevation.tif"
+        with rasterio.open(
+            path,
+            "w",
+            driver="GTiff",
+            height=height,
+            width=width,
+            count=1,
+            dtype="float32",
+            crs=crs,
+            transform=from_origin(minx, maxy, res, res),
+        ) as dst:
+            dst.write(data, 1)
 
-    @pytest.mark.skip(reason="needs a committed NetCDF fixture matching the domain CRS")
+        grid = create_grid_from_geotiff(
+            test_domain,
+            str(path),
+            bands=[UploadBandDefinition(key="elevation", type_=BandType.CONTINUOUS)],
+            name="throwaway_geotiff",
+        )
+        assert grid.domain_id == test_domain.id
+        grid.wait()
+        assert grid.status == JobStatus.COMPLETED
+        assert [b.key for b in grid.bands] == ["elevation"]
+        grid.delete()
+
+    @pytest.mark.skip(
+        reason="needs an on-the-fly NetCDF writer matching the domain CRS"
+    )
     def test_create_grid_from_netcdf(self, test_domain):
         pass
 
