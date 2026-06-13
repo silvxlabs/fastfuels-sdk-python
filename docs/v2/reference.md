@@ -12,6 +12,8 @@
 
 ::: fastfuels_sdk.v2.modifications
 
+::: fastfuels_sdk.v2.treatments
+
 ::: fastfuels_sdk.v2._jobs
 
 ::: fastfuels_sdk.v2.api

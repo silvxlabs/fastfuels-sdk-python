@@ -15,6 +15,7 @@ from fastfuels_sdk.v2.api import ensure_client
 from fastfuels_sdk.v2.exceptions import expect
 from fastfuels_sdk.v2.client_library.api.inventories import (
     apply_modifications as apply_modifications_endpoint,
+    apply_treatments as apply_treatments_endpoint,
     create_chm_inventory,
     create_inventory_export,
     create_inventory_upload,
@@ -31,6 +32,7 @@ from fastfuels_sdk.v2.client_library.api.inventories import (
 from fastfuels_sdk.v2.client_library.models import (
     Inventory as InventoryModel,
     ApplyModificationsRequest,
+    ApplyTreatmentsRequest,
     CreateChmInventoryRequest,
     CreateInventoryUploadRequest,
     CreatePimInventoryRequest,
@@ -391,6 +393,48 @@ class Inventory(InventoryModel):
         self._require_completed("apply modifications to")
         request_body = ApplyModificationsRequest(modifications=list(modifications))
         response = apply_modifications_endpoint.sync_detailed(
+            self.domain_id, self.id, client=ensure_client(), body=request_body
+        )
+        return self._copy_fields_from(expect(response))
+
+    def apply_treatments(self, treatments: list) -> "Inventory":
+        """Apply silvicultural treatments to this inventory in place.
+
+        The inventory keeps its ID; the submitted treatments are appended to
+        its cumulative ``treatments`` list and the tree data is re-derived as a
+        background job — the inventory returns to "pending" status, so call
+        :meth:`wait` before using its data. To keep the original data,
+        :meth:`duplicate` first and treat the copy.
+
+        Parameters
+        ----------
+        treatments : list
+            Treatments thinning the stand to a target. Build them with
+            :func:`fastfuels_sdk.v2.treatments.basal_area_treatment` (residual
+            basal area) or
+            :func:`fastfuels_sdk.v2.treatments.diameter_treatment` (diameter
+            limit), available as ``ff.basal_area_treatment`` /
+            ``ff.diameter_treatment``.
+
+        Returns
+        -------
+        Inventory
+            ``self``, updated (so calls chain).
+
+        Raises
+        ------
+        NotFoundException
+            If the inventory no longer exists.
+
+        Examples
+        --------
+        >>> import fastfuels_sdk.v2 as ff
+        >>> inventory.apply_treatments([ff.basal_area_treatment("from_below", 25.0)])
+        >>> inventory.wait()
+        """
+        self._require_completed("apply treatments to")
+        request_body = ApplyTreatmentsRequest(treatments=list(treatments))
+        response = apply_treatments_endpoint.sync_detailed(
             self.domain_id, self.id, client=ensure_client(), body=request_body
         )
         return self._copy_fields_from(expect(response))

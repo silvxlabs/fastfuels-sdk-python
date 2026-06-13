@@ -213,8 +213,9 @@ With `seed=42` the unthinned expansion above produced 71,619 trees; the
 same expansion with this rule keeps 40,620. Besides `RemoveAction`, an
 `InventoryModificationAction` can `replace`, `multiply`, `divide`, `add`,
 or `subtract` an attribute's value. Creators also accept `treatments=` —
-silvicultural prescriptions (`InventoryBasalAreaTreatment`,
-`InventoryDiameterTreatment`) applied after modifications.
+silvicultural thinning prescriptions built with `ff.basal_area_treatment(...)`
+(thin to a residual basal area) or `ff.diameter_treatment(...)` (thin to a
+diameter limit), applied after modifications.
 
 ## Branch a scenario
 
@@ -241,6 +242,16 @@ cumulative `modifications` list and re-deriving the data in place — call
 
 ```python
 copy.apply_modifications([modification])
+copy.wait()
+```
+
+`apply_treatments` works the same way for silvicultural thinning: it appends
+prescriptions to the inventory's cumulative `treatments` list and re-derives in
+place. Build them with `ff.basal_area_treatment` (thin to a residual basal
+area) or `ff.diameter_treatment` (thin to a diameter limit):
+
+```python
+copy.apply_treatments([ff.basal_area_treatment("from_below", 25.0)])
 copy.wait()
 ```
 

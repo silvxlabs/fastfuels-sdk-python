@@ -16,6 +16,7 @@ from fastfuels_sdk.v2.inventories import (
     get_inventory,
     list_inventories,
 )
+from fastfuels_sdk.v2.treatments import basal_area_treatment, diameter_treatment
 from fastfuels_sdk.v2.client_library.models import (
     InventoryAttribute,
     InventoryModification,
@@ -212,6 +213,34 @@ class TestApplyModifications:
             pytest.skip("inventory completed too quickly to test the guard")
         with pytest.raises(ValueError, match="apply modifications"):
             inventory.apply_modifications([])
+        inventory.delete()
+
+
+class TestApplyTreatments:
+    def test_apply_treatments_rederives_in_place(self, completed_tree_inventory):
+        # Mutating, so work on a duplicate — the shared fixture is read-only
+        copy = completed_tree_inventory.duplicate(name="treat_test")
+        copy.wait()
+        original_checksum = copy.checksum
+
+        treated = copy.apply_treatments([basal_area_treatment("from_below", 25.0)])
+
+        assert treated is copy  # in place: same object, same id
+        assert len(copy.treatments) == 1
+        copy.wait()
+        assert copy.status == JobStatus.COMPLETED
+        assert copy.checksum != original_checksum  # data was re-derived
+        copy.delete()
+
+    def test_requires_completed_source(self, test_domain, completed_pim_grid):
+        inventory = create_tree_inventory_from_pim_grid(
+            test_domain, completed_pim_grid, seed=42
+        )
+        if inventory.status == JobStatus.COMPLETED:
+            inventory.delete()
+            pytest.skip("inventory completed too quickly to test the guard")
+        with pytest.raises(ValueError, match="apply treatments"):
+            inventory.apply_treatments([diameter_treatment("from_below", 10.0)])
         inventory.delete()
 
 

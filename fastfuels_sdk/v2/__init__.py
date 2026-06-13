@@ -32,6 +32,7 @@ from fastfuels_sdk.v2.point_clouds import (
     get_point_cloud,
     list_point_clouds,
 )
+from fastfuels_sdk.v2.treatments import basal_area_treatment, diameter_treatment
 
 __all__ = [
     # Submodules (resource creators live here: ff.grids.create_*, ff.features.create_*)
@@ -64,6 +65,9 @@ __all__ = [
     "reproject_geojson",
     # Modifications
     "mask",
+    # Treatments
+    "basal_area_treatment",
+    "diameter_treatment",
     # Jobs
     "wait_all",
     "JobFailedError",
