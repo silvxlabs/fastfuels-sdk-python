@@ -427,7 +427,7 @@ def export_roi(
                 },
                 "fuelMoisture": {
                     "source": "uniform",
-                    "value": 0.15,  # Fuel moisture content (0.0-1.0)
+                    "value": 15,  # Fuel moisture content (%)
                     "featureMasks": ["road", "water"]
                 }
             }
@@ -521,7 +521,7 @@ def export_roi(
     >>> surface_config = {
     ...     "fuelMoisture": {
     ...         "source": "uniform",
-    ...         "value": 0.05,
+    ...         "value": 5,
     ...         "featureMasks": ["road", "water"]
     ...     }
     ... }

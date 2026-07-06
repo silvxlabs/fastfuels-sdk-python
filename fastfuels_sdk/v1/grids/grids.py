@@ -241,7 +241,7 @@ class Grids(GridsModel):
         >>> grid = grids.create_surface_grid(
         ...     attributes=["fuelLoad", "fuelMoisture"],
         ...     fuel_load={"source": "uniform", "value": 0.5},
-        ...     fuel_moisture={"source": "uniform", "value": 0.1}
+        ...     fuel_moisture={"source": "uniform", "value": 15.0}
         ... )
 
         See Also
