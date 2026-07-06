@@ -181,7 +181,7 @@ surface_grid = (
         remove_non_burnable=["NB1", "NB2"],
     )
     .with_uniform_fuel_moisture(
-        value=0.15,
+        value=15.0,
         feature_masks=["road", "water"]
     )
     .build()
@@ -264,7 +264,7 @@ This replaces the manual `.with_uniform_fuel_moisture()` call from Step 8 above:
 surface_config = {
     "fuelMoisture": {
         "source": "uniform",
-        "value": 0.05,  # 5% moisture content
+        "value": 5,  # 5% moisture content
         "featureMasks": ["road", "water"]
     }
 }
@@ -356,7 +356,7 @@ surface_config = {
 
     "fuelMoisture": {
         "source": "uniform",  # Currently only uniform supported
-        "value": 0.15,        # Moisture content (0.0-1.0)
+        "value": 15,          # Moisture content (%)
         "featureMasks": ["road", "water"]
     }
 }
@@ -475,7 +475,7 @@ surface_config = {
     },
     "fuelMoisture": {
         "source": "uniform",
-        "value": 0.08,  # Very dry conditions (8%)
+        "value": 8,  # Very dry conditions (8%)
         "featureMasks": ["road"]
     }
 }
@@ -515,7 +515,7 @@ features_config = {
 surface_config = {
     "fuelMoisture": {
         "source": "uniform",
-        "value": 0.12,
+        "value": 12,
         "featureMasks": ["road"]  # Only road masks
     }
 }
