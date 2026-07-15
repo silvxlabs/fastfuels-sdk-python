@@ -28,7 +28,10 @@ dependencies = [
     "requests",
     "scipy",
     "urllib3>=2.1.0",
-    "zarr",
+    # Not imported by the SDK: present so environments can open the API's
+    # zipped-Zarr grid exports, which are written as format v3. zarr-python
+    # 2.x cannot read v3 at all.
+    "zarr>=3",
 ]
 
 [project.urls]
