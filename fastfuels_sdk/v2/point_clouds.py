@@ -13,6 +13,8 @@ from fastfuels_sdk.v2._uploads import put_upload
 from fastfuels_sdk.v2.api import ensure_client
 from fastfuels_sdk.v2.exceptions import expect
 from fastfuels_sdk.v2.client_library.api.point_clouds import (
+    check_3dep_point_cloud_coverage,
+    create_3dep_point_cloud as create_3dep_point_cloud_endpoint,
     create_point_cloud_upload,
     delete_point_cloud,
     get_point_cloud as get_point_cloud_endpoint,
@@ -23,7 +25,9 @@ from fastfuels_sdk.v2.client_library.api.point_clouds import (
 from fastfuels_sdk.v2.client_library.models import (
     PointCloud as PointCloudModel,
     CreatePointCloudUploadRequest,
+    CreateThreeDepPointCloudRequest,
     ListPointCloudsResponse,
+    PointCloudThreeDepCoverageResponse,
     PointCloudSortField,
     PointCloudType,
     SortOrder,
@@ -36,6 +40,8 @@ import attrs
 
 __all__ = [
     "PointCloud",
+    "check_3dep_coverage",
+    "create_point_cloud_from_3dep",
     "create_point_cloud_from_file",
     "list_point_clouds",
     "get_point_cloud",
@@ -60,10 +66,11 @@ def _point_cloud_type(value) -> PointCloudType:
 class PointCloud(PointCloudModel):
     """Point cloud resource for the FastFuels v2 API.
 
-    A point cloud is a 3D LiDAR dataset within a domain, uploaded from your own
-    ALS (airborne) or TLS (terrestrial) scan. Point clouds are asynchronous job
-    resources — creation starts a background job and returns a *pending* record;
-    call :meth:`wait` to block until the uploaded file is processed.
+    A point cloud is a 3D LiDAR dataset within a domain, either fetched from
+    USGS 3DEP or uploaded from your own ALS (airborne) or TLS (terrestrial)
+    scan. Point clouds are asynchronous job resources — creation starts a
+    background job and returns a *pending* record; call :meth:`wait` to block
+    until the data is processed.
 
     Attributes
     ----------
@@ -102,7 +109,7 @@ class PointCloud(PointCloudModel):
     Examples
     --------
     Upload a point cloud and wait for it to process:
-    >>> import fastfuels_sdk as ff
+    >>> import fastfuels_sdk.v2 as ff
     >>> pc = ff.point_clouds.create_point_cloud_from_file(
     ...     domain, "scan.laz", point_cloud_type="als"
     ... )
@@ -113,6 +120,7 @@ class PointCloud(PointCloudModel):
 
     See Also
     --------
+    create_point_cloud_from_3dep : Fetch public airborne LiDAR from USGS 3DEP.
     create_point_cloud_from_file : Upload a local LiDAR file.
     list_point_clouds : List point clouds in a domain or across all domains.
     """
@@ -271,8 +279,70 @@ class PointCloud(PointCloudModel):
 
 
 # ---------------------------------------------------------------------------
-# Create a point cloud from your own file
+# Create point clouds
 # ---------------------------------------------------------------------------
+
+
+def check_3dep_coverage(domain) -> PointCloudThreeDepCoverageResponse:
+    """Check USGS 3DEP LiDAR coverage before creating a point cloud.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to check.
+
+    Returns
+    -------
+    PointCloudThreeDepCoverageResponse
+        Availability, coverage fraction, estimated point count and budget,
+        and the contributing acquisitions.
+    """
+    response = check_3dep_point_cloud_coverage.sync_detailed(
+        _domain_id(domain),
+        client=ensure_client(),
+    )
+    return expect(response)
+
+
+def create_point_cloud_from_3dep(
+    domain,
+    datasets: Optional[List[str]] = None,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+) -> PointCloud:
+    """Create an airborne point cloud from USGS 3DEP LiDAR.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the point cloud in.
+    datasets : List[str], optional
+        Acquisition names to read, in priority order. Use
+        :func:`check_3dep_coverage` to discover names. If omitted, the API
+        selects acquisitions automatically.
+    name, description : str, optional
+        Metadata for the point cloud.
+    tags : List[str], optional
+        Tags for the point cloud.
+
+    Returns
+    -------
+    PointCloud
+        The created airborne PointCloud (job status "pending" or "running").
+    """
+    request_body = CreateThreeDepPointCloudRequest(
+        datasets=_opt(datasets),
+        name=name,
+        description=description,
+        tags=_opt(tags),
+    )
+    response = create_3dep_point_cloud_endpoint.sync_detailed(
+        _domain_id(domain),
+        client=ensure_client(),
+        body=request_body,
+    )
+    return PointCloud._from_model(expect(response, HTTPStatus.CREATED))
 
 
 def create_point_cloud_from_file(
