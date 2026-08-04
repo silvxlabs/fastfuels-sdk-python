@@ -170,13 +170,30 @@ fuels.wait()
 
 ### From FCCS instead
 
-Alternatively, build an already-parameterized fuels grid from the Fuel
-Characteristic Classification System (FCCS), skipping the lookup step:
+To use Fuel Characteristic Classification System (FCCS) fuelbeds, create the
+categorical source grid and wait for it to complete:
 
 ```python
-grid = ff.grids.create_fuel_model_grid_from_landfire_fccs(
+fccs = ff.grids.create_fuel_model_grid_from_landfire_fccs(
     domain, remove_bare_ground=True, output_resolution_m=30
 )
+fccs.wait()
+```
+
+Then look up any of the 12 available FCCS fuel-parameter bands, including
+duff and live components:
+
+```python
+fuels = ff.grids.create_fuel_grid_from_fccs_lookup(
+    fccs,
+    bands=[
+        "fuel_load.litter",
+        "fuel_load.duff",
+        "duff_depth",
+        "fuel_load.live_shrub",
+    ],
+)
+fuels.wait()
 ```
 
 FCCS takes the same alignment arguments as the other source grids

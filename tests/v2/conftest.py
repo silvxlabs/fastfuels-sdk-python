@@ -23,6 +23,7 @@ from fastfuels_sdk.v2.features import (
 from fastfuels_sdk.v2.grids import (
     create_fuel_model_grid_from_landfire_fbfm13,
     create_fuel_model_grid_from_landfire_fbfm40,
+    create_fuel_model_grid_from_landfire_fccs,
     create_pim_grid_from_treemap,
     create_topography_grid_from_3dep,
 )
@@ -110,6 +111,21 @@ def completed_fbfm13_grid(test_domain):
         output_resolution_m=30,
         name="test_fbfm13",
         description="FBFM13 grid for testing v2 grid lookup operations",
+        tags=["test"],
+    )
+    grid.wait()
+    return grid
+
+
+@pytest.fixture(scope="session")
+def completed_fccs_grid(test_domain):
+    """A completed LANDFIRE FCCS fuelbed grid. READ-ONLY."""
+    grid = create_fuel_model_grid_from_landfire_fccs(
+        test_domain,
+        remove_bare_ground=True,
+        output_resolution_m=30,
+        name="test_fccs",
+        description="FCCS grid for testing v2 grid lookup operations",
         tags=["test"],
     )
     grid.wait()

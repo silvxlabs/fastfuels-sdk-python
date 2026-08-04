@@ -17,6 +17,7 @@ from fastfuels_sdk.v2.client_library.api.grids import (
     check_3dep_coverage as check_3dep_coverage_endpoint,
     create_3dep_topography,
     create_duet_grid,
+    create_fccs_lookup,
     create_fbfm13_lookup,
     create_fbfm40_lookup,
     create_geotiff_upload,
@@ -45,6 +46,7 @@ from fastfuels_sdk.v2.client_library.models import (
     Grid as GridModel,
     ApplyGridModificationsRequest,
     CreateDuetRequest,
+    CreateFccsLookupRequest,
     CreateFbfm13LookupRequest,
     CreateFbfm40LookupRequest,
     CreateGeoTIFFUploadRequest,
@@ -65,6 +67,7 @@ from fastfuels_sdk.v2.client_library.models import (
     DuetBand,
     DuetCalibration,
     ExportGridRequest,
+    FccsLookupBand,
     Fbfm13LookupBand,
     Fbfm40LookupBand,
     GridAlignmentDomainTarget,
@@ -119,6 +122,7 @@ __all__ = [
     "create_grid_from_netcdf",
     "create_uniform_grid",
     "create_surface_fuel_grid_from_duet",
+    "create_fuel_grid_from_fccs_lookup",
     "create_fuel_grid_from_fbfm13_lookup",
     "create_fuel_grid_from_fbfm40_lookup",
     "list_grids",
@@ -1680,6 +1684,71 @@ def create_uniform_grid(
 # (``resample``, ``export``). Transforms that only make sense for a particular
 # kind of grid are functions here instead — keeping them off ``Grid`` so they
 # never appear on a grid that cannot perform them.
+
+
+def create_fuel_grid_from_fccs_lookup(
+    source_grid: "Grid",
+    bands: list,
+    source_band: str = "fccs",
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    modifications: Optional[list] = None,
+) -> Grid:
+    """Create a fuel-parameter grid by looking up FCCS codes in a grid.
+
+    Parameters
+    ----------
+    source_grid : Grid
+        A completed grid carrying FCCS codes (produced by
+        :func:`create_fuel_model_grid_from_landfire_fccs`).
+    bands : list
+        The FCCS lookup bands to produce (``FccsLookupBand`` members or
+        string keys such as ``"fuel_load.duff"``, ``"duff_depth"``, and
+        ``"fuel_load.live_shrub"``).
+    source_band : str, optional
+        The band in ``source_grid`` that holds FCCS codes (default ``"fccs"``).
+    name, description : str, optional
+        Metadata for the new grid.
+    tags : List[str], optional
+        Tags for the new grid.
+    modifications : list, optional
+        Modification rules applied after the grid is built.
+
+    Returns
+    -------
+    Grid
+        The new pending fuel-parameter Grid.
+
+    Raises
+    ------
+    ValueError
+        If ``source_grid`` is not completed or has no ``source_band`` band.
+    """
+    source_grid._require_completed("look up fuel parameters from")
+    band_keys = [band.key for band in source_grid.bands]
+    if source_band not in band_keys:
+        raise ValueError(
+            f"Grid {source_grid.id} has no {source_band!r} band to look up; pass "
+            "an FCCS fuel model grid (see "
+            f"create_fuel_model_grid_from_landfire_fccs). Available bands: "
+            f"{band_keys}."
+        )
+    request_body = CreateFccsLookupRequest(
+        source_grid_id=source_grid.id,
+        bands=_enum_list(bands, FccsLookupBand),
+        source_band=source_band,
+        name=name,
+        description=description,
+        tags=_opt(tags),
+        modifications=_opt(modifications),
+    )
+    response = create_fccs_lookup.sync_detailed(
+        source_grid.domain_id,
+        client=ensure_client(),
+        body=request_body,
+    )
+    return Grid._from_model(expect(response, HTTPStatus.CREATED))
 
 
 def create_fuel_grid_from_fbfm13_lookup(

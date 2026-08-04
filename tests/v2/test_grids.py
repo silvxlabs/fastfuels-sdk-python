@@ -26,6 +26,7 @@ from fastfuels_sdk.v2.grids import (
     create_canopy_height_grid_from_meta,
     create_canopy_height_grid_from_naip_chm,
     create_canopy_height_grid_from_point_cloud,
+    create_fuel_grid_from_fccs_lookup,
     create_fuel_grid_from_fbfm13_lookup,
     create_fuel_grid_from_fbfm40_lookup,
     create_fuel_model_grid_from_landfire_fbfm13,
@@ -47,6 +48,7 @@ from fastfuels_sdk.v2.client_library.models import (
     BandType,
     ContinuousBandSummary,
     DuetBand,
+    FccsLookupBand,
     Fbfm13LookupBand,
     GridAlignmentDomainTarget,
     GridAlignmentGridTarget,
@@ -954,6 +956,94 @@ class TestFbfm13Lookup:
             create_fuel_grid_from_fbfm13_lookup(
                 self._source(band="elevation"),
                 bands=["fuel_load.1hr"],
+            )
+
+
+class TestFccsLookup:
+    @staticmethod
+    def _source(status=JobStatus.COMPLETED, band="fccs"):
+        return Grid(
+            id="fccs-grid-id",
+            domain_id="domain-id",
+            status=status,
+            source=GridSource(),
+            bands=[Band(key=band, type_=BandType.CATEGORICAL, index=0)],
+        )
+
+    def test_builds_request(self, monkeypatch):
+        created = Grid(
+            id="fuel-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_fccs_lookup,
+            "sync_detailed",
+            fake_create,
+        )
+
+        result = create_fuel_grid_from_fccs_lookup(
+            self._source(),
+            bands=["fuel_load.duff", FccsLookupBand.DUFF_DEPTH],
+            name="FCCS fuel parameters",
+            tags=["test"],
+        )
+
+        assert result.id == "fuel-grid-id"
+        assert captured["domain_id"] == "domain-id"
+        assert captured["client"] is client
+        assert captured["body"].source_grid_id == "fccs-grid-id"
+        assert captured["body"].source_band == "fccs"
+        assert captured["body"].bands == [
+            FccsLookupBand.FUEL_LOAD_DUFF,
+            FccsLookupBand.DUFF_DEPTH,
+        ]
+        assert captured["body"].name == "FCCS fuel parameters"
+        assert captured["body"].tags == ["test"]
+
+    def test_lookup_returns_new_pending_grid(self, completed_fccs_grid):
+        fuel_grid = create_fuel_grid_from_fccs_lookup(
+            completed_fccs_grid,
+            bands=[
+                "fuel_load.litter",
+                "fuel_load.duff",
+                "duff_depth",
+                "fuel_load.live_shrub",
+            ],
+            name="throwaway_fccs_lookup",
+        )
+        assert fuel_grid.id != completed_fccs_grid.id
+        assert fuel_grid.domain_id == completed_fccs_grid.domain_id
+        assert fuel_grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
+        fuel_grid.delete()
+
+    def test_requires_completed_source(self):
+        with pytest.raises(ValueError, match="look up fuel"):
+            create_fuel_grid_from_fccs_lookup(
+                self._source(status=JobStatus.PENDING),
+                bands=["fuel_load.duff"],
+            )
+
+    def test_rejects_non_fccs_grid(self):
+        with pytest.raises(ValueError, match="fccs"):
+            create_fuel_grid_from_fccs_lookup(
+                self._source(band="elevation"),
+                bands=["fuel_load.duff"],
             )
 
 
