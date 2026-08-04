@@ -46,9 +46,9 @@ Available now — see the [Domains guide](domains.md) and the
   `horizontal_resolution`/`vertical_resolution`. Use the optional
   `pad_to_resolution` argument to pad the domain bounding box outward so
   grids of that resolution align with it.
-- **Responses are richer.** A v2 domain carries two named GeoJSON
-  features: `"domain"` (the projected working extent) and `"input"`
-  (your original geometry).
+- **Responses carry the working extent.** A v2 domain contains one named
+  GeoJSON feature, `"domain"`: the projected bounding box used by child
+  resources. Keep the original input geometry separately if you need it.
 - **GeoDataFrame CRS is honored.** `from_geodataframe` forwards the
   GeoDataFrame's CRS to the API, so projected inputs (e.g. EPSG:5070)
   are interpreted correctly. The v1 SDK assumed EPSG:4326.

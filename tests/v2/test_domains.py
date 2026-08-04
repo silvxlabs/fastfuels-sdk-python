@@ -49,9 +49,8 @@ class TestCreateDomain:
         assert domain.description == self.domain_description
         assert domain.pad_to_resolution == self.pad_to_resolution
 
-        # v2 responses carry two named features: the working extent and
-        # the original input geometry
-        assert feature_names(domain) == {"domain", "input"}
+        # v2 responses carry the normalized working extent only.
+        assert feature_names(domain) == {"domain"}
 
         # If the input CRS is projected, the domain preserves it (echoing
         # the CRS name as sent, e.g. "urn:ogc:def:crs:EPSG::5070");
@@ -140,7 +139,7 @@ class TestPreviewDomain:
 
         # A preview is never persisted; its id is the "preview" sentinel
         assert previewed.id == "preview"
-        assert feature_names(previewed) == {"domain", "input"}
+        assert feature_names(previewed) == {"domain"}
         assert previewed.pad_to_resolution == 2.0
         assert len(previewed.bbox) >= 4
 
@@ -259,7 +258,7 @@ class TestToGeodataframe:
         gdf = test_domain.to_geodataframe()
 
         assert len(gdf) == len(test_domain.features)
-        assert set(gdf["name"]) == {"domain", "input"}
+        assert set(gdf["name"]) == {"domain"}
         assert (gdf["domain_id"] == test_domain.id).all()
         assert ":".join(gdf.crs.to_authority()) == test_domain.crs.properties.name
 
