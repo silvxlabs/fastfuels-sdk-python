@@ -26,7 +26,9 @@ from fastfuels_sdk.v2.grids import (
     create_canopy_height_grid_from_meta,
     create_canopy_height_grid_from_naip_chm,
     create_canopy_height_grid_from_point_cloud,
+    create_fuel_grid_from_fbfm13_lookup,
     create_fuel_grid_from_fbfm40_lookup,
+    create_fuel_model_grid_from_landfire_fbfm13,
     create_fuel_model_grid_from_landfire_fbfm40,
     create_fuel_model_grid_from_landfire_fccs,
     create_grid_from_geotiff,
@@ -45,6 +47,7 @@ from fastfuels_sdk.v2.client_library.models import (
     BandType,
     ContinuousBandSummary,
     DuetBand,
+    Fbfm13LookupBand,
     GridAlignmentDomainTarget,
     GridAlignmentGridTarget,
     GridAlignmentNativeTarget,
@@ -502,6 +505,58 @@ class TestCreateFuelModelGridFromLandfireFbfm40:
         grid.delete()
 
 
+class TestCreateFuelModelGridFromLandfireFbfm13:
+    def test_builds_request(self, monkeypatch):
+        created = Grid(
+            id="fbfm13-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_landfire_fbfm13,
+            "sync_detailed",
+            fake_create,
+        )
+
+        grid = create_fuel_model_grid_from_landfire_fbfm13(
+            SimpleNamespace(id="domain-id"),
+            version="2024",
+            remove_non_burnable=["NB1", "NB2"],
+            output_resolution_m=30,
+            name="Anderson 13",
+        )
+
+        assert grid.id == "fbfm13-grid-id"
+        assert captured["domain_id"] == "domain-id"
+        assert captured["client"] is client
+        assert captured["body"].version.value == "2024"
+        assert [value.value for value in captured["body"].remove_non_burnable] == [
+            "NB1",
+            "NB2",
+        ]
+        assert captured["body"].alignment.resolution == 30
+        assert captured["body"].name == "Anderson 13"
+
+    def test_completed_fixture(self, completed_fbfm13_grid):
+        assert completed_fbfm13_grid.status == JobStatus.COMPLETED
+        assert [band.key for band in completed_fbfm13_grid.bands] == ["fbfm13"]
+
+
 class TestMask:
     def test_mask_payload_shape(self):
         # Unit: a single band masks one feature to one replacement value
@@ -820,6 +875,85 @@ class TestFbfm40Lookup:
         with pytest.raises(ValueError, match="fbfm"):
             create_fuel_grid_from_fbfm40_lookup(
                 completed_topography_grid, bands=["fuel_load.1hr"]
+            )
+
+
+class TestFbfm13Lookup:
+    @staticmethod
+    def _source(status=JobStatus.COMPLETED, band="fbfm13"):
+        return Grid(
+            id="fbfm13-grid-id",
+            domain_id="domain-id",
+            status=status,
+            source=GridSource(),
+            bands=[Band(key=band, type_=BandType.CATEGORICAL, index=0)],
+        )
+
+    def test_builds_request(self, monkeypatch):
+        created = Grid(
+            id="fuel-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_fbfm13_lookup,
+            "sync_detailed",
+            fake_create,
+        )
+
+        result = create_fuel_grid_from_fbfm13_lookup(
+            self._source(),
+            bands=["fuel_load.1hr", Fbfm13LookupBand.FUEL_DEPTH],
+            name="Anderson fuel parameters",
+        )
+
+        assert result.id == "fuel-grid-id"
+        assert captured["body"].source_grid_id == "fbfm13-grid-id"
+        assert captured["body"].source_band == "fbfm13"
+        assert captured["body"].bands == [
+            Fbfm13LookupBand.FUEL_LOAD_1HR,
+            Fbfm13LookupBand.FUEL_DEPTH,
+        ]
+        assert captured["body"].name == "Anderson fuel parameters"
+
+    def test_lookup_returns_new_pending_grid(self, completed_fbfm13_grid):
+        fuel_grid = create_fuel_grid_from_fbfm13_lookup(
+            completed_fbfm13_grid,
+            bands=["fuel_load.1hr", "fuel_depth"],
+            name="throwaway_fbfm13_lookup",
+        )
+        assert fuel_grid.id != completed_fbfm13_grid.id
+        assert fuel_grid.domain_id == completed_fbfm13_grid.domain_id
+        assert fuel_grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
+        fuel_grid.delete()
+
+    def test_requires_completed_source(self):
+        with pytest.raises(ValueError, match="look up fuel"):
+            create_fuel_grid_from_fbfm13_lookup(
+                self._source(status=JobStatus.PENDING),
+                bands=["fuel_load.1hr"],
+            )
+
+    def test_rejects_non_fbfm13_grid(self):
+        with pytest.raises(ValueError, match="fbfm13"):
+            create_fuel_grid_from_fbfm13_lookup(
+                self._source(band="elevation"),
+                bands=["fuel_load.1hr"],
             )
 
 

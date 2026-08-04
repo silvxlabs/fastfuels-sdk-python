@@ -142,6 +142,32 @@ fuels.wait()
 [('fuel_load.1hr', 'kg/m**2'), ('fuel_load.10hr', 'kg/m**2'), ('fuel_depth', 'm')]
 ```
 
+### Use Anderson 13 fuel models
+
+To create the Anderson 13 model set instead, select a LANDFIRE version and
+use the FBFM13 creator:
+
+```python
+grid = ff.grids.create_fuel_model_grid_from_landfire_fbfm13(
+    domain,
+    version="2024",
+    remove_non_burnable=["NB1", "NB2"],
+    output_resolution_m=30,
+)
+grid.wait()
+```
+
+Its categorical source band is `fbfm13`. Convert it to any of the nine
+FBFM13 parameter bands with the matching lookup:
+
+```python
+fuels = ff.grids.create_fuel_grid_from_fbfm13_lookup(
+    grid,
+    bands=["fuel_load.1hr", "fuel_load.live_foliage", "fuel_depth"],
+)
+fuels.wait()
+```
+
 ### From FCCS instead
 
 Alternatively, build an already-parameterized fuels grid from the Fuel

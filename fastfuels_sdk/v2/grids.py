@@ -17,10 +17,12 @@ from fastfuels_sdk.v2.client_library.api.grids import (
     check_3dep_coverage as check_3dep_coverage_endpoint,
     create_3dep_topography,
     create_duet_grid,
+    create_fbfm13_lookup,
     create_fbfm40_lookup,
     create_geotiff_upload,
     create_grid_export,
     create_landfire_canopy,
+    create_landfire_fbfm13,
     create_landfire_fbfm40,
     create_landfire_fccs,
     create_landfire_topography,
@@ -43,9 +45,11 @@ from fastfuels_sdk.v2.client_library.models import (
     Grid as GridModel,
     ApplyGridModificationsRequest,
     CreateDuetRequest,
+    CreateFbfm13LookupRequest,
     CreateFbfm40LookupRequest,
     CreateGeoTIFFUploadRequest,
     CreateLandfireCanopyRequest,
+    CreateLandfireFbfm13Request,
     CreateLandfireFbfm40Request,
     CreateLandfireFccsRequest,
     CreateLandfireTopographyRequest,
@@ -61,6 +65,7 @@ from fastfuels_sdk.v2.client_library.models import (
     DuetBand,
     DuetCalibration,
     ExportGridRequest,
+    Fbfm13LookupBand,
     Fbfm40LookupBand,
     GridAlignmentDomainTarget,
     GridAlignmentGridTarget,
@@ -72,6 +77,7 @@ from fastfuels_sdk.v2.client_library.models import (
     JobStatus,
     LandfireCanopyFuelBand,
     LandfireCanopyVersion,
+    LandfireFbfm13Version,
     LandfireFbfm40Version,
     LandfireFccsVersion,
     LandfireTopographyVersion,
@@ -105,6 +111,7 @@ __all__ = [
     "create_canopy_height_grid_from_meta",
     "create_canopy_height_grid_from_naip_chm",
     "create_canopy_height_grid_from_point_cloud",
+    "create_fuel_model_grid_from_landfire_fbfm13",
     "create_fuel_model_grid_from_landfire_fbfm40",
     "create_fuel_model_grid_from_landfire_fccs",
     "create_pim_grid_from_treemap",
@@ -112,6 +119,7 @@ __all__ = [
     "create_grid_from_netcdf",
     "create_uniform_grid",
     "create_surface_fuel_grid_from_duet",
+    "create_fuel_grid_from_fbfm13_lookup",
     "create_fuel_grid_from_fbfm40_lookup",
     "list_grids",
     "get_grid",
@@ -1245,6 +1253,70 @@ def create_canopy_height_grid_from_point_cloud(
     return Grid._from_model(expect(response, HTTPStatus.CREATED))
 
 
+def create_fuel_model_grid_from_landfire_fbfm13(
+    domain,
+    version: Optional[str] = None,
+    remove_non_burnable: Optional[list] = None,
+    output_resolution_m: Optional[float] = None,
+    align_to=None,
+    align: Optional[str] = None,
+    resampling: Optional[str] = None,
+    extent_buffer_cells: int = 0,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    modifications: Optional[list] = None,
+) -> Grid:
+    """Create a fuel model grid from LANDFIRE Anderson 13 fuel models.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the grid in.
+    version : str, optional
+        LANDFIRE version (``"2023"`` or ``"2024"``). Defaults to the API's
+        current version.
+    remove_non_burnable : list, optional
+        Non-burnable fuel models to drop (``NonBurnableFuelModel`` members or
+        their string keys, e.g. ``"NB1"``, ``"NB2"``).
+    output_resolution_m : float, optional
+        Output cell size in meters, anchored to the domain origin.
+    align_to : Grid or str, optional
+        Match the lattice of an existing grid (or its id).
+    align : str, optional
+        Pass ``"native"`` to keep the source raster's pixel anchor.
+    resampling : str, optional
+        Resampling method (e.g. ``"nearest"`` for categorical fuel models).
+    extent_buffer_cells : int, optional
+        Result-grid cells to buffer around the domain extent (0-10, default 0).
+    name, description : str, optional
+        Metadata for the grid.
+    tags : List[str], optional
+        Tags for the grid.
+    modifications : list, optional
+        Modification rules applied after the grid is built.
+
+    Returns
+    -------
+    Grid
+        The created Grid object (job status ``"pending"`` or ``"running"``).
+    """
+    request_body = CreateLandfireFbfm13Request(
+        version=LandfireFbfm13Version(version) if version is not None else UNSET,
+        remove_non_burnable=_enum_list(remove_non_burnable, NonBurnableFuelModel),
+        alignment=_build_alignment(output_resolution_m, align_to, align, resampling),
+        extent_buffer_cells=extent_buffer_cells,
+        name=name,
+        description=description,
+        tags=_opt(tags),
+        modifications=_opt(modifications),
+    )
+    response = create_landfire_fbfm13.sync_detailed(
+        _domain_id(domain), client=ensure_client(), body=request_body
+    )
+    return Grid._from_model(expect(response, HTTPStatus.CREATED))
+
+
 def create_fuel_model_grid_from_landfire_fbfm40(
     domain,
     version: Optional[str] = None,
@@ -1608,6 +1680,71 @@ def create_uniform_grid(
 # (``resample``, ``export``). Transforms that only make sense for a particular
 # kind of grid are functions here instead — keeping them off ``Grid`` so they
 # never appear on a grid that cannot perform them.
+
+
+def create_fuel_grid_from_fbfm13_lookup(
+    source_grid: "Grid",
+    bands: list,
+    source_band: str = "fbfm13",
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    modifications: Optional[list] = None,
+) -> Grid:
+    """Create a fuel-parameter grid by looking up FBFM13 codes in a grid.
+
+    Parameters
+    ----------
+    source_grid : Grid
+        A completed grid carrying FBFM13 codes (produced by
+        :func:`create_fuel_model_grid_from_landfire_fbfm13`).
+    bands : list
+        The FBFM13 lookup bands to produce (``Fbfm13LookupBand`` members or
+        string keys such as ``"fuel_load.1hr"`` and ``"fuel_depth"``).
+    source_band : str, optional
+        The band in ``source_grid`` that holds FBFM13 codes (default
+        ``"fbfm13"``).
+    name, description : str, optional
+        Metadata for the new grid.
+    tags : List[str], optional
+        Tags for the new grid.
+    modifications : list, optional
+        Modification rules applied after the grid is built.
+
+    Returns
+    -------
+    Grid
+        The new pending fuel-parameter Grid.
+
+    Raises
+    ------
+    ValueError
+        If ``source_grid`` is not completed or has no ``source_band`` band.
+    """
+    source_grid._require_completed("look up fuel parameters from")
+    band_keys = [band.key for band in source_grid.bands]
+    if source_band not in band_keys:
+        raise ValueError(
+            f"Grid {source_grid.id} has no {source_band!r} band to look up; pass "
+            "an FBFM13 fuel model grid (see "
+            f"create_fuel_model_grid_from_landfire_fbfm13). Available bands: "
+            f"{band_keys}."
+        )
+    request_body = CreateFbfm13LookupRequest(
+        source_grid_id=source_grid.id,
+        bands=_enum_list(bands, Fbfm13LookupBand),
+        source_band=source_band,
+        name=name,
+        description=description,
+        tags=_opt(tags),
+        modifications=_opt(modifications),
+    )
+    response = create_fbfm13_lookup.sync_detailed(
+        source_grid.domain_id,
+        client=ensure_client(),
+        body=request_body,
+    )
+    return Grid._from_model(expect(response, HTTPStatus.CREATED))
 
 
 def create_fuel_grid_from_fbfm40_lookup(

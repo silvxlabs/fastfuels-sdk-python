@@ -21,6 +21,7 @@ from fastfuels_sdk.v2.features import (
     create_road_feature_from_osm,
 )
 from fastfuels_sdk.v2.grids import (
+    create_fuel_model_grid_from_landfire_fbfm13,
     create_fuel_model_grid_from_landfire_fbfm40,
     create_pim_grid_from_treemap,
     create_topography_grid_from_3dep,
@@ -93,6 +94,22 @@ def completed_fbfm40_grid(test_domain):
         output_resolution_m=30,
         name="test_fbfm40",
         description="FBFM40 grid for testing v2 grid lookup operations",
+        tags=["test"],
+    )
+    grid.wait()
+    return grid
+
+
+@pytest.fixture(scope="session")
+def completed_fbfm13_grid(test_domain):
+    """A completed LANDFIRE FBFM13 fuel model grid. READ-ONLY."""
+    grid = create_fuel_model_grid_from_landfire_fbfm13(
+        test_domain,
+        version="2024",
+        remove_non_burnable=["NB1", "NB2"],
+        output_resolution_m=30,
+        name="test_fbfm13",
+        description="FBFM13 grid for testing v2 grid lookup operations",
         tags=["test"],
     )
     grid.wait()
