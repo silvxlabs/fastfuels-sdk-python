@@ -341,8 +341,20 @@ operations have no SDK surface. Ordered by what unblocks a user workflow.
 - `get_chunk_metadata` / `get_grid_data_json` stay unwrapped — the binary
   chunk path already covers `to_numpy`/`to_xarray`.
 
-### Account management (unwrapped, lowest priority)
+### Account management (deliberately generated-client only)
 
-`applications` (6) and `keys` (4) are entirely unwrapped. These are console
-concerns; wrap only if the SDK is meant to provision its own credentials.
-`Application` gained `tier`/`quota_overrides`.
+**Decision (2026-08-04): do not add high-level wrappers for `applications`
+or `keys`.** The public SDK consumes an existing API key; application and key
+provisioning remain account-console concerns.
+
+The ten generated endpoints remain available in `client_library`, including
+the new `Application.tier`/`quota_overrides` fields, but they are not exported
+through `fastfuels_sdk.v2`. This keeps one-time key secrets, credential
+rotation/revocation, and destructive account operations out of ordinary data
+workflows. It also matches v1, where these endpoints exist only in the
+generated client and never gained a high-level wrapper.
+
+Revisit this boundary only if programmatic credential provisioning becomes a
+supported SDK use case. That work should be designed as a dedicated account
+module with explicit secret-handling requirements rather than added piecemeal
+to the resource wrappers.
