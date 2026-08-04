@@ -4,6 +4,8 @@ tests/v2/test_inventories.py
 
 # Core imports
 import json
+from http import HTTPStatus
+from types import SimpleNamespace
 from uuid import uuid4
 
 # Internal imports
@@ -27,6 +29,8 @@ from fastfuels_sdk.v2.client_library.models import (
     FIASpeciesGroupShare,
     Inventory as InventoryModel,
     InventoryAttribute,
+    InventoryDataResponse,
+    InventoryJsonOrientation,
     InventoryModification,
     InventoryModificationAction,
     InventoryModificationCondition,
@@ -37,7 +41,7 @@ from fastfuels_sdk.v2.client_library.models import (
     Operator,
     TreeForestryMetrics,
 )
-from fastfuels_sdk.v2.client_library.types import UNSET
+from fastfuels_sdk.v2.client_library.types import UNSET, Response
 from fastfuels_sdk.v2.exceptions import NotFoundException
 
 # External imports
@@ -488,6 +492,113 @@ class TestExport:
 
 
 class TestInventoryData:
+    @staticmethod
+    def _inventory():
+        return Inventory(
+            id="inventory-id",
+            domain_id="domain-id",
+            type_=InventoryType.TREE,
+            status=JobStatus.COMPLETED,
+            source=InventorySource(),
+        )
+
+    def test_get_data_partition_passes_json_orientation(self, monkeypatch):
+        captured = {}
+
+        def fake_get(domain_id, inventory_id, partition_index, **kwargs):
+            captured.update(
+                domain_id=domain_id,
+                inventory_id=inventory_id,
+                partition_index=partition_index,
+                **kwargs,
+            )
+            return Response(
+                status_code=HTTPStatus.OK,
+                content=b"",
+                headers={},
+                parsed=InventoryDataResponse(
+                    partition=partition_index,
+                    num_rows=1,
+                    columns=["height"],
+                    data=[{"height": 12.0}],
+                ),
+            )
+
+        client = object()
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.ensure_client", lambda: client
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.get_inventory_data_json.sync_detailed",
+            fake_get,
+        )
+
+        partition = self._inventory().get_data_partition(
+            2, columns=["height"], json_orientation="records"
+        )
+
+        assert partition.data == [{"height": 12.0}]
+        assert captured == {
+            "domain_id": "domain-id",
+            "inventory_id": "inventory-id",
+            "partition_index": 2,
+            "client": client,
+            "json_orientation": InventoryJsonOrientation.RECORDS,
+            "columns": "height",
+        }
+
+    def test_get_data_partition_rejects_invalid_orientation(self):
+        with pytest.raises(ValueError, match="not a valid InventoryJsonOrientation"):
+            self._inventory().get_data_partition(0, json_orientation="columns")
+
+    def test_to_dataframe_uses_csv_partitions(self, monkeypatch):
+        inventory = self._inventory()
+        metadata = SimpleNamespace(
+            num_partitions=2, total_rows=3, columns=["x", "height"]
+        )
+        csv_partitions = [
+            "x,height\n1.0,10.0\n2.0,20.0\n",
+            "x,height\n3.0,30.0\n",
+        ]
+        captured = []
+
+        def fake_csv(domain_id, inventory_id, partition_index, **kwargs):
+            captured.append((domain_id, inventory_id, partition_index, kwargs))
+            return Response(
+                status_code=HTTPStatus.OK,
+                content=csv_partitions[partition_index].encode(),
+                headers={},
+                parsed=csv_partitions[partition_index],
+            )
+
+        def fail_json(*args, **kwargs):
+            raise AssertionError("to_dataframe must use the CSV endpoint")
+
+        client = object()
+        monkeypatch.setattr(inventory, "get_data_metadata", lambda: metadata)
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.ensure_client", lambda: client
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.get_inventory_data_csv.sync_detailed",
+            fake_csv,
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.get_inventory_data_json.sync_detailed",
+            fail_json,
+        )
+
+        trees = inventory.to_dataframe(columns=["x", "height"])
+
+        assert trees.to_dict(orient="list") == {
+            "x": [1.0, 2.0, 3.0],
+            "height": [10.0, 20.0, 30.0],
+        }
+        assert [call[2] for call in captured] == [0, 1]
+        assert all(
+            call[3] == {"client": client, "columns": "x,height"} for call in captured
+        )
+
     def test_get_data_metadata(self, completed_tree_inventory):
         metadata = completed_tree_inventory.get_data_metadata()
         assert metadata.inventory_id == completed_tree_inventory.id
@@ -505,6 +616,15 @@ class TestInventoryData:
         assert set(partition.columns) <= set(metadata.columns)
         assert "height" in partition.columns
         assert len(partition.data) == partition.num_rows
+
+    def test_get_data_partition_records(self, completed_tree_inventory):
+        partition = completed_tree_inventory.get_data_partition(
+            0, columns=["height"], json_orientation="records"
+        )
+
+        assert partition.columns == ["height"]
+        assert len(partition.data) == partition.num_rows
+        assert set(partition.data[0]) == {"height"}
 
     def test_to_dataframe(self, completed_tree_inventory):
         metadata = completed_tree_inventory.get_data_metadata()

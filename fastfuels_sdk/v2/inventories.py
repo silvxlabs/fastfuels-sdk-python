@@ -5,6 +5,7 @@ fastfuels_sdk/v2/inventories.py
 # Core imports
 import json
 from http import HTTPStatus
+from io import StringIO
 from pathlib import Path
 from typing import List, Optional
 
@@ -24,6 +25,7 @@ from fastfuels_sdk.v2.client_library.api.inventories import (
     delete_inventory,
     duplicate_inventory as duplicate_inventory_endpoint,
     get_inventory as get_inventory_endpoint,
+    get_inventory_data_csv,
     get_inventory_data_json,
     get_inventory_data_metadata,
     list_inventories as list_inventories_endpoint,
@@ -47,6 +49,7 @@ from fastfuels_sdk.v2.client_library.models import (
     InventoryDataMetadata,
     InventoryDataResponse,
     InventoryExportFormat,
+    InventoryJsonOrientation,
     InventorySortField,
     InventoryUploadFormat,
     JobStatus,
@@ -702,7 +705,10 @@ class Inventory(InventoryModel):
         return None if summary is UNSET else summary
 
     def get_data_partition(
-        self, partition_index: int, columns: Optional[List[str]] = None
+        self,
+        partition_index: int,
+        columns: Optional[List[str]] = None,
+        json_orientation: str = "split",
     ) -> InventoryDataResponse:
         """Get one partition of the inventory's tree records.
 
@@ -713,13 +719,17 @@ class Inventory(InventoryModel):
             ``num_partitions`` reported by :meth:`get_data_metadata`.
         columns : List[str], optional
             Column subset to retrieve (default: all columns).
+        json_orientation : {"split", "records"}, optional
+            JSON layout. ``"split"`` (default) returns rows as lists of
+            values in ``partition.columns`` order; ``"records"`` returns
+            self-describing row mappings.
 
         Returns
         -------
         InventoryDataResponse
             With attributes ``partition``, ``num_rows``, ``columns``
-            (column names), and ``data`` (rows as lists of values, in
-            column order).
+            (column names), and ``data`` (row lists for ``"split"`` or row
+            mappings for ``"records"``).
 
         Raises
         ------
@@ -728,6 +738,8 @@ class Inventory(InventoryModel):
         UnprocessableEntityException
             If ``partition_index`` is past the last partition, or the
             inventory is not in "completed" status.
+        ValueError
+            If ``json_orientation`` is not ``"split"`` or ``"records"``.
 
         Examples
         --------
@@ -735,11 +747,13 @@ class Inventory(InventoryModel):
         >>> partition.num_rows
         1392
         """
+        orientation = InventoryJsonOrientation(json_orientation)
         response = get_inventory_data_json.sync_detailed(
             self.domain_id,
             self.id,
             partition_index,
             client=ensure_client(),
+            json_orientation=orientation,
             columns=",".join(columns) if columns is not None else UNSET,
         )
         return expect(response)
@@ -747,8 +761,9 @@ class Inventory(InventoryModel):
     def to_dataframe(self, columns: Optional[List[str]] = None) -> pd.DataFrame:
         """Retrieve the inventory's tree records as a pandas DataFrame.
 
-        Retrieves every partition and concatenates them into a single
-        DataFrame with one row per tree, preserving source order.
+        Retrieves every partition as CSV, parses it with :func:`pandas.read_csv`,
+        and concatenates the partitions into a single DataFrame with one row
+        per tree, preserving source order.
 
         Parameters
         ----------
@@ -776,8 +791,14 @@ class Inventory(InventoryModel):
         metadata = self.get_data_metadata()
         frames = []
         for partition_index in range(metadata.num_partitions):
-            partition = self.get_data_partition(partition_index, columns=columns)
-            frames.append(pd.DataFrame(partition.data, columns=partition.columns))
+            response = get_inventory_data_csv.sync_detailed(
+                self.domain_id,
+                self.id,
+                partition_index,
+                client=ensure_client(),
+                columns=",".join(columns) if columns is not None else UNSET,
+            )
+            frames.append(pd.read_csv(StringIO(expect(response))))
         if not frames:
             return pd.DataFrame(columns=columns or metadata.columns)
         return pd.concat(frames, ignore_index=True)

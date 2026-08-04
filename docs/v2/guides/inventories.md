@@ -170,8 +170,8 @@ Inventory 7b02df6f583a418da3ec9929037d876d: completed (5s)
 ## Access the tree records
 
 For most workflows, `to_dataframe()` (shown above) is all you need — it
-retrieves every partition and assembles one DataFrame. Pass `columns=` to
-retrieve a subset.
+retrieves each partition through the CSV endpoint, parses it with pandas, and
+assembles one DataFrame. Pass `columns=` to retrieve a subset.
 
 The records are served in fixed-size partitions; to control retrieval
 partition by partition (useful for large inventories), read the partition
@@ -186,6 +186,17 @@ layout first:
 >>> partition = inventory.get_data_partition(0)
 >>> partition.num_rows
 34831
+```
+
+`get_data_partition` uses the compact `"split"` JSON layout by default, where
+each row in `partition.data` follows `partition.columns`. To receive
+self-describing row mappings instead, request the `"records"` layout:
+
+```python
+partition = inventory.get_data_partition(
+    0, columns=["x", "y", "height"], json_orientation="records"
+)
+first_tree = partition.data[0]
 ```
 
 Data is only available once the inventory is `"completed"` — earlier calls
