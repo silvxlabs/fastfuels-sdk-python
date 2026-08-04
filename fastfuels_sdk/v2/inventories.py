@@ -428,11 +428,12 @@ class Inventory(InventoryModel):
     def apply_treatments(self, treatments: list) -> "Inventory":
         """Apply silvicultural treatments to this inventory in place.
 
-        The inventory keeps its ID; the submitted treatments are appended to
-        its cumulative ``treatments`` list and the tree data is re-derived as a
-        background job — the inventory returns to "pending" status, so call
-        :meth:`wait` before using its data. To keep the original data,
-        :meth:`duplicate` first and treat the copy.
+        The inventory keeps its ID; the submitted treatments are queued while
+        the tree data is re-derived as a background job. The inventory returns
+        to "pending" status, and the treatments are appended to its cumulative
+        ``treatments`` list once processing completes. Call :meth:`wait` before
+        using its data. To keep the original data, :meth:`duplicate` first and
+        treat the copy.
 
         Parameters
         ----------
