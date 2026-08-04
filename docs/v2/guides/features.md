@@ -243,6 +243,16 @@ osm_features = ff.list_features(domain, product="osm")
 tagged = ff.list_features(domain, tag="roads")
 ```
 
+Sort a page by name, creation time, or modification time:
+
+```python
+newest_first = ff.list_features(
+    domain,
+    sort_by="created_on",
+    sort_order="descending",
+)
+```
+
 ## Delete a Feature
 
 To permanently delete a feature and its generated data:
