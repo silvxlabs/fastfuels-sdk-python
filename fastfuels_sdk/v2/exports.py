@@ -20,6 +20,7 @@ from fastfuels_sdk.v2.client_library.api.exports import (
     update_export,
 )
 from fastfuels_sdk.v2.client_library.api.grids import (
+    create_landscape_export as create_landscape_export_endpoint,
     create_quicfire_export as create_quicfire_export_endpoint,
 )
 from fastfuels_sdk.v2.client_library.models import (
@@ -27,6 +28,11 @@ from fastfuels_sdk.v2.client_library.models import (
     ExportSortField,
     FieldSource,
     JobStatus,
+    LandscapeExportAlignmentDomainTarget,
+    LandscapeExportAlignmentGridTarget,
+    LandscapeExportRequest,
+    LandscapeExportRequestFireBehaviorFuelModel,
+    LandscapeFieldSource,
     ListExportsResponse,
     QuicfireExportRequest,
     QuicfireExportRequestMoistMerge,
@@ -43,6 +49,7 @@ import requests
 
 __all__ = [
     "Export",
+    "create_landscape_export",
     "create_quicfire_export",
     "list_exports",
     "get_export",
@@ -70,6 +77,19 @@ def _field_source(value, role: str) -> FieldSource:
         return FieldSource(grid_id=_domain_id(grid), band=band)
     raise ValueError(
         f"{role} must be a (grid, band) tuple or a FieldSource, got {value!r}"
+    )
+
+
+def _landscape_field_source(value, role: str) -> LandscapeFieldSource:
+    """Build a landscape field source from a ``(grid, band)`` pair."""
+    if isinstance(value, LandscapeFieldSource):
+        return value
+    if isinstance(value, (tuple, list)) and len(value) == 2:
+        grid, band = value
+        return LandscapeFieldSource(grid_id=_domain_id(grid), band=band)
+    raise ValueError(
+        f"{role} must be a (grid, band) tuple or a LandscapeFieldSource, "
+        f"got {value!r}"
     )
 
 
@@ -122,6 +142,7 @@ class Export(ExportModel):
 
     See Also
     --------
+    create_landscape_export : Assemble an 8-band fire-behavior landscape.
     create_quicfire_export : Bundle fuel grids into a QUIC-Fire archive.
     list_exports : List your exports.
     """
@@ -325,6 +346,136 @@ class Export(ExportModel):
 # ---------------------------------------------------------------------------
 
 
+def create_landscape_export(
+    domain,
+    *,
+    fire_behavior_fuel_model: str,
+    elevation: Tuple,
+    slope: Tuple,
+    aspect: Tuple,
+    fuel_model: Tuple,
+    canopy_cover: Tuple,
+    canopy_height: Tuple,
+    canopy_base_height: Tuple,
+    canopy_bulk_density: Tuple,
+    resolution_m: Optional[float] = None,
+    align_to=None,
+    expiration_days: int = 7,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+) -> Export:
+    """Assemble terrain, fuel-model, and canopy grids into a landscape export.
+
+    Produces an 8-band LANDFIRE-style GeoTIFF for FlamMap, IFTDSS, and WFDSS.
+    Every role is a ``(grid, band)`` pair. Role grids must already share the
+    selected 2D lattice and cover its full extent; the exporter never
+    resamples or reprojects them.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) the source grids belong to.
+    fire_behavior_fuel_model : {"fbfm40", "fbfm13"}
+        How codes in ``fuel_model`` should be interpreted.
+    elevation, slope, aspect : tuple
+        ``(grid, band)`` roles for terrain elevation (m), slope (degrees), and
+        aspect (degrees).
+    fuel_model : tuple
+        ``(grid, band)`` for categorical FBFM40 or FBFM13 codes.
+    canopy_cover : tuple
+        ``(grid, band)`` for canopy cover (%).
+    canopy_height : tuple
+        ``(grid, band)`` for canopy height (m).
+    canopy_base_height : tuple
+        ``(grid, band)`` for canopy base height (m).
+    canopy_bulk_density : tuple
+        ``(grid, band)`` for canopy bulk density (kg/m³).
+    resolution_m : float, optional
+        Domain-anchored landscape cell size. Defaults to 30 m. Mutually
+        exclusive with ``align_to``.
+    align_to : Grid or str, optional
+        Match an existing grid's CRS, transform, and shape. Mutually exclusive
+        with ``resolution_m``.
+    expiration_days : int, optional
+        Days until the signed download URL expires (1-7, default 7).
+    name, description : str, optional
+        Metadata for the export.
+    tags : List[str], optional
+        Tags for the export.
+
+    Returns
+    -------
+    Export
+        The new pending Export. Call :meth:`Export.wait` and then
+        :meth:`Export.to_file` to download ``landscape.tif``.
+
+    Raises
+    ------
+    ValueError
+        If ``align_to`` and ``resolution_m`` are combined, a role is not a
+        field-source pair, or the fuel-model declaration is invalid.
+    UnprocessableEntityException
+        If a source band has the wrong unit or dimensionality, or a role grid
+        is not aligned with or does not cover the landscape lattice.
+
+    Examples
+    --------
+    >>> export = ff.exports.create_landscape_export(
+    ...     domain,
+    ...     fire_behavior_fuel_model="fbfm40",
+    ...     elevation=(topography, "elevation"),
+    ...     slope=(topography, "slope"),
+    ...     aspect=(topography, "aspect"),
+    ...     fuel_model=(fuel_models, "fbfm"),
+    ...     canopy_cover=(canopy, "cc"),
+    ...     canopy_height=(canopy, "chm"),
+    ...     canopy_base_height=(canopy, "cbh"),
+    ...     canopy_bulk_density=(canopy, "cbd"),
+    ... )
+    >>> export.wait().to_file("landscape.tif")
+    """
+    if align_to is not None and resolution_m is not None:
+        raise ValueError("Specify either align_to or resolution_m, not both.")
+    if align_to is not None:
+        alignment = LandscapeExportAlignmentGridTarget(
+            target="grid", grid_id=_domain_id(align_to)
+        )
+    elif resolution_m is not None:
+        alignment = LandscapeExportAlignmentDomainTarget(
+            target="domain", resolution=resolution_m
+        )
+    else:
+        alignment = UNSET
+
+    request_body = LandscapeExportRequest(
+        fire_behavior_fuel_model=LandscapeExportRequestFireBehaviorFuelModel(
+            fire_behavior_fuel_model
+        ),
+        elevation=_landscape_field_source(elevation, "elevation"),
+        slope=_landscape_field_source(slope, "slope"),
+        aspect=_landscape_field_source(aspect, "aspect"),
+        fuel_model=_landscape_field_source(fuel_model, "fuel_model"),
+        canopy_cover=_landscape_field_source(canopy_cover, "canopy_cover"),
+        canopy_height=_landscape_field_source(canopy_height, "canopy_height"),
+        canopy_base_height=_landscape_field_source(
+            canopy_base_height, "canopy_base_height"
+        ),
+        canopy_bulk_density=_landscape_field_source(
+            canopy_bulk_density, "canopy_bulk_density"
+        ),
+        alignment=alignment,
+        expiration_days=expiration_days,
+        name=name,
+        description=description,
+        tags=_opt(tags),
+    )
+    response = create_landscape_export_endpoint.sync_detailed(
+        _domain_id(domain), client=ensure_client(), body=request_body
+    )
+    return Export._from_model(expect(response, HTTPStatus.CREATED))
+
+
 def create_quicfire_export(
     domain,
     canopy_bulk_density: Tuple,
@@ -503,8 +654,8 @@ def list_exports(
         Sort direction: "ascending" or "descending".
     source : str, optional
         Only return exports with this source name — the format for
-        single-resource exports (e.g. "geotiff", "csv") or "quicfire"
-        for bundles.
+        single-resource exports (e.g. "geotiff", "csv"), "landscape" for
+        landscape GeoTIFFs, or "quicfire" for bundles.
     tag : str, optional
         Only return exports carrying this tag.
 

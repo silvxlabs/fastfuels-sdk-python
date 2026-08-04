@@ -5,24 +5,41 @@ tests/v2/test_exports.py
 # Core imports
 import json
 import zipfile
+from http import HTTPStatus
+from types import SimpleNamespace
 from uuid import uuid4
 
 # Internal imports
 from fastfuels_sdk.v2.exports import (
     Export,
     _field_source,
+    _landscape_field_source,
+    create_landscape_export,
     create_quicfire_export,
     get_export,
     list_exports,
 )
 from fastfuels_sdk.v2.grids import (
+    create_canopy_fuel_grid_from_landfire,
     create_fuel_grid_from_fbfm40_lookup,
     create_fuel_model_grid_from_landfire_fbfm40,
     create_topography_grid_from_3dep,
     create_uniform_grid,
 )
-from fastfuels_sdk.v2.client_library.models import FieldSource, JobStatus
-from fastfuels_sdk.v2.exceptions import NotFoundException
+from fastfuels_sdk.v2.client_library.models import (
+    Export as ExportModel,
+    ExportSource,
+    FieldSource,
+    JobStatus,
+    LandscapeExportAlignmentDomainTarget,
+    LandscapeExportAlignmentGridTarget,
+    LandscapeFieldSource,
+)
+from fastfuels_sdk.v2.client_library.types import UNSET, Response
+from fastfuels_sdk.v2.exceptions import (
+    NotFoundException,
+    UnprocessableEntityException,
+)
 
 # External imports
 import numpy as np
@@ -53,6 +70,230 @@ class TestFieldSource:
     def test_invalid_value_raises(self):
         with pytest.raises(ValueError, match="surface_moisture"):
             _field_source("not-a-pair", "surface_moisture")
+
+
+def _landscape_roles():
+    return {
+        "elevation": ("topography-grid", "elevation"),
+        "slope": ("topography-grid", "slope"),
+        "aspect": ("topography-grid", "aspect"),
+        "fuel_model": ("fuel-model-grid", "fbfm"),
+        "canopy_cover": ("canopy-grid", "cc"),
+        "canopy_height": ("canopy-grid", "chm"),
+        "canopy_base_height": ("canopy-grid", "cbh"),
+        "canopy_bulk_density": ("canopy-grid", "cbd"),
+    }
+
+
+def _pending_export_model():
+    source = ExportSource()
+    source.additional_properties = {"name": "landscape"}
+    return ExportModel(
+        id="landscape-export-id",
+        domain_id="domain-id",
+        status=JobStatus.PENDING,
+        source=source,
+    )
+
+
+class TestLandscapeFieldSource:
+    def test_tuple_with_grid_object(self):
+        source = _landscape_field_source(
+            (SimpleNamespace(id="grid-id"), "elevation"), "elevation"
+        )
+
+        assert source.to_dict() == {"grid_id": "grid-id", "band": "elevation"}
+
+    def test_model_passes_through(self):
+        source = LandscapeFieldSource(grid_id="grid-id", band="elevation")
+        assert _landscape_field_source(source, "elevation") is source
+
+    def test_invalid_value_names_role(self):
+        with pytest.raises(ValueError, match="canopy_height"):
+            _landscape_field_source("not-a-pair", "canopy_height")
+
+
+class TestLandscapeExport:
+    @staticmethod
+    def _mock_endpoint(monkeypatch, response=None):
+        captured = {}
+        response = response or Response(
+            status_code=HTTPStatus.CREATED,
+            content=b"",
+            headers={},
+            parsed=_pending_export_model(),
+        )
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return response
+
+        client = object()
+        monkeypatch.setattr("fastfuels_sdk.v2.exports.ensure_client", lambda: client)
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.exports.create_landscape_export_endpoint.sync_detailed",
+            fake_create,
+        )
+        return captured, client
+
+    def test_builds_request(self, monkeypatch):
+        captured, client = self._mock_endpoint(monkeypatch)
+
+        export = create_landscape_export(
+            SimpleNamespace(id="domain-id"),
+            fire_behavior_fuel_model="fbfm40",
+            name="Landscape",
+            tags=["test"],
+            **_landscape_roles(),
+        )
+
+        assert isinstance(export, Export)
+        assert export.id == "landscape-export-id"
+        assert captured["domain_id"] == "domain-id"
+        assert captured["client"] is client
+        assert captured["body"].alignment is UNSET
+        assert captured["body"].fire_behavior_fuel_model.value == "fbfm40"
+        assert captured["body"].elevation.to_dict() == {
+            "grid_id": "topography-grid",
+            "band": "elevation",
+        }
+        assert captured["body"].canopy_bulk_density.to_dict() == {
+            "grid_id": "canopy-grid",
+            "band": "cbd",
+        }
+        assert captured["body"].name == "Landscape"
+        assert captured["body"].tags == ["test"]
+
+    def test_domain_alignment(self, monkeypatch):
+        captured, _ = self._mock_endpoint(monkeypatch)
+
+        create_landscape_export(
+            "domain-id",
+            fire_behavior_fuel_model="fbfm40",
+            resolution_m=10,
+            **_landscape_roles(),
+        )
+
+        assert isinstance(
+            captured["body"].alignment, LandscapeExportAlignmentDomainTarget
+        )
+        assert captured["body"].alignment.resolution == 10
+
+    def test_grid_alignment(self, monkeypatch):
+        captured, _ = self._mock_endpoint(monkeypatch)
+
+        create_landscape_export(
+            "domain-id",
+            fire_behavior_fuel_model="fbfm13",
+            align_to=SimpleNamespace(id="master-grid"),
+            **_landscape_roles(),
+        )
+
+        assert isinstance(
+            captured["body"].alignment, LandscapeExportAlignmentGridTarget
+        )
+        assert captured["body"].alignment.grid_id == "master-grid"
+
+    def test_alignment_arguments_are_exclusive(self):
+        with pytest.raises(ValueError, match="not both"):
+            create_landscape_export(
+                "domain-id",
+                fire_behavior_fuel_model="fbfm40",
+                resolution_m=30,
+                align_to="master-grid",
+                **_landscape_roles(),
+            )
+
+    def test_alignment_error_is_preserved(self, monkeypatch):
+        response = Response(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            content=b'{"detail":"fuel_model grid is not aligned with landscape"}',
+            headers={},
+            parsed=None,
+        )
+        self._mock_endpoint(monkeypatch, response=response)
+
+        with pytest.raises(UnprocessableEntityException) as exc_info:
+            create_landscape_export(
+                "domain-id",
+                fire_behavior_fuel_model="fbfm40",
+                **_landscape_roles(),
+            )
+
+        assert exc_info.value.detail == (
+            "fuel_model grid is not aligned with landscape"
+        )
+
+    @pytest.fixture(scope="class")
+    def topography_grid(self, test_domain):
+        grid = create_topography_grid_from_3dep(
+            test_domain,
+            source_resolution_m=10,
+            output_resolution_m=30,
+            bands=["elevation", "slope", "aspect"],
+            name="landscape_topography",
+            tags=["test"],
+        )
+        grid.wait()
+        return grid
+
+    @pytest.fixture(scope="class")
+    def canopy_grid(self, test_domain):
+        grid = create_canopy_fuel_grid_from_landfire(
+            test_domain,
+            output_resolution_m=30,
+            bands=["cc", "chm", "cbh", "cbd"],
+            name="landscape_canopy",
+            tags=["test"],
+        )
+        grid.wait()
+        return grid
+
+    def test_landscape_roundtrip(
+        self,
+        test_domain,
+        topography_grid,
+        completed_fbfm40_grid,
+        canopy_grid,
+        tmp_path,
+    ):
+        export = create_landscape_export(
+            test_domain,
+            fire_behavior_fuel_model="fbfm40",
+            elevation=(topography_grid, "elevation"),
+            slope=(topography_grid, "slope"),
+            aspect=(topography_grid, "aspect"),
+            fuel_model=(completed_fbfm40_grid, "fbfm"),
+            canopy_cover=(canopy_grid, "cc"),
+            canopy_height=(canopy_grid, "chm"),
+            canopy_base_height=(canopy_grid, "cbh"),
+            canopy_bulk_density=(canopy_grid, "cbd"),
+            name="test_landscape",
+            tags=["test"],
+        )
+        try:
+            assert isinstance(export, Export)
+            assert export.status in (JobStatus.PENDING, JobStatus.RUNNING)
+            assert export.source["name"] == "landscape"
+            assert len(export.source["georeference"]["shape"]) == 2
+
+            export.wait()
+            destination = export.to_file(tmp_path / "landscape.tif")
+            with rasterio.open(destination) as dataset:
+                assert dataset.count == 8
+                assert dataset.dtypes == ("int16",) * 8
+                assert dataset.descriptions == (
+                    "Elevation",
+                    "Slope",
+                    "Aspect",
+                    "Fuel Model",
+                    "Canopy Cover",
+                    "Canopy Height",
+                    "Canopy Base Height",
+                    "Canopy Bulk Density",
+                )
+        finally:
+            export.delete()
 
 
 class TestGridExportLifecycle:
