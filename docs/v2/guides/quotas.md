@@ -1,4 +1,4 @@
-# How to Handle Quota Rejections
+# How to Check Usage and Handle Quota Rejections
 
 !!! warning "Beta"
     The v2 SDK targets the FastFuels v2 API and is under active
@@ -10,7 +10,49 @@
 - The FastFuels SDK installed: `pip install fastfuels-sdk`
 - A FastFuels API key in the `FASTFUELS_API_KEY` environment variable
 
-Use this guide to handle quota rejections from SDK resource creators.
+Use this guide to inspect the current owner's limits and usage and to handle
+quota rejections from SDK resource creators.
+
+## Check your limits
+
+Call `get_quotas` to retrieve the limits resolved for the owner authenticated
+by the current API key:
+
+```python
+import fastfuels_sdk.v2 as ff
+
+quotas = ff.get_quotas()
+
+print(quotas.max_active_grids)
+print(quotas.max_weekly_grid_dispatches)
+print(quotas.max_grid_storage_bytes)
+```
+
+## Check your current usage
+
+Call `get_usage` to compare current usage with the corresponding limits:
+
+```python
+usage = ff.get_usage()
+
+print(usage.grids.active.usage, usage.grids.active.limit)
+print(usage.grids.total.usage, usage.grids.total.limit)
+print(usage.grids.storage.usage_bytes, usage.grids.storage.limit_bytes)
+```
+
+Count-only resources are available through `usage.domains`,
+`usage.applications`, and `usage.api_keys`. The active, total, and storage
+fields are also available for exports, inventories, features, and point
+clouds.
+
+Inspect `usage.lifecycle` for the resource-retention policy currently applied
+to the owner:
+
+```python
+print(usage.lifecycle.resource_ttl_days)
+print(usage.lifecycle.failed_resource_ttl_days)
+print(usage.lifecycle.next_expiry_on)
+```
 
 ## Handle a quota rejection
 

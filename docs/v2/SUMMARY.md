@@ -12,5 +12,5 @@
     * [Modify and treat inventories](guides/modify-treat-inventories.md)
     * [Point clouds](guides/point-clouds.md)
     * [Exports](guides/exports.md)
-    * [Quota rejections](guides/quotas.md)
+    * [Quotas and usage](guides/quotas.md)
 * [Reference](reference.md)

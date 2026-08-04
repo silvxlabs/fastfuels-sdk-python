@@ -13,7 +13,10 @@ from typing import Optional
 # deployment for now — a stable domain should front it before GA (tracked in
 # #176); until then FASTFUELS_API_V2_URL overrides it without an SDK upgrade.
 from fastfuels_sdk.v2.client_library.base_url import DEFAULT_BASE_URL
+from fastfuels_sdk.v2.client_library.api.users import get_me, get_me_usage
 from fastfuels_sdk.v2.client_library.client import AuthenticatedClient
+from fastfuels_sdk.v2.client_library.models import Quotas, Usage
+from fastfuels_sdk.v2.exceptions import expect
 
 _client: Optional[AuthenticatedClient] = None
 
@@ -96,3 +99,42 @@ def ensure_client() -> AuthenticatedClient:
             "before making API calls"
         )
     return client
+
+
+def get_quotas() -> Quotas:
+    """Return the authenticated owner's resolved quotas.
+
+    Returns
+    -------
+    Quotas
+        Count, concurrency, storage, dispatch, and retention limits for the
+        owner authenticated by the current API key.
+
+    Raises
+    ------
+    RuntimeError
+        If no API key is configured.
+    ApiException
+        If the API request fails.
+    """
+    owner = expect(get_me.sync_detailed(client=ensure_client()))
+    return owner.quotas
+
+
+def get_usage() -> Usage:
+    """Return the authenticated owner's current usage and limits.
+
+    Returns
+    -------
+    Usage
+        Usage for job resources, count-only resources, storage, and the
+        owner's resource-retention policy.
+
+    Raises
+    ------
+    RuntimeError
+        If no API key is configured.
+    ApiException
+        If the API request fails.
+    """
+    return expect(get_me_usage.sync_detailed(client=ensure_client()))

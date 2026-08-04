@@ -20,7 +20,7 @@ package namespace::
 
 from fastfuels_sdk.v2 import exports, features, grids, inventories, point_clouds
 from fastfuels_sdk.v2._jobs import JobFailedError, wait_all
-from fastfuels_sdk.v2.api import set_api_key
+from fastfuels_sdk.v2.api import get_quotas, get_usage, set_api_key
 from fastfuels_sdk.v2.domains import Domain, list_domains, reproject_geojson
 from fastfuels_sdk.v2.exports import Export, get_export, list_exports
 from fastfuels_sdk.v2.features import Feature, get_feature, list_features
@@ -49,6 +49,9 @@ __all__ = [
     "point_clouds",
     # Configuration
     "set_api_key",
+    # Quotas and usage
+    "get_quotas",
+    "get_usage",
     # Records
     "Domain",
     "Export",
