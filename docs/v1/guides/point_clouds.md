@@ -23,6 +23,34 @@ als_point_cloud.wait_until_completed(verbose=True)
 
 Processing time depends on your domain size. Use `verbose=True` to monitor progress.
 
+## How to Create an ALS Point Cloud from a File Upload
+
+If you already have ALS point cloud data, upload it instead of fetching public 3DEP data. Create the resource with the `"file"` source — this returns a signed upload URL and the headers required to use it — then upload your file and wait for processing:
+
+```python
+import requests
+from fastfuels_sdk import PointClouds
+
+point_clouds = PointClouds.from_domain_id("your_domain_id")
+
+# Create an ALS point cloud resource that expects a file upload
+als_point_cloud = point_clouds.create_als_point_cloud(sources=["file"])
+
+# Upload your file to the signed URL using the headers from the response
+with open("my_points.laz", "rb") as file:
+    response = requests.put(
+        als_point_cloud.file.url,
+        headers=als_point_cloud.file.headers,
+        data=file,
+    )
+response.raise_for_status()
+
+# Wait for the API to process the uploaded point cloud
+als_point_cloud.wait_until_completed(verbose=True)
+```
+
+The `als_point_cloud.file` attribute holds the upload details — `url`, `method`, and `headers`. The point cloud stays in `"pending"` status until the upload finishes and the API has processed it. Once it reaches `"completed"`, create a tree inventory from it exactly as you would for a 3DEP point cloud.
+
 ## How to Create a Tree Inventory from Point Cloud Data
 
 Once the ALS point cloud is completed, create a tree inventory from it:

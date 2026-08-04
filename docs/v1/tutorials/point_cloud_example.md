@@ -98,6 +98,35 @@ als_point_cloud.wait_until_completed(verbose=True)
 
 This step downloads the relevant 3DEP tiles, clips them to your domain boundary, and prepares the point cloud for tree segmentation. Processing time depends on domain size and data density — expect anywhere from a few seconds to several minutes.
 
+!!! tip "Bring your own point cloud"
+
+    If you already have ALS data, you can upload it instead of fetching 3DEP
+    tiles. Create the resource with the `"file"` source, upload your file to
+    the returned signed URL, then wait for processing:
+
+    ```python
+    import requests
+
+    als_point_cloud = (
+        PointClouds.from_domain_id(domain.id)
+        .create_als_point_cloud(sources=["file"])
+    )
+
+    with open("my_points.laz", "rb") as file:
+        response = requests.put(
+            als_point_cloud.file.url,
+            headers=als_point_cloud.file.headers,
+            data=file,
+        )
+    response.raise_for_status()
+
+    als_point_cloud.wait_until_completed(verbose=True)
+    ```
+
+    The rest of the tutorial is identical — segment a tree inventory from the
+    completed point cloud in Step 3. See the
+    [Point Clouds how-to guide](../guides/point_clouds.md) for more detail.
+
 ## Step 3: Create a Tree Inventory from the Point Cloud
 
 Once the point cloud is ready, the SDK can segment individual trees from it. This process identifies tree tops, delineates crowns, and extracts tree-level attributes (location and height) from the LiDAR returns.
