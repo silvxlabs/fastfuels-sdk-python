@@ -181,6 +181,18 @@ meta = ff.grids.create_canopy_height_grid_from_meta(domain, output_resolution_m=
 naip = ff.grids.create_canopy_height_grid_from_naip_chm(domain, output_resolution_m=1)
 ```
 
+To rasterize a completed airborne point cloud into the same `chm` band, pass
+the point cloud directly. The output defaults to 1 m cells:
+
+```python
+chm = ff.grids.create_canopy_height_grid_from_point_cloud(point_cloud)
+chm.wait()
+```
+
+Use `output_resolution_m` or `align_to` to choose a different lattice. See the
+[Point clouds guide](point-clouds.md#create-a-point-cloud-from-usgs-3dep) to
+create an airborne point cloud from USGS 3DEP.
+
 !!! tip "NAIP-CHM is a surface model"
     NAIP-CHM is a digital surface model and retains buildings and other
     infrastructure. To keep only vegetation, mask out built-up areas — see

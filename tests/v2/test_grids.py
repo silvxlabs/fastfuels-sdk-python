@@ -6,6 +6,7 @@ tests/v2/test_grids.py
 import inspect
 import json
 import math
+from http import HTTPStatus
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -23,6 +24,7 @@ from fastfuels_sdk.v2.grids import (
     create_canopy_fuel_grid_from_landfire,
     create_canopy_height_grid_from_meta,
     create_canopy_height_grid_from_naip_chm,
+    create_canopy_height_grid_from_point_cloud,
     create_fuel_grid_from_fbfm40_lookup,
     create_fuel_model_grid_from_landfire_fbfm40,
     create_fuel_model_grid_from_landfire_fccs,
@@ -52,11 +54,12 @@ from fastfuels_sdk.v2.client_library.models import (
     JobStatus,
     Modifier,
     Operator,
+    PointCloudType,
     ResamplingMethod,
     TopographyBand,
     UploadBandDefinition,
 )
-from fastfuels_sdk.v2.client_library.types import UNSET
+from fastfuels_sdk.v2.client_library.types import UNSET, Response
 from fastfuels_sdk.v2.exceptions import NotFoundException, expect
 from fastfuels_sdk.v2.modifications import mask
 
@@ -248,6 +251,70 @@ class TestCreateCanopyHeightGridFromNaipChm:
         assert grid.domain_id == test_domain.id
         assert grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
         grid.delete()
+
+
+class TestCreateCanopyHeightGridFromPointCloud:
+    @staticmethod
+    def _point_cloud(status=JobStatus.COMPLETED, type_=PointCloudType.ALS):
+        return SimpleNamespace(
+            id="pc-id",
+            domain_id="domain-id",
+            status=status,
+            type_=type_,
+        )
+
+    def test_builds_request_from_completed_als_cloud(self, monkeypatch):
+        created = Grid(
+            id="grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[Band(key="chm", type_=BandType.CONTINUOUS, index=0, unit="m")],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_point_cloud_chm,
+            "sync_detailed",
+            fake_create,
+        )
+
+        grid = create_canopy_height_grid_from_point_cloud(
+            self._point_cloud(),
+            output_resolution_m=2,
+            name="Point-cloud CHM",
+        )
+
+        assert isinstance(grid, Grid)
+        assert grid.id == "grid-id"
+        assert captured["domain_id"] == "domain-id"
+        assert captured["client"] is client
+        assert captured["body"].source_point_cloud_id == "pc-id"
+        assert captured["body"].alignment.resolution == 2
+        assert captured["body"].name == "Point-cloud CHM"
+
+    def test_requires_completed_cloud(self):
+        with pytest.raises(ValueError, match="must be completed"):
+            create_canopy_height_grid_from_point_cloud(
+                self._point_cloud(status=JobStatus.PENDING)
+            )
+
+    def test_requires_airborne_cloud(self):
+        with pytest.raises(ValueError, match="airborne"):
+            create_canopy_height_grid_from_point_cloud(
+                self._point_cloud(type_=PointCloudType.TLS)
+            )
 
 
 class TestCreateFuelModelGridFromLandfireFbfm40:

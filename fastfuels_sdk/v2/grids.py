@@ -5,7 +5,7 @@ fastfuels_sdk/v2/grids.py
 # Core imports
 import json
 from http import HTTPStatus
-from typing import Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 # Internal imports
 from fastfuels_sdk.v2._jobs import wait as _wait
@@ -26,6 +26,7 @@ from fastfuels_sdk.v2.client_library.api.grids import (
     create_meta_chm,
     create_naip_chm,
     create_netcdf_upload,
+    create_point_cloud_chm,
     create_resample,
     create_treemap,
     create_uniform_grid as create_uniform_grid_endpoint,
@@ -49,6 +50,7 @@ from fastfuels_sdk.v2.client_library.models import (
     CreateMetaChmRequest,
     CreateNaipChmRequest,
     CreateNetcdfUploadRequest,
+    CreatePointCloudChmRequest,
     CreateResampleRequest,
     CreateThreeDepTopographyRequest,
     CreateTreeMapRequest,
@@ -88,6 +90,9 @@ from fastfuels_sdk.v2.client_library.types import UNSET, Response
 import attrs
 import numpy as np
 
+if TYPE_CHECKING:
+    from fastfuels_sdk.v2.point_clouds import PointCloud
+
 __all__ = [
     "Grid",
     "create_topography_grid_from_3dep",
@@ -95,6 +100,7 @@ __all__ = [
     "create_canopy_fuel_grid_from_landfire",
     "create_canopy_height_grid_from_meta",
     "create_canopy_height_grid_from_naip_chm",
+    "create_canopy_height_grid_from_point_cloud",
     "create_fuel_model_grid_from_landfire_fbfm40",
     "create_fuel_model_grid_from_landfire_fccs",
     "create_pim_grid_from_treemap",
@@ -1155,6 +1161,81 @@ def create_canopy_height_grid_from_naip_chm(
     )
     response = create_naip_chm.sync_detailed(
         _domain_id(domain), client=ensure_client(), body=request_body
+    )
+    return Grid._from_model(expect(response, HTTPStatus.CREATED))
+
+
+def create_canopy_height_grid_from_point_cloud(
+    point_cloud: "PointCloud",
+    output_resolution_m: Optional[float] = None,
+    align_to=None,
+    resampling: Optional[str] = None,
+    extent_buffer_cells: int = 0,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    modifications: Optional[list] = None,
+) -> Grid:
+    """Create a canopy height grid from a completed airborne point cloud.
+
+    Parameters
+    ----------
+    point_cloud : PointCloud
+        The completed airborne point cloud to rasterize.
+    output_resolution_m : float, optional
+        Output cell size in meters, anchored to the domain origin. Defaults to
+        1 meter when no alignment target is provided.
+    align_to : Grid or str, optional
+        Match the lattice of an existing grid (or its id).
+    resampling : str, optional
+        Resampling method for the continuous canopy-height band.
+    extent_buffer_cells : int, optional
+        Result-grid cells to buffer around the domain extent (0-10, default 0).
+    name, description : str, optional
+        Metadata for the grid.
+    tags : List[str], optional
+        Tags for the grid.
+    modifications : list, optional
+        Modification rules applied after the grid is built.
+
+    Returns
+    -------
+    Grid
+        The created canopy-height Grid (job status "pending" or "running").
+
+    Raises
+    ------
+    ValueError
+        If the point cloud is not completed or is not airborne.
+    """
+    if point_cloud.status != JobStatus.COMPLETED:
+        raise ValueError(
+            f"Point cloud {point_cloud.id} must be completed before creating "
+            f"a canopy height grid (current status: {point_cloud.status.value})."
+        )
+    if point_cloud.type_.value != "als":
+        raise ValueError(
+            f"Point cloud {point_cloud.id} must be airborne (ALS) to create a "
+            f"canopy height grid (got {point_cloud.type_.value!r})."
+        )
+
+    request_body = CreatePointCloudChmRequest(
+        source_point_cloud_id=point_cloud.id,
+        alignment=_build_alignment(
+            output_resolution_m,
+            align_to,
+            resampling=resampling,
+        ),
+        extent_buffer_cells=extent_buffer_cells,
+        name=name,
+        description=description,
+        tags=_opt(tags),
+        modifications=_opt(modifications),
+    )
+    response = create_point_cloud_chm.sync_detailed(
+        point_cloud.domain_id,
+        client=ensure_client(),
+        body=request_body,
     )
     return Grid._from_model(expect(response, HTTPStatus.CREATED))
 

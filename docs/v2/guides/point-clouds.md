@@ -141,4 +141,6 @@ except NotFoundException:
 
 ## Next steps
 
+- Turn a completed airborne point cloud into a canopy-height grid with
+  [`create_canopy_height_grid_from_point_cloud`](creating-grids.md#canopy-grids)
 - Full signatures — see the [Reference](../reference.md)
