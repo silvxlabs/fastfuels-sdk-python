@@ -5,6 +5,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Literal,
+    Self,
     TypeVar,
     cast,
 )
@@ -63,17 +64,14 @@ class GeometryCollection:
         geometries = []
         for geometries_item_data in self.geometries:
             geometries_item: dict[str, Any]
-            if isinstance(geometries_item_data, Point):
-                geometries_item = geometries_item_data.to_dict()
-            elif isinstance(geometries_item_data, MultiPoint):
-                geometries_item = geometries_item_data.to_dict()
-            elif isinstance(geometries_item_data, LineString):
-                geometries_item = geometries_item_data.to_dict()
-            elif isinstance(geometries_item_data, MultiLineString):
-                geometries_item = geometries_item_data.to_dict()
-            elif isinstance(geometries_item_data, Polygon):
-                geometries_item = geometries_item_data.to_dict()
-            elif isinstance(geometries_item_data, MultiPolygon):
+            if (
+                isinstance(geometries_item_data, Point)
+                or isinstance(geometries_item_data, MultiPoint)
+                or isinstance(geometries_item_data, LineString)
+                or isinstance(geometries_item_data, MultiLineString)
+                or isinstance(geometries_item_data, Polygon)
+                or isinstance(geometries_item_data, MultiPolygon)
+            ):
                 geometries_item = geometries_item_data.to_dict()
             else:
                 geometries_item = geometries_item_data.to_dict()
@@ -107,7 +105,7 @@ class GeometryCollection:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.line_string import LineString
         from ..models.multi_line_string import MultiLineString
         from ..models.multi_point import MultiPoint

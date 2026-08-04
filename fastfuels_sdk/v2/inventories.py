@@ -5,6 +5,7 @@ fastfuels_sdk/v2/inventories.py
 # Core imports
 import json
 from http import HTTPStatus
+from io import StringIO
 from pathlib import Path
 from typing import List, Optional
 
@@ -24,7 +25,8 @@ from fastfuels_sdk.v2.client_library.api.inventories import (
     delete_inventory,
     duplicate_inventory as duplicate_inventory_endpoint,
     get_inventory as get_inventory_endpoint,
-    get_inventory_data,
+    get_inventory_data_csv,
+    get_inventory_data_json,
     get_inventory_data_metadata,
     list_inventories as list_inventories_endpoint,
     list_inventories_cross_domain,
@@ -47,6 +49,7 @@ from fastfuels_sdk.v2.client_library.models import (
     InventoryDataMetadata,
     InventoryDataResponse,
     InventoryExportFormat,
+    InventoryJsonOrientation,
     InventorySortField,
     InventoryUploadFormat,
     JobStatus,
@@ -140,6 +143,10 @@ class Inventory(InventoryModel):
         Silvicultural treatments applied to the inventory.
     columns : List[Column], optional
         The columns of the inventory's tabular data.
+    forestry_metrics : TreeForestryMetrics, optional
+        Stand-level tree count, basal area per acre, trees per acre,
+        quadratic mean diameter, and dominant FIA species groups. Populated
+        when a tree inventory completes; ``None`` when unavailable.
     georeference : InventoryGeoreference, optional
         Spatial reference of the generated data; populated when the job
         completes.
@@ -180,13 +187,18 @@ class Inventory(InventoryModel):
         Round-trips through the generated to_dict/from_dict — from_dict
         constructs ``cls``, i.e. this subclass.
         """
-        return cls.from_dict(model.to_dict())
+        inventory = cls.from_dict(model.to_dict())
+        if inventory.forestry_metrics is UNSET:
+            inventory.forestry_metrics = None
+        return inventory
 
     def _copy_fields_from(self, model: InventoryModel) -> "Inventory":
         """Copy all generated-model fields from `model` onto self (in-place)."""
         for field in attrs.fields(InventoryModel):
             if field.init:
                 setattr(self, field.name, getattr(model, field.name))
+        if self.forestry_metrics is UNSET:
+            self.forestry_metrics = None
         self.additional_properties = dict(model.additional_properties)
         return self
 
@@ -197,6 +209,17 @@ class Inventory(InventoryModel):
                 f"Cannot {action} an inventory with status '{self.status}'. "
                 "Call .wait() until it completes first."
             )
+
+    def _column(self, column: str):
+        """Return the :class:`Column` with key ``column``, or raise if absent."""
+        columns = [] if self.columns is UNSET or self.columns is None else self.columns
+        for inventory_column in columns:
+            if inventory_column.key == column:
+                return inventory_column
+        keys = [inventory_column.key for inventory_column in columns]
+        raise ValueError(
+            f"Inventory has no column {column!r}. Available columns: {keys}."
+        )
 
     @classmethod
     def from_id(cls, domain_id: str, inventory_id: str) -> "Inventory":
@@ -370,11 +393,12 @@ class Inventory(InventoryModel):
     def apply_modifications(self, modifications: list) -> "Inventory":
         """Apply modification rules to this inventory in place.
 
-        The inventory keeps its ID; the submitted rules are appended to its
-        cumulative ``modifications`` list and the tree data is re-derived as
-        a background job — the inventory returns to "pending" status, so
-        call :meth:`wait` before using its data. To keep the original data,
-        :meth:`duplicate` first and modify the copy.
+        The inventory keeps its ID; the submitted rules are queued while the
+        tree data is re-derived as a background job. The inventory returns to
+        "pending" status, and the rules are appended to its cumulative
+        ``modifications`` list once processing completes. Call :meth:`wait`
+        before using its data. To keep the original data, :meth:`duplicate`
+        first and modify the copy.
 
         Parameters
         ----------
@@ -404,11 +428,12 @@ class Inventory(InventoryModel):
     def apply_treatments(self, treatments: list) -> "Inventory":
         """Apply silvicultural treatments to this inventory in place.
 
-        The inventory keeps its ID; the submitted treatments are appended to
-        its cumulative ``treatments`` list and the tree data is re-derived as a
-        background job — the inventory returns to "pending" status, so call
-        :meth:`wait` before using its data. To keep the original data,
-        :meth:`duplicate` first and treat the copy.
+        The inventory keeps its ID; the submitted treatments are queued while
+        the tree data is re-derived as a background job. The inventory returns
+        to "pending" status, and the treatments are appended to its cumulative
+        ``treatments`` list once processing completes. Call :meth:`wait` before
+        using its data. To keep the original data, :meth:`duplicate` first and
+        treat the copy.
 
         Parameters
         ----------
@@ -645,8 +670,47 @@ class Inventory(InventoryModel):
         )
         return expect(response)
 
+    def column_summary(self, column: str):
+        """Return summary statistics for one column without downloading records.
+
+        The server computes a per-column summary when an inventory completes,
+        so this provides a cheap overview without fetching the inventory's tree
+        records (unlike :meth:`to_dataframe`).
+
+        Parameters
+        ----------
+        column : str
+            The column key to summarize (see :attr:`columns` for available
+            keys).
+
+        Returns
+        -------
+        ContinuousColumnSummary or CategoricalColumnSummary or None
+            The column's summary, discriminated by its ``type_``:
+            ``"continuous"`` carries ``count``, ``null_count``, ``min_``,
+            ``max_``, ``mean``, and ``std``; ``"categorical"`` carries
+            ``count``, ``null_count``, and ``unique_count``. ``None`` until
+            the inventory completes (call :meth:`wait` first).
+
+        Raises
+        ------
+        ValueError
+            If ``column`` is not one of the inventory's columns.
+
+        Examples
+        --------
+        >>> inventory = ff.get_inventory(domain, "abc123").wait()
+        >>> inventory.column_summary("dbh").type_
+        'continuous'
+        """
+        summary = self._column(column).summary
+        return None if summary is UNSET else summary
+
     def get_data_partition(
-        self, partition_index: int, columns: Optional[List[str]] = None
+        self,
+        partition_index: int,
+        columns: Optional[List[str]] = None,
+        json_orientation: str = "split",
     ) -> InventoryDataResponse:
         """Get one partition of the inventory's tree records.
 
@@ -657,13 +721,17 @@ class Inventory(InventoryModel):
             ``num_partitions`` reported by :meth:`get_data_metadata`.
         columns : List[str], optional
             Column subset to retrieve (default: all columns).
+        json_orientation : {"split", "records"}, optional
+            JSON layout. ``"split"`` (default) returns rows as lists of
+            values in ``partition.columns`` order; ``"records"`` returns
+            self-describing row mappings.
 
         Returns
         -------
         InventoryDataResponse
             With attributes ``partition``, ``num_rows``, ``columns``
-            (column names), and ``data`` (rows as lists of values, in
-            column order).
+            (column names), and ``data`` (row lists for ``"split"`` or row
+            mappings for ``"records"``).
 
         Raises
         ------
@@ -672,6 +740,8 @@ class Inventory(InventoryModel):
         UnprocessableEntityException
             If ``partition_index`` is past the last partition, or the
             inventory is not in "completed" status.
+        ValueError
+            If ``json_orientation`` is not ``"split"`` or ``"records"``.
 
         Examples
         --------
@@ -679,11 +749,13 @@ class Inventory(InventoryModel):
         >>> partition.num_rows
         1392
         """
-        response = get_inventory_data.sync_detailed(
+        orientation = InventoryJsonOrientation(json_orientation)
+        response = get_inventory_data_json.sync_detailed(
             self.domain_id,
             self.id,
             partition_index,
             client=ensure_client(),
+            json_orientation=orientation,
             columns=",".join(columns) if columns is not None else UNSET,
         )
         return expect(response)
@@ -691,8 +763,9 @@ class Inventory(InventoryModel):
     def to_dataframe(self, columns: Optional[List[str]] = None) -> pd.DataFrame:
         """Retrieve the inventory's tree records as a pandas DataFrame.
 
-        Retrieves every partition and concatenates them into a single
-        DataFrame with one row per tree, preserving source order.
+        Retrieves every partition as CSV, parses it with :func:`pandas.read_csv`,
+        and concatenates the partitions into a single DataFrame with one row
+        per tree, preserving source order.
 
         Parameters
         ----------
@@ -720,8 +793,14 @@ class Inventory(InventoryModel):
         metadata = self.get_data_metadata()
         frames = []
         for partition_index in range(metadata.num_partitions):
-            partition = self.get_data_partition(partition_index, columns=columns)
-            frames.append(pd.DataFrame(partition.data, columns=partition.columns))
+            response = get_inventory_data_csv.sync_detailed(
+                self.domain_id,
+                self.id,
+                partition_index,
+                client=ensure_client(),
+                columns=",".join(columns) if columns is not None else UNSET,
+            )
+            frames.append(pd.read_csv(StringIO(expect(response))))
         if not frames:
             return pd.DataFrame(columns=columns or metadata.columns)
         return pd.concat(frames, ignore_index=True)

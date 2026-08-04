@@ -9,6 +9,7 @@ from ...client import AuthenticatedClient, Client
 from ...models.apply_modifications_request import ApplyModificationsRequest
 from ...models.http_validation_error import HTTPValidationError
 from ...models.inventory import Inventory
+from ...models.quota_exceeded_detail import QuotaExceededDetail
 from ...types import Response
 
 
@@ -38,7 +39,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> HTTPValidationError | Inventory | None:
+) -> HTTPValidationError | Inventory | QuotaExceededDetail | None:
     if response.status_code == 200:
         response_200 = Inventory.from_dict(response.json())
 
@@ -49,6 +50,11 @@ def _parse_response(
 
         return response_422
 
+    if response.status_code == 429:
+        response_429 = QuotaExceededDetail.from_dict(response.json())
+
+        return response_429
+
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
@@ -57,7 +63,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[HTTPValidationError | Inventory]:
+) -> Response[HTTPValidationError | Inventory | QuotaExceededDetail]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -72,7 +78,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: ApplyModificationsRequest,
-) -> Response[HTTPValidationError | Inventory]:
+) -> Response[HTTPValidationError | Inventory | QuotaExceededDetail]:
     r"""Apply modifications to an inventory in place
 
      # Apply Modifications to an Inventory (in place)
@@ -135,10 +141,28 @@ def sync_detailed(
 
     ## Response
 
-    Returns this inventory (same ID) with status `\"pending\"` and the submitted
-    rules appended to `modifications`. Its `checksum` changes, so any resource
-    derived from it can detect that the source has changed. Poll the inventory
-    until status returns to `\"completed\"`.
+    Returns this inventory (same ID) with status `\"pending\"`. Its `checksum`
+    changes immediately, so any resource derived from it can detect that the
+    source has changed. The submitted rules appear in the inventory's
+    `modifications` list once processing completes — poll the inventory until
+    status returns to `\"completed\"`.
+
+    If processing fails, the inventory's status becomes `\"failed\"` with error
+    details, the stored data is unchanged, and the queued rules are retained —
+    submit another POST to retry (the new rules are applied together with the
+    retained ones).
+
+    ## Error Responses
+
+    - **404 Not Found**: The inventory does not exist, is not owned by the
+      caller, or is not in this domain.
+    - **422 Unprocessable Content**: The inventory is not in `completed` status
+      (and is not a retryable failed modification); or a referenced `feature_id`
+      is missing, cross-domain, or not completed.
+    - **429 Too Many Requests**: You have too many active inventory jobs in
+      progress (your `max_active_inventories` quota). Wait for jobs to complete
+      or delete unneeded inventories, then retry. The response detail names the
+      exact `quota` and includes a `Retry-After` header.
 
     Args:
         domain_id (str):
@@ -154,7 +178,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | Inventory]
+        Response[HTTPValidationError | Inventory | QuotaExceededDetail]
     """
 
     kwargs = _get_kwargs(
@@ -176,7 +200,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: ApplyModificationsRequest,
-) -> HTTPValidationError | Inventory | None:
+) -> HTTPValidationError | Inventory | QuotaExceededDetail | None:
     r"""Apply modifications to an inventory in place
 
      # Apply Modifications to an Inventory (in place)
@@ -239,10 +263,28 @@ def sync(
 
     ## Response
 
-    Returns this inventory (same ID) with status `\"pending\"` and the submitted
-    rules appended to `modifications`. Its `checksum` changes, so any resource
-    derived from it can detect that the source has changed. Poll the inventory
-    until status returns to `\"completed\"`.
+    Returns this inventory (same ID) with status `\"pending\"`. Its `checksum`
+    changes immediately, so any resource derived from it can detect that the
+    source has changed. The submitted rules appear in the inventory's
+    `modifications` list once processing completes — poll the inventory until
+    status returns to `\"completed\"`.
+
+    If processing fails, the inventory's status becomes `\"failed\"` with error
+    details, the stored data is unchanged, and the queued rules are retained —
+    submit another POST to retry (the new rules are applied together with the
+    retained ones).
+
+    ## Error Responses
+
+    - **404 Not Found**: The inventory does not exist, is not owned by the
+      caller, or is not in this domain.
+    - **422 Unprocessable Content**: The inventory is not in `completed` status
+      (and is not a retryable failed modification); or a referenced `feature_id`
+      is missing, cross-domain, or not completed.
+    - **429 Too Many Requests**: You have too many active inventory jobs in
+      progress (your `max_active_inventories` quota). Wait for jobs to complete
+      or delete unneeded inventories, then retry. The response detail names the
+      exact `quota` and includes a `Retry-After` header.
 
     Args:
         domain_id (str):
@@ -258,7 +300,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | Inventory
+        HTTPValidationError | Inventory | QuotaExceededDetail
     """
 
     return sync_detailed(
@@ -275,7 +317,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: ApplyModificationsRequest,
-) -> Response[HTTPValidationError | Inventory]:
+) -> Response[HTTPValidationError | Inventory | QuotaExceededDetail]:
     r"""Apply modifications to an inventory in place
 
      # Apply Modifications to an Inventory (in place)
@@ -338,10 +380,28 @@ async def asyncio_detailed(
 
     ## Response
 
-    Returns this inventory (same ID) with status `\"pending\"` and the submitted
-    rules appended to `modifications`. Its `checksum` changes, so any resource
-    derived from it can detect that the source has changed. Poll the inventory
-    until status returns to `\"completed\"`.
+    Returns this inventory (same ID) with status `\"pending\"`. Its `checksum`
+    changes immediately, so any resource derived from it can detect that the
+    source has changed. The submitted rules appear in the inventory's
+    `modifications` list once processing completes — poll the inventory until
+    status returns to `\"completed\"`.
+
+    If processing fails, the inventory's status becomes `\"failed\"` with error
+    details, the stored data is unchanged, and the queued rules are retained —
+    submit another POST to retry (the new rules are applied together with the
+    retained ones).
+
+    ## Error Responses
+
+    - **404 Not Found**: The inventory does not exist, is not owned by the
+      caller, or is not in this domain.
+    - **422 Unprocessable Content**: The inventory is not in `completed` status
+      (and is not a retryable failed modification); or a referenced `feature_id`
+      is missing, cross-domain, or not completed.
+    - **429 Too Many Requests**: You have too many active inventory jobs in
+      progress (your `max_active_inventories` quota). Wait for jobs to complete
+      or delete unneeded inventories, then retry. The response detail names the
+      exact `quota` and includes a `Retry-After` header.
 
     Args:
         domain_id (str):
@@ -357,7 +417,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | Inventory]
+        Response[HTTPValidationError | Inventory | QuotaExceededDetail]
     """
 
     kwargs = _get_kwargs(
@@ -377,7 +437,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: ApplyModificationsRequest,
-) -> HTTPValidationError | Inventory | None:
+) -> HTTPValidationError | Inventory | QuotaExceededDetail | None:
     r"""Apply modifications to an inventory in place
 
      # Apply Modifications to an Inventory (in place)
@@ -440,10 +500,28 @@ async def asyncio(
 
     ## Response
 
-    Returns this inventory (same ID) with status `\"pending\"` and the submitted
-    rules appended to `modifications`. Its `checksum` changes, so any resource
-    derived from it can detect that the source has changed. Poll the inventory
-    until status returns to `\"completed\"`.
+    Returns this inventory (same ID) with status `\"pending\"`. Its `checksum`
+    changes immediately, so any resource derived from it can detect that the
+    source has changed. The submitted rules appear in the inventory's
+    `modifications` list once processing completes — poll the inventory until
+    status returns to `\"completed\"`.
+
+    If processing fails, the inventory's status becomes `\"failed\"` with error
+    details, the stored data is unchanged, and the queued rules are retained —
+    submit another POST to retry (the new rules are applied together with the
+    retained ones).
+
+    ## Error Responses
+
+    - **404 Not Found**: The inventory does not exist, is not owned by the
+      caller, or is not in this domain.
+    - **422 Unprocessable Content**: The inventory is not in `completed` status
+      (and is not a retryable failed modification); or a referenced `feature_id`
+      is missing, cross-domain, or not completed.
+    - **429 Too Many Requests**: You have too many active inventory jobs in
+      progress (your `max_active_inventories` quota). Wait for jobs to complete
+      or delete unneeded inventories, then retry. The response detail names the
+      exact `quota` and includes a `Retry-After` header.
 
     Args:
         domain_id (str):
@@ -459,7 +537,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | Inventory
+        HTTPValidationError | Inventory | QuotaExceededDetail
     """
 
     return (

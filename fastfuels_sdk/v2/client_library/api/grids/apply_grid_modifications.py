@@ -9,6 +9,7 @@ from ...client import AuthenticatedClient, Client
 from ...models.apply_grid_modifications_request import ApplyGridModificationsRequest
 from ...models.grid import Grid
 from ...models.http_validation_error import HTTPValidationError
+from ...models.quota_exceeded_detail import QuotaExceededDetail
 from ...types import Response
 
 
@@ -38,7 +39,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Grid | HTTPValidationError | None:
+) -> Grid | HTTPValidationError | QuotaExceededDetail | None:
     if response.status_code == 200:
         response_200 = Grid.from_dict(response.json())
 
@@ -49,6 +50,11 @@ def _parse_response(
 
         return response_422
 
+    if response.status_code == 429:
+        response_429 = QuotaExceededDetail.from_dict(response.json())
+
+        return response_429
+
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
@@ -57,7 +63,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Grid | HTTPValidationError]:
+) -> Response[Grid | HTTPValidationError | QuotaExceededDetail]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -72,7 +78,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: ApplyGridModificationsRequest,
-) -> Response[Grid | HTTPValidationError]:
+) -> Response[Grid | HTTPValidationError | QuotaExceededDetail]:
     r"""Apply modifications to a grid in place
 
      # Apply Modifications to a Grid (in place)
@@ -113,7 +119,9 @@ def sync_detailed(
     - `band`: dot-notation band key (e.g., `fbfm`, `fuel_load.1hr`)
     - `operator`: `eq`, `ne`, `gt`, `lt`, `ge`, `le`
       (`eq`/`ne` also accept a list of values)
-    - `value`: number, string, or list for `eq`/`ne`
+    - `value`: number or list for `eq`/`ne`. For `fbfm` bands you may use the
+      human-readable Scott-Burgan labels (`\"GR1\"`) or the numeric codes (`101`)
+      interchangeably — labels are resolved to codes when the rule is stored.
 
     **Spatial conditions** test each cell's location against a geometry. Two
     variants discriminated by the required `source` field:
@@ -161,6 +169,10 @@ def sync_detailed(
       grid (apply modifications to the source tree inventory and re-voxelize
       instead); a referenced `feature_id` is missing, cross-domain, or not
       completed; or a referenced band does not exist on this grid.
+    - **429 Too Many Requests**: You have too many active grid jobs in progress
+      (your `max_active_grids` quota). Wait for jobs to complete or delete
+      unneeded grids, then retry. The response detail names the exact `quota`
+      and includes a `Retry-After` header.
 
     Args:
         domain_id (str):
@@ -176,7 +188,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Grid | HTTPValidationError]
+        Response[Grid | HTTPValidationError | QuotaExceededDetail]
     """
 
     kwargs = _get_kwargs(
@@ -198,7 +210,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: ApplyGridModificationsRequest,
-) -> Grid | HTTPValidationError | None:
+) -> Grid | HTTPValidationError | QuotaExceededDetail | None:
     r"""Apply modifications to a grid in place
 
      # Apply Modifications to a Grid (in place)
@@ -239,7 +251,9 @@ def sync(
     - `band`: dot-notation band key (e.g., `fbfm`, `fuel_load.1hr`)
     - `operator`: `eq`, `ne`, `gt`, `lt`, `ge`, `le`
       (`eq`/`ne` also accept a list of values)
-    - `value`: number, string, or list for `eq`/`ne`
+    - `value`: number or list for `eq`/`ne`. For `fbfm` bands you may use the
+      human-readable Scott-Burgan labels (`\"GR1\"`) or the numeric codes (`101`)
+      interchangeably — labels are resolved to codes when the rule is stored.
 
     **Spatial conditions** test each cell's location against a geometry. Two
     variants discriminated by the required `source` field:
@@ -287,6 +301,10 @@ def sync(
       grid (apply modifications to the source tree inventory and re-voxelize
       instead); a referenced `feature_id` is missing, cross-domain, or not
       completed; or a referenced band does not exist on this grid.
+    - **429 Too Many Requests**: You have too many active grid jobs in progress
+      (your `max_active_grids` quota). Wait for jobs to complete or delete
+      unneeded grids, then retry. The response detail names the exact `quota`
+      and includes a `Retry-After` header.
 
     Args:
         domain_id (str):
@@ -302,7 +320,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Grid | HTTPValidationError
+        Grid | HTTPValidationError | QuotaExceededDetail
     """
 
     return sync_detailed(
@@ -319,7 +337,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: ApplyGridModificationsRequest,
-) -> Response[Grid | HTTPValidationError]:
+) -> Response[Grid | HTTPValidationError | QuotaExceededDetail]:
     r"""Apply modifications to a grid in place
 
      # Apply Modifications to a Grid (in place)
@@ -360,7 +378,9 @@ async def asyncio_detailed(
     - `band`: dot-notation band key (e.g., `fbfm`, `fuel_load.1hr`)
     - `operator`: `eq`, `ne`, `gt`, `lt`, `ge`, `le`
       (`eq`/`ne` also accept a list of values)
-    - `value`: number, string, or list for `eq`/`ne`
+    - `value`: number or list for `eq`/`ne`. For `fbfm` bands you may use the
+      human-readable Scott-Burgan labels (`\"GR1\"`) or the numeric codes (`101`)
+      interchangeably — labels are resolved to codes when the rule is stored.
 
     **Spatial conditions** test each cell's location against a geometry. Two
     variants discriminated by the required `source` field:
@@ -408,6 +428,10 @@ async def asyncio_detailed(
       grid (apply modifications to the source tree inventory and re-voxelize
       instead); a referenced `feature_id` is missing, cross-domain, or not
       completed; or a referenced band does not exist on this grid.
+    - **429 Too Many Requests**: You have too many active grid jobs in progress
+      (your `max_active_grids` quota). Wait for jobs to complete or delete
+      unneeded grids, then retry. The response detail names the exact `quota`
+      and includes a `Retry-After` header.
 
     Args:
         domain_id (str):
@@ -423,7 +447,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Grid | HTTPValidationError]
+        Response[Grid | HTTPValidationError | QuotaExceededDetail]
     """
 
     kwargs = _get_kwargs(
@@ -443,7 +467,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: ApplyGridModificationsRequest,
-) -> Grid | HTTPValidationError | None:
+) -> Grid | HTTPValidationError | QuotaExceededDetail | None:
     r"""Apply modifications to a grid in place
 
      # Apply Modifications to a Grid (in place)
@@ -484,7 +508,9 @@ async def asyncio(
     - `band`: dot-notation band key (e.g., `fbfm`, `fuel_load.1hr`)
     - `operator`: `eq`, `ne`, `gt`, `lt`, `ge`, `le`
       (`eq`/`ne` also accept a list of values)
-    - `value`: number, string, or list for `eq`/`ne`
+    - `value`: number or list for `eq`/`ne`. For `fbfm` bands you may use the
+      human-readable Scott-Burgan labels (`\"GR1\"`) or the numeric codes (`101`)
+      interchangeably — labels are resolved to codes when the rule is stored.
 
     **Spatial conditions** test each cell's location against a geometry. Two
     variants discriminated by the required `source` field:
@@ -532,6 +558,10 @@ async def asyncio(
       grid (apply modifications to the source tree inventory and re-voxelize
       instead); a referenced `feature_id` is missing, cross-domain, or not
       completed; or a referenced band does not exist on this grid.
+    - **429 Too Many Requests**: You have too many active grid jobs in progress
+      (your `max_active_grids` quota). Wait for jobs to complete or delete
+      unneeded grids, then retry. The response detail names the exact `quota`
+      and includes a `Retry-After` header.
 
     Args:
         domain_id (str):
@@ -547,7 +577,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Grid | HTTPValidationError
+        Grid | HTTPValidationError | QuotaExceededDetail
     """
 
     return (

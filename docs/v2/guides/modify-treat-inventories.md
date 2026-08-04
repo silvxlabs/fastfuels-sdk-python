@@ -92,9 +92,10 @@ thinned.wait()
 ## Apply to an inventory you hold
 
 `apply_modifications` and `apply_treatments` reshape an inventory **in place**:
-the submitted rules are appended to the inventory's cumulative `modifications`
-/ `treatments` list, its ID is kept, and the data is re-derived as a background
-job — the inventory returns to `"pending"`, so `wait()` before using it again.
+its ID is kept and the data is re-derived as a background job. The submitted
+rules are queued while the inventory is `"pending"`, then appended to the
+cumulative `modifications` / `treatments` list when processing completes. Call
+`wait()` before using the inventory again or reading those ledgers.
 
 ```python
 inventory.apply_treatments([ff.basal_area_treatment("from_below", 25.0)])

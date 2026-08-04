@@ -23,10 +23,10 @@ from fastfuels_sdk.v2.client_library.api.domains import (
 )
 from fastfuels_sdk.v2.client_library.models import (
     Domain as DomainModel,
-    CreateDomainRequestBody,
     DomainLattice,
     DomainSortField,
     DomainSortOrder,
+    GeoJsonFeatureCollection,
     ListDomainsResponse,
     UpdateDomainRequestBody,
 )
@@ -43,7 +43,7 @@ def _build_create_request_body(
     description: str,
     tags: Optional[List[str]],
     pad_to_resolution: Optional[float],
-) -> CreateDomainRequestBody:
+) -> GeoJsonFeatureCollection:
     """Build a domain creation request body from GeoJSON input.
 
     The v2 API accepts FeatureCollection input only; a single Feature is
@@ -62,7 +62,7 @@ def _build_create_request_body(
             f"got {geojson_type!r}"
         )
 
-    return CreateDomainRequestBody.from_dict(
+    return GeoJsonFeatureCollection.from_dict(
         {
             **geojson,
             "name": name,
@@ -101,8 +101,8 @@ class Domain(DomainModel):
     type_ : str
         Always "FeatureCollection".
     features : List[GeoJsonFeature]
-        Two named GeoJSON features: "domain" (the working extent /
-        bounding box) and "input" (the original geometry).
+        One GeoJSON feature named "domain": the projected working extent /
+        bounding box.
     bbox : List[float]
         Bounding box of the "domain" feature.
     crs : GeoJsonCRS
@@ -583,9 +583,8 @@ class Domain(DomainModel):
     def to_geodataframe(self) -> gpd.GeoDataFrame:
         """Convert the Domain to a GeoPandas GeoDataFrame.
 
-        The v2 API returns two named features: "domain" (the working
-        extent / bounding box) and "input" (the original geometry), so the
-        GeoDataFrame has one row per feature.
+        The v2 API returns one named feature, "domain": the projected working
+        extent / bounding box. The GeoDataFrame therefore has one row.
 
         Returns
         -------
@@ -596,7 +595,8 @@ class Domain(DomainModel):
         Examples
         --------
         >>> gdf = domain.to_geodataframe()
-        >>> gdf[gdf["name"] == "input"].geometry  # the original geometry
+        >>> gdf.loc[0, "name"]
+        'domain'
         """
         feature_collection: dict[str, Any] = {
             "type": "FeatureCollection",

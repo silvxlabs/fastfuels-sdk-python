@@ -5,6 +5,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Literal,
+    Self,
     TypeVar,
     cast,
 )
@@ -60,9 +61,9 @@ class LayersetFeature:
         type_ = self.type_
 
         geometry: dict[str, Any] | None
-        if isinstance(self.geometry, Polygon):
-            geometry = self.geometry.to_dict()
-        elif isinstance(self.geometry, MultiPolygon):
+        if isinstance(self.geometry, Polygon) or isinstance(
+            self.geometry, MultiPolygon
+        ):
             geometry = self.geometry.to_dict()
         else:
             geometry = self.geometry
@@ -105,7 +106,7 @@ class LayersetFeature:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.layerset_properties import LayersetProperties
         from ..models.multi_polygon import MultiPolygon
         from ..models.polygon import Polygon

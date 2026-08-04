@@ -12,8 +12,11 @@ from collections.abc import Mapping
 from http import HTTPStatus
 from typing import Any, NoReturn
 
-from fastfuels_sdk.v2.client_library.models import HTTPValidationError
-from fastfuels_sdk.v2.client_library.types import Response
+from fastfuels_sdk.v2.client_library.models import (
+    HTTPValidationError,
+    QuotaExceededDetail,
+)
+from fastfuels_sdk.v2.client_library.types import UNSET, Response
 
 # Implementation note: the generated client (openapi-python-client) does
 # not raise per-status exceptions — documented error responses are
@@ -31,6 +34,7 @@ from fastfuels_sdk.v2.client_library.types import Response
 # so wrap it to tolerate undocumented body shapes; the actual detail is
 # re-read from ``response.content`` in ``raise_for_response()``.
 _generated_from_dict = HTTPValidationError.from_dict.__func__
+_generated_quota_from_dict = QuotaExceededDetail.from_dict.__func__
 
 
 def _tolerant_from_dict(cls, src_dict):
@@ -44,6 +48,16 @@ def _tolerant_from_dict(cls, src_dict):
 
 
 HTTPValidationError.from_dict = classmethod(_tolerant_from_dict)
+
+
+def _quota_from_dict(cls, src_dict):
+    """Unwrap FastAPI's ``detail`` envelope before generated parsing."""
+    if isinstance(src_dict, Mapping) and isinstance(src_dict.get("detail"), Mapping):
+        src_dict = src_dict["detail"]
+    return _generated_quota_from_dict(cls, src_dict)
+
+
+QuotaExceededDetail.from_dict = classmethod(_quota_from_dict)
 
 
 class ApiException(Exception):
@@ -92,6 +106,57 @@ class UnprocessableEntityException(ApiException):
     """
 
 
+class QuotaExceededException(ApiException):
+    """Raised when the API returns 429 Too Many Requests.
+
+    Attributes
+    ----------
+    quota : str or None
+        The quota field that was exceeded.
+    current : int or None
+        The owner's current usage for the quota.
+    limit : int or None
+        The quota limit that was reached.
+    window_reset_on : datetime.datetime or None
+        When a windowed quota resets, if applicable.
+    message : str or None
+        A human-readable explanation and suggested next steps.
+    reason : str or None
+        The machine-readable error reason.
+    retry_after : int or None
+        Seconds the API recommends waiting before retrying. Present only for
+        active-job quota rejections.
+    """
+
+    def __init__(
+        self,
+        status_code: int,
+        detail: Any = None,
+        retry_after: int | None = None,
+    ):
+        self.quota = None
+        self.current = None
+        self.limit = None
+        self.window_reset_on = None
+        self.message = None
+        self.reason = None
+        self.retry_after = retry_after
+
+        if isinstance(detail, QuotaExceededDetail):
+            self.quota = detail.quota
+            self.current = detail.current
+            self.limit = detail.limit
+            if detail.window_reset_on is not UNSET:
+                self.window_reset_on = detail.window_reset_on
+            self.message = detail.message
+            if detail.reason is not UNSET:
+                self.reason = detail.reason
+
+        self.status_code = status_code
+        self.detail = detail
+        Exception.__init__(self, f"({status_code}) {self.message or detail}")
+
+
 class ServiceException(ApiException):
     """Raised when the API returns a 5xx server error."""
 
@@ -101,6 +166,7 @@ _STATUS_TO_EXCEPTION = {
     HTTPStatus.UNAUTHORIZED: UnauthorizedException,
     HTTPStatus.FORBIDDEN: ForbiddenException,
     HTTPStatus.NOT_FOUND: NotFoundException,
+    HTTPStatus.TOO_MANY_REQUESTS: QuotaExceededException,
     HTTPStatus.UNPROCESSABLE_ENTITY: UnprocessableEntityException,
 }
 
@@ -114,6 +180,32 @@ def _extract_detail(response: Response) -> Any:
             response.content.decode(errors="ignore")
             or HTTPStatus(response.status_code).phrase
         )
+
+
+def _extract_quota_detail(response: Response) -> Any:
+    """Return a typed quota detail, falling back to the generic detail."""
+    if isinstance(response.parsed, QuotaExceededDetail):
+        return response.parsed
+
+    try:
+        payload = json.loads(response.content)
+        if isinstance(payload, Mapping) and isinstance(payload.get("detail"), Mapping):
+            payload = payload["detail"]
+        if isinstance(payload, Mapping):
+            return QuotaExceededDetail.from_dict(payload)
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+        pass
+
+    return _extract_detail(response)
+
+
+def _extract_retry_after(response: Response) -> int | None:
+    """Return the delta-seconds value from ``Retry-After``, when present."""
+    value = response.headers.get("Retry-After")
+    try:
+        return int(value) if value is not None else None
+    except ValueError:
+        return None
 
 
 def raise_for_response(response: Response) -> NoReturn:
@@ -134,6 +226,8 @@ def raise_for_response(response: Response) -> NoReturn:
         If the response status is 403.
     NotFoundException
         If the response status is 404.
+    QuotaExceededException
+        If the response status is 429.
     UnprocessableEntityException
         If the response status is 422.
     ServiceException
@@ -145,7 +239,18 @@ def raise_for_response(response: Response) -> NoReturn:
     exception_class = _STATUS_TO_EXCEPTION.get(response.status_code)
     if exception_class is None:
         exception_class = ServiceException if status_code >= 500 else ApiException
-    raise exception_class(status_code, _extract_detail(response))
+    detail = (
+        _extract_quota_detail(response)
+        if response.status_code == HTTPStatus.TOO_MANY_REQUESTS
+        else _extract_detail(response)
+    )
+    if exception_class is QuotaExceededException:
+        raise exception_class(
+            status_code,
+            detail,
+            retry_after=_extract_retry_after(response),
+        )
+    raise exception_class(status_code, detail)
 
 
 def expect(response: Response, expected_status: HTTPStatus = HTTPStatus.OK) -> Any:

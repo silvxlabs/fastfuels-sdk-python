@@ -10,11 +10,14 @@ from uuid import uuid4
 from fastfuels_sdk.v2.point_clouds import (
     PointCloud,
     _point_cloud_type,
+    check_3dep_coverage,
+    create_point_cloud_from_3dep,
     create_point_cloud_from_file,
     get_point_cloud,
     list_point_clouds,
 )
 from fastfuels_sdk.v2.client_library.models import JobStatus, PointCloudType
+from fastfuels_sdk.v2.domains import Domain
 from fastfuels_sdk.v2.exceptions import NotFoundException
 
 # External imports
@@ -35,6 +38,40 @@ def _placeholder_laz(directory) -> str:
     return str(path)
 
 
+@pytest.fixture(scope="module")
+def covered_3dep_domain():
+    """A small Bondurant, WY domain with stable 3DEP LiDAR coverage."""
+    geojson = {
+        "type": "FeatureCollection",
+        "crs": {"type": "name", "properties": {"name": "EPSG:32612"}},
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [522800, 4720400],
+                            [523300, 4720400],
+                            [523300, 4720900],
+                            [522800, 4720900],
+                            [522800, 4720400],
+                        ]
+                    ],
+                },
+            }
+        ],
+    }
+    domain = Domain.from_geojson(
+        geojson,
+        name="test_3dep_point_cloud_domain",
+        tags=["sdk-test"],
+    )
+    yield domain
+    domain.delete(force=True)
+
+
 class TestPointCloudType:
     """Pure unit tests for the scan-type coercion (no API)."""
 
@@ -48,6 +85,43 @@ class TestPointCloudType:
     def test_invalid_raises(self):
         with pytest.raises(ValueError):
             _point_cloud_type("mls")
+
+
+class TestCreateFrom3dep:
+    def test_coverage_preflight(self, covered_3dep_domain):
+        coverage = check_3dep_coverage(covered_3dep_domain)
+
+        assert coverage.available is True
+        assert coverage.coverage_fraction == pytest.approx(1.0, abs=1e-3)
+        assert coverage.estimated_point_count > 0
+        assert coverage.point_budget > 0
+        assert coverage.exceeds_point_budget is False
+        assert coverage.datasets
+
+    def test_create_with_pinned_dataset(self, covered_3dep_domain):
+        coverage = check_3dep_coverage(covered_3dep_domain)
+        dataset = coverage.datasets[0].name
+        point_cloud = create_point_cloud_from_3dep(
+            covered_3dep_domain,
+            datasets=[dataset],
+            name="throwaway_3dep_pc",
+        )
+        try:
+            assert isinstance(point_cloud, PointCloud)
+            assert point_cloud.domain_id == covered_3dep_domain.id
+            assert point_cloud.type_ == PointCloudType.ALS
+            assert point_cloud.source["name"] == "3dep"
+            assert point_cloud.source["datasets"] == [dataset]
+            assert point_cloud.status in (
+                JobStatus.PENDING,
+                JobStatus.RUNNING,
+                JobStatus.COMPLETED,
+            )
+        finally:
+            try:
+                point_cloud.delete()
+            except NotFoundException:
+                pass
 
 
 class TestCreateAndLifecycle:

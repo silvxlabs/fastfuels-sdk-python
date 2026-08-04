@@ -5,6 +5,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Literal,
+    Self,
     TypeVar,
     cast,
 )
@@ -91,7 +92,7 @@ class InventoryColumnsBiomassSource:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.fine_biomass_config import FineBiomassConfig
         from ..models.inventory_columns_biomass_source_columns import (
             InventoryColumnsBiomassSourceColumns,

@@ -8,13 +8,14 @@
 An export packages a resource's data into a downloadable file: a
 [grid](working-with-grids.md) as GeoTIFF/NetCDF/zarr, an
 [inventory](inventories.md) as Parquet/CSV/GeoJSON/GeoPackage, or several
-grids bundled into a QUIC-Fire-loadable archive. Exports run as background
-jobs and expose a signed download URL on completion.
+grids assembled into a fire-behavior landscape or QUIC-Fire-loadable archive.
+Exports run as background jobs and expose a signed download URL on completion.
 
 The pattern is the same everywhere: exporting a resource you **hold** is a
 method on it (`grid.export(...)`, `inventory.export(...)`); the QUIC-Fire
-bundle is **assembled from many** grids, so it is a module-level function
-(`ff.exports.create_quicfire_export(...)`).
+bundle and landscape are **assembled from many** grids, so they are
+module-level functions (`ff.exports.create_quicfire_export(...)` and
+`ff.exports.create_landscape_export(...)`).
 
 ## Prerequisites
 
@@ -63,6 +64,35 @@ path = export.wait().to_file("trees.csv")
 >>> path.read_text().splitlines()[0]
 'x,y,fia_species_code,fia_status_code,dbh,height,crown_ratio'
 ```
+
+## Create a fire-behavior landscape
+
+To create an 8-band LANDFIRE-style GeoTIFF for FlamMap, IFTDSS, or WFDSS,
+assign the terrain, fuel-model, and canopy roles to completed 30 m grids:
+
+```python
+export = ff.exports.create_landscape_export(
+    domain,
+    fire_behavior_fuel_model="fbfm40",
+    elevation=(topography, "elevation"),
+    slope=(topography, "slope"),
+    aspect=(topography, "aspect"),
+    fuel_model=(fuel_models, "fbfm"),
+    canopy_cover=(canopy, "cc"),
+    canopy_height=(canopy, "chm"),
+    canopy_base_height=(canopy, "cbh"),
+    canopy_bulk_density=(canopy, "cbd"),
+    name="Landscape",
+)
+export.wait().to_file("landscape.tif")
+```
+
+Use `fire_behavior_fuel_model="fbfm13"` with an FBFM13 source. To export a
+different domain-anchored cell size, pass `resolution_m=` after building all
+role grids at that resolution. To preserve an existing lattice instead, pass
+`align_to=<grid>`. The exporter can crop oversized inputs but does not
+resample or reproject them; use the grid alignment options before exporting
+if the API reports an alignment error.
 
 ## Bundle grids for QUIC-Fire
 
@@ -146,10 +176,11 @@ export = ff.get_export("4a56bae0cd5e481aa1617cb894a9a7f3")
 ## List exports
 
 To list your exports, optionally narrowed to a domain, a source name
-(the format, or `"quicfire"` for bundles), or a tag:
+(the format, `"landscape"`, or `"quicfire"`), or a tag:
 
 ```python
 exports = ff.list_exports(domain)
+landscapes = ff.list_exports(source="landscape")
 bundles = ff.list_exports(source="quicfire")
 tagged = ff.list_exports(tag="run-42")
 ```

@@ -170,8 +170,8 @@ Inventory 7b02df6f583a418da3ec9929037d876d: completed (5s)
 ## Access the tree records
 
 For most workflows, `to_dataframe()` (shown above) is all you need — it
-retrieves every partition and assembles one DataFrame. Pass `columns=` to
-retrieve a subset.
+retrieves each partition through the CSV endpoint, parses it with pandas, and
+assembles one DataFrame. Pass `columns=` to retrieve a subset.
 
 The records are served in fixed-size partitions; to control retrieval
 partition by partition (useful for large inventories), read the partition
@@ -188,8 +188,64 @@ layout first:
 34831
 ```
 
+`get_data_partition` uses the compact `"split"` JSON layout by default, where
+each row in `partition.data` follows `partition.columns`. To receive
+self-describing row mappings instead, request the `"records"` layout:
+
+```python
+partition = inventory.get_data_partition(
+    0, columns=["x", "y", "height"], json_orientation="records"
+)
+first_tree = partition.data[0]
+```
+
 Data is only available once the inventory is `"completed"` — earlier calls
 raise `UnprocessableEntityException`.
+
+## Summarize a column without downloading records
+
+Once an inventory completes, inspect a column's server-computed summary by
+passing its key to `column_summary`:
+
+```python
+dbh = inventory.column_summary("dbh")
+mean_dbh = dbh.mean
+minimum_dbh = dbh.min_
+maximum_dbh = dbh.max_
+
+species = inventory.column_summary("fia_species_code")
+species_count = species.unique_count
+```
+
+A continuous column reports `count`, `null_count`, `min_`, `max_`, `mean`, and
+`std`; a categorical column reports `count`, `null_count`, and `unique_count`.
+The `type_` field identifies the shape. `column_summary` returns `None` when
+the requested column exists but its summary is unavailable; an unknown column
+key raises `ValueError`.
+
+## Inspect stand-level forestry metrics
+
+Once a tree inventory completes, read its server-computed forestry metrics
+without downloading the tree records:
+
+```python
+metrics = inventory.forestry_metrics
+
+tree_count = metrics.tree_count
+basal_area_per_acre = metrics.basal_area_per_area
+trees_per_acre = metrics.tree_density
+quadratic_mean_diameter_inches = metrics.quadratic_mean_diameter
+
+dominant_groups = [
+    (group.spgrpcd, group.name, group.basal_area_share)
+    for group in metrics.dominant_species_groups
+]
+```
+
+`dominant_species_groups` is ordered by decreasing basal-area share and
+contains the leading FIA species groups. Only the leading groups are returned,
+so their shares may sum to less than one. `forestry_metrics` is `None` when
+metrics are unavailable, including before processing completes.
 
 ## Reshape the trees
 

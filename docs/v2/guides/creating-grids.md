@@ -142,20 +142,66 @@ fuels.wait()
 [('fuel_load.1hr', 'kg/m**2'), ('fuel_load.10hr', 'kg/m**2'), ('fuel_depth', 'm')]
 ```
 
-### From FCCS instead
+### Use Anderson 13 fuel models
 
-Alternatively, build an already-parameterized fuels grid from the Fuel
-Characteristic Classification System (FCCS), skipping the lookup step:
+To create the Anderson 13 model set instead, select a LANDFIRE version and
+use the FBFM13 creator:
 
 ```python
-grid = ff.grids.create_fuel_model_grid_from_landfire_fccs(
+grid = ff.grids.create_fuel_model_grid_from_landfire_fbfm13(
+    domain,
+    version="2024",
+    remove_non_burnable=["NB1", "NB2"],
+    output_resolution_m=30,
+)
+grid.wait()
+```
+
+Its categorical source band is `fbfm13`. Convert it to any of the nine
+FBFM13 parameter bands with the matching lookup:
+
+```python
+fuels = ff.grids.create_fuel_grid_from_fbfm13_lookup(
+    grid,
+    bands=["fuel_load.1hr", "fuel_load.live_foliage", "fuel_depth"],
+)
+fuels.wait()
+```
+
+### From FCCS instead
+
+To use Fuel Characteristic Classification System (FCCS) fuelbeds, create the
+categorical source grid and wait for it to complete:
+
+```python
+fccs = ff.grids.create_fuel_model_grid_from_landfire_fccs(
     domain, remove_bare_ground=True, output_resolution_m=30
 )
+fccs.wait()
+```
+
+Then look up any of the 12 available FCCS fuel-parameter bands, including
+duff and live components:
+
+```python
+fuels = ff.grids.create_fuel_grid_from_fccs_lookup(
+    fccs,
+    bands=[
+        "fuel_load.litter",
+        "fuel_load.duff",
+        "duff_depth",
+        "fuel_load.live_shrub",
+    ],
+)
+fuels.wait()
 ```
 
 FCCS takes the same alignment arguments as the other source grids
 (`output_resolution_m`, `align_to`, `align`, `resampling`) — see
 [Align grids to each other](#align-grids-to-each-other).
+
+To select and calculate bands across one or more completed grids, see
+[Compose grids](composing-grids.md).
 
 ## Canopy grids
 
@@ -180,6 +226,18 @@ CONUS) — each producing a single `chm` band:
 meta = ff.grids.create_canopy_height_grid_from_meta(domain, output_resolution_m=1)
 naip = ff.grids.create_canopy_height_grid_from_naip_chm(domain, output_resolution_m=1)
 ```
+
+To rasterize a completed airborne point cloud into the same `chm` band, pass
+the point cloud directly. The output defaults to 1 m cells:
+
+```python
+chm = ff.grids.create_canopy_height_grid_from_point_cloud(point_cloud)
+chm.wait()
+```
+
+Use `output_resolution_m` or `align_to` to choose a different lattice. See the
+[Point clouds guide](point-clouds.md#create-a-point-cloud-from-usgs-3dep) to
+create an airborne point cloud from USGS 3DEP.
 
 !!! tip "NAIP-CHM is a surface model"
     NAIP-CHM is a digital surface model and retains buildings and other
@@ -237,6 +295,57 @@ before voxelizing (see
 
 For the concepts behind plot imputation and voxelization, see the
 [FastFuels documentation](https://docs.fastfuels.silvxlabs.com).
+
+### Derive surface fuels with DUET
+
+To create a two-dimensional DUET surface-fuel grid, include the three DUET
+input bands when voxelizing the inventory:
+
+```python
+voxels = inventory.voxelize(
+    horizontal_resolution_m=2,
+    vertical_resolution_m=1,
+    bands=[
+        "bulk_density.foliage.live",
+        "spcd",
+        "fuel_moisture.live",
+    ],
+)
+voxels.wait()
+```
+
+Build calibration targets from ordinary mappings, then pass them with the
+output bands and time since fire:
+
+```python
+calibration = ff.duet_calibration(
+    fuel_load={
+        "grass": {"mean": 0.5, "sd": 0.25},
+        "litter": {"max": 5, "min": 0},
+    },
+    fuel_depth={
+        "grass": {"value": 0.3},
+        "litter": {"value": 0.06},
+    },
+)
+
+surface = ff.grids.create_surface_fuel_grid_from_duet(
+    voxels,
+    years_since_burn=25,
+    bands=[
+        "fuel_load.grass",
+        "fuel_load.litter",
+        "fuel_depth.grass",
+        "fuel_depth.litter",
+    ],
+    calibration=calibration,
+)
+surface.wait()
+```
+
+Use a `value` target to set every occupied cell to a constant, `max` with an
+optional `min` to scale by extrema, or `mean` and `sd` to scale by moments.
+Omit `calibration` only when you want the raw DUET values.
 
 ## Uniform grids
 

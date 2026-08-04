@@ -5,15 +5,16 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.create_domain_request_body import CreateDomainRequestBody
 from ...models.domain import Domain
+from ...models.geo_json_feature_collection import GeoJsonFeatureCollection
 from ...models.http_validation_error import HTTPValidationError
+from ...models.quota_exceeded_detail import QuotaExceededDetail
 from ...types import Response
 
 
 def _get_kwargs(
     *,
-    body: CreateDomainRequestBody,
+    body: GeoJsonFeatureCollection,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -32,7 +33,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Domain | HTTPValidationError | None:
+) -> Domain | HTTPValidationError | QuotaExceededDetail | None:
     if response.status_code == 201:
         response_201 = Domain.from_dict(response.json())
 
@@ -43,6 +44,11 @@ def _parse_response(
 
         return response_422
 
+    if response.status_code == 429:
+        response_429 = QuotaExceededDetail.from_dict(response.json())
+
+        return response_429
+
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
@@ -51,7 +57,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Domain | HTTPValidationError]:
+) -> Response[Domain | HTTPValidationError | QuotaExceededDetail]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -63,8 +69,8 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    body: CreateDomainRequestBody,
-) -> Response[Domain | HTTPValidationError]:
+    body: GeoJsonFeatureCollection,
+) -> Response[Domain | HTTPValidationError | QuotaExceededDetail]:
     r"""Create a new domain
 
      # Create Domain Endpoint
@@ -128,12 +134,10 @@ def sync_detailed(
     - **modified_on**: (datetime) When the domain was last modified.
     - **tags**: (array) The tags associated with the domain.
     - **crs**: (object) The coordinate reference system (always projected).
-    - **features**: (array) Two named features:
-      - **`name: \"domain\"`** — A polygon covering the working extent (bounding
-        box of the input, possibly padded). This is what griddle, standgen,
-        and exporter use as the authoritative spatial extent.
-      - **`name: \"input\"`** — The user's original projected geometry, preserved
-        for visualization and reference.
+    - **features**: (array) A single feature named `\"domain\"` — a polygon
+      covering the working extent (bounding box of the input, possibly
+      padded). This is what griddle, standgen, and exporter use as the
+      authoritative spatial extent.
     - **bbox**: (array) Standard GeoJSON bbox `[minx, miny, maxx, maxy]` in the
       domain's projected CRS. Equals the bounds of the \"domain\" feature.
     - **pad_to_resolution**: (number, optional) The padding value, if set.
@@ -166,10 +170,10 @@ def sync_detailed(
        FeatureCollection input, not individual Feature objects. Wrap single
        features in a FeatureCollection.
 
-    2. **Two-Feature Output**: The created domain stores two named features:
-       a \"domain\" feature (bounding box, the working extent used by all
-       downstream services) and an \"input\" feature (the user's original
-       polygon, preserved for visualization).
+    2. **Working-Extent Output**: The created domain stores a single \"domain\"
+       feature — the bounding box of the input geometry, which is the working
+       extent used by all downstream services. The submitted geometry itself
+       is not stored.
 
     3. **Projection**: Geographic coordinates are always projected to a suitable
        UTM zone for accurate area calculations and grid operations.
@@ -186,14 +190,14 @@ def sync_detailed(
       - \"Invalid spatial extent. The domain must be entirely within CONUS.\"
 
     Args:
-        body (CreateDomainRequestBody):
+        body (GeoJsonFeatureCollection):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Domain | HTTPValidationError]
+        Response[Domain | HTTPValidationError | QuotaExceededDetail]
     """
 
     kwargs = _get_kwargs(
@@ -210,8 +214,8 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
-    body: CreateDomainRequestBody,
-) -> Domain | HTTPValidationError | None:
+    body: GeoJsonFeatureCollection,
+) -> Domain | HTTPValidationError | QuotaExceededDetail | None:
     r"""Create a new domain
 
      # Create Domain Endpoint
@@ -275,12 +279,10 @@ def sync(
     - **modified_on**: (datetime) When the domain was last modified.
     - **tags**: (array) The tags associated with the domain.
     - **crs**: (object) The coordinate reference system (always projected).
-    - **features**: (array) Two named features:
-      - **`name: \"domain\"`** — A polygon covering the working extent (bounding
-        box of the input, possibly padded). This is what griddle, standgen,
-        and exporter use as the authoritative spatial extent.
-      - **`name: \"input\"`** — The user's original projected geometry, preserved
-        for visualization and reference.
+    - **features**: (array) A single feature named `\"domain\"` — a polygon
+      covering the working extent (bounding box of the input, possibly
+      padded). This is what griddle, standgen, and exporter use as the
+      authoritative spatial extent.
     - **bbox**: (array) Standard GeoJSON bbox `[minx, miny, maxx, maxy]` in the
       domain's projected CRS. Equals the bounds of the \"domain\" feature.
     - **pad_to_resolution**: (number, optional) The padding value, if set.
@@ -313,10 +315,10 @@ def sync(
        FeatureCollection input, not individual Feature objects. Wrap single
        features in a FeatureCollection.
 
-    2. **Two-Feature Output**: The created domain stores two named features:
-       a \"domain\" feature (bounding box, the working extent used by all
-       downstream services) and an \"input\" feature (the user's original
-       polygon, preserved for visualization).
+    2. **Working-Extent Output**: The created domain stores a single \"domain\"
+       feature — the bounding box of the input geometry, which is the working
+       extent used by all downstream services. The submitted geometry itself
+       is not stored.
 
     3. **Projection**: Geographic coordinates are always projected to a suitable
        UTM zone for accurate area calculations and grid operations.
@@ -333,14 +335,14 @@ def sync(
       - \"Invalid spatial extent. The domain must be entirely within CONUS.\"
 
     Args:
-        body (CreateDomainRequestBody):
+        body (GeoJsonFeatureCollection):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Domain | HTTPValidationError
+        Domain | HTTPValidationError | QuotaExceededDetail
     """
 
     return sync_detailed(
@@ -352,8 +354,8 @@ def sync(
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    body: CreateDomainRequestBody,
-) -> Response[Domain | HTTPValidationError]:
+    body: GeoJsonFeatureCollection,
+) -> Response[Domain | HTTPValidationError | QuotaExceededDetail]:
     r"""Create a new domain
 
      # Create Domain Endpoint
@@ -417,12 +419,10 @@ async def asyncio_detailed(
     - **modified_on**: (datetime) When the domain was last modified.
     - **tags**: (array) The tags associated with the domain.
     - **crs**: (object) The coordinate reference system (always projected).
-    - **features**: (array) Two named features:
-      - **`name: \"domain\"`** — A polygon covering the working extent (bounding
-        box of the input, possibly padded). This is what griddle, standgen,
-        and exporter use as the authoritative spatial extent.
-      - **`name: \"input\"`** — The user's original projected geometry, preserved
-        for visualization and reference.
+    - **features**: (array) A single feature named `\"domain\"` — a polygon
+      covering the working extent (bounding box of the input, possibly
+      padded). This is what griddle, standgen, and exporter use as the
+      authoritative spatial extent.
     - **bbox**: (array) Standard GeoJSON bbox `[minx, miny, maxx, maxy]` in the
       domain's projected CRS. Equals the bounds of the \"domain\" feature.
     - **pad_to_resolution**: (number, optional) The padding value, if set.
@@ -455,10 +455,10 @@ async def asyncio_detailed(
        FeatureCollection input, not individual Feature objects. Wrap single
        features in a FeatureCollection.
 
-    2. **Two-Feature Output**: The created domain stores two named features:
-       a \"domain\" feature (bounding box, the working extent used by all
-       downstream services) and an \"input\" feature (the user's original
-       polygon, preserved for visualization).
+    2. **Working-Extent Output**: The created domain stores a single \"domain\"
+       feature — the bounding box of the input geometry, which is the working
+       extent used by all downstream services. The submitted geometry itself
+       is not stored.
 
     3. **Projection**: Geographic coordinates are always projected to a suitable
        UTM zone for accurate area calculations and grid operations.
@@ -475,14 +475,14 @@ async def asyncio_detailed(
       - \"Invalid spatial extent. The domain must be entirely within CONUS.\"
 
     Args:
-        body (CreateDomainRequestBody):
+        body (GeoJsonFeatureCollection):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Domain | HTTPValidationError]
+        Response[Domain | HTTPValidationError | QuotaExceededDetail]
     """
 
     kwargs = _get_kwargs(
@@ -497,8 +497,8 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
-    body: CreateDomainRequestBody,
-) -> Domain | HTTPValidationError | None:
+    body: GeoJsonFeatureCollection,
+) -> Domain | HTTPValidationError | QuotaExceededDetail | None:
     r"""Create a new domain
 
      # Create Domain Endpoint
@@ -562,12 +562,10 @@ async def asyncio(
     - **modified_on**: (datetime) When the domain was last modified.
     - **tags**: (array) The tags associated with the domain.
     - **crs**: (object) The coordinate reference system (always projected).
-    - **features**: (array) Two named features:
-      - **`name: \"domain\"`** — A polygon covering the working extent (bounding
-        box of the input, possibly padded). This is what griddle, standgen,
-        and exporter use as the authoritative spatial extent.
-      - **`name: \"input\"`** — The user's original projected geometry, preserved
-        for visualization and reference.
+    - **features**: (array) A single feature named `\"domain\"` — a polygon
+      covering the working extent (bounding box of the input, possibly
+      padded). This is what griddle, standgen, and exporter use as the
+      authoritative spatial extent.
     - **bbox**: (array) Standard GeoJSON bbox `[minx, miny, maxx, maxy]` in the
       domain's projected CRS. Equals the bounds of the \"domain\" feature.
     - **pad_to_resolution**: (number, optional) The padding value, if set.
@@ -600,10 +598,10 @@ async def asyncio(
        FeatureCollection input, not individual Feature objects. Wrap single
        features in a FeatureCollection.
 
-    2. **Two-Feature Output**: The created domain stores two named features:
-       a \"domain\" feature (bounding box, the working extent used by all
-       downstream services) and an \"input\" feature (the user's original
-       polygon, preserved for visualization).
+    2. **Working-Extent Output**: The created domain stores a single \"domain\"
+       feature — the bounding box of the input geometry, which is the working
+       extent used by all downstream services. The submitted geometry itself
+       is not stored.
 
     3. **Projection**: Geographic coordinates are always projected to a suitable
        UTM zone for accurate area calculations and grid operations.
@@ -620,14 +618,14 @@ async def asyncio(
       - \"Invalid spatial extent. The domain must be entirely within CONUS.\"
 
     Args:
-        body (CreateDomainRequestBody):
+        body (GeoJsonFeatureCollection):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Domain | HTTPValidationError
+        Domain | HTTPValidationError | QuotaExceededDetail
     """
 
     return (

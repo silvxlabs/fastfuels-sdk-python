@@ -2,12 +2,18 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+    from ..models.application_quota_overrides_type_0 import (
+        ApplicationQuotaOverridesType0,
+    )
+
 
 T = TypeVar("T", bound="Application")
 
@@ -23,6 +29,9 @@ class Application:
         description (None | str | Unset): Description of the application.
         created_on (datetime.datetime | Unset): When the application was created.
         modified_on (datetime.datetime | Unset): When the application was last modified.
+        tier (None | str | Unset): Quota tier for the application. Set by the FastFuels team.
+        quota_overrides (ApplicationQuotaOverridesType0 | None | Unset): Per-application quota overrides. Set by the
+            FastFuels team.
     """
 
     id: str
@@ -31,9 +40,15 @@ class Application:
     description: None | str | Unset = UNSET
     created_on: datetime.datetime | Unset = UNSET
     modified_on: datetime.datetime | Unset = UNSET
+    tier: None | str | Unset = UNSET
+    quota_overrides: ApplicationQuotaOverridesType0 | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.application_quota_overrides_type_0 import (
+            ApplicationQuotaOverridesType0,
+        )
+
         id = self.id
 
         owner_id = self.owner_id
@@ -54,6 +69,20 @@ class Application:
         if not isinstance(self.modified_on, Unset):
             modified_on = self.modified_on.isoformat()
 
+        tier: None | str | Unset
+        if isinstance(self.tier, Unset):
+            tier = UNSET
+        else:
+            tier = self.tier
+
+        quota_overrides: dict[str, Any] | None | Unset
+        if isinstance(self.quota_overrides, Unset):
+            quota_overrides = UNSET
+        elif isinstance(self.quota_overrides, ApplicationQuotaOverridesType0):
+            quota_overrides = self.quota_overrides.to_dict()
+        else:
+            quota_overrides = self.quota_overrides
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -69,11 +98,19 @@ class Application:
             field_dict["created_on"] = created_on
         if modified_on is not UNSET:
             field_dict["modified_on"] = modified_on
+        if tier is not UNSET:
+            field_dict["tier"] = tier
+        if quota_overrides is not UNSET:
+            field_dict["quota_overrides"] = quota_overrides
 
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
+        from ..models.application_quota_overrides_type_0 import (
+            ApplicationQuotaOverridesType0,
+        )
+
         d = dict(src_dict)
         id = d.pop("id")
 
@@ -104,6 +141,34 @@ class Application:
         else:
             modified_on = datetime.datetime.fromisoformat(_modified_on)
 
+        def _parse_tier(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        tier = _parse_tier(d.pop("tier", UNSET))
+
+        def _parse_quota_overrides(
+            data: object,
+        ) -> ApplicationQuotaOverridesType0 | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                quota_overrides_type_0 = ApplicationQuotaOverridesType0.from_dict(data)
+
+                return quota_overrides_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(ApplicationQuotaOverridesType0 | None | Unset, data)
+
+        quota_overrides = _parse_quota_overrides(d.pop("quota_overrides", UNSET))
+
         application = cls(
             id=id,
             owner_id=owner_id,
@@ -111,6 +176,8 @@ class Application:
             description=description,
             created_on=created_on,
             modified_on=modified_on,
+            tier=tier,
+            quota_overrides=quota_overrides,
         )
 
         application.additional_properties = d

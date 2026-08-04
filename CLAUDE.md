@@ -5,6 +5,18 @@
 Do NOT add "Co-Authored-By: Claude", "Generated with Claude Code", or any other
 AI-attribution lines to commit messages, PR descriptions, or GitHub issues.
 
+## Live API testing
+
+- Local live-test credentials are stored in the repository-root `.env`, which
+  is ignored by Git. The SDK authenticates with the `FASTFUELS_API_KEY` value
+  from that file.
+- Before running live tests, load `.env` into the current shell without
+  printing its contents: `set -a; source .env; set +a`.
+- Check and load `.env` before concluding that live API credentials are
+  unavailable or asking the user to provide them.
+- Never print, stage, commit, or copy credential values from `.env` into code,
+  documentation, logs, commit messages, pull requests, or issues.
+
 ## Documentation
 
 FastFuels has two documentation properties that must stay in concert:

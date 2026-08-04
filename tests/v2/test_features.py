@@ -248,10 +248,6 @@ class TestListFeatures:
         features = list_features(test_domain, tag="layerset-test")
         assert [feature.id for feature in features] == [layerset_feature.id]
 
-    @pytest.mark.xfail(
-        reason="v2 API returns 500 for feature sort_by combinations; "
-        "see FastFuels-API-v2#321",
-    )
     def test_sorting(self, test_domain, layerset_feature):
         features = list_features(
             test_domain, sort_by="created_on", sort_order="descending"

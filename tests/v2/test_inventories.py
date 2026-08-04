@@ -4,10 +4,11 @@ tests/v2/test_inventories.py
 
 # Core imports
 import json
+from http import HTTPStatus
+from types import SimpleNamespace
 from uuid import uuid4
 
 # Internal imports
-from fastfuels_sdk.v2._jobs import JobFailedError
 from fastfuels_sdk.v2.grids import Grid
 from fastfuels_sdk.v2.inventories import (
     Inventory,
@@ -20,14 +21,26 @@ from fastfuels_sdk.v2.inventories import (
 from fastfuels_sdk.v2.treatments import basal_area_treatment, diameter_treatment
 from fastfuels_sdk.v2.modifications import remove_trees, tree_attribute
 from fastfuels_sdk.v2.client_library.models import (
+    CategoricalColumnSummary,
+    Column,
+    ColumnType,
+    ContinuousColumnSummary,
+    FIASpeciesGroupShare,
+    Inventory as InventoryModel,
     InventoryAttribute,
+    InventoryDataResponse,
+    InventoryJsonOrientation,
     InventoryModification,
     InventoryModificationAction,
     InventoryModificationCondition,
+    InventorySource,
+    InventoryType,
     JobStatus,
     Modifier,
     Operator,
+    TreeForestryMetrics,
 )
+from fastfuels_sdk.v2.client_library.types import UNSET, Response
 from fastfuels_sdk.v2.exceptions import NotFoundException
 
 # External imports
@@ -73,6 +86,145 @@ class TestCreateTreeInventoryFromPimGrid:
         assert completed_tree_inventory.status == JobStatus.COMPLETED
         assert completed_tree_inventory.georeference is not None
         assert completed_tree_inventory.checksum
+
+
+class TestForestryMetrics:
+    @staticmethod
+    def _model(forestry_metrics=UNSET):
+        return InventoryModel(
+            id="inventory-id",
+            domain_id="domain-id",
+            type_=InventoryType.TREE,
+            status=JobStatus.COMPLETED,
+            source=InventorySource(),
+            forestry_metrics=forestry_metrics,
+        )
+
+    def test_wraps_metrics_record(self):
+        metrics = TreeForestryMetrics(
+            type_="tree",
+            tree_count=120,
+            basal_area_per_area=87.5,
+            tree_density=240.0,
+            quadratic_mean_diameter=9.4,
+            dominant_species_groups=[
+                FIASpeciesGroupShare(
+                    spgrpcd=3,
+                    name="Douglas-fir",
+                    basal_area_share=0.62,
+                )
+            ],
+        )
+
+        inventory = Inventory._from_model(self._model(metrics))
+
+        assert isinstance(inventory.forestry_metrics, TreeForestryMetrics)
+        assert inventory.forestry_metrics.tree_count == 120
+        assert inventory.forestry_metrics.dominant_species_groups[0].spgrpcd == 3
+
+    def test_normalizes_missing_metrics_to_none(self):
+        inventory = Inventory._from_model(self._model())
+
+        assert inventory.forestry_metrics is None
+
+    def test_completed_inventory_metrics_live(self, completed_tree_inventory):
+        metrics = completed_tree_inventory.forestry_metrics
+
+        assert isinstance(metrics, TreeForestryMetrics)
+        assert metrics.type_ == "tree"
+        assert (
+            metrics.tree_count
+            == completed_tree_inventory.get_data_metadata().total_rows
+        )
+        assert metrics.basal_area_per_area > 0
+        assert metrics.tree_density > 0
+        assert metrics.quadratic_mean_diameter > 0
+        assert len(metrics.dominant_species_groups) > 0
+        assert [
+            group.basal_area_share for group in metrics.dominant_species_groups
+        ] == (
+            sorted(
+                (group.basal_area_share for group in metrics.dominant_species_groups),
+                reverse=True,
+            )
+        )
+
+
+class TestColumnSummary:
+    @staticmethod
+    def _inventory_with_column(column):
+        return Inventory(
+            id="inventory-id",
+            domain_id="domain-id",
+            type_=InventoryType.TREE,
+            status=JobStatus.COMPLETED,
+            source=InventorySource(),
+            columns=[column],
+        )
+
+    def test_returns_continuous_summary(self):
+        summary = ContinuousColumnSummary(
+            type_="continuous",
+            count=10,
+            null_count=0,
+            min_=1.0,
+            max_=5.0,
+            mean=3.0,
+            std=1.0,
+        )
+        inventory = self._inventory_with_column(
+            Column(key="dbh", type_=ColumnType.CONTINUOUS, summary=summary)
+        )
+
+        assert inventory.column_summary("dbh") is summary
+        assert inventory.column_summary("dbh").mean == 3.0
+
+    def test_returns_categorical_summary(self):
+        summary = CategoricalColumnSummary(
+            type_="categorical", count=10, null_count=1, unique_count=3
+        )
+        inventory = self._inventory_with_column(
+            Column(
+                key="fia_species_code",
+                type_=ColumnType.CATEGORICAL,
+                summary=summary,
+            )
+        )
+
+        assert inventory.column_summary("fia_species_code") is summary
+        assert inventory.column_summary("fia_species_code").unique_count == 3
+
+    def test_none_when_not_computed(self):
+        inventory = self._inventory_with_column(
+            Column(key="dbh", type_=ColumnType.CONTINUOUS)
+        )
+
+        assert inventory.column_summary("dbh") is None
+
+    def test_unknown_column_raises(self):
+        inventory = self._inventory_with_column(
+            Column(key="dbh", type_=ColumnType.CONTINUOUS)
+        )
+
+        with pytest.raises(ValueError, match="no column"):
+            inventory.column_summary("height")
+
+    def test_summaries_live(self, completed_tree_inventory):
+        dbh = completed_tree_inventory.column_summary("dbh")
+        species = completed_tree_inventory.column_summary("fia_species_code")
+        tree_count = completed_tree_inventory.get_data_metadata().total_rows
+
+        assert isinstance(dbh, ContinuousColumnSummary)
+        assert dbh.type_ == "continuous"
+        assert dbh.count == tree_count
+        assert dbh.null_count == 0
+        assert dbh.mean > 0
+
+        assert isinstance(species, CategoricalColumnSummary)
+        assert species.type_ == "categorical"
+        assert species.count == tree_count
+        assert species.null_count == 0
+        assert species.unique_count > 0
 
 
 class TestCreateTreeInventoryFromFile:
@@ -191,17 +343,8 @@ class TestDuplicate:
 
 
 class TestApplyModifications:
-    @pytest.mark.xfail(
-        reason="v2 API bug: the in-place modifications job fails at the save "
-        "step (module-level gcsfs client is not fork-safe in standgen) — "
-        "FastFuels-API-v2#333",
-        raises=JobFailedError,
-        strict=True,
-    )
-    def test_apply_modifications_rederives_in_place(self, completed_tree_inventory):
-        # Mutating, so work on a duplicate — the shared fixture is read-only
-        copy = completed_tree_inventory.duplicate(name="modify_test")
-        copy.wait()
+    def test_apply_modifications_rederives_in_place(self, throwaway_inventory):
+        copy = throwaway_inventory
         # Rules need at least one condition; height > 0 matches every tree
         modification = InventoryModification(
             conditions=[
@@ -224,11 +367,13 @@ class TestApplyModifications:
         modified = copy.apply_modifications([modification])
 
         assert modified is copy  # in place: same object, same id
-        assert len(copy.modifications) == 1
+        assert copy.status == JobStatus.PENDING
+        assert copy.modifications == []  # ledger grows only after completion
+        assert copy.checksum != original_checksum  # rotates at dispatch
         copy.wait()
         assert copy.status == JobStatus.COMPLETED
+        assert len(copy.modifications) == 1
         assert copy.checksum != original_checksum  # data was re-derived
-        copy.delete()
 
     def test_requires_completed_source(self, test_domain, completed_pim_grid):
         inventory = create_tree_inventory_from_pim_grid(
@@ -243,20 +388,20 @@ class TestApplyModifications:
 
 
 class TestApplyTreatments:
-    def test_apply_treatments_rederives_in_place(self, completed_tree_inventory):
-        # Mutating, so work on a duplicate — the shared fixture is read-only
-        copy = completed_tree_inventory.duplicate(name="treat_test")
-        copy.wait()
+    def test_apply_treatments_rederives_in_place(self, throwaway_inventory):
+        copy = throwaway_inventory
         original_checksum = copy.checksum
 
         treated = copy.apply_treatments([basal_area_treatment("from_below", 25.0)])
 
         assert treated is copy  # in place: same object, same id
-        assert len(copy.treatments) == 1
+        assert copy.status == JobStatus.PENDING
+        assert copy.treatments == []  # ledger grows only after completion
+        assert copy.checksum != original_checksum  # rotates at dispatch
         copy.wait()
         assert copy.status == JobStatus.COMPLETED
+        assert len(copy.treatments) == 1
         assert copy.checksum != original_checksum  # data was re-derived
-        copy.delete()
 
     def test_requires_completed_source(self, test_domain, completed_pim_grid):
         inventory = create_tree_inventory_from_pim_grid(
@@ -274,9 +419,9 @@ class TestModificationBuilders:
     def test_remove_trees_at_creation(
         self, test_domain, completed_pim_grid, completed_tree_inventory
     ):
-        # In-place apply_modifications is #333-blocked, so verify the builders
-        # via the create-time path (which works). Same seed as the unmodified
-        # fixture, so removing dbh < 10 must yield strictly fewer trees.
+        # Verify the builders independently through the create-time path. Use
+        # the same seed as the unmodified fixture so removing dbh < 10 must
+        # yield strictly fewer trees.
         modified = create_tree_inventory_from_pim_grid(
             test_domain,
             completed_pim_grid,
@@ -339,6 +484,113 @@ class TestExport:
 
 
 class TestInventoryData:
+    @staticmethod
+    def _inventory():
+        return Inventory(
+            id="inventory-id",
+            domain_id="domain-id",
+            type_=InventoryType.TREE,
+            status=JobStatus.COMPLETED,
+            source=InventorySource(),
+        )
+
+    def test_get_data_partition_passes_json_orientation(self, monkeypatch):
+        captured = {}
+
+        def fake_get(domain_id, inventory_id, partition_index, **kwargs):
+            captured.update(
+                domain_id=domain_id,
+                inventory_id=inventory_id,
+                partition_index=partition_index,
+                **kwargs,
+            )
+            return Response(
+                status_code=HTTPStatus.OK,
+                content=b"",
+                headers={},
+                parsed=InventoryDataResponse(
+                    partition=partition_index,
+                    num_rows=1,
+                    columns=["height"],
+                    data=[{"height": 12.0}],
+                ),
+            )
+
+        client = object()
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.ensure_client", lambda: client
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.get_inventory_data_json.sync_detailed",
+            fake_get,
+        )
+
+        partition = self._inventory().get_data_partition(
+            2, columns=["height"], json_orientation="records"
+        )
+
+        assert partition.data == [{"height": 12.0}]
+        assert captured == {
+            "domain_id": "domain-id",
+            "inventory_id": "inventory-id",
+            "partition_index": 2,
+            "client": client,
+            "json_orientation": InventoryJsonOrientation.RECORDS,
+            "columns": "height",
+        }
+
+    def test_get_data_partition_rejects_invalid_orientation(self):
+        with pytest.raises(ValueError, match="not a valid InventoryJsonOrientation"):
+            self._inventory().get_data_partition(0, json_orientation="columns")
+
+    def test_to_dataframe_uses_csv_partitions(self, monkeypatch):
+        inventory = self._inventory()
+        metadata = SimpleNamespace(
+            num_partitions=2, total_rows=3, columns=["x", "height"]
+        )
+        csv_partitions = [
+            "x,height\n1.0,10.0\n2.0,20.0\n",
+            "x,height\n3.0,30.0\n",
+        ]
+        captured = []
+
+        def fake_csv(domain_id, inventory_id, partition_index, **kwargs):
+            captured.append((domain_id, inventory_id, partition_index, kwargs))
+            return Response(
+                status_code=HTTPStatus.OK,
+                content=csv_partitions[partition_index].encode(),
+                headers={},
+                parsed=csv_partitions[partition_index],
+            )
+
+        def fail_json(*args, **kwargs):
+            raise AssertionError("to_dataframe must use the CSV endpoint")
+
+        client = object()
+        monkeypatch.setattr(inventory, "get_data_metadata", lambda: metadata)
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.ensure_client", lambda: client
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.get_inventory_data_csv.sync_detailed",
+            fake_csv,
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.get_inventory_data_json.sync_detailed",
+            fail_json,
+        )
+
+        trees = inventory.to_dataframe(columns=["x", "height"])
+
+        assert trees.to_dict(orient="list") == {
+            "x": [1.0, 2.0, 3.0],
+            "height": [10.0, 20.0, 30.0],
+        }
+        assert [call[2] for call in captured] == [0, 1]
+        assert all(
+            call[3] == {"client": client, "columns": "x,height"} for call in captured
+        )
+
     def test_get_data_metadata(self, completed_tree_inventory):
         metadata = completed_tree_inventory.get_data_metadata()
         assert metadata.inventory_id == completed_tree_inventory.id
@@ -356,6 +608,15 @@ class TestInventoryData:
         assert set(partition.columns) <= set(metadata.columns)
         assert "height" in partition.columns
         assert len(partition.data) == partition.num_rows
+
+    def test_get_data_partition_records(self, completed_tree_inventory):
+        partition = completed_tree_inventory.get_data_partition(
+            0, columns=["height"], json_orientation="records"
+        )
+
+        assert partition.columns == ["height"]
+        assert len(partition.data) == partition.num_rows
+        assert set(partition.data[0]) == {"height"}
 
     def test_to_dataframe(self, completed_tree_inventory):
         metadata = completed_tree_inventory.get_data_metadata()

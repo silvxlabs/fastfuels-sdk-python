@@ -10,6 +10,7 @@ class TreeBand(str, Enum):
     BULK_DENSITY_FOLIAGE_LIVE = "bulk_density.foliage.live"
     FUEL_MOISTURE_DEAD = "fuel_moisture.dead"
     FUEL_MOISTURE_LIVE = "fuel_moisture.live"
+    LEAF_AREA_DENSITY = "leaf_area_density"
     SAVR_FOLIAGE = "savr.foliage"
     SPCD = "spcd"
     TREE_ID = "tree_id"

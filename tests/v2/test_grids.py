@@ -6,11 +6,13 @@ tests/v2/test_grids.py
 import inspect
 import json
 import math
+from http import HTTPStatus
 from types import SimpleNamespace
 from uuid import uuid4
 
 # Internal imports
 from fastfuels_sdk.v2 import grids
+from fastfuels_sdk.v2.calibrations import duet_calibration
 from fastfuels_sdk.v2.grids import (
     Grid,
     _build_alignment,
@@ -23,11 +25,16 @@ from fastfuels_sdk.v2.grids import (
     create_canopy_fuel_grid_from_landfire,
     create_canopy_height_grid_from_meta,
     create_canopy_height_grid_from_naip_chm,
+    create_canopy_height_grid_from_point_cloud,
+    create_fuel_grid_from_fccs_lookup,
+    create_fuel_grid_from_fbfm13_lookup,
     create_fuel_grid_from_fbfm40_lookup,
+    create_fuel_model_grid_from_landfire_fbfm13,
     create_fuel_model_grid_from_landfire_fbfm40,
     create_fuel_model_grid_from_landfire_fccs,
     create_grid_from_geotiff,
     create_pim_grid_from_treemap,
+    create_surface_fuel_grid_from_duet,
     create_topography_grid_from_3dep,
     create_topography_grid_from_landfire,
     create_uniform_grid,
@@ -40,6 +47,9 @@ from fastfuels_sdk.v2.client_library.models import (
     Band,
     BandType,
     ContinuousBandSummary,
+    DuetBand,
+    FccsLookupBand,
+    Fbfm13LookupBand,
     GridAlignmentDomainTarget,
     GridAlignmentGridTarget,
     GridAlignmentNativeTarget,
@@ -52,11 +62,12 @@ from fastfuels_sdk.v2.client_library.models import (
     JobStatus,
     Modifier,
     Operator,
+    PointCloudType,
     ResamplingMethod,
     TopographyBand,
     UploadBandDefinition,
 )
-from fastfuels_sdk.v2.client_library.types import UNSET
+from fastfuels_sdk.v2.client_library.types import UNSET, Response
 from fastfuels_sdk.v2.exceptions import NotFoundException, expect
 from fastfuels_sdk.v2.modifications import mask
 
@@ -250,6 +261,237 @@ class TestCreateCanopyHeightGridFromNaipChm:
         grid.delete()
 
 
+class TestCreateCanopyHeightGridFromPointCloud:
+    @staticmethod
+    def _point_cloud(status=JobStatus.COMPLETED, type_=PointCloudType.ALS):
+        return SimpleNamespace(
+            id="pc-id",
+            domain_id="domain-id",
+            status=status,
+            type_=type_,
+        )
+
+    def test_builds_request_from_completed_als_cloud(self, monkeypatch):
+        created = Grid(
+            id="grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[Band(key="chm", type_=BandType.CONTINUOUS, index=0, unit="m")],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_point_cloud_chm,
+            "sync_detailed",
+            fake_create,
+        )
+
+        grid = create_canopy_height_grid_from_point_cloud(
+            self._point_cloud(),
+            output_resolution_m=2,
+            name="Point-cloud CHM",
+        )
+
+        assert isinstance(grid, Grid)
+        assert grid.id == "grid-id"
+        assert captured["domain_id"] == "domain-id"
+        assert captured["client"] is client
+        assert captured["body"].source_point_cloud_id == "pc-id"
+        assert captured["body"].alignment.resolution == 2
+        assert captured["body"].name == "Point-cloud CHM"
+
+    def test_requires_completed_cloud(self):
+        with pytest.raises(ValueError, match="must be completed"):
+            create_canopy_height_grid_from_point_cloud(
+                self._point_cloud(status=JobStatus.PENDING)
+            )
+
+    def test_requires_airborne_cloud(self):
+        with pytest.raises(ValueError, match="airborne"):
+            create_canopy_height_grid_from_point_cloud(
+                self._point_cloud(type_=PointCloudType.TLS)
+            )
+
+
+class TestCreateSurfaceFuelGridFromDuet:
+    @staticmethod
+    def _source_grid(
+        status=JobStatus.COMPLETED,
+        omit=None,
+    ):
+        required = [
+            ("bulk_density.foliage.live", BandType.CONTINUOUS),
+            ("spcd", BandType.CATEGORICAL),
+            ("fuel_moisture.live", BandType.CONTINUOUS),
+        ]
+        return Grid(
+            id="tree-grid-id",
+            domain_id="domain-id",
+            status=status,
+            source=GridSource(),
+            bands=[
+                Band(key=key, type_=type_, index=index)
+                for index, (key, type_) in enumerate(required)
+                if key != omit
+            ],
+        )
+
+    def test_builds_request_from_completed_tree_grid(self, monkeypatch):
+        created = Grid(
+            id="duet-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        calibration = duet_calibration(fuel_load={"grass": {"mean": 0.5, "sd": 0.25}})
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_duet_grid,
+            "sync_detailed",
+            fake_create,
+        )
+
+        grid = create_surface_fuel_grid_from_duet(
+            self._source_grid(),
+            years_since_burn=20,
+            wind_direction=225,
+            wind_variability=45,
+            bands=["fuel_load.grass", DuetBand.FUEL_LOAD_LITTER],
+            calibration=calibration,
+            name="DUET surface fuels",
+            tags=["test"],
+        )
+
+        assert grid.id == "duet-grid-id"
+        assert captured["domain_id"] == "domain-id"
+        assert captured["client"] is client
+        assert captured["body"].source_grid_id == "tree-grid-id"
+        assert captured["body"].years_since_burn == 20
+        assert captured["body"].wind_direction == 225
+        assert captured["body"].wind_variability == 45
+        assert captured["body"].bands == [
+            DuetBand.FUEL_LOAD_GRASS,
+            DuetBand.FUEL_LOAD_LITTER,
+        ]
+        assert captured["body"].calibration is calibration
+        assert captured["body"].name == "DUET surface fuels"
+        assert captured["body"].tags == ["test"]
+
+    def test_requires_completed_tree_grid(self):
+        with pytest.raises(ValueError, match=r"Call \.wait\(\)"):
+            create_surface_fuel_grid_from_duet(
+                self._source_grid(status=JobStatus.PENDING),
+                years_since_burn=20,
+            )
+
+    def test_requires_duet_source_bands(self):
+        with pytest.raises(ValueError, match="fuel_moisture.live"):
+            create_surface_fuel_grid_from_duet(
+                self._source_grid(omit="fuel_moisture.live"),
+                years_since_burn=20,
+            )
+
+    @pytest.mark.parametrize(
+        "kwargs,error",
+        [
+            ({"years_since_burn": 0}, ValueError),
+            ({"years_since_burn": 101}, ValueError),
+            ({"years_since_burn": 1.5}, TypeError),
+            ({"years_since_burn": 20, "wind_direction": 360}, ValueError),
+            ({"years_since_burn": 20, "wind_variability": 181}, ValueError),
+            ({"years_since_burn": 20, "bands": []}, ValueError),
+            (
+                {
+                    "years_since_burn": 20,
+                    "bands": ["fuel_load.grass", "fuel_load.grass"],
+                },
+                ValueError,
+            ),
+        ],
+    )
+    def test_validates_request_parameters(self, kwargs, error):
+        with pytest.raises(error):
+            create_surface_fuel_grid_from_duet(self._source_grid(), **kwargs)
+
+    def test_create_live(self, completed_tree_inventory):
+        voxels = completed_tree_inventory.voxelize(
+            horizontal_resolution_m=2,
+            vertical_resolution_m=1,
+            bands=[
+                "bulk_density.foliage.live",
+                "spcd",
+                "fuel_moisture.live",
+            ],
+            name="test_duet_source",
+            tags=["test"],
+        )
+        surface = None
+        try:
+            voxels.wait()
+            surface = create_surface_fuel_grid_from_duet(
+                voxels,
+                years_since_burn=25,
+                bands=[
+                    "fuel_load.grass",
+                    "fuel_load.litter",
+                    "fuel_depth.grass",
+                    "fuel_depth.litter",
+                ],
+                calibration=duet_calibration(
+                    fuel_load={
+                        "grass": {"mean": 0.5, "sd": 0.25},
+                        "litter": {"max": 5, "min": 0},
+                    },
+                    fuel_depth={
+                        "grass": {"value": 0.3},
+                        "litter": {"value": 0.06},
+                    },
+                ),
+                name="test_duet_surface_fuels",
+                tags=["test"],
+            )
+            surface.wait()
+            assert surface.status == JobStatus.COMPLETED
+            assert {band.key for band in surface.bands} == {
+                "fuel_load.grass",
+                "fuel_load.litter",
+                "fuel_depth.grass",
+                "fuel_depth.litter",
+            }
+            grass_load = surface.to_numpy("fuel_load.grass")
+            assert grass_load.ndim == 2
+            assert np.isfinite(grass_load).any()
+        finally:
+            if surface is not None:
+                surface.delete()
+            voxels.delete()
+
+
 class TestCreateFuelModelGridFromLandfireFbfm40:
     def test_create(self, test_domain):
         # remove_non_burnable exercises the string -> enum list coercion
@@ -263,6 +505,58 @@ class TestCreateFuelModelGridFromLandfireFbfm40:
         assert grid.domain_id == test_domain.id
         assert grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
         grid.delete()
+
+
+class TestCreateFuelModelGridFromLandfireFbfm13:
+    def test_builds_request(self, monkeypatch):
+        created = Grid(
+            id="fbfm13-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_landfire_fbfm13,
+            "sync_detailed",
+            fake_create,
+        )
+
+        grid = create_fuel_model_grid_from_landfire_fbfm13(
+            SimpleNamespace(id="domain-id"),
+            version="2024",
+            remove_non_burnable=["NB1", "NB2"],
+            output_resolution_m=30,
+            name="Anderson 13",
+        )
+
+        assert grid.id == "fbfm13-grid-id"
+        assert captured["domain_id"] == "domain-id"
+        assert captured["client"] is client
+        assert captured["body"].version.value == "2024"
+        assert [value.value for value in captured["body"].remove_non_burnable] == [
+            "NB1",
+            "NB2",
+        ]
+        assert captured["body"].alignment.resolution == 30
+        assert captured["body"].name == "Anderson 13"
+
+    def test_completed_fixture(self, completed_fbfm13_grid):
+        assert completed_fbfm13_grid.status == JobStatus.COMPLETED
+        assert [band.key for band in completed_fbfm13_grid.bands] == ["fbfm13"]
 
 
 class TestMask:
@@ -586,6 +880,173 @@ class TestFbfm40Lookup:
             )
 
 
+class TestFbfm13Lookup:
+    @staticmethod
+    def _source(status=JobStatus.COMPLETED, band="fbfm13"):
+        return Grid(
+            id="fbfm13-grid-id",
+            domain_id="domain-id",
+            status=status,
+            source=GridSource(),
+            bands=[Band(key=band, type_=BandType.CATEGORICAL, index=0)],
+        )
+
+    def test_builds_request(self, monkeypatch):
+        created = Grid(
+            id="fuel-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_fbfm13_lookup,
+            "sync_detailed",
+            fake_create,
+        )
+
+        result = create_fuel_grid_from_fbfm13_lookup(
+            self._source(),
+            bands=["fuel_load.1hr", Fbfm13LookupBand.FUEL_DEPTH],
+            name="Anderson fuel parameters",
+        )
+
+        assert result.id == "fuel-grid-id"
+        assert captured["body"].source_grid_id == "fbfm13-grid-id"
+        assert captured["body"].source_band == "fbfm13"
+        assert captured["body"].bands == [
+            Fbfm13LookupBand.FUEL_LOAD_1HR,
+            Fbfm13LookupBand.FUEL_DEPTH,
+        ]
+        assert captured["body"].name == "Anderson fuel parameters"
+
+    def test_lookup_returns_new_pending_grid(self, completed_fbfm13_grid):
+        fuel_grid = create_fuel_grid_from_fbfm13_lookup(
+            completed_fbfm13_grid,
+            bands=["fuel_load.1hr", "fuel_depth"],
+            name="throwaway_fbfm13_lookup",
+        )
+        assert fuel_grid.id != completed_fbfm13_grid.id
+        assert fuel_grid.domain_id == completed_fbfm13_grid.domain_id
+        assert fuel_grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
+        fuel_grid.delete()
+
+    def test_requires_completed_source(self):
+        with pytest.raises(ValueError, match="look up fuel"):
+            create_fuel_grid_from_fbfm13_lookup(
+                self._source(status=JobStatus.PENDING),
+                bands=["fuel_load.1hr"],
+            )
+
+    def test_rejects_non_fbfm13_grid(self):
+        with pytest.raises(ValueError, match="fbfm13"):
+            create_fuel_grid_from_fbfm13_lookup(
+                self._source(band="elevation"),
+                bands=["fuel_load.1hr"],
+            )
+
+
+class TestFccsLookup:
+    @staticmethod
+    def _source(status=JobStatus.COMPLETED, band="fccs"):
+        return Grid(
+            id="fccs-grid-id",
+            domain_id="domain-id",
+            status=status,
+            source=GridSource(),
+            bands=[Band(key=band, type_=BandType.CATEGORICAL, index=0)],
+        )
+
+    def test_builds_request(self, monkeypatch):
+        created = Grid(
+            id="fuel-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_fccs_lookup,
+            "sync_detailed",
+            fake_create,
+        )
+
+        result = create_fuel_grid_from_fccs_lookup(
+            self._source(),
+            bands=["fuel_load.duff", FccsLookupBand.DUFF_DEPTH],
+            name="FCCS fuel parameters",
+            tags=["test"],
+        )
+
+        assert result.id == "fuel-grid-id"
+        assert captured["domain_id"] == "domain-id"
+        assert captured["client"] is client
+        assert captured["body"].source_grid_id == "fccs-grid-id"
+        assert captured["body"].source_band == "fccs"
+        assert captured["body"].bands == [
+            FccsLookupBand.FUEL_LOAD_DUFF,
+            FccsLookupBand.DUFF_DEPTH,
+        ]
+        assert captured["body"].name == "FCCS fuel parameters"
+        assert captured["body"].tags == ["test"]
+
+    def test_lookup_returns_new_pending_grid(self, completed_fccs_grid):
+        fuel_grid = create_fuel_grid_from_fccs_lookup(
+            completed_fccs_grid,
+            bands=[
+                "fuel_load.litter",
+                "fuel_load.duff",
+                "duff_depth",
+                "fuel_load.live_shrub",
+            ],
+            name="throwaway_fccs_lookup",
+        )
+        assert fuel_grid.id != completed_fccs_grid.id
+        assert fuel_grid.domain_id == completed_fccs_grid.domain_id
+        assert fuel_grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
+        fuel_grid.delete()
+
+    def test_requires_completed_source(self):
+        with pytest.raises(ValueError, match="look up fuel"):
+            create_fuel_grid_from_fccs_lookup(
+                self._source(status=JobStatus.PENDING),
+                bands=["fuel_load.duff"],
+            )
+
+    def test_rejects_non_fccs_grid(self):
+        with pytest.raises(ValueError, match="fccs"):
+            create_fuel_grid_from_fccs_lookup(
+                self._source(band="elevation"),
+                bands=["fuel_load.duff"],
+            )
+
+
 class TestExport:
     def test_export_returns_pending_export(self, completed_topography_grid):
         # Topography is 2D, so a GeoTIFF export is valid
@@ -613,9 +1074,25 @@ class TestListGrids:
         assert completed_topography_grid.id in grid_ids
 
     def test_list_cross_domain(self, completed_topography_grid):
-        # No domain: list grids across all the user's domains
-        grid_ids = [grid.id for grid in list_grids()]
-        assert completed_topography_grid.id in grid_ids
+        # No domain: list grids across all the user's domains. The SDK returns
+        # one page at a time, so search subsequent pages when the account has
+        # more than the default page size of 100 grids.
+        for page in range(100):
+            grids = list_grids(
+                page=page,
+                size=100,
+                sort_by="created_on",
+                sort_order="descending",
+            )
+            if completed_topography_grid.id in [grid.id for grid in grids]:
+                return
+            if len(grids) < 100:
+                break
+
+        pytest.fail(
+            f"Grid {completed_topography_grid.id} was not found in the "
+            "cross-domain grid pages."
+        )
 
     def test_filter_by_tag(self, test_domain, completed_topography_grid):
         grids_with_tag = list_grids(test_domain, tag="test")

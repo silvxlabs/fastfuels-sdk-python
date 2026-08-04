@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from typing import (
     Any,
     Literal,
+    Self,
     TypeVar,
     cast,
 )
@@ -32,7 +33,9 @@ class QUICFireExportAlignmentDomainTarget:
                 Default: 2.0.
             dy (float | Unset): Horizontal fire-grid cell size in y (UTM north-south), in meters. Must equal `dx` — non-
                 square fire-grid cells are not supported. Default: 2.0.
-            dz (float | Unset): Vertical fire-grid cell size, in meters. QUIC-Fire recommends 1 m. Default: 1.0.
+            dz (float | Unset): Vertical fire-grid cell size, in meters. QUIC-Fire recommends 1 m. Must equal the 3D tree
+                grid's voxelization vertical resolution (`resolution.vertical`): the exporter never resamples vertically, so a
+                mismatch is rejected with 422 rather than silently applied. Default: 1.0.
     """
 
     target: Literal["domain"] | Unset = "domain"
@@ -65,7 +68,7 @@ class QUICFireExportAlignmentDomainTarget:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         d = dict(src_dict)
         target = cast(Literal["domain"] | Unset, d.pop("target", UNSET))
         if target != "domain" and not isinstance(target, Unset):

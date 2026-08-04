@@ -45,3 +45,7 @@ from fastfuels_sdk.v2 import Domain   # v2 (Beta)
 ```
 
 Coming from v1? Start with [Migrating from v1](guides/migration.md).
+
+The SDK authenticates with an existing API key. Creating applications and
+creating, rotating, or revoking keys are account-management operations handled
+outside the high-level Python SDK through the FastFuels console.

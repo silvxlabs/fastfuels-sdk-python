@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -142,9 +142,9 @@ class Grid:
         georeference: dict[str, Any] | None | Unset
         if isinstance(self.georeference, Unset):
             georeference = UNSET
-        elif isinstance(self.georeference, Georeference):
-            georeference = self.georeference.to_dict()
-        elif isinstance(self.georeference, Georeference3D):
+        elif isinstance(self.georeference, Georeference) or isinstance(
+            self.georeference, Georeference3D
+        ):
             georeference = self.georeference.to_dict()
         else:
             georeference = self.georeference
@@ -206,7 +206,7 @@ class Grid:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.band import Band
         from ..models.chunks import Chunks
         from ..models.georeference import Georeference
