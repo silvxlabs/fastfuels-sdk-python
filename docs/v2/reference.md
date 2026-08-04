@@ -16,6 +16,8 @@
 
 ::: fastfuels_sdk.v2.calibrations
 
+::: fastfuels_sdk.v2.compose
+
 ::: fastfuels_sdk.v2._jobs
 
 ::: fastfuels_sdk.v2.api

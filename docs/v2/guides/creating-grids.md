@@ -200,6 +200,9 @@ FCCS takes the same alignment arguments as the other source grids
 (`output_resolution_m`, `align_to`, `align`, `resampling`) — see
 [Align grids to each other](#align-grids-to-each-other).
 
+To select and calculate bands across one or more completed grids, see
+[Compose grids](composing-grids.md).
+
 ## Canopy grids
 
 For crown-fire inputs, `create_canopy_fuel_grid_from_landfire` produces the

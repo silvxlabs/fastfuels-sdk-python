@@ -4,6 +4,8 @@ fastfuels_sdk/v2/grids.py
 
 # Core imports
 import json
+import re
+from collections.abc import Mapping
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
@@ -16,6 +18,7 @@ from fastfuels_sdk.v2.client_library.api.grids import (
     apply_grid_modifications as apply_grid_modifications_endpoint,
     check_3dep_coverage as check_3dep_coverage_endpoint,
     create_3dep_topography,
+    create_compose_grid,
     create_duet_grid,
     create_fccs_lookup,
     create_fbfm13_lookup,
@@ -45,7 +48,13 @@ from fastfuels_sdk.v2.client_library.api.grids import (
 from fastfuels_sdk.v2.client_library.models import (
     Grid as GridModel,
     ApplyGridModificationsRequest,
+    ComposeAttributeCondition,
+    ComposeCompute,
+    ComposeInput,
+    ComposeLiteral,
+    ComposeSelect,
     CreateDuetRequest,
+    CreateComposeRequest,
     CreateFccsLookupRequest,
     CreateFbfm13LookupRequest,
     CreateFbfm40LookupRequest,
@@ -77,6 +86,7 @@ from fastfuels_sdk.v2.client_library.models import (
     GridDataOrder,
     GridExportFormat,
     GridSortField,
+    InlineCompute,
     JobStatus,
     LandfireCanopyFuelBand,
     LandfireCanopyVersion,
@@ -120,6 +130,7 @@ __all__ = [
     "create_pim_grid_from_treemap",
     "create_grid_from_geotiff",
     "create_grid_from_netcdf",
+    "create_grid_from_compose",
     "create_uniform_grid",
     "create_surface_fuel_grid_from_duet",
     "create_fuel_grid_from_fccs_lookup",
@@ -1674,6 +1685,191 @@ def create_uniform_grid(
         _domain_id(domain), client=ensure_client(), body=request_body
     )
     return Grid._from_model(expect(response, HTTPStatus.CREATED))
+
+
+def create_grid_from_compose(
+    inputs: Mapping[str, "Grid"],
+    *,
+    select: Optional[list] = None,
+    compute: Optional[list] = None,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    modifications: Optional[list] = None,
+) -> Grid:
+    """Create a grid by selecting and computing bands from aligned grids.
+
+    Parameters
+    ----------
+    inputs : mapping of str to Grid
+        Alias-to-grid mapping for completed, aligned 2D grids in one domain.
+        Operations refer to their bands as ``"alias.band_key"``.
+    select : list of ComposeSelect, optional
+        Bands to copy, built with :func:`fastfuels_sdk.v2.compose.select`.
+    compute : list of ComposeCompute, optional
+        Bands to calculate, built with
+        :func:`fastfuels_sdk.v2.compose.compute`.
+    name, description : str, optional
+        Metadata for the new grid.
+    tags : List[str], optional
+        Tags for the new grid.
+    modifications : list, optional
+        Modification rules applied after the grid is composed.
+
+    Returns
+    -------
+    Grid
+        The new pending composed Grid.
+
+    Raises
+    ------
+    TypeError
+        If inputs or operations have the wrong shape.
+    ValueError
+        If inputs are empty, incomplete, duplicated, or from different
+        domains; if aliases or band references are invalid; or if operation
+        outputs are empty or duplicated.
+
+    Examples
+    --------
+    >>> import fastfuels_sdk.v2 as ff
+    >>> composed = ff.grids.create_grid_from_compose(
+    ...     {"fuels": fuel_grid},
+    ...     select=[ff.compose.select("fuel_depth", "fuels.fuel_depth")],
+    ...     compute=[
+    ...         ff.compose.compute(
+    ...             "fuel_load.1hr",
+    ...             "multiply",
+    ...             ["fuels.fuel_load.1hr", 0.5],
+    ...         )
+    ...     ],
+    ... )
+    >>> composed.wait()
+    """
+    if not isinstance(inputs, Mapping):
+        raise TypeError("inputs must be an alias-to-Grid mapping.")
+    if not inputs:
+        raise ValueError("inputs must contain at least one aliased Grid.")
+
+    compose_inputs = []
+    grids_by_alias = {}
+    seen_grid_ids = set()
+    domain_id = None
+    for alias, grid in inputs.items():
+        if (
+            not isinstance(alias, str)
+            or re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", alias) is None
+        ):
+            raise ValueError(
+                f"Invalid compose alias {alias!r}; aliases must start with a "
+                "letter and contain only letters, numbers, and underscores."
+            )
+        if not isinstance(grid, Grid):
+            raise TypeError(f"Compose input {alias!r} must be a Grid object.")
+        grid._require_completed("compose")
+        if grid.id in seen_grid_ids:
+            raise ValueError(f"Grid {grid.id!r} is assigned more than one alias.")
+        if domain_id is None:
+            domain_id = grid.domain_id
+        elif grid.domain_id != domain_id:
+            raise ValueError("All compose input grids must belong to the same domain.")
+        seen_grid_ids.add(grid.id)
+        grids_by_alias[alias] = grid
+        compose_inputs.append(ComposeInput(grid_id=grid.id, alias=alias))
+
+    select_operations = _compose_operations(select, ComposeSelect, "select")
+    compute_operations = _compose_operations(compute, ComposeCompute, "compute")
+    operations = [*select_operations, *compute_operations]
+    if not operations:
+        raise ValueError("At least one select or compute operation is required.")
+    outputs = [operation.output for operation in operations]
+    if any(not isinstance(output, str) or not output for output in outputs):
+        raise ValueError("Every compose operation requires a nonempty output band.")
+    duplicates = sorted({output for output in outputs if outputs.count(output) > 1})
+    if duplicates:
+        raise ValueError(f"Compose output bands must be unique: {duplicates}.")
+    for operation in operations:
+        _validate_compose_references(operation, grids_by_alias)
+
+    request_body = CreateComposeRequest(
+        inputs=compose_inputs,
+        select=select_operations if select_operations else UNSET,
+        compute=compute_operations if compute_operations else UNSET,
+        name=name,
+        description=description,
+        tags=_opt(tags),
+        modifications=_opt(modifications),
+    )
+    response = create_compose_grid.sync_detailed(
+        domain_id,
+        client=ensure_client(),
+        body=request_body,
+    )
+    return Grid._from_model(expect(response, HTTPStatus.CREATED))
+
+
+def _compose_operations(value, model_type, name: str) -> list:
+    """Normalize and type-check one compose operation collection."""
+    if value is None:
+        return []
+    if isinstance(value, model_type):
+        raise TypeError(f"{name} must be a list of {model_type.__name__} objects.")
+    try:
+        operations = list(value)
+    except TypeError:
+        raise TypeError(
+            f"{name} must be a list of {model_type.__name__} objects."
+        ) from None
+    if not all(isinstance(operation, model_type) for operation in operations):
+        raise TypeError(f"{name} must contain only {model_type.__name__} objects.")
+    return operations
+
+
+def _validate_compose_references(operation, grids_by_alias) -> None:
+    """Catch alias and band typos before dispatching a compose request."""
+    if isinstance(operation, ComposeSelect):
+        _validate_compose_reference(operation.from_, grids_by_alias)
+    else:
+        _validate_compose_operands(operation.operands, grids_by_alias)
+
+    conditions = operation.conditions
+    if conditions is not UNSET and conditions is not None:
+        for condition in conditions:
+            if isinstance(condition, ComposeAttributeCondition):
+                _validate_compose_reference(condition.band, grids_by_alias)
+
+    else_value = operation.else_
+    if (
+        else_value is UNSET
+        or else_value is None
+        or isinstance(else_value, ComposeLiteral)
+    ):
+        return
+    if isinstance(else_value, InlineCompute):
+        _validate_compose_operands(else_value.operands, grids_by_alias)
+    elif isinstance(else_value, str) and "." in else_value:
+        _validate_compose_reference(else_value, grids_by_alias)
+
+
+def _validate_compose_operands(operands, grids_by_alias) -> None:
+    for operand in operands:
+        if isinstance(operand, str):
+            _validate_compose_reference(operand, grids_by_alias)
+
+
+def _validate_compose_reference(reference: str, grids_by_alias) -> None:
+    alias, separator, band_key = reference.partition(".")
+    if not separator or alias not in grids_by_alias or not band_key:
+        raise ValueError(
+            f"Unknown compose band reference {reference!r}; use "
+            "'alias.band_key' with an alias from inputs."
+        )
+    available = [band.key for band in grids_by_alias[alias].bands]
+    if band_key not in available:
+        raise ValueError(
+            f"Grid {grids_by_alias[alias].id} has no {band_key!r} band for "
+            f"compose alias {alias!r}. Available bands: {available}."
+        )
 
 
 # ---------------------------------------------------------------------------

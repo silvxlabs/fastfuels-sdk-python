@@ -18,7 +18,14 @@ package namespace::
   ``ff.list_grids``, ``ff.wait_all``, ``ff.set_api_key``.
 """
 
-from fastfuels_sdk.v2 import exports, features, grids, inventories, point_clouds
+from fastfuels_sdk.v2 import (
+    compose,
+    exports,
+    features,
+    grids,
+    inventories,
+    point_clouds,
+)
 from fastfuels_sdk.v2._jobs import JobFailedError, wait_all
 from fastfuels_sdk.v2.api import get_quotas, get_usage, set_api_key
 from fastfuels_sdk.v2.calibrations import duet_calibration
@@ -43,6 +50,7 @@ from fastfuels_sdk.v2.treatments import basal_area_treatment, diameter_treatment
 
 __all__ = [
     # Submodules (resource creators live here: ff.grids.create_*, ff.features.create_*)
+    "compose",
     "exports",
     "features",
     "grids",

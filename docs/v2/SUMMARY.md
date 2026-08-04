@@ -7,6 +7,7 @@
     * [Features](guides/features.md)
     * Grids
         * [Creating grids](guides/creating-grids.md)
+        * [Composing grids](guides/composing-grids.md)
         * [Working with grids](guides/working-with-grids.md)
     * [Inventories](guides/inventories.md)
     * [Modify and treat inventories](guides/modify-treat-inventories.md)
