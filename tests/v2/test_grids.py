@@ -1074,9 +1074,25 @@ class TestListGrids:
         assert completed_topography_grid.id in grid_ids
 
     def test_list_cross_domain(self, completed_topography_grid):
-        # No domain: list grids across all the user's domains
-        grid_ids = [grid.id for grid in list_grids()]
-        assert completed_topography_grid.id in grid_ids
+        # No domain: list grids across all the user's domains. The SDK returns
+        # one page at a time, so search subsequent pages when the account has
+        # more than the default page size of 100 grids.
+        for page in range(100):
+            grids = list_grids(
+                page=page,
+                size=100,
+                sort_by="created_on",
+                sort_order="descending",
+            )
+            if completed_topography_grid.id in [grid.id for grid in grids]:
+                return
+            if len(grids) < 100:
+                break
+
+        pytest.fail(
+            f"Grid {completed_topography_grid.id} was not found in the "
+            "cross-domain grid pages."
+        )
 
     def test_filter_by_tag(self, test_domain, completed_topography_grid):
         grids_with_tag = list_grids(test_domain, tag="test")
