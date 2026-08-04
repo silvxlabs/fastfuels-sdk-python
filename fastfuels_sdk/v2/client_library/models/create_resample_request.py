@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -70,9 +70,9 @@ class CreateResampleRequest:
         alignment: dict[str, Any] | Unset
         if isinstance(self.alignment, Unset):
             alignment = UNSET
-        elif isinstance(self.alignment, GridAlignmentDomainTarget):
-            alignment = self.alignment.to_dict()
-        elif isinstance(self.alignment, GridAlignmentNativeTarget):
+        elif isinstance(self.alignment, GridAlignmentDomainTarget) or isinstance(
+            self.alignment, GridAlignmentNativeTarget
+        ):
             alignment = self.alignment.to_dict()
         else:
             alignment = self.alignment.to_dict()
@@ -119,7 +119,7 @@ class CreateResampleRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.create_resample_request_method_overrides import (
             CreateResampleRequestMethodOverrides,
         )

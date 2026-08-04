@@ -255,3 +255,94 @@ later merges). Each new resource/endpoint kept to the settled rules above.
 - **Uploads** — one shared `_uploads.put_upload(spec, path)` echoes the
   server's signed `spec.headers` verbatim; replaced the two divergent
   `_put_upload` copies (grids had been missing the GCS content-length-range).
+
+## Post-regen backlog (2026-08-04)
+
+Client re-synced against the live spec: 94 operations, 236 schemas. 19
+operations have no SDK surface. Ordered by what unblocks a user workflow.
+
+### Breaking (landed with the regen)
+
+- `get_inventory_data` split into `get_inventory_data_json` (adds
+  `json_orientation`) and `get_inventory_data_csv`; `InventoryDataFormat` is
+  gone. `Inventory.get_data_partition` now calls the JSON variant — behavior
+  unchanged. The CSV variant is unused (see *data out* below).
+- Second spec title collision — the point cloud and topography 3DEP
+  pre-flight responses are both titled `ThreeDepCoverageResponse`, which
+  silently dropped the point cloud coverage endpoint from the client.
+  `generate_client.sh` now re-titles the point cloud one to
+  `PointCloudThreeDepCoverageResponse`, alongside the `Feature` patch.
+  Same long-term fix: re-title in FastFuels-API-v2 so the spec is clean.
+
+### Quotas — cross-cutting, affects every creator
+
+41 of 94 operations can now return **429** with a structured
+`QuotaExceededDetail` (`quota`, `current`, `limit`, `window_reset_on`).
+`exceptions.py` has no 429 mapping, so today it degrades to a bare
+`ApiException`. Needs a `QuotaExceededException` carrying those fields —
+`window_reset_on` is what a caller retries on.
+
+- `ff.get_quotas()` / `ff.get_usage()` ← `users/me`, `users/me/usage`
+  (`Quotas`, `Usage` per resource type: active/total counts, storage bytes,
+  weekly dispatch windows, TTL policy). Top-level functions: owner-scoped,
+  no held resource.
+
+### New resource sources
+
+- **3DEP point clouds** — `ff.point_clouds.create_point_cloud_from_3dep(
+  domain, datasets=)` + `ff.point_clouds.check_3dep_coverage(domain)`
+  (returns `available`, `coverage_fraction`, `estimated_point_count`,
+  `point_budget`, `exceeds_point_budget`, per-acquisition `datasets`).
+  Mirrors the existing `grids.check_3dep_coverage` pre-flight pattern; this
+  is the first non-upload point cloud source.
+- **Point cloud → CHM** — `ff.grids.create_canopy_height_grid_from_point_cloud(
+  point_cloud, ...)`. First consumer of a point cloud, which closes the
+  3DEP → CHM → tree inventory chain entirely inside the SDK.
+
+### New grid creators
+
+- **DUET** — `ff.grids.create_surface_fuel_grid_from_duet(source_grid,
+  years_since_burn=, wind_direction=, wind_variability=, bands=,
+  calibration=)`. Needs a `duet_calibration(...)` builder in the
+  `modifications.py`/`treatments.py` family: `DuetCalibration` nests
+  fuel_load/fuel_depth/fuel_moisture → per-fuel-type
+  (grass/coniferous/deciduous/litter/all) targets in three shapes
+  (constant / max-min / mean-sd).
+- **FBFM13** — `create_fuel_model_grid_from_landfire_fbfm13` (version
+  2023/2024, `remove_non_burnable=`) and
+  `create_fuel_grid_from_fbfm13_lookup` (9 bands), matching the FBFM40 pair.
+- **FCCS lookup** — `create_fuel_grid_from_fccs_lookup` (12 bands incl. duff
+  and live components). The FCCS *source* creator exists; the lookup that
+  turns it into fuel parameters does not.
+- **Compose** — `create_grid_from_compose(inputs, select=, compute=)`: grid
+  algebra over aliased input bands (`add`/`subtract`/`multiply`/`divide`/
+  `min`/`max`/`average`, conditional `select` with `else_`). The largest
+  design question in this batch — it is a small DSL, not a creator with
+  kwargs, and it needs builders to be usable from Python.
+
+### New export
+
+- **Landscape (LCP)** — `ff.exports.create_landscape_export(...)`: 8-band
+  FlamMap/IFTDSS/WFDSS GeoTIFF assembled from 8 named
+  `LandscapeFieldSource` (grid_id + band) plus `fire_behavior_fuel_model`
+  (fbfm13/fbfm40) and alignment. Assembled-from-many → function, same shape
+  as `create_quicfire_export`.
+
+### Records and data out
+
+- `Inventory.forestry_metrics` — new `TreeForestryMetrics` on the inventory
+  record (tree_count, basal area/acre, TPA, QMD, dominant FIA species
+  groups). Read-only accessor; the parallel of `Grid.band_summary`.
+- `Inventory.column_summary(column)` — `Column.summary` is new
+  (categorical/continuous), exactly mirroring `Band.summary`; reuse the
+  `band_summary` shape.
+- `Inventory.to_dataframe` should fetch CSV partitions and `pd.read_csv`
+  them instead of rebuilding frames from JSON row lists.
+- `get_chunk_metadata` / `get_grid_data_json` stay unwrapped — the binary
+  chunk path already covers `to_numpy`/`to_xarray`.
+
+### Account management (unwrapped, lowest priority)
+
+`applications` (6) and `keys` (4) are entirely unwrapped. These are console
+concerns; wrap only if the SDK is meant to provision its own credentials.
+`Application` gained `tier`/`quota_overrides`.

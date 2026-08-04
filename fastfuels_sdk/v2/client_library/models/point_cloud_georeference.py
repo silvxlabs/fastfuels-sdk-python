@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, cast
+from typing import Any, Self, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -18,7 +18,9 @@ class PointCloudGeoreference:
 
         Attributes:
             crs (str): Coordinate reference system the points are stored in, as an authority code (e.g. `EPSG:32613`). This
-                is always the domain's CRS: uploads in a different CRS are reprojected during ingestion.
+                is always the domain's CRS: uploads in a different CRS are reprojected during ingestion. Only horizontal
+                coordinates are transformed — elevations are stored exactly as the source provided them and are never converted
+                between reference surfaces.
             bounds (list[float]): Axis-aligned 3D bounding box of every point, given as `[min_x, min_y, min_z, max_x, max_y,
                 max_z]` in the units of `crs`. Point clouds are three-dimensional, so the box includes a vertical (z) extent.
                 Use it to check coverage against a domain before deriving products from the cloud.
@@ -49,7 +51,7 @@ class PointCloudGeoreference:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         d = dict(src_dict)
         crs = d.pop("crs")
 

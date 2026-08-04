@@ -24,7 +24,7 @@ from fastfuels_sdk.v2.client_library.api.inventories import (
     delete_inventory,
     duplicate_inventory as duplicate_inventory_endpoint,
     get_inventory as get_inventory_endpoint,
-    get_inventory_data,
+    get_inventory_data_json,
     get_inventory_data_metadata,
     list_inventories as list_inventories_endpoint,
     list_inventories_cross_domain,
@@ -679,7 +679,7 @@ class Inventory(InventoryModel):
         >>> partition.num_rows
         1392
         """
-        response = get_inventory_data.sync_detailed(
+        response = get_inventory_data_json.sync_detailed(
             self.domain_id,
             self.id,
             partition_index,

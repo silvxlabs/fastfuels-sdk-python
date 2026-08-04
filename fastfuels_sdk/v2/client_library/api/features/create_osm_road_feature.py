@@ -9,6 +9,7 @@ from ...client import AuthenticatedClient, Client
 from ...models.create_osm_road_feature_request import CreateOsmRoadFeatureRequest
 from ...models.feature import Feature
 from ...models.http_validation_error import HTTPValidationError
+from ...models.quota_exceeded_detail import QuotaExceededDetail
 from ...types import Response
 
 
@@ -36,7 +37,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Feature | HTTPValidationError | None:
+) -> Feature | HTTPValidationError | QuotaExceededDetail | None:
     if response.status_code == 201:
         response_201 = Feature.from_dict(response.json())
 
@@ -47,6 +48,11 @@ def _parse_response(
 
         return response_422
 
+    if response.status_code == 429:
+        response_429 = QuotaExceededDetail.from_dict(response.json())
+
+        return response_429
+
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
@@ -55,7 +61,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Feature | HTTPValidationError]:
+) -> Response[Feature | HTTPValidationError | QuotaExceededDetail]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -69,7 +75,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: CreateOsmRoadFeatureRequest,
-) -> Response[Feature | HTTPValidationError]:
+) -> Response[Feature | HTTPValidationError | QuotaExceededDetail]:
     r"""Create a road feature from OpenStreetMap
 
      # Create OSM Road Feature
@@ -113,7 +119,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Feature | HTTPValidationError]
+        Response[Feature | HTTPValidationError | QuotaExceededDetail]
     """
 
     kwargs = _get_kwargs(
@@ -133,7 +139,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: CreateOsmRoadFeatureRequest,
-) -> Feature | HTTPValidationError | None:
+) -> Feature | HTTPValidationError | QuotaExceededDetail | None:
     r"""Create a road feature from OpenStreetMap
 
      # Create OSM Road Feature
@@ -177,7 +183,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Feature | HTTPValidationError
+        Feature | HTTPValidationError | QuotaExceededDetail
     """
 
     return sync_detailed(
@@ -192,7 +198,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: CreateOsmRoadFeatureRequest,
-) -> Response[Feature | HTTPValidationError]:
+) -> Response[Feature | HTTPValidationError | QuotaExceededDetail]:
     r"""Create a road feature from OpenStreetMap
 
      # Create OSM Road Feature
@@ -236,7 +242,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Feature | HTTPValidationError]
+        Response[Feature | HTTPValidationError | QuotaExceededDetail]
     """
 
     kwargs = _get_kwargs(
@@ -254,7 +260,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: CreateOsmRoadFeatureRequest,
-) -> Feature | HTTPValidationError | None:
+) -> Feature | HTTPValidationError | QuotaExceededDetail | None:
     r"""Create a road feature from OpenStreetMap
 
      # Create OSM Road Feature
@@ -298,7 +304,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Feature | HTTPValidationError
+        Feature | HTTPValidationError | QuotaExceededDetail
     """
 
     return (

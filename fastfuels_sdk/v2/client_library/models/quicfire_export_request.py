@@ -5,6 +5,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Literal,
+    Self,
     TypeVar,
     cast,
 )
@@ -42,6 +43,17 @@ class QuicfireExportRequest:
     fire grid and cover its full extent; otherwise the request is rejected.
     The exporter only crops oversized roles by integer slicing — it never
     resamples or reprojects.
+
+    The output resolution is set here, on the export, via `alignment.dx`/`dy`
+    (default 2 m, QUIC-Fire's recommended value). It is a separate setting
+    from the resolution of each grid you built — changing your grids does not
+    change the export, and vice versa. Because the exporter never resamples,
+    every role grid must already be built at the fire-grid resolution. To
+    export at 1 m, for example, set `dx`/`dy` to 1 and build all role grids at
+    1 m (2D grids at 1 m via their `alignment.resolution`, and the 3D tree
+    grid at 1 m via `resolution.horizontal` — 3D grids cannot be resampled).
+    The same holds vertically: `alignment.dz` must equal the 3D tree grid's
+    `resolution.vertical`, or the request is rejected with 422.
 
         Attributes:
             canopy_bulk_density (FieldSource): A single physical quantity drawn from one band on one grid.
@@ -227,7 +239,7 @@ class QuicfireExportRequest:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.field_source import FieldSource
         from ..models.quic_fire_export_alignment_domain_target import (
             QUICFireExportAlignmentDomainTarget,

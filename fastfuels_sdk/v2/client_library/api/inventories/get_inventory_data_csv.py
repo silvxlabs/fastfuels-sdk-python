@@ -7,9 +7,6 @@ import httpx
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
-from ...models.inventory_data_format import InventoryDataFormat
-from ...models.inventory_data_response import InventoryDataResponse
-from ...models.inventory_json_orientation import InventoryJsonOrientation
 from ...types import UNSET, Response, Unset
 
 
@@ -18,24 +15,10 @@ def _get_kwargs(
     inventory_id: str,
     partition_index: int,
     *,
-    format_: InventoryDataFormat | Unset = UNSET,
-    json_orientation: InventoryJsonOrientation | Unset = UNSET,
     columns: None | str | Unset = UNSET,
 ) -> dict[str, Any]:
 
     params: dict[str, Any] = {}
-
-    json_format_: str | Unset = UNSET
-    if not isinstance(format_, Unset):
-        json_format_ = format_.value
-
-    params["format"] = json_format_
-
-    json_json_orientation: str | Unset = UNSET
-    if not isinstance(json_orientation, Unset):
-        json_json_orientation = json_orientation.value
-
-    params["json_orientation"] = json_json_orientation
 
     json_columns: None | str | Unset
     if isinstance(columns, Unset):
@@ -48,7 +31,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/domains/{domain_id}/inventories/{inventory_id}/data/{partition_index}".format(
+        "url": "/domains/{domain_id}/inventories/{inventory_id}/data/{partition_index}/csv".format(
             domain_id=quote(str(domain_id), safe=""),
             inventory_id=quote(str(inventory_id), safe=""),
             partition_index=quote(str(partition_index), safe=""),
@@ -61,10 +44,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> HTTPValidationError | InventoryDataResponse | None:
+) -> HTTPValidationError | str | None:
     if response.status_code == 200:
-        response_200 = InventoryDataResponse.from_dict(response.json())
-
+        response_200 = response.text
         return response_200
 
     if response.status_code == 422:
@@ -80,7 +62,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[HTTPValidationError | InventoryDataResponse]:
+) -> Response[HTTPValidationError | str]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -95,16 +77,18 @@ def sync_detailed(
     partition_index: int,
     *,
     client: AuthenticatedClient,
-    format_: InventoryDataFormat | Unset = UNSET,
-    json_orientation: InventoryJsonOrientation | Unset = UNSET,
     columns: None | str | Unset = UNSET,
-) -> Response[HTTPValidationError | InventoryDataResponse]:
-    """Get inventory data for a partition
+) -> Response[HTTPValidationError | str]:
+    """Get inventory data for a partition (CSV)
 
-     # Get Inventory Data
+     # Get Inventory Data (CSV)
 
-    Reads a single partition of a completed inventory's Parquet data on GCS.
-    Returns the tree records as JSON (split or records orientation) or CSV.
+    Reads a single partition of a completed inventory's Parquet data on GCS and
+    returns the tree records as a `text/csv` body with a header row. Use this
+    when you want to hand the response straight to a CSV reader.
+
+    For a structured JSON payload, use the JSON variant of this endpoint (drop
+    the trailing `/csv`).
 
     ## Path Parameters
 
@@ -114,19 +98,16 @@ def sync_detailed(
 
     ## Query Parameters
 
-    - **format**: Response format: `json` (default) or `csv`.
-    - **json_orientation**: JSON layout: `split` (default, compact) or
-      `records` (self-describing). Ignored for CSV.
     - **columns**: Comma-separated column subset (default: all).
 
     ## Response
 
-    **JSON split** (default): column names + 2D array of values.
+    A `text/csv` body, with partition metadata in these response headers:
 
-    **JSON records**: list of row objects.
-
-    **CSV**: `text/csv` body with metadata in response headers
-    `X-Partition-Index`, `X-Row-Count`, `X-Total-Rows`, `X-Num-Partitions`.
+    - `X-Partition-Index`: the partition this body came from.
+    - `X-Row-Count`: rows in this partition.
+    - `X-Total-Rows`: rows across all partitions of the inventory.
+    - `X-Num-Partitions`: total number of partitions.
 
     ## Error Responses
 
@@ -138,8 +119,6 @@ def sync_detailed(
         domain_id (str):
         inventory_id (str):
         partition_index (int): Zero-based partition index.
-        format_ (InventoryDataFormat | Unset):
-        json_orientation (InventoryJsonOrientation | Unset):
         columns (None | str | Unset): Comma-separated column subset.
 
     Raises:
@@ -147,15 +126,13 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | InventoryDataResponse]
+        Response[HTTPValidationError | str]
     """
 
     kwargs = _get_kwargs(
         domain_id=domain_id,
         inventory_id=inventory_id,
         partition_index=partition_index,
-        format_=format_,
-        json_orientation=json_orientation,
         columns=columns,
     )
 
@@ -172,16 +149,18 @@ def sync(
     partition_index: int,
     *,
     client: AuthenticatedClient,
-    format_: InventoryDataFormat | Unset = UNSET,
-    json_orientation: InventoryJsonOrientation | Unset = UNSET,
     columns: None | str | Unset = UNSET,
-) -> HTTPValidationError | InventoryDataResponse | None:
-    """Get inventory data for a partition
+) -> HTTPValidationError | str | None:
+    """Get inventory data for a partition (CSV)
 
-     # Get Inventory Data
+     # Get Inventory Data (CSV)
 
-    Reads a single partition of a completed inventory's Parquet data on GCS.
-    Returns the tree records as JSON (split or records orientation) or CSV.
+    Reads a single partition of a completed inventory's Parquet data on GCS and
+    returns the tree records as a `text/csv` body with a header row. Use this
+    when you want to hand the response straight to a CSV reader.
+
+    For a structured JSON payload, use the JSON variant of this endpoint (drop
+    the trailing `/csv`).
 
     ## Path Parameters
 
@@ -191,19 +170,16 @@ def sync(
 
     ## Query Parameters
 
-    - **format**: Response format: `json` (default) or `csv`.
-    - **json_orientation**: JSON layout: `split` (default, compact) or
-      `records` (self-describing). Ignored for CSV.
     - **columns**: Comma-separated column subset (default: all).
 
     ## Response
 
-    **JSON split** (default): column names + 2D array of values.
+    A `text/csv` body, with partition metadata in these response headers:
 
-    **JSON records**: list of row objects.
-
-    **CSV**: `text/csv` body with metadata in response headers
-    `X-Partition-Index`, `X-Row-Count`, `X-Total-Rows`, `X-Num-Partitions`.
+    - `X-Partition-Index`: the partition this body came from.
+    - `X-Row-Count`: rows in this partition.
+    - `X-Total-Rows`: rows across all partitions of the inventory.
+    - `X-Num-Partitions`: total number of partitions.
 
     ## Error Responses
 
@@ -215,8 +191,6 @@ def sync(
         domain_id (str):
         inventory_id (str):
         partition_index (int): Zero-based partition index.
-        format_ (InventoryDataFormat | Unset):
-        json_orientation (InventoryJsonOrientation | Unset):
         columns (None | str | Unset): Comma-separated column subset.
 
     Raises:
@@ -224,7 +198,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | InventoryDataResponse
+        HTTPValidationError | str
     """
 
     return sync_detailed(
@@ -232,8 +206,6 @@ def sync(
         inventory_id=inventory_id,
         partition_index=partition_index,
         client=client,
-        format_=format_,
-        json_orientation=json_orientation,
         columns=columns,
     ).parsed
 
@@ -244,16 +216,18 @@ async def asyncio_detailed(
     partition_index: int,
     *,
     client: AuthenticatedClient,
-    format_: InventoryDataFormat | Unset = UNSET,
-    json_orientation: InventoryJsonOrientation | Unset = UNSET,
     columns: None | str | Unset = UNSET,
-) -> Response[HTTPValidationError | InventoryDataResponse]:
-    """Get inventory data for a partition
+) -> Response[HTTPValidationError | str]:
+    """Get inventory data for a partition (CSV)
 
-     # Get Inventory Data
+     # Get Inventory Data (CSV)
 
-    Reads a single partition of a completed inventory's Parquet data on GCS.
-    Returns the tree records as JSON (split or records orientation) or CSV.
+    Reads a single partition of a completed inventory's Parquet data on GCS and
+    returns the tree records as a `text/csv` body with a header row. Use this
+    when you want to hand the response straight to a CSV reader.
+
+    For a structured JSON payload, use the JSON variant of this endpoint (drop
+    the trailing `/csv`).
 
     ## Path Parameters
 
@@ -263,19 +237,16 @@ async def asyncio_detailed(
 
     ## Query Parameters
 
-    - **format**: Response format: `json` (default) or `csv`.
-    - **json_orientation**: JSON layout: `split` (default, compact) or
-      `records` (self-describing). Ignored for CSV.
     - **columns**: Comma-separated column subset (default: all).
 
     ## Response
 
-    **JSON split** (default): column names + 2D array of values.
+    A `text/csv` body, with partition metadata in these response headers:
 
-    **JSON records**: list of row objects.
-
-    **CSV**: `text/csv` body with metadata in response headers
-    `X-Partition-Index`, `X-Row-Count`, `X-Total-Rows`, `X-Num-Partitions`.
+    - `X-Partition-Index`: the partition this body came from.
+    - `X-Row-Count`: rows in this partition.
+    - `X-Total-Rows`: rows across all partitions of the inventory.
+    - `X-Num-Partitions`: total number of partitions.
 
     ## Error Responses
 
@@ -287,8 +258,6 @@ async def asyncio_detailed(
         domain_id (str):
         inventory_id (str):
         partition_index (int): Zero-based partition index.
-        format_ (InventoryDataFormat | Unset):
-        json_orientation (InventoryJsonOrientation | Unset):
         columns (None | str | Unset): Comma-separated column subset.
 
     Raises:
@@ -296,15 +265,13 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | InventoryDataResponse]
+        Response[HTTPValidationError | str]
     """
 
     kwargs = _get_kwargs(
         domain_id=domain_id,
         inventory_id=inventory_id,
         partition_index=partition_index,
-        format_=format_,
-        json_orientation=json_orientation,
         columns=columns,
     )
 
@@ -319,16 +286,18 @@ async def asyncio(
     partition_index: int,
     *,
     client: AuthenticatedClient,
-    format_: InventoryDataFormat | Unset = UNSET,
-    json_orientation: InventoryJsonOrientation | Unset = UNSET,
     columns: None | str | Unset = UNSET,
-) -> HTTPValidationError | InventoryDataResponse | None:
-    """Get inventory data for a partition
+) -> HTTPValidationError | str | None:
+    """Get inventory data for a partition (CSV)
 
-     # Get Inventory Data
+     # Get Inventory Data (CSV)
 
-    Reads a single partition of a completed inventory's Parquet data on GCS.
-    Returns the tree records as JSON (split or records orientation) or CSV.
+    Reads a single partition of a completed inventory's Parquet data on GCS and
+    returns the tree records as a `text/csv` body with a header row. Use this
+    when you want to hand the response straight to a CSV reader.
+
+    For a structured JSON payload, use the JSON variant of this endpoint (drop
+    the trailing `/csv`).
 
     ## Path Parameters
 
@@ -338,19 +307,16 @@ async def asyncio(
 
     ## Query Parameters
 
-    - **format**: Response format: `json` (default) or `csv`.
-    - **json_orientation**: JSON layout: `split` (default, compact) or
-      `records` (self-describing). Ignored for CSV.
     - **columns**: Comma-separated column subset (default: all).
 
     ## Response
 
-    **JSON split** (default): column names + 2D array of values.
+    A `text/csv` body, with partition metadata in these response headers:
 
-    **JSON records**: list of row objects.
-
-    **CSV**: `text/csv` body with metadata in response headers
-    `X-Partition-Index`, `X-Row-Count`, `X-Total-Rows`, `X-Num-Partitions`.
+    - `X-Partition-Index`: the partition this body came from.
+    - `X-Row-Count`: rows in this partition.
+    - `X-Total-Rows`: rows across all partitions of the inventory.
+    - `X-Num-Partitions`: total number of partitions.
 
     ## Error Responses
 
@@ -362,8 +328,6 @@ async def asyncio(
         domain_id (str):
         inventory_id (str):
         partition_index (int): Zero-based partition index.
-        format_ (InventoryDataFormat | Unset):
-        json_orientation (InventoryJsonOrientation | Unset):
         columns (None | str | Unset): Comma-separated column subset.
 
     Raises:
@@ -371,7 +335,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | InventoryDataResponse
+        HTTPValidationError | str
     """
 
     return (
@@ -380,8 +344,6 @@ async def asyncio(
             inventory_id=inventory_id,
             partition_index=partition_index,
             client=client,
-            format_=format_,
-            json_orientation=json_orientation,
             columns=columns,
         )
     ).parsed

@@ -6,6 +6,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Literal,
+    Self,
     TypeVar,
     cast,
 )
@@ -163,7 +164,7 @@ class Domain:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.domain_style import DomainStyle
         from ..models.geo_json_crs import GeoJsonCRS
         from ..models.geo_json_feature import GeoJsonFeature

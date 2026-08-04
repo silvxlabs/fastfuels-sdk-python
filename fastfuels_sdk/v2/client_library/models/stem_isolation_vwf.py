@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from typing import (
     Any,
     Literal,
+    Self,
     TypeVar,
     cast,
 )
@@ -20,18 +21,24 @@ T = TypeVar("T", bound="StemIsolationVwf")
 class StemIsolationVwf:
     """Parameters for Variable Window Filter (VWF) stem isolation.
 
-    Attributes:
-        name (Literal['vwf'] | Unset):  Default: 'vwf'.
-        min_height (float | Unset): Minimum height threshold (in CHM units) for a treetop. Default: 2.0.
-        spatial_resolution (float | None | Unset): Spatial resolution of the CHM. If omitted, it will be automatically
-            inferred from the source grid metadata.
-        crown_ratio (float | Unset): Multiplier used to dynamically scale the search window based on pixel height.
-            Default: 0.1.
-        crown_offset (float | Unset): Constant offset (in meters) added to the dynamic search window. Default: 1.0.
+    When set, ``max_height`` must be greater than ``min_height``.
+
+        Attributes:
+            name (Literal['vwf'] | Unset):  Default: 'vwf'.
+            min_height (float | Unset): Minimum height threshold (in meters) for a treetop. Default: 2.0.
+            max_height (float | None | Unset): Maximum height threshold (in meters) for a treetop. CHM returns taller than
+                this are treated as artifacts (e.g. LiDAR noise spikes) and excluded before detection. Defaults to 120, above
+                the tallest known tree; set to null to disable the ceiling. Default: 120.0.
+            spatial_resolution (float | None | Unset): Spatial resolution of the CHM. If omitted, it will be automatically
+                inferred from the source grid metadata.
+            crown_ratio (float | Unset): Multiplier used to dynamically scale the search window based on pixel height.
+                Default: 0.1.
+            crown_offset (float | Unset): Constant offset (in meters) added to the dynamic search window. Default: 1.0.
     """
 
     name: Literal["vwf"] | Unset = "vwf"
     min_height: float | Unset = 2.0
+    max_height: float | None | Unset = 120.0
     spatial_resolution: float | None | Unset = UNSET
     crown_ratio: float | Unset = 0.1
     crown_offset: float | Unset = 1.0
@@ -41,6 +48,12 @@ class StemIsolationVwf:
         name = self.name
 
         min_height = self.min_height
+
+        max_height: float | None | Unset
+        if isinstance(self.max_height, Unset):
+            max_height = UNSET
+        else:
+            max_height = self.max_height
 
         spatial_resolution: float | None | Unset
         if isinstance(self.spatial_resolution, Unset):
@@ -59,6 +72,8 @@ class StemIsolationVwf:
             field_dict["name"] = name
         if min_height is not UNSET:
             field_dict["min_height"] = min_height
+        if max_height is not UNSET:
+            field_dict["max_height"] = max_height
         if spatial_resolution is not UNSET:
             field_dict["spatial_resolution"] = spatial_resolution
         if crown_ratio is not UNSET:
@@ -69,13 +84,22 @@ class StemIsolationVwf:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         d = dict(src_dict)
         name = cast(Literal["vwf"] | Unset, d.pop("name", UNSET))
         if name != "vwf" and not isinstance(name, Unset):
             raise ValueError(f"name must match const 'vwf', got '{name}'")
 
         min_height = d.pop("min_height", UNSET)
+
+        def _parse_max_height(data: object) -> float | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(float | None | Unset, data)
+
+        max_height = _parse_max_height(d.pop("max_height", UNSET))
 
         def _parse_spatial_resolution(data: object) -> float | None | Unset:
             if data is None:
@@ -95,6 +119,7 @@ class StemIsolationVwf:
         stem_isolation_vwf = cls(
             name=name,
             min_height=min_height,
+            max_height=max_height,
             spatial_resolution=spatial_resolution,
             crown_ratio=crown_ratio,
             crown_offset=crown_offset,

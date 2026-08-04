@@ -9,6 +9,7 @@ from ...client import AuthenticatedClient, Client
 from ...models.create_tree_map_request import CreateTreeMapRequest
 from ...models.grid import Grid
 from ...models.http_validation_error import HTTPValidationError
+from ...models.quota_exceeded_detail import QuotaExceededDetail
 from ...types import Response
 
 
@@ -36,7 +37,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Grid | HTTPValidationError | None:
+) -> Grid | HTTPValidationError | QuotaExceededDetail | None:
     if response.status_code == 201:
         response_201 = Grid.from_dict(response.json())
 
@@ -47,6 +48,11 @@ def _parse_response(
 
         return response_422
 
+    if response.status_code == 429:
+        response_429 = QuotaExceededDetail.from_dict(response.json())
+
+        return response_429
+
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
@@ -55,7 +61,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Grid | HTTPValidationError]:
+) -> Response[Grid | HTTPValidationError | QuotaExceededDetail]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -69,7 +75,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: CreateTreeMapRequest,
-) -> Response[Grid | HTTPValidationError]:
+) -> Response[Grid | HTTPValidationError | QuotaExceededDetail]:
     r"""Create a grid from TreeMap
 
      # Create TreeMap Grid
@@ -109,7 +115,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Grid | HTTPValidationError]
+        Response[Grid | HTTPValidationError | QuotaExceededDetail]
     """
 
     kwargs = _get_kwargs(
@@ -129,7 +135,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: CreateTreeMapRequest,
-) -> Grid | HTTPValidationError | None:
+) -> Grid | HTTPValidationError | QuotaExceededDetail | None:
     r"""Create a grid from TreeMap
 
      # Create TreeMap Grid
@@ -169,7 +175,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Grid | HTTPValidationError
+        Grid | HTTPValidationError | QuotaExceededDetail
     """
 
     return sync_detailed(
@@ -184,7 +190,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: CreateTreeMapRequest,
-) -> Response[Grid | HTTPValidationError]:
+) -> Response[Grid | HTTPValidationError | QuotaExceededDetail]:
     r"""Create a grid from TreeMap
 
      # Create TreeMap Grid
@@ -224,7 +230,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Grid | HTTPValidationError]
+        Response[Grid | HTTPValidationError | QuotaExceededDetail]
     """
 
     kwargs = _get_kwargs(
@@ -242,7 +248,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: CreateTreeMapRequest,
-) -> Grid | HTTPValidationError | None:
+) -> Grid | HTTPValidationError | QuotaExceededDetail | None:
     r"""Create a grid from TreeMap
 
      # Create TreeMap Grid
@@ -282,7 +288,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Grid | HTTPValidationError
+        Grid | HTTPValidationError | QuotaExceededDetail
     """
 
     return (

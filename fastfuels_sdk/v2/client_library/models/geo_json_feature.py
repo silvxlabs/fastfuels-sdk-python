@@ -5,6 +5,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Literal,
+    Self,
     TypeVar,
     cast,
 )
@@ -76,27 +77,23 @@ class GeoJsonFeature:
         type_ = self.type_
 
         geometry: dict[str, Any] | None
-        if isinstance(self.geometry, Point):
-            geometry = self.geometry.to_dict()
-        elif isinstance(self.geometry, MultiPoint):
-            geometry = self.geometry.to_dict()
-        elif isinstance(self.geometry, LineString):
-            geometry = self.geometry.to_dict()
-        elif isinstance(self.geometry, MultiLineString):
-            geometry = self.geometry.to_dict()
-        elif isinstance(self.geometry, Polygon):
-            geometry = self.geometry.to_dict()
-        elif isinstance(self.geometry, MultiPolygon):
-            geometry = self.geometry.to_dict()
-        elif isinstance(self.geometry, GeometryCollection):
+        if (
+            isinstance(self.geometry, Point)
+            or isinstance(self.geometry, MultiPoint)
+            or isinstance(self.geometry, LineString)
+            or isinstance(self.geometry, MultiLineString)
+            or isinstance(self.geometry, Polygon)
+            or isinstance(self.geometry, MultiPolygon)
+            or isinstance(self.geometry, GeometryCollection)
+        ):
             geometry = self.geometry.to_dict()
         else:
             geometry = self.geometry
 
         properties: dict[str, Any] | None
-        if isinstance(self.properties, GeoJsonFeaturePropertiesType0):
-            properties = self.properties.to_dict()
-        elif isinstance(self.properties, BaseModel):
+        if isinstance(self.properties, GeoJsonFeaturePropertiesType0) or isinstance(
+            self.properties, BaseModel
+        ):
             properties = self.properties.to_dict()
         else:
             properties = self.properties
@@ -137,7 +134,7 @@ class GeoJsonFeature:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.base_model import BaseModel
         from ..models.geo_json_feature_properties_type_0 import (
             GeoJsonFeaturePropertiesType0,

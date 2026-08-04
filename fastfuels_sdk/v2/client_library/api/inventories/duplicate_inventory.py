@@ -9,6 +9,7 @@ from ...client import AuthenticatedClient, Client
 from ...models.duplicate_inventory_request import DuplicateInventoryRequest
 from ...models.http_validation_error import HTTPValidationError
 from ...models.inventory import Inventory
+from ...models.quota_exceeded_detail import QuotaExceededDetail
 from ...types import UNSET, Response, Unset
 
 
@@ -41,7 +42,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> HTTPValidationError | Inventory | None:
+) -> HTTPValidationError | Inventory | QuotaExceededDetail | None:
     if response.status_code == 201:
         response_201 = Inventory.from_dict(response.json())
 
@@ -52,6 +53,11 @@ def _parse_response(
 
         return response_422
 
+    if response.status_code == 429:
+        response_429 = QuotaExceededDetail.from_dict(response.json())
+
+        return response_429
+
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
@@ -60,7 +66,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[HTTPValidationError | Inventory]:
+) -> Response[HTTPValidationError | Inventory | QuotaExceededDetail]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -75,7 +81,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: DuplicateInventoryRequest | None | Unset = UNSET,
-) -> Response[HTTPValidationError | Inventory]:
+) -> Response[HTTPValidationError | Inventory | QuotaExceededDetail]:
     r"""Duplicate an inventory
 
      # Duplicate an Inventory
@@ -112,6 +118,10 @@ def sync_detailed(
       caller, or is not in this domain.
     - **422 Unprocessable Content**: The source inventory exists but is not yet
       `completed`, so there is no finished artifact to copy.
+    - **429 Too Many Requests**: You have too many active inventory jobs in
+      progress (your `max_active_inventories` quota). Wait for jobs to complete
+      or delete unneeded inventories, then retry. The response detail names the
+      exact `quota` and includes a `Retry-After` header.
 
     Args:
         domain_id (str):
@@ -123,7 +133,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | Inventory]
+        Response[HTTPValidationError | Inventory | QuotaExceededDetail]
     """
 
     kwargs = _get_kwargs(
@@ -145,7 +155,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: DuplicateInventoryRequest | None | Unset = UNSET,
-) -> HTTPValidationError | Inventory | None:
+) -> HTTPValidationError | Inventory | QuotaExceededDetail | None:
     r"""Duplicate an inventory
 
      # Duplicate an Inventory
@@ -182,6 +192,10 @@ def sync(
       caller, or is not in this domain.
     - **422 Unprocessable Content**: The source inventory exists but is not yet
       `completed`, so there is no finished artifact to copy.
+    - **429 Too Many Requests**: You have too many active inventory jobs in
+      progress (your `max_active_inventories` quota). Wait for jobs to complete
+      or delete unneeded inventories, then retry. The response detail names the
+      exact `quota` and includes a `Retry-After` header.
 
     Args:
         domain_id (str):
@@ -193,7 +207,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | Inventory
+        HTTPValidationError | Inventory | QuotaExceededDetail
     """
 
     return sync_detailed(
@@ -210,7 +224,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: DuplicateInventoryRequest | None | Unset = UNSET,
-) -> Response[HTTPValidationError | Inventory]:
+) -> Response[HTTPValidationError | Inventory | QuotaExceededDetail]:
     r"""Duplicate an inventory
 
      # Duplicate an Inventory
@@ -247,6 +261,10 @@ async def asyncio_detailed(
       caller, or is not in this domain.
     - **422 Unprocessable Content**: The source inventory exists but is not yet
       `completed`, so there is no finished artifact to copy.
+    - **429 Too Many Requests**: You have too many active inventory jobs in
+      progress (your `max_active_inventories` quota). Wait for jobs to complete
+      or delete unneeded inventories, then retry. The response detail names the
+      exact `quota` and includes a `Retry-After` header.
 
     Args:
         domain_id (str):
@@ -258,7 +276,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | Inventory]
+        Response[HTTPValidationError | Inventory | QuotaExceededDetail]
     """
 
     kwargs = _get_kwargs(
@@ -278,7 +296,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: DuplicateInventoryRequest | None | Unset = UNSET,
-) -> HTTPValidationError | Inventory | None:
+) -> HTTPValidationError | Inventory | QuotaExceededDetail | None:
     r"""Duplicate an inventory
 
      # Duplicate an Inventory
@@ -315,6 +333,10 @@ async def asyncio(
       caller, or is not in this domain.
     - **422 Unprocessable Content**: The source inventory exists but is not yet
       `completed`, so there is no finished artifact to copy.
+    - **429 Too Many Requests**: You have too many active inventory jobs in
+      progress (your `max_active_inventories` quota). Wait for jobs to complete
+      or delete unneeded inventories, then retry. The response detail names the
+      exact `quota` and includes a `Retry-After` header.
 
     Args:
         domain_id (str):
@@ -326,7 +348,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | Inventory
+        HTTPValidationError | Inventory | QuotaExceededDetail
     """
 
     return (

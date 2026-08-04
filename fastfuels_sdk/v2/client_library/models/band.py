@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -83,9 +83,9 @@ class Band:
         summary: dict[str, Any] | None | Unset
         if isinstance(self.summary, Unset):
             summary = UNSET
-        elif isinstance(self.summary, ContinuousBandSummary):
-            summary = self.summary.to_dict()
-        elif isinstance(self.summary, CategoricalBandSummary):
+        elif isinstance(self.summary, ContinuousBandSummary) or isinstance(
+            self.summary, CategoricalBandSummary
+        ):
             summary = self.summary.to_dict()
         else:
             summary = self.summary
@@ -113,7 +113,7 @@ class Band:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.categorical_band_summary import CategoricalBandSummary
         from ..models.continuous_band_summary import ContinuousBandSummary
 

@@ -18,16 +18,22 @@ PATCHED=$(mktemp /tmp/v2_openapi_patched.XXXXXX.json)
 
 curl -s "$URL/openapi.json" > "$SPEC"
 
-# The spec contains two schemas titled "Feature": the FastFuels feature
-# resource and geojson_pydantic's GeoJSON Feature (auto-namespaced by
-# FastAPI as geojson_pydantic__features__Feature, but with title "Feature").
-# openapi-python-client names classes from titles and refuses duplicates,
-# so re-title the GeoJSON one. Long-term fix: re-title the model in the
-# FastFuels-API-v2 repo so the spec has no collision.
+# openapi-python-client names classes from schema titles and refuses
+# duplicates, dropping the endpoints that reference the loser. The spec has
+# two such collisions, so re-title one side of each. Long-term fix: re-title
+# the models in the FastFuels-API-v2 repo so the spec has no collision.
+#
+#   "Feature" — the FastFuels feature resource vs geojson_pydantic's GeoJSON
+#   Feature (auto-namespaced by FastAPI, but still titled "Feature").
+#
+#   "ThreeDepCoverageResponse" — the point cloud 3DEP pre-flight check
+#   (point count / budget) vs the topography one (tiles / resolution).
 python3 - "$SPEC" "$PATCHED" <<'EOF'
 import json, sys
 spec = json.load(open(sys.argv[1]))
-spec["components"]["schemas"]["geojson_pydantic__features__Feature"]["title"] = "GeoJsonFeature"
+schemas = spec["components"]["schemas"]
+schemas["geojson_pydantic__features__Feature"]["title"] = "GeoJsonFeature"
+schemas["ThreeDepCoverageResponse"]["title"] = "PointCloudThreeDepCoverageResponse"
 json.dump(spec, open(sys.argv[2], "w"))
 EOF
 

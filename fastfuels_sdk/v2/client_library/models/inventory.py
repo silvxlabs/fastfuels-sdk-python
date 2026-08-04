@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from ..models.inventory_source import InventorySource
     from ..models.job_error import JobError
     from ..models.job_progress import JobProgress
+    from ..models.tree_forestry_metrics import TreeForestryMetrics
 
 
 T = TypeVar("T", bound="Inventory")
@@ -51,6 +52,7 @@ class Inventory:
             modifications (list[InventoryModification] | Unset):
             treatments (list[InventoryBasalAreaTreatment | InventoryDiameterTreatment] | Unset):
             columns (list[Column] | Unset):
+            forestry_metrics (None | TreeForestryMetrics | Unset):
             georeference (InventoryGeoreference | None | Unset): Spatial reference. Null until backend completes processing.
             error (JobError | None | Unset): Error details if status is 'failed'.
             tags (list[str] | Unset):
@@ -72,6 +74,7 @@ class Inventory:
         list[InventoryBasalAreaTreatment | InventoryDiameterTreatment] | Unset
     ) = UNSET
     columns: list[Column] | Unset = UNSET
+    forestry_metrics: None | TreeForestryMetrics | Unset = UNSET
     georeference: InventoryGeoreference | None | Unset = UNSET
     error: JobError | None | Unset = UNSET
     tags: list[str] | Unset = UNSET
@@ -82,6 +85,7 @@ class Inventory:
         from ..models.inventory_georeference import InventoryGeoreference
         from ..models.job_error import JobError
         from ..models.job_progress import JobProgress
+        from ..models.tree_forestry_metrics import TreeForestryMetrics
 
         id = self.id
 
@@ -153,6 +157,14 @@ class Inventory:
                 columns_item = columns_item_data.to_dict()
                 columns.append(columns_item)
 
+        forestry_metrics: dict[str, Any] | None | Unset
+        if isinstance(self.forestry_metrics, Unset):
+            forestry_metrics = UNSET
+        elif isinstance(self.forestry_metrics, TreeForestryMetrics):
+            forestry_metrics = self.forestry_metrics.to_dict()
+        else:
+            forestry_metrics = self.forestry_metrics
+
         georeference: dict[str, Any] | None | Unset
         if isinstance(self.georeference, Unset):
             georeference = UNSET
@@ -202,6 +214,8 @@ class Inventory:
             field_dict["treatments"] = treatments
         if columns is not UNSET:
             field_dict["columns"] = columns
+        if forestry_metrics is not UNSET:
+            field_dict["forestry_metrics"] = forestry_metrics
         if georeference is not UNSET:
             field_dict["georeference"] = georeference
         if error is not UNSET:
@@ -212,7 +226,7 @@ class Inventory:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.column import Column
         from ..models.inventory_basal_area_treatment import InventoryBasalAreaTreatment
         from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
@@ -221,6 +235,7 @@ class Inventory:
         from ..models.inventory_source import InventorySource
         from ..models.job_error import JobError
         from ..models.job_progress import JobProgress
+        from ..models.tree_forestry_metrics import TreeForestryMetrics
 
         d = dict(src_dict)
         id = d.pop("id")
@@ -348,6 +363,23 @@ class Inventory:
 
                 columns.append(columns_item)
 
+        def _parse_forestry_metrics(data: object) -> None | TreeForestryMetrics | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                forestry_metrics_type_0 = TreeForestryMetrics.from_dict(data)
+
+                return forestry_metrics_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(None | TreeForestryMetrics | Unset, data)
+
+        forestry_metrics = _parse_forestry_metrics(d.pop("forestry_metrics", UNSET))
+
         def _parse_georeference(data: object) -> InventoryGeoreference | None | Unset:
             if data is None:
                 return data
@@ -399,6 +431,7 @@ class Inventory:
             modifications=modifications,
             treatments=treatments,
             columns=columns,
+            forestry_metrics=forestry_metrics,
             georeference=georeference,
             error=error,
             tags=tags,

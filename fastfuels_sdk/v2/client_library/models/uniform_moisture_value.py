@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from typing import (
     Any,
     Literal,
+    Self,
     TypeVar,
     cast,
 )
@@ -45,7 +46,7 @@ class UniformMoistureValue:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         d = dict(src_dict)
         method = cast(Literal["uniform"] | Unset, d.pop("method", UNSET))
         if method != "uniform" and not isinstance(method, Unset):

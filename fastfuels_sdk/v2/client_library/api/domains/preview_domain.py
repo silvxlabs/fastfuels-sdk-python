@@ -84,8 +84,8 @@ def sync_detailed(
 
     - **id**: Always `\"preview\"` — not a real domain identifier.
     - **created_on** / **modified_on**: Set to the current request time (not persisted).
-    - **features**: Two named features — `\"domain\"` (working extent) and `\"input\"`
-      (original polygon), identical to what create would return.
+    - **features**: A single `\"domain\"` feature (the working extent),
+      identical to what create would return.
     - **bbox**: Bounding box of the `\"domain\"` feature.
     - **crs**: Projected CRS, identical to what create would return.
 
@@ -144,8 +144,8 @@ def sync(
 
     - **id**: Always `\"preview\"` — not a real domain identifier.
     - **created_on** / **modified_on**: Set to the current request time (not persisted).
-    - **features**: Two named features — `\"domain\"` (working extent) and `\"input\"`
-      (original polygon), identical to what create would return.
+    - **features**: A single `\"domain\"` feature (the working extent),
+      identical to what create would return.
     - **bbox**: Bounding box of the `\"domain\"` feature.
     - **crs**: Projected CRS, identical to what create would return.
 
@@ -199,8 +199,8 @@ async def asyncio_detailed(
 
     - **id**: Always `\"preview\"` — not a real domain identifier.
     - **created_on** / **modified_on**: Set to the current request time (not persisted).
-    - **features**: Two named features — `\"domain\"` (working extent) and `\"input\"`
-      (original polygon), identical to what create would return.
+    - **features**: A single `\"domain\"` feature (the working extent),
+      identical to what create would return.
     - **bbox**: Bounding box of the `\"domain\"` feature.
     - **crs**: Projected CRS, identical to what create would return.
 
@@ -257,8 +257,8 @@ async def asyncio(
 
     - **id**: Always `\"preview\"` — not a real domain identifier.
     - **created_on** / **modified_on**: Set to the current request time (not persisted).
-    - **features**: Two named features — `\"domain\"` (working extent) and `\"input\"`
-      (original polygon), identical to what create would return.
+    - **features**: A single `\"domain\"` feature (the working extent),
+      identical to what create would return.
     - **bbox**: Bounding box of the `\"domain\"` feature.
     - **crs**: Projected CRS, identical to what create would return.
 
