@@ -16,6 +16,7 @@ from fastfuels_sdk.v2.client_library.api.grids import (
     apply_grid_modifications as apply_grid_modifications_endpoint,
     check_3dep_coverage as check_3dep_coverage_endpoint,
     create_3dep_topography,
+    create_duet_grid,
     create_fbfm40_lookup,
     create_geotiff_upload,
     create_grid_export,
@@ -41,6 +42,7 @@ from fastfuels_sdk.v2.client_library.api.grids import (
 from fastfuels_sdk.v2.client_library.models import (
     Grid as GridModel,
     ApplyGridModificationsRequest,
+    CreateDuetRequest,
     CreateFbfm40LookupRequest,
     CreateGeoTIFFUploadRequest,
     CreateLandfireCanopyRequest,
@@ -56,6 +58,8 @@ from fastfuels_sdk.v2.client_library.models import (
     CreateTreeMapRequest,
     CreateUniformRequest,
     DuplicateGridRequest,
+    DuetBand,
+    DuetCalibration,
     ExportGridRequest,
     Fbfm40LookupBand,
     GridAlignmentDomainTarget,
@@ -107,6 +111,7 @@ __all__ = [
     "create_grid_from_geotiff",
     "create_grid_from_netcdf",
     "create_uniform_grid",
+    "create_surface_fuel_grid_from_duet",
     "create_fuel_grid_from_fbfm40_lookup",
     "list_grids",
     "get_grid",
@@ -1672,6 +1677,114 @@ def create_fuel_grid_from_fbfm40_lookup(
         source_grid.domain_id, client=ensure_client(), body=request_body
     )
     return Grid._from_model(expect(response, HTTPStatus.CREATED))
+
+
+def create_surface_fuel_grid_from_duet(
+    source_grid: "Grid",
+    years_since_burn: int,
+    wind_direction: int = 270,
+    wind_variability: int = 30,
+    bands: Optional[list] = None,
+    calibration: Optional[DuetCalibration] = None,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+) -> Grid:
+    """Create a 2D DUET surface-fuel grid from a 3D tree grid.
+
+    Parameters
+    ----------
+    source_grid : Grid
+        A completed 3D tree grid carrying ``bulk_density.foliage.live``,
+        ``spcd``, and ``fuel_moisture.live`` bands.
+    years_since_burn : int
+        Years of litter accumulation to simulate, from 1 through 100.
+    wind_direction : int, optional
+        Prevailing wind direction in whole degrees clockwise from north
+        (0-359, default 270).
+    wind_variability : int, optional
+        Angular spread of wind direction in whole degrees (0-180, default 30).
+    bands : list, optional
+        DUET output bands (``DuetBand`` members or string keys). Defaults to
+        ``fuel_load.grass`` and ``fuel_load.litter``.
+    calibration : DuetCalibration, optional
+        Per-parameter and per-fuel-type targets from
+        :func:`fastfuels_sdk.v2.calibrations.duet_calibration`. If omitted,
+        the grid stores raw DUET values.
+    name, description : str, optional
+        Metadata for the new grid.
+    tags : List[str], optional
+        Tags for the new grid.
+
+    Returns
+    -------
+    Grid
+        The new pending DUET surface-fuel Grid.
+
+    Raises
+    ------
+    TypeError
+        If a DUET time or wind parameter is not a whole number.
+    ValueError
+        If a parameter is out of range, the source is not completed, or the
+        source lacks a required tree band.
+    """
+    source_grid._require_completed("create a DUET surface fuel grid from")
+    required_bands = {
+        "bulk_density.foliage.live",
+        "spcd",
+        "fuel_moisture.live",
+    }
+    band_keys = {band.key for band in source_grid.bands}
+    missing = sorted(required_bands - band_keys)
+    if missing:
+        raise ValueError(
+            f"Grid {source_grid.id} lacks DUET source bands: {missing}. "
+            f"Available bands: {sorted(band_keys)}."
+        )
+
+    years_since_burn = _duet_integer(
+        "years_since_burn", years_since_burn, minimum=1, maximum=100
+    )
+    wind_direction = _duet_integer(
+        "wind_direction", wind_direction, minimum=0, maximum=359
+    )
+    wind_variability = _duet_integer(
+        "wind_variability", wind_variability, minimum=0, maximum=180
+    )
+    requested_bands = _enum_list(bands, DuetBand)
+    if requested_bands is not UNSET:
+        if not requested_bands:
+            raise ValueError("bands must contain at least one DUET band.")
+        if len(set(requested_bands)) != len(requested_bands):
+            raise ValueError("bands contains duplicate DUET bands.")
+
+    request_body = CreateDuetRequest(
+        source_grid_id=source_grid.id,
+        years_since_burn=years_since_burn,
+        wind_direction=wind_direction,
+        wind_variability=wind_variability,
+        bands=requested_bands,
+        calibration=_opt(calibration),
+        name=name,
+        description=description,
+        tags=_opt(tags),
+    )
+    response = create_duet_grid.sync_detailed(
+        source_grid.domain_id,
+        client=ensure_client(),
+        body=request_body,
+    )
+    return Grid._from_model(expect(response, HTTPStatus.CREATED))
+
+
+def _duet_integer(name: str, value, *, minimum: int, maximum: int) -> int:
+    """Validate a bounded whole-number DUET parameter."""
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise TypeError(f"{name} must be a whole number.")
+    if not minimum <= value <= maximum:
+        raise ValueError(f"{name} must be between {minimum} and {maximum}.")
+    return value
 
 
 # ---------------------------------------------------------------------------

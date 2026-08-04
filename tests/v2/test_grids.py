@@ -12,6 +12,7 @@ from uuid import uuid4
 
 # Internal imports
 from fastfuels_sdk.v2 import grids
+from fastfuels_sdk.v2.calibrations import duet_calibration
 from fastfuels_sdk.v2.grids import (
     Grid,
     _build_alignment,
@@ -30,6 +31,7 @@ from fastfuels_sdk.v2.grids import (
     create_fuel_model_grid_from_landfire_fccs,
     create_grid_from_geotiff,
     create_pim_grid_from_treemap,
+    create_surface_fuel_grid_from_duet,
     create_topography_grid_from_3dep,
     create_topography_grid_from_landfire,
     create_uniform_grid,
@@ -42,6 +44,7 @@ from fastfuels_sdk.v2.client_library.models import (
     Band,
     BandType,
     ContinuousBandSummary,
+    DuetBand,
     GridAlignmentDomainTarget,
     GridAlignmentGridTarget,
     GridAlignmentNativeTarget,
@@ -315,6 +318,173 @@ class TestCreateCanopyHeightGridFromPointCloud:
             create_canopy_height_grid_from_point_cloud(
                 self._point_cloud(type_=PointCloudType.TLS)
             )
+
+
+class TestCreateSurfaceFuelGridFromDuet:
+    @staticmethod
+    def _source_grid(
+        status=JobStatus.COMPLETED,
+        omit=None,
+    ):
+        required = [
+            ("bulk_density.foliage.live", BandType.CONTINUOUS),
+            ("spcd", BandType.CATEGORICAL),
+            ("fuel_moisture.live", BandType.CONTINUOUS),
+        ]
+        return Grid(
+            id="tree-grid-id",
+            domain_id="domain-id",
+            status=status,
+            source=GridSource(),
+            bands=[
+                Band(key=key, type_=type_, index=index)
+                for index, (key, type_) in enumerate(required)
+                if key != omit
+            ],
+        )
+
+    def test_builds_request_from_completed_tree_grid(self, monkeypatch):
+        created = Grid(
+            id="duet-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        calibration = duet_calibration(fuel_load={"grass": {"mean": 0.5, "sd": 0.25}})
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_duet_grid,
+            "sync_detailed",
+            fake_create,
+        )
+
+        grid = create_surface_fuel_grid_from_duet(
+            self._source_grid(),
+            years_since_burn=20,
+            wind_direction=225,
+            wind_variability=45,
+            bands=["fuel_load.grass", DuetBand.FUEL_LOAD_LITTER],
+            calibration=calibration,
+            name="DUET surface fuels",
+            tags=["test"],
+        )
+
+        assert grid.id == "duet-grid-id"
+        assert captured["domain_id"] == "domain-id"
+        assert captured["client"] is client
+        assert captured["body"].source_grid_id == "tree-grid-id"
+        assert captured["body"].years_since_burn == 20
+        assert captured["body"].wind_direction == 225
+        assert captured["body"].wind_variability == 45
+        assert captured["body"].bands == [
+            DuetBand.FUEL_LOAD_GRASS,
+            DuetBand.FUEL_LOAD_LITTER,
+        ]
+        assert captured["body"].calibration is calibration
+        assert captured["body"].name == "DUET surface fuels"
+        assert captured["body"].tags == ["test"]
+
+    def test_requires_completed_tree_grid(self):
+        with pytest.raises(ValueError, match=r"Call \.wait\(\)"):
+            create_surface_fuel_grid_from_duet(
+                self._source_grid(status=JobStatus.PENDING),
+                years_since_burn=20,
+            )
+
+    def test_requires_duet_source_bands(self):
+        with pytest.raises(ValueError, match="fuel_moisture.live"):
+            create_surface_fuel_grid_from_duet(
+                self._source_grid(omit="fuel_moisture.live"),
+                years_since_burn=20,
+            )
+
+    @pytest.mark.parametrize(
+        "kwargs,error",
+        [
+            ({"years_since_burn": 0}, ValueError),
+            ({"years_since_burn": 101}, ValueError),
+            ({"years_since_burn": 1.5}, TypeError),
+            ({"years_since_burn": 20, "wind_direction": 360}, ValueError),
+            ({"years_since_burn": 20, "wind_variability": 181}, ValueError),
+            ({"years_since_burn": 20, "bands": []}, ValueError),
+            (
+                {
+                    "years_since_burn": 20,
+                    "bands": ["fuel_load.grass", "fuel_load.grass"],
+                },
+                ValueError,
+            ),
+        ],
+    )
+    def test_validates_request_parameters(self, kwargs, error):
+        with pytest.raises(error):
+            create_surface_fuel_grid_from_duet(self._source_grid(), **kwargs)
+
+    def test_create_live(self, completed_tree_inventory):
+        voxels = completed_tree_inventory.voxelize(
+            horizontal_resolution_m=2,
+            vertical_resolution_m=1,
+            bands=[
+                "bulk_density.foliage.live",
+                "spcd",
+                "fuel_moisture.live",
+            ],
+            name="test_duet_source",
+            tags=["test"],
+        )
+        surface = None
+        try:
+            voxels.wait()
+            surface = create_surface_fuel_grid_from_duet(
+                voxels,
+                years_since_burn=25,
+                bands=[
+                    "fuel_load.grass",
+                    "fuel_load.litter",
+                    "fuel_depth.grass",
+                    "fuel_depth.litter",
+                ],
+                calibration=duet_calibration(
+                    fuel_load={
+                        "grass": {"mean": 0.5, "sd": 0.25},
+                        "litter": {"max": 5, "min": 0},
+                    },
+                    fuel_depth={
+                        "grass": {"value": 0.3},
+                        "litter": {"value": 0.06},
+                    },
+                ),
+                name="test_duet_surface_fuels",
+                tags=["test"],
+            )
+            surface.wait()
+            assert surface.status == JobStatus.COMPLETED
+            assert {band.key for band in surface.bands} == {
+                "fuel_load.grass",
+                "fuel_load.litter",
+                "fuel_depth.grass",
+                "fuel_depth.litter",
+            }
+            grass_load = surface.to_numpy("fuel_load.grass")
+            assert grass_load.ndim == 2
+            assert np.isfinite(grass_load).any()
+        finally:
+            if surface is not None:
+                surface.delete()
+            voxels.delete()
 
 
 class TestCreateFuelModelGridFromLandfireFbfm40:

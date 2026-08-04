@@ -21,6 +21,7 @@ package namespace::
 from fastfuels_sdk.v2 import exports, features, grids, inventories, point_clouds
 from fastfuels_sdk.v2._jobs import JobFailedError, wait_all
 from fastfuels_sdk.v2.api import get_quotas, get_usage, set_api_key
+from fastfuels_sdk.v2.calibrations import duet_calibration
 from fastfuels_sdk.v2.domains import Domain, list_domains, reproject_geojson
 from fastfuels_sdk.v2.exports import Export, get_export, list_exports
 from fastfuels_sdk.v2.features import Feature, get_feature, list_features
@@ -52,6 +53,8 @@ __all__ = [
     # Quotas and usage
     "get_quotas",
     "get_usage",
+    # Calibrations
+    "duet_calibration",
     # Records
     "Domain",
     "Export",

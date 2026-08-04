@@ -250,6 +250,57 @@ before voxelizing (see
 For the concepts behind plot imputation and voxelization, see the
 [FastFuels documentation](https://docs.fastfuels.silvxlabs.com).
 
+### Derive surface fuels with DUET
+
+To create a two-dimensional DUET surface-fuel grid, include the three DUET
+input bands when voxelizing the inventory:
+
+```python
+voxels = inventory.voxelize(
+    horizontal_resolution_m=2,
+    vertical_resolution_m=1,
+    bands=[
+        "bulk_density.foliage.live",
+        "spcd",
+        "fuel_moisture.live",
+    ],
+)
+voxels.wait()
+```
+
+Build calibration targets from ordinary mappings, then pass them with the
+output bands and time since fire:
+
+```python
+calibration = ff.duet_calibration(
+    fuel_load={
+        "grass": {"mean": 0.5, "sd": 0.25},
+        "litter": {"max": 5, "min": 0},
+    },
+    fuel_depth={
+        "grass": {"value": 0.3},
+        "litter": {"value": 0.06},
+    },
+)
+
+surface = ff.grids.create_surface_fuel_grid_from_duet(
+    voxels,
+    years_since_burn=25,
+    bands=[
+        "fuel_load.grass",
+        "fuel_load.litter",
+        "fuel_depth.grass",
+        "fuel_depth.litter",
+    ],
+    calibration=calibration,
+)
+surface.wait()
+```
+
+Use a `value` target to set every occupied cell to a constant, `max` with an
+optional `min` to scale by extrema, or `mean` and `sd` to scale by moments.
+Omit `calibration` only when you want the raw DUET values.
+
 ## Uniform grids
 
 To fill the whole domain with constant band values at a chosen resolution —
