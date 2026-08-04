@@ -4,17 +4,22 @@ on:
   pull_request:
     branches: [ main ]
 
-env:
-    FASTFUELS_API_KEY: ${{ secrets.FASTFUELS_API_KEY }}
-
+# v1 and v2 are separate live deployments with separate API keys, so each
+# suite runs as its own job with its own secret mapped to FASTFUELS_API_KEY
+# (the variable both SDKs read). While v2 is a beta preview, make only
+# `test-v1` a required status check in branch protection — `test-v2` runs
+# and reports on every PR but is intentionally NOT required, so v2-API
+# flakiness does not block v1-only changes.
 jobs:
-  test:
+  test-v1:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.12"]
+    env:
+      FASTFUELS_API_KEY: ${{ secrets.FASTFUELS_API_KEY }}
     steps:
     - uses: actions/checkout@v4
     - name: Install uv
@@ -24,9 +29,34 @@ jobs:
         enable-cache: true
     - name: Install dependencies
       run: uv sync
-    - name: Run pytest
+    - name: Run v1 tests
       env:
         TEST_ENV: local
       run: |
         cd tests/
-        uv run pytest
+        uv run pytest v1
+
+  test-v2:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.12"]
+    env:
+      FASTFUELS_API_KEY: ${{ secrets.FASTFUELS_API_KEY_V2 }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+        enable-cache: true
+    - name: Install dependencies
+      run: uv sync
+    - name: Run v2 tests
+      env:
+        TEST_ENV: local
+      run: |
+        cd tests/
+        uv run pytest v2

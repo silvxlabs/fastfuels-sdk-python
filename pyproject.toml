@@ -21,13 +21,17 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
+    "attrs>=22.2.0",
     "geopandas",
+    "httpx>=0.23.0",
     "numpy",
     "pandas",
     "pydantic>=2",
+    "python-dateutil>=2.9.0.post0",
     "requests",
     "scipy",
     "urllib3>=2.1.0",
+    "xarray",
     "zarr",
 ]
 
@@ -40,23 +44,34 @@ dev = [
     "pytest",
     "pre-commit",
     "ipykernel",
-    "httpx>=0.23.0,<0.29.0",
+    "httpx>=0.23.0",
     "attrs>=22.2.0",
     "python-dateutil>=2.9.0.post0",
+    # reads exported GeoTIFFs to ground-truth Grid.to_numpy against the server
+    "rasterio",
 ]
-docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocstrings-python"]
+docs = [
+    "mike>=2.2.0",
+    "mkdocs",
+    # pinned pre-0.6.3: 0.6.3 co-installs the properdocs mkdocs-fork and
+    # warns when run under mkdocs; revisit when the fork situation settles
+    "mkdocs-literate-nav==0.6.2",
+    # major pinned per the Material docs (semver; majors break config)
+    "mkdocs-material>=9.7,<10",
+    "mkdocstrings",
+    "mkdocstrings-python",
+]
 
 [tool.hatch.version]
 source = "vcs"
 
 [tool.hatch.build]
 exclude = [
-    # v2 is under development and not yet distributable: its runtime deps
-    # (httpx, attrs, python-dateutil) live in the dev group until the v2
-    # preview ships. The Phase 2 release swaps this for fine-grained
-    # excludes (v2/*.sh, v2/COMPARISON.md, v2/draft_*.py), mirroring v1's.
-    "fastfuels_sdk/v2",
-    # Client regeneration scaffolding — repo-only, not for distribution
+    # Client regeneration scaffolding and design notes — repo-only, not for
+    # distribution. v2 ships as a beta preview; only its non-runtime files
+    # are excluded (mirroring v1's client_library excludes below).
+    "fastfuels_sdk/v2/*.sh",
+    "fastfuels_sdk/v2/*.md",
     "fastfuels_sdk/v1/client_library/*.sh",
     "fastfuels_sdk/v1/client_library/README.md",
     "fastfuels_sdk/v1/client_library/api_spec.json",

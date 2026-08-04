@@ -1,28 +1,70 @@
 # mkdocs.yml
+#
+# One config builds either docs version: DOCS_DIR selects the tree
+# (defaults to docs/v1; set DOCS_DIR=docs/v2 for v2), and each tree
+# defines its own nav in a SUMMARY.md (literate-nav). Versions deploy via
+# mike as independent site snapshots picked from the header version
+# selector; see docs/deploy.sh. Local preview:
+#   uv run mkdocs serve                       # v1 only
+#   DOCS_DIR=docs/v2 uv run mkdocs serve      # v2 only
+#   ./docs/deploy.sh                         # both versions + selector
 site_name: FastFuels SDK Documentation
+# site_url is required for mike's version selector to keep the reader on
+# the same page when switching versions
+site_url: https://silvxlabs.github.io/fastfuels-sdk-python/
+
+docs_dir: !ENV [DOCS_DIR, docs/v1]
+
+repo_url: https://github.com/silvxlabs/fastfuels-sdk-python
+repo_name: silvxlabs/fastfuels-sdk-python
 
 theme:
   name: "material"
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    # Palette toggle: light mode -> dark mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle: dark mode -> light mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
   features:
+    - navigation.top
+    - navigation.tracking
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - search.share
     - content.code.copy
+    - content.code.annotate
+    - content.tooltips
 
-nav:
-  - Home: index.md
-  - v1 (current):
-    - How-To Guides:
-      - Authentication: v1/guides/authentication.md
-      - Domains: v1/guides/domains.md
-      - Inventories: v1/guides/inventories.md
-      - Point Clouds: v1/guides/point_clouds.md
-      - Features: v1/guides/features.md
-      - Grids: v1/guides/grids.md
-    - Tutorials:
-      - Export to QUIC-Fire: v1/tutorials/export_to_quicfire.md
-      - ALS Point Cloud: v1/tutorials/point_cloud_example.md
-    - Reference: v1/reference.md
+extra:
+  version:
+    provider: mike
+    alias: true
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/silvxlabs/fastfuels-sdk-python
+      name: FastFuels SDK on GitHub
+
+copyright: Copyright &copy; Silvx Labs
+
+extra_css:
+  - stylesheets/extra.css
 
 plugins:
   - search
+  - literate-nav:
+      nav_file: SUMMARY.md
   - mkdocstrings:
       handlers:
         python:
@@ -39,7 +81,17 @@ plugins:
             show_signature_annotations: true
 
 markdown_extensions:
+  # Python Markdown
+  - abbr
   - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  # PyMdown Extensions
   - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
@@ -48,3 +100,10 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg

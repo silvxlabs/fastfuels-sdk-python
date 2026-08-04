@@ -3,14 +3,25 @@ name: build mkdocs
 on:
   release:
     types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Install uv
         uses: astral-sh/setup-uv@v6
-      - name: Install docs dependencies
-        run: uv sync --group docs
-      - run: uv run mkdocs gh-deploy --force --clean --verbose
+      - name: Configure git for mike
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      # docs/deploy.sh is the single source of truth for versions, titles,
+      # and aliases — the same script serves the local preview.
+      - name: Deploy versioned docs (v1 + v2)
+        run: ./docs/deploy.sh deploy
