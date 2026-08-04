@@ -9,11 +9,11 @@ from attrs import field as _attrs_field
 from ..models.three_dep_resolution import ThreeDepResolution
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="ThreeDepCoverageResponse")
+T = TypeVar("T", bound="TopographyThreeDepCoverageResponse")
 
 
 @_attrs_define
-class ThreeDepCoverageResponse:
+class TopographyThreeDepCoverageResponse:
     """Response model for 3DEP tile coverage pre-flight check.
 
     Attributes:
@@ -92,7 +92,7 @@ class ThreeDepCoverageResponse:
 
         acquisition_dates = _parse_acquisition_dates(d.pop("acquisition_dates", UNSET))
 
-        three_dep_coverage_response = cls(
+        topography_three_dep_coverage_response = cls(
             resolution=resolution,
             available=available,
             tile_count=tile_count,
@@ -100,8 +100,8 @@ class ThreeDepCoverageResponse:
             acquisition_dates=acquisition_dates,
         )
 
-        three_dep_coverage_response.additional_properties = d
-        return three_dep_coverage_response
+        topography_three_dep_coverage_response.additional_properties = d
+        return topography_three_dep_coverage_response
 
     @property
     def additional_keys(self) -> list[str]:

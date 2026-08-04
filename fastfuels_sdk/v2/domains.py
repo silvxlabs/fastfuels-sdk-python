@@ -23,10 +23,10 @@ from fastfuels_sdk.v2.client_library.api.domains import (
 )
 from fastfuels_sdk.v2.client_library.models import (
     Domain as DomainModel,
-    CreateDomainRequestBody,
     DomainLattice,
     DomainSortField,
     DomainSortOrder,
+    GeoJsonFeatureCollection,
     ListDomainsResponse,
     UpdateDomainRequestBody,
 )
@@ -43,7 +43,7 @@ def _build_create_request_body(
     description: str,
     tags: Optional[List[str]],
     pad_to_resolution: Optional[float],
-) -> CreateDomainRequestBody:
+) -> GeoJsonFeatureCollection:
     """Build a domain creation request body from GeoJSON input.
 
     The v2 API accepts FeatureCollection input only; a single Feature is
@@ -62,7 +62,7 @@ def _build_create_request_body(
             f"got {geojson_type!r}"
         )
 
-    return CreateDomainRequestBody.from_dict(
+    return GeoJsonFeatureCollection.from_dict(
         {
             **geojson,
             "name": name,

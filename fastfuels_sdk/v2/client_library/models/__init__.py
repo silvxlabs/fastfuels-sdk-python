@@ -37,7 +37,6 @@ from .count_usage import CountUsage
 from .create_application_request import CreateApplicationRequest
 from .create_chm_inventory_request import CreateChmInventoryRequest
 from .create_compose_request import CreateComposeRequest
-from .create_domain_request_body import CreateDomainRequestBody
 from .create_duet_request import CreateDuetRequest
 from .create_fbfm_13_lookup_request import CreateFbfm13LookupRequest
 from .create_fbfm_40_lookup_request import CreateFbfm40LookupRequest
@@ -111,6 +110,7 @@ from .fine_biomass_config import FineBiomassConfig
 from .geo_json_crs import GeoJsonCRS
 from .geo_json_crs_properties import GeoJsonCRSProperties
 from .geo_json_feature import GeoJsonFeature
+from .geo_json_feature_collection import GeoJsonFeatureCollection
 from .geo_json_feature_properties_type_0 import GeoJsonFeaturePropertiesType0
 from .geometry_collection import GeometryCollection
 from .georeference import Georeference
@@ -261,10 +261,10 @@ from .sparse_grid_data import SparseGridData
 from .spatial_operator import SpatialOperator
 from .stem_isolation_lmf import StemIsolationLmf
 from .stem_isolation_vwf import StemIsolationVwf
-from .three_dep_coverage_response import ThreeDepCoverageResponse
 from .three_dep_dataset_coverage import ThreeDepDatasetCoverage
 from .three_dep_resolution import ThreeDepResolution
 from .topography_band import TopographyBand
+from .topography_three_dep_coverage_response import TopographyThreeDepCoverageResponse
 from .tree_band import TreeBand
 from .tree_forestry_metrics import TreeForestryMetrics
 from .tree_map_band import TreeMapBand
@@ -324,7 +324,6 @@ __all__ = (
     "CreateApplicationRequest",
     "CreateChmInventoryRequest",
     "CreateComposeRequest",
-    "CreateDomainRequestBody",
     "CreateDuetRequest",
     "CreateFbfm13LookupRequest",
     "CreateFbfm40LookupRequest",
@@ -394,6 +393,7 @@ __all__ = (
     "GeoJsonCRS",
     "GeoJsonCRSProperties",
     "GeoJsonFeature",
+    "GeoJsonFeatureCollection",
     "GeoJsonFeaturePropertiesType0",
     "GeometryCollection",
     "Georeference",
@@ -524,10 +524,10 @@ __all__ = (
     "SpatialOperator",
     "StemIsolationLmf",
     "StemIsolationVwf",
-    "ThreeDepCoverageResponse",
     "ThreeDepDatasetCoverage",
     "ThreeDepResolution",
     "TopographyBand",
+    "TopographyThreeDepCoverageResponse",
     "TreeBand",
     "TreeForestryMetrics",
     "TreeMapBand",

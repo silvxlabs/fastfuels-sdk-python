@@ -14,31 +14,11 @@ OPC_VERSION="0.29.0"
 
 URL="https://api-v2-prod-782971006568.us-west1.run.app"
 SPEC=$(mktemp /tmp/v2_openapi.XXXXXX.json)
-PATCHED=$(mktemp /tmp/v2_openapi_patched.XXXXXX.json)
 
-curl -s "$URL/openapi.json" > "$SPEC"
-
-# openapi-python-client names classes from schema titles and refuses
-# duplicates, dropping the endpoints that reference the loser. The spec has
-# two such collisions, so re-title one side of each. Long-term fix: re-title
-# the models in the FastFuels-API-v2 repo so the spec has no collision.
-#
-#   "Feature" — the FastFuels feature resource vs geojson_pydantic's GeoJSON
-#   Feature (auto-namespaced by FastAPI, but still titled "Feature").
-#
-#   "ThreeDepCoverageResponse" — the point cloud 3DEP pre-flight check
-#   (point count / budget) vs the topography one (tiles / resolution).
-python3 - "$SPEC" "$PATCHED" <<'EOF'
-import json, sys
-spec = json.load(open(sys.argv[1]))
-schemas = spec["components"]["schemas"]
-schemas["geojson_pydantic__features__Feature"]["title"] = "GeoJsonFeature"
-schemas["ThreeDepCoverageResponse"]["title"] = "PointCloudThreeDepCoverageResponse"
-json.dump(spec, open(sys.argv[2], "w"))
-EOF
+curl -fsS "$URL/openapi.json" > "$SPEC"
 
 uvx "openapi-python-client@${OPC_VERSION}" generate \
-  --path "$PATCHED" \
+  --path "$SPEC" \
   --meta none \
   --output-path client_library \
   --overwrite
@@ -59,5 +39,5 @@ the regen script records the URL alongside the client it generates).
 DEFAULT_BASE_URL = "$URL"
 EOF
 
-rm -f "$SPEC" "$PATCHED"
+rm -f "$SPEC"
 echo "Done."

@@ -34,7 +34,7 @@ T = TypeVar("T", bound="GeoJsonFeature")
 
 @_attrs_define
 class GeoJsonFeature:
-    """Feature Model
+    """Generic GeoJSON feature with a generator-safe OpenAPI title.
 
     Attributes:
         type_ (Literal['Feature']):

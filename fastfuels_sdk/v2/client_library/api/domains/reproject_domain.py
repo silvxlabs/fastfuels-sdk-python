@@ -5,14 +5,14 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.create_domain_request_body import CreateDomainRequestBody
+from ...models.geo_json_feature_collection import GeoJsonFeatureCollection
 from ...models.http_validation_error import HTTPValidationError
 from ...types import UNSET, Response
 
 
 def _get_kwargs(
     *,
-    body: CreateDomainRequestBody,
+    body: GeoJsonFeatureCollection,
     target_epsg: int,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
@@ -39,9 +39,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> CreateDomainRequestBody | HTTPValidationError | None:
+) -> GeoJsonFeatureCollection | HTTPValidationError | None:
     if response.status_code == 200:
-        response_200 = CreateDomainRequestBody.from_dict(response.json())
+        response_200 = GeoJsonFeatureCollection.from_dict(response.json())
 
         return response_200
 
@@ -58,7 +58,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[CreateDomainRequestBody | HTTPValidationError]:
+) -> Response[GeoJsonFeatureCollection | HTTPValidationError]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -70,9 +70,9 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    body: CreateDomainRequestBody,
+    body: GeoJsonFeatureCollection,
     target_epsg: int,
-) -> Response[CreateDomainRequestBody | HTTPValidationError]:
+) -> Response[GeoJsonFeatureCollection | HTTPValidationError]:
     """Reproject a FeatureCollection to a target CRS
 
      # Reproject Domain Endpoint
@@ -106,14 +106,14 @@ def sync_detailed(
 
     Args:
         target_epsg (int): EPSG code of the target CRS.
-        body (CreateDomainRequestBody):
+        body (GeoJsonFeatureCollection):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[CreateDomainRequestBody | HTTPValidationError]
+        Response[GeoJsonFeatureCollection | HTTPValidationError]
     """
 
     kwargs = _get_kwargs(
@@ -131,9 +131,9 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
-    body: CreateDomainRequestBody,
+    body: GeoJsonFeatureCollection,
     target_epsg: int,
-) -> CreateDomainRequestBody | HTTPValidationError | None:
+) -> GeoJsonFeatureCollection | HTTPValidationError | None:
     """Reproject a FeatureCollection to a target CRS
 
      # Reproject Domain Endpoint
@@ -167,14 +167,14 @@ def sync(
 
     Args:
         target_epsg (int): EPSG code of the target CRS.
-        body (CreateDomainRequestBody):
+        body (GeoJsonFeatureCollection):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        CreateDomainRequestBody | HTTPValidationError
+        GeoJsonFeatureCollection | HTTPValidationError
     """
 
     return sync_detailed(
@@ -187,9 +187,9 @@ def sync(
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    body: CreateDomainRequestBody,
+    body: GeoJsonFeatureCollection,
     target_epsg: int,
-) -> Response[CreateDomainRequestBody | HTTPValidationError]:
+) -> Response[GeoJsonFeatureCollection | HTTPValidationError]:
     """Reproject a FeatureCollection to a target CRS
 
      # Reproject Domain Endpoint
@@ -223,14 +223,14 @@ async def asyncio_detailed(
 
     Args:
         target_epsg (int): EPSG code of the target CRS.
-        body (CreateDomainRequestBody):
+        body (GeoJsonFeatureCollection):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[CreateDomainRequestBody | HTTPValidationError]
+        Response[GeoJsonFeatureCollection | HTTPValidationError]
     """
 
     kwargs = _get_kwargs(
@@ -246,9 +246,9 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
-    body: CreateDomainRequestBody,
+    body: GeoJsonFeatureCollection,
     target_epsg: int,
-) -> CreateDomainRequestBody | HTTPValidationError | None:
+) -> GeoJsonFeatureCollection | HTTPValidationError | None:
     """Reproject a FeatureCollection to a target CRS
 
      # Reproject Domain Endpoint
@@ -282,14 +282,14 @@ async def asyncio(
 
     Args:
         target_epsg (int): EPSG code of the target CRS.
-        body (CreateDomainRequestBody):
+        body (GeoJsonFeatureCollection):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        CreateDomainRequestBody | HTTPValidationError
+        GeoJsonFeatureCollection | HTTPValidationError
     """
 
     return (

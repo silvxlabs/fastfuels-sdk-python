@@ -7,8 +7,10 @@ import httpx
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.http_validation_error import HTTPValidationError
-from ...models.three_dep_coverage_response import ThreeDepCoverageResponse
 from ...models.three_dep_resolution import ThreeDepResolution
+from ...models.topography_three_dep_coverage_response import (
+    TopographyThreeDepCoverageResponse,
+)
 from ...types import UNSET, Response, Unset
 
 
@@ -41,9 +43,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> HTTPValidationError | ThreeDepCoverageResponse | None:
+) -> HTTPValidationError | TopographyThreeDepCoverageResponse | None:
     if response.status_code == 200:
-        response_200 = ThreeDepCoverageResponse.from_dict(response.json())
+        response_200 = TopographyThreeDepCoverageResponse.from_dict(response.json())
 
         return response_200
 
@@ -60,7 +62,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[HTTPValidationError | ThreeDepCoverageResponse]:
+) -> Response[HTTPValidationError | TopographyThreeDepCoverageResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -74,7 +76,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     resolution: ThreeDepResolution | Unset = UNSET,
-) -> Response[HTTPValidationError | ThreeDepCoverageResponse]:
+) -> Response[HTTPValidationError | TopographyThreeDepCoverageResponse]:
     """Check 3DEP tile coverage for a domain
 
      # Check 3DEP Tile Coverage
@@ -102,7 +104,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | ThreeDepCoverageResponse]
+        Response[HTTPValidationError | TopographyThreeDepCoverageResponse]
     """
 
     kwargs = _get_kwargs(
@@ -122,7 +124,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     resolution: ThreeDepResolution | Unset = UNSET,
-) -> HTTPValidationError | ThreeDepCoverageResponse | None:
+) -> HTTPValidationError | TopographyThreeDepCoverageResponse | None:
     """Check 3DEP tile coverage for a domain
 
      # Check 3DEP Tile Coverage
@@ -150,7 +152,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | ThreeDepCoverageResponse
+        HTTPValidationError | TopographyThreeDepCoverageResponse
     """
 
     return sync_detailed(
@@ -165,7 +167,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     resolution: ThreeDepResolution | Unset = UNSET,
-) -> Response[HTTPValidationError | ThreeDepCoverageResponse]:
+) -> Response[HTTPValidationError | TopographyThreeDepCoverageResponse]:
     """Check 3DEP tile coverage for a domain
 
      # Check 3DEP Tile Coverage
@@ -193,7 +195,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HTTPValidationError | ThreeDepCoverageResponse]
+        Response[HTTPValidationError | TopographyThreeDepCoverageResponse]
     """
 
     kwargs = _get_kwargs(
@@ -211,7 +213,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     resolution: ThreeDepResolution | Unset = UNSET,
-) -> HTTPValidationError | ThreeDepCoverageResponse | None:
+) -> HTTPValidationError | TopographyThreeDepCoverageResponse | None:
     """Check 3DEP tile coverage for a domain
 
      # Check 3DEP Tile Coverage
@@ -239,7 +241,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HTTPValidationError | ThreeDepCoverageResponse
+        HTTPValidationError | TopographyThreeDepCoverageResponse
     """
 
     return (

@@ -101,6 +101,7 @@ from fastfuels_sdk.v2.client_library.models import (
     SortOrder,
     ThreeDepResolution,
     TopographyBand,
+    TopographyThreeDepCoverageResponse,
     TreeMapBand,
     TreeMapVersion,
     UniformBand,
@@ -2273,7 +2274,9 @@ def get_grid(domain, grid_id: str) -> Grid:
     return Grid.from_id(_domain_id(domain), grid_id)
 
 
-def check_3dep_coverage(domain, resolution_m: Optional[int] = None):
+def check_3dep_coverage(
+    domain, resolution_m: Optional[int] = None
+) -> TopographyThreeDepCoverageResponse:
     """Check USGS 3DEP tile coverage for a domain before creating a grid.
 
     Parameters
@@ -2285,7 +2288,7 @@ def check_3dep_coverage(domain, resolution_m: Optional[int] = None):
 
     Returns
     -------
-    ThreeDepCoverageResponse
+    TopographyThreeDepCoverageResponse
         Tile availability, count, URLs, and (for 1 m) acquisition dates.
     """
     response = check_3dep_coverage_endpoint.sync_detailed(

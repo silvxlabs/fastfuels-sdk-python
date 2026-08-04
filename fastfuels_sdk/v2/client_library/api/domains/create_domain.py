@@ -5,8 +5,8 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.create_domain_request_body import CreateDomainRequestBody
 from ...models.domain import Domain
+from ...models.geo_json_feature_collection import GeoJsonFeatureCollection
 from ...models.http_validation_error import HTTPValidationError
 from ...models.quota_exceeded_detail import QuotaExceededDetail
 from ...types import Response
@@ -14,7 +14,7 @@ from ...types import Response
 
 def _get_kwargs(
     *,
-    body: CreateDomainRequestBody,
+    body: GeoJsonFeatureCollection,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -69,7 +69,7 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    body: CreateDomainRequestBody,
+    body: GeoJsonFeatureCollection,
 ) -> Response[Domain | HTTPValidationError | QuotaExceededDetail]:
     r"""Create a new domain
 
@@ -190,7 +190,7 @@ def sync_detailed(
       - \"Invalid spatial extent. The domain must be entirely within CONUS.\"
 
     Args:
-        body (CreateDomainRequestBody):
+        body (GeoJsonFeatureCollection):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -214,7 +214,7 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
-    body: CreateDomainRequestBody,
+    body: GeoJsonFeatureCollection,
 ) -> Domain | HTTPValidationError | QuotaExceededDetail | None:
     r"""Create a new domain
 
@@ -335,7 +335,7 @@ def sync(
       - \"Invalid spatial extent. The domain must be entirely within CONUS.\"
 
     Args:
-        body (CreateDomainRequestBody):
+        body (GeoJsonFeatureCollection):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -354,7 +354,7 @@ def sync(
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    body: CreateDomainRequestBody,
+    body: GeoJsonFeatureCollection,
 ) -> Response[Domain | HTTPValidationError | QuotaExceededDetail]:
     r"""Create a new domain
 
@@ -475,7 +475,7 @@ async def asyncio_detailed(
       - \"Invalid spatial extent. The domain must be entirely within CONUS.\"
 
     Args:
-        body (CreateDomainRequestBody):
+        body (GeoJsonFeatureCollection):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -497,7 +497,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
-    body: CreateDomainRequestBody,
+    body: GeoJsonFeatureCollection,
 ) -> Domain | HTTPValidationError | QuotaExceededDetail | None:
     r"""Create a new domain
 
@@ -618,7 +618,7 @@ async def asyncio(
       - \"Invalid spatial extent. The domain must be entirely within CONUS.\"
 
     Args:
-        body (CreateDomainRequestBody):
+        body (GeoJsonFeatureCollection):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

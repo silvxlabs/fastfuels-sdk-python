@@ -267,12 +267,11 @@ operations have no SDK surface. Ordered by what unblocks a user workflow.
   `json_orientation`) and `get_inventory_data_csv`; `InventoryDataFormat` is
   gone. `Inventory.get_data_partition` now calls the JSON variant — behavior
   unchanged. The CSV variant is unused (see *data out* below).
-- Second spec title collision — the point cloud and topography 3DEP
-  pre-flight responses are both titled `ThreeDepCoverageResponse`, which
-  silently dropped the point cloud coverage endpoint from the client.
-  `generate_client.sh` now re-titles the point cloud one to
-  `PointCloudThreeDepCoverageResponse`, alongside the `Feature` patch.
-  Same long-term fix: re-title in FastFuels-API-v2 so the spec is clean.
+- FastFuels-API-v2#489 resolved both schema-title collisions at the source.
+  `generate_client.sh` now consumes the production spec without patching it.
+  The generated domain request model is `GeoJsonFeatureCollection`, and the
+  two 3DEP coverage models are `PointCloudThreeDepCoverageResponse` and
+  `TopographyThreeDepCoverageResponse`.
 
 ### Quotas — cross-cutting, affects every creator
 

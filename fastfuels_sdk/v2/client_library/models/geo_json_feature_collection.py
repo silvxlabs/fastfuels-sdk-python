@@ -21,11 +21,11 @@ if TYPE_CHECKING:
     from ..models.geo_json_feature import GeoJsonFeature
 
 
-T = TypeVar("T", bound="CreateDomainRequestBody")
+T = TypeVar("T", bound="GeoJsonFeatureCollection")
 
 
 @_attrs_define
-class CreateDomainRequestBody:
+class GeoJsonFeatureCollection:
     """
     Attributes:
         type_ (Literal['FeatureCollection']):
@@ -231,7 +231,7 @@ class CreateDomainRequestBody:
 
         style = _parse_style(d.pop("style", UNSET))
 
-        create_domain_request_body = cls(
+        geo_json_feature_collection = cls(
             type_=type_,
             features=features,
             bbox=bbox,
@@ -243,8 +243,8 @@ class CreateDomainRequestBody:
             style=style,
         )
 
-        create_domain_request_body.additional_properties = d
-        return create_domain_request_body
+        geo_json_feature_collection.additional_properties = d
+        return geo_json_feature_collection
 
     @property
     def additional_keys(self) -> list[str]:
