@@ -140,6 +140,10 @@ class Inventory(InventoryModel):
         Silvicultural treatments applied to the inventory.
     columns : List[Column], optional
         The columns of the inventory's tabular data.
+    forestry_metrics : TreeForestryMetrics, optional
+        Stand-level tree count, basal area per acre, trees per acre,
+        quadratic mean diameter, and dominant FIA species groups. Populated
+        when a tree inventory completes; ``None`` when unavailable.
     georeference : InventoryGeoreference, optional
         Spatial reference of the generated data; populated when the job
         completes.
@@ -180,13 +184,18 @@ class Inventory(InventoryModel):
         Round-trips through the generated to_dict/from_dict — from_dict
         constructs ``cls``, i.e. this subclass.
         """
-        return cls.from_dict(model.to_dict())
+        inventory = cls.from_dict(model.to_dict())
+        if inventory.forestry_metrics is UNSET:
+            inventory.forestry_metrics = None
+        return inventory
 
     def _copy_fields_from(self, model: InventoryModel) -> "Inventory":
         """Copy all generated-model fields from `model` onto self (in-place)."""
         for field in attrs.fields(InventoryModel):
             if field.init:
                 setattr(self, field.name, getattr(model, field.name))
+        if self.forestry_metrics is UNSET:
+            self.forestry_metrics = None
         self.additional_properties = dict(model.additional_properties)
         return self
 

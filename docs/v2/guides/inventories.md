@@ -191,6 +191,30 @@ layout first:
 Data is only available once the inventory is `"completed"` — earlier calls
 raise `UnprocessableEntityException`.
 
+## Inspect stand-level forestry metrics
+
+Once a tree inventory completes, read its server-computed forestry metrics
+without downloading the tree records:
+
+```python
+metrics = inventory.forestry_metrics
+
+tree_count = metrics.tree_count
+basal_area_per_acre = metrics.basal_area_per_area
+trees_per_acre = metrics.tree_density
+quadratic_mean_diameter_inches = metrics.quadratic_mean_diameter
+
+dominant_groups = [
+    (group.spgrpcd, group.name, group.basal_area_share)
+    for group in metrics.dominant_species_groups
+]
+```
+
+`dominant_species_groups` is ordered by decreasing basal-area share and
+contains the leading FIA species groups. Only the leading groups are returned,
+so their shares may sum to less than one. `forestry_metrics` is `None` when
+metrics are unavailable, including before processing completes.
+
 ## Reshape the trees
 
 Every creator accepts `modifications=` (rules that filter trees by conditions

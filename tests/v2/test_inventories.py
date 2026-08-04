@@ -20,14 +20,20 @@ from fastfuels_sdk.v2.inventories import (
 from fastfuels_sdk.v2.treatments import basal_area_treatment, diameter_treatment
 from fastfuels_sdk.v2.modifications import remove_trees, tree_attribute
 from fastfuels_sdk.v2.client_library.models import (
+    FIASpeciesGroupShare,
+    Inventory as InventoryModel,
     InventoryAttribute,
     InventoryModification,
     InventoryModificationAction,
     InventoryModificationCondition,
+    InventorySource,
+    InventoryType,
     JobStatus,
     Modifier,
     Operator,
+    TreeForestryMetrics,
 )
+from fastfuels_sdk.v2.client_library.types import UNSET
 from fastfuels_sdk.v2.exceptions import NotFoundException
 
 # External imports
@@ -73,6 +79,68 @@ class TestCreateTreeInventoryFromPimGrid:
         assert completed_tree_inventory.status == JobStatus.COMPLETED
         assert completed_tree_inventory.georeference is not None
         assert completed_tree_inventory.checksum
+
+
+class TestForestryMetrics:
+    @staticmethod
+    def _model(forestry_metrics=UNSET):
+        return InventoryModel(
+            id="inventory-id",
+            domain_id="domain-id",
+            type_=InventoryType.TREE,
+            status=JobStatus.COMPLETED,
+            source=InventorySource(),
+            forestry_metrics=forestry_metrics,
+        )
+
+    def test_wraps_metrics_record(self):
+        metrics = TreeForestryMetrics(
+            type_="tree",
+            tree_count=120,
+            basal_area_per_area=87.5,
+            tree_density=240.0,
+            quadratic_mean_diameter=9.4,
+            dominant_species_groups=[
+                FIASpeciesGroupShare(
+                    spgrpcd=3,
+                    name="Douglas-fir",
+                    basal_area_share=0.62,
+                )
+            ],
+        )
+
+        inventory = Inventory._from_model(self._model(metrics))
+
+        assert isinstance(inventory.forestry_metrics, TreeForestryMetrics)
+        assert inventory.forestry_metrics.tree_count == 120
+        assert inventory.forestry_metrics.dominant_species_groups[0].spgrpcd == 3
+
+    def test_normalizes_missing_metrics_to_none(self):
+        inventory = Inventory._from_model(self._model())
+
+        assert inventory.forestry_metrics is None
+
+    def test_completed_inventory_metrics_live(self, completed_tree_inventory):
+        metrics = completed_tree_inventory.forestry_metrics
+
+        assert isinstance(metrics, TreeForestryMetrics)
+        assert metrics.type_ == "tree"
+        assert (
+            metrics.tree_count
+            == completed_tree_inventory.get_data_metadata().total_rows
+        )
+        assert metrics.basal_area_per_area > 0
+        assert metrics.tree_density > 0
+        assert metrics.quadratic_mean_diameter > 0
+        assert len(metrics.dominant_species_groups) > 0
+        assert [
+            group.basal_area_share for group in metrics.dominant_species_groups
+        ] == (
+            sorted(
+                (group.basal_area_share for group in metrics.dominant_species_groups),
+                reverse=True,
+            )
+        )
 
 
 class TestCreateTreeInventoryFromFile:
