@@ -20,6 +20,10 @@ from fastfuels_sdk.v2.inventories import (
 from fastfuels_sdk.v2.treatments import basal_area_treatment, diameter_treatment
 from fastfuels_sdk.v2.modifications import remove_trees, tree_attribute
 from fastfuels_sdk.v2.client_library.models import (
+    CategoricalColumnSummary,
+    Column,
+    ColumnType,
+    ContinuousColumnSummary,
     FIASpeciesGroupShare,
     Inventory as InventoryModel,
     InventoryAttribute,
@@ -141,6 +145,83 @@ class TestForestryMetrics:
                 reverse=True,
             )
         )
+
+
+class TestColumnSummary:
+    @staticmethod
+    def _inventory_with_column(column):
+        return Inventory(
+            id="inventory-id",
+            domain_id="domain-id",
+            type_=InventoryType.TREE,
+            status=JobStatus.COMPLETED,
+            source=InventorySource(),
+            columns=[column],
+        )
+
+    def test_returns_continuous_summary(self):
+        summary = ContinuousColumnSummary(
+            type_="continuous",
+            count=10,
+            null_count=0,
+            min_=1.0,
+            max_=5.0,
+            mean=3.0,
+            std=1.0,
+        )
+        inventory = self._inventory_with_column(
+            Column(key="dbh", type_=ColumnType.CONTINUOUS, summary=summary)
+        )
+
+        assert inventory.column_summary("dbh") is summary
+        assert inventory.column_summary("dbh").mean == 3.0
+
+    def test_returns_categorical_summary(self):
+        summary = CategoricalColumnSummary(
+            type_="categorical", count=10, null_count=1, unique_count=3
+        )
+        inventory = self._inventory_with_column(
+            Column(
+                key="fia_species_code",
+                type_=ColumnType.CATEGORICAL,
+                summary=summary,
+            )
+        )
+
+        assert inventory.column_summary("fia_species_code") is summary
+        assert inventory.column_summary("fia_species_code").unique_count == 3
+
+    def test_none_when_not_computed(self):
+        inventory = self._inventory_with_column(
+            Column(key="dbh", type_=ColumnType.CONTINUOUS)
+        )
+
+        assert inventory.column_summary("dbh") is None
+
+    def test_unknown_column_raises(self):
+        inventory = self._inventory_with_column(
+            Column(key="dbh", type_=ColumnType.CONTINUOUS)
+        )
+
+        with pytest.raises(ValueError, match="no column"):
+            inventory.column_summary("height")
+
+    def test_summaries_live(self, completed_tree_inventory):
+        dbh = completed_tree_inventory.column_summary("dbh")
+        species = completed_tree_inventory.column_summary("fia_species_code")
+        tree_count = completed_tree_inventory.get_data_metadata().total_rows
+
+        assert isinstance(dbh, ContinuousColumnSummary)
+        assert dbh.type_ == "continuous"
+        assert dbh.count == tree_count
+        assert dbh.null_count == 0
+        assert dbh.mean > 0
+
+        assert isinstance(species, CategoricalColumnSummary)
+        assert species.type_ == "categorical"
+        assert species.count == tree_count
+        assert species.null_count == 0
+        assert species.unique_count > 0
 
 
 class TestCreateTreeInventoryFromFile:

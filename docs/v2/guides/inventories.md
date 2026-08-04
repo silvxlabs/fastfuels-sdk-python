@@ -191,6 +191,27 @@ layout first:
 Data is only available once the inventory is `"completed"` — earlier calls
 raise `UnprocessableEntityException`.
 
+## Summarize a column without downloading records
+
+Once an inventory completes, inspect a column's server-computed summary by
+passing its key to `column_summary`:
+
+```python
+dbh = inventory.column_summary("dbh")
+mean_dbh = dbh.mean
+minimum_dbh = dbh.min_
+maximum_dbh = dbh.max_
+
+species = inventory.column_summary("fia_species_code")
+species_count = species.unique_count
+```
+
+A continuous column reports `count`, `null_count`, `min_`, `max_`, `mean`, and
+`std`; a categorical column reports `count`, `null_count`, and `unique_count`.
+The `type_` field identifies the shape. `column_summary` returns `None` when
+the requested column exists but its summary is unavailable; an unknown column
+key raises `ValueError`.
+
 ## Inspect stand-level forestry metrics
 
 Once a tree inventory completes, read its server-computed forestry metrics

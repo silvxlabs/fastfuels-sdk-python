@@ -207,6 +207,17 @@ class Inventory(InventoryModel):
                 "Call .wait() until it completes first."
             )
 
+    def _column(self, column: str):
+        """Return the :class:`Column` with key ``column``, or raise if absent."""
+        columns = [] if self.columns is UNSET or self.columns is None else self.columns
+        for inventory_column in columns:
+            if inventory_column.key == column:
+                return inventory_column
+        keys = [inventory_column.key for inventory_column in columns]
+        raise ValueError(
+            f"Inventory has no column {column!r}. Available columns: {keys}."
+        )
+
     @classmethod
     def from_id(cls, domain_id: str, inventory_id: str) -> "Inventory":
         """Retrieve an existing Inventory resource by its ID.
@@ -653,6 +664,42 @@ class Inventory(InventoryModel):
             self.domain_id, self.id, client=ensure_client()
         )
         return expect(response)
+
+    def column_summary(self, column: str):
+        """Return summary statistics for one column without downloading records.
+
+        The server computes a per-column summary when an inventory completes,
+        so this provides a cheap overview without fetching the inventory's tree
+        records (unlike :meth:`to_dataframe`).
+
+        Parameters
+        ----------
+        column : str
+            The column key to summarize (see :attr:`columns` for available
+            keys).
+
+        Returns
+        -------
+        ContinuousColumnSummary or CategoricalColumnSummary or None
+            The column's summary, discriminated by its ``type_``:
+            ``"continuous"`` carries ``count``, ``null_count``, ``min_``,
+            ``max_``, ``mean``, and ``std``; ``"categorical"`` carries
+            ``count``, ``null_count``, and ``unique_count``. ``None`` until
+            the inventory completes (call :meth:`wait` first).
+
+        Raises
+        ------
+        ValueError
+            If ``column`` is not one of the inventory's columns.
+
+        Examples
+        --------
+        >>> inventory = ff.get_inventory(domain, "abc123").wait()
+        >>> inventory.column_summary("dbh").type_
+        'continuous'
+        """
+        summary = self._column(column).summary
+        return None if summary is UNSET else summary
 
     def get_data_partition(
         self, partition_index: int, columns: Optional[List[str]] = None
