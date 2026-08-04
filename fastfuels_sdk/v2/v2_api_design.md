@@ -240,8 +240,9 @@ later merges). Each new resource/endpoint kept to the settled rules above.
   point_cloud_type=)`, `list_point_clouds`/`get_point_cloud`. Nothing else
   sources from a point cloud yet.
 - **Inventory treatments** — `Inventory.apply_treatments([...])` (in-place
-  re-derive; unlike `apply_modifications` it does *not* hit #333) + the
-  `ff.basal_area_treatment`/`ff.diameter_treatment` builders (`treatments.py`).
+  re-derive) + the `ff.basal_area_treatment`/`ff.diameter_treatment` builders
+  (`treatments.py`). The former #333 fork-safety blocker for both in-place
+  processing paths is fixed.
 - **GDAM** — `create_tree_inventory_from_gdam(domain, source_inventory,
   impute_columns=)`. A *create* (new inventory) → a function in the
   `create_tree_inventory_from_*` family, **not** a method — same call as the

@@ -9,7 +9,6 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 # Internal imports
-from fastfuels_sdk.v2._jobs import JobFailedError
 from fastfuels_sdk.v2.grids import Grid
 from fastfuels_sdk.v2.inventories import (
     Inventory,
@@ -344,17 +343,8 @@ class TestDuplicate:
 
 
 class TestApplyModifications:
-    @pytest.mark.xfail(
-        reason="v2 API bug: the in-place modifications job fails at the save "
-        "step (module-level gcsfs client is not fork-safe in standgen) — "
-        "FastFuels-API-v2#333",
-        raises=JobFailedError,
-        strict=True,
-    )
-    def test_apply_modifications_rederives_in_place(self, completed_tree_inventory):
-        # Mutating, so work on a duplicate — the shared fixture is read-only
-        copy = completed_tree_inventory.duplicate(name="modify_test")
-        copy.wait()
+    def test_apply_modifications_rederives_in_place(self, throwaway_inventory):
+        copy = throwaway_inventory
         # Rules need at least one condition; height > 0 matches every tree
         modification = InventoryModification(
             conditions=[
@@ -377,11 +367,13 @@ class TestApplyModifications:
         modified = copy.apply_modifications([modification])
 
         assert modified is copy  # in place: same object, same id
-        assert len(copy.modifications) == 1
+        assert copy.status == JobStatus.PENDING
+        assert copy.modifications == []  # ledger grows only after completion
+        assert copy.checksum != original_checksum  # rotates at dispatch
         copy.wait()
         assert copy.status == JobStatus.COMPLETED
+        assert len(copy.modifications) == 1
         assert copy.checksum != original_checksum  # data was re-derived
-        copy.delete()
 
     def test_requires_completed_source(self, test_domain, completed_pim_grid):
         inventory = create_tree_inventory_from_pim_grid(
@@ -427,9 +419,9 @@ class TestModificationBuilders:
     def test_remove_trees_at_creation(
         self, test_domain, completed_pim_grid, completed_tree_inventory
     ):
-        # In-place apply_modifications is #333-blocked, so verify the builders
-        # via the create-time path (which works). Same seed as the unmodified
-        # fixture, so removing dbh < 10 must yield strictly fewer trees.
+        # Verify the builders independently through the create-time path. Use
+        # the same seed as the unmodified fixture so removing dbh < 10 must
+        # yield strictly fewer trees.
         modified = create_tree_inventory_from_pim_grid(
             test_domain,
             completed_pim_grid,

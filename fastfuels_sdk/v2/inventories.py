@@ -393,11 +393,12 @@ class Inventory(InventoryModel):
     def apply_modifications(self, modifications: list) -> "Inventory":
         """Apply modification rules to this inventory in place.
 
-        The inventory keeps its ID; the submitted rules are appended to its
-        cumulative ``modifications`` list and the tree data is re-derived as
-        a background job — the inventory returns to "pending" status, so
-        call :meth:`wait` before using its data. To keep the original data,
-        :meth:`duplicate` first and modify the copy.
+        The inventory keeps its ID; the submitted rules are queued while the
+        tree data is re-derived as a background job. The inventory returns to
+        "pending" status, and the rules are appended to its cumulative
+        ``modifications`` list once processing completes. Call :meth:`wait`
+        before using its data. To keep the original data, :meth:`duplicate`
+        first and modify the copy.
 
         Parameters
         ----------
