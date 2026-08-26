@@ -120,9 +120,9 @@ grid = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
 )
 ```
 
-To pin a LANDFIRE vintage, pass `version` (`"2024"` or `"2025"`); it defaults
-to the API's current version. A completed grid reports the calendar year its
-fuels represent on `grid.represented_year`:
+To pin an annual LANDFIRE vintage, pass `version` (e.g. `"2024"`); it defaults
+to the API's current version. The grid reports the calendar year its fuels
+represent on `grid.represented_year`:
 
 ```python
 grid = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
@@ -134,6 +134,35 @@ grid = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
 >>> grid.represented_year
 2024
 ```
+
+### Seasonal fuels
+
+LANDFIRE Seasonal Fuels adjusts FBFM40 for a time of year — early spring
+(`"ES"`), spring (`"SP"`), summer (`"SU"`), or fall (`"FA"`). Pass `season`
+together with a seasonal `version` (`"2025"`) to fetch it on demand from the
+LANDFIRE Product Service instead of the staged annual release:
+
+```python
+grid = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
+    domain, version="2025", season="SP", output_resolution_m=30
+)
+```
+
+`grid.represented_year` is the projected season year — version `"2025"` plus
+`"SP"` is spring 2026:
+
+```python
+>>> grid.represented_year
+2026
+```
+
+!!! warning "Seasonal coverage is limited"
+
+    Seasonal Fuels covers a changing region rather than all of CONUS. A
+    request for a domain outside the current coverage raises
+    `UnprocessableEntityException`. See
+    [LANDFIRE Seasonal Fuels](https://landfire.gov/fuel/seasonal_fuels) for
+    current availability.
 
 ### Look up fuel parameters from FBFM40 codes
 
