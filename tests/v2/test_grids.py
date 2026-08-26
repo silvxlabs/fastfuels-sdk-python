@@ -671,6 +671,87 @@ class TestCreateFuelModelGridFromLandfireFbfm40:
         assert grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
         grid.delete()
 
+    def test_create_new_version_reports_year(self, test_domain):
+        # Annual FBFM40's represented year is its version, populated on the
+        # source the moment the pending grid is returned.
+        grid = create_fuel_model_grid_from_landfire_fbfm40(
+            test_domain,
+            version="2024",
+            output_resolution_m=30,
+            name="throwaway_fbfm40_2024",
+        )
+        assert grid.represented_year == 2024
+        grid.delete()
+
+    @pytest.mark.parametrize("version", ["2024", "2025"])
+    def test_builds_request_accepts_new_versions(self, monkeypatch, version):
+        created = Grid(
+            id="fbfm40-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_landfire_fbfm40,
+            "sync_detailed",
+            fake_create,
+        )
+
+        create_fuel_model_grid_from_landfire_fbfm40(
+            SimpleNamespace(id="domain-id"),
+            version=version,
+            output_resolution_m=30,
+        )
+
+        assert captured["body"].version.value == version
+
+    def test_rejects_unknown_version(self):
+        with pytest.raises(ValueError):
+            create_fuel_model_grid_from_landfire_fbfm40(
+                SimpleNamespace(id="domain-id"),
+                version="1999",
+            )
+
+
+class TestRepresentedYear:
+    """Unit tests for the Grid.represented_year accessor (no API)."""
+
+    def test_reads_year_from_source(self):
+        source = GridSource()
+        source["year"] = 2026
+        grid = Grid(
+            id="grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=source,
+            bands=[],
+        )
+        assert grid.represented_year == 2026
+
+    def test_none_when_source_has_no_year(self):
+        grid = Grid(
+            id="grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        assert grid.represented_year is None
+
 
 class TestCreateFuelModelGridFromLandfireFbfm13:
     def test_builds_request(self, monkeypatch):

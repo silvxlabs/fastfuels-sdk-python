@@ -351,6 +351,21 @@ class Grid(GridModel):
         keys = [b.key for b in self.bands]
         raise ValueError(f"Grid has no band {band!r}. Available bands: {keys}.")
 
+    @property
+    def represented_year(self) -> Optional[int]:
+        """Calendar year the fuel data represents, as reported by the API.
+
+        Populated on LANDFIRE fuel model grids. For an annual product this is
+        the landscape vintage (the ``version``); for a seasonal product it is
+        the projected season year read from the LANDFIRE Product Service
+        catalog. ``None`` when the source does not report a year.
+        """
+        # `source` is a free-form GridSource, so read the server-set `year`
+        # off its additional properties rather than a typed attribute.
+        if self.source is None:
+            return None
+        return self.source.additional_properties.get("year")
+
     @classmethod
     def from_id(cls, domain_id: str, grid_id: str) -> "Grid":
         """Retrieve an existing Grid resource by its ID.
