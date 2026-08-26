@@ -8,6 +8,8 @@
       
       
       
+        <link rel="canonical" href="https://silvxlabs.github.io/fastfuels-sdk-python/v1/reference/">
+      
       
         <link rel="prev" href="../tutorials/point_cloud_example/">
       
@@ -16,7 +18,7 @@
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
@@ -25,7 +27,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -44,9 +49,11 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -55,7 +62,14 @@
   </head>
   
   
-    <body dir="ltr">
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -73,6 +87,10 @@
       
     </div>
     
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
     
       
 
@@ -80,7 +98,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="FastFuels SDK Documentation" class="md-header__button md-logo" aria-label="FastFuels SDK Documentation" data-md-component="logo">
+    <a href=".." title="FastFuels SDK Documentation" class="md-header__button md-logo" aria-label="FastFuels SDK Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -107,6 +125,32 @@
       </div>
     </div>
     
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
     
       <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
@@ -131,11 +175,18 @@
       </label>
       <nav class="md-search__options" aria-label="Search">
         
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
       </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
       
     </form>
     <div class="md-search__output">
@@ -152,6 +203,18 @@
 </div>
       
     
+    
+      <div class="md-header__source">
+        <a href="https://github.com/silvxlabs/fastfuels-sdk-python" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    silvxlabs/fastfuels-sdk-python
+  </div>
+</a>
+      </div>
     
   </nav>
   
@@ -178,7 +241,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="FastFuels SDK Documentation" class="md-nav__button md-logo" aria-label="FastFuels SDK Documentation" data-md-component="logo">
+    <a href=".." title="FastFuels SDK Documentation" class="md-nav__button md-logo" aria-label="FastFuels SDK Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -186,6 +249,18 @@
     </a>
     FastFuels SDK Documentation
   </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/silvxlabs/fastfuels-sdk-python" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    silvxlabs/fastfuels-sdk-python
+  </div>
+</a>
+    </div>
   
   <ul class="md-nav__list" data-md-scrollfix>
     
@@ -196,7 +271,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -220,55 +295,6 @@
       
   
   
-    
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    v1 (current)
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    v1 (current)
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
   
   
     
@@ -280,10 +306,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2_1" id="__nav_2_1_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   
@@ -301,8 +327,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_1_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_1">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -486,10 +512,9 @@
     </li>
   
 
-              
-            
-              
-                
+    
+      
+      
   
   
   
@@ -503,10 +528,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
         
           
-          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
             
   
   
@@ -524,8 +549,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_2">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -597,10 +622,9 @@
     </li>
   
 
-              
-            
-              
-                
+    
+      
+      
   
   
     
@@ -2257,14 +2281,6 @@
     </li>
   
 
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
     
   </ul>
 </nav>
@@ -3895,6 +3911,9 @@
                   
 
 
+  
+  
+
 
   <h1>Reference</h1>
 
@@ -3906,7 +3925,7 @@
             <span class="doc doc-object-name doc-module-name">fastfuels_sdk.v1.domains</span>
 
 
-</h2>
+<a href="#fastfuels_sdk.v1.domains" class="headerlink" title="Permanent link">&para;</a></h2>
 
     <div class="doc doc-contents first">
 
@@ -3939,7 +3958,7 @@
             <span class="doc doc-object-name doc-class-name">Domain</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.domains.Domain" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -4130,7 +4149,7 @@ list_domains : List available domains</p>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
   </span>
 
-</h4>
+<a href="#fastfuels_sdk.v1.domains.Domain.from_id" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_id</span><span class="p">(</span><span class="n">domain_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Domain</span>
 </span></code></pre></div>
 
@@ -4183,7 +4202,7 @@ Raises NotFoundException if no domain exists with the given ID.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Domain (fastfuels_sdk.v1.domains.Domain)" href="#fastfuels_sdk.v1.domains.Domain">Domain</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Domain&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.domains.Domain&lt;/code&gt;)" href="#fastfuels_sdk.v1.domains.Domain">Domain</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4217,7 +4236,7 @@ Raises NotFoundException if no domain exists with the given ID.</p>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
   </span>
 
-</h4>
+<a href="#fastfuels_sdk.v1.domains.Domain.from_geojson" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_geojson</span><span class="p">(</span><span class="n">geojson</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">horizontal_resolution</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">vertical_resolution</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Domain</span>
 </span></code></pre></div>
 
@@ -4343,7 +4362,7 @@ geometry defining the spatial location of the domain.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Domain (fastfuels_sdk.v1.domains.Domain)" href="#fastfuels_sdk.v1.domains.Domain">Domain</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Domain&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.domains.Domain&lt;/code&gt;)" href="#fastfuels_sdk.v1.domains.Domain">Domain</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4385,7 +4404,7 @@ geometry defining the spatial location of the domain.</p>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
   </span>
 
-</h4>
+<a href="#fastfuels_sdk.v1.domains.Domain.from_geodataframe" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_geodataframe</span><span class="p">(</span><span class="n">geodataframe</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">horizontal_resolution</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">vertical_resolution</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span>
 </span></code></pre></div>
 
@@ -4518,7 +4537,7 @@ processing and analysis.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Domain (fastfuels_sdk.v1.domains.Domain)" href="#fastfuels_sdk.v1.domains.Domain">Domain</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Domain&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.domains.Domain&lt;/code&gt;)" href="#fastfuels_sdk.v1.domains.Domain">Domain</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4556,7 +4575,7 @@ processing and analysis.</p>
             <span class="doc doc-object-name doc-function-name">get</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.domains.Domain.get" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get</span><span class="p">(</span><span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Domain</span>
 </span></code></pre></div>
 
@@ -4612,7 +4631,7 @@ leaving the current instance unchanged. Default is False.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Domain (fastfuels_sdk.v1.domains.Domain)" href="#fastfuels_sdk.v1.domains.Domain">Domain</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Domain&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.domains.Domain&lt;/code&gt;)" href="#fastfuels_sdk.v1.domains.Domain">Domain</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4658,7 +4677,7 @@ ensure all references to this Domain instance see the updated data.</p>
             <span class="doc doc-object-name doc-function-name">update</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.domains.Domain.update" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">update</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Domain</span>
 </span></code></pre></div>
 
@@ -4761,7 +4780,7 @@ leaving the current instance unchanged. Default is False.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Domain (fastfuels_sdk.v1.domains.Domain)" href="#fastfuels_sdk.v1.domains.Domain">Domain</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Domain&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.domains.Domain&lt;/code&gt;)" href="#fastfuels_sdk.v1.domains.Domain">Domain</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4807,7 +4826,7 @@ modified - you must create a new domain instead.</p>
             <span class="doc doc-object-name doc-function-name">to_json</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.domains.Domain.to_json" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">to_json</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span>
 </span></code></pre></div>
 
@@ -4861,7 +4880,7 @@ Uses clean serialization without internal Pydantic validation fields.</p>
             <span class="doc doc-object-name doc-function-name">to_geodataframe</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.domains.Domain.to_geodataframe" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">to_geodataframe</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span>
 </span></code></pre></div>
 
@@ -4925,7 +4944,7 @@ visualization, or export to various geospatial file formats.</p>
             <span class="doc doc-object-name doc-function-name">export</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.domains.Domain.export" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">export</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span>
 </span></code></pre></div>
 
@@ -4998,7 +5017,7 @@ large data payloads like grid arrays, GeoJSON features, or tree records.</p>
             <span class="doc doc-object-name doc-function-name">delete</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.domains.Domain.delete" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">delete</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
@@ -5062,7 +5081,7 @@ raise a NotFoundException.</p>
             <span class="doc doc-object-name doc-function-name">list_domains</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.domains.list_domains" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">list_domains</span><span class="p">(</span><span class="n">page</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">sort_by</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">sort_order</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ListDomainResponse</span>
 </span></code></pre></div>
 
@@ -5230,7 +5249,7 @@ Default is "ascending".</p>
             <span class="doc doc-object-name doc-module-name">fastfuels_sdk.v1.inventories</span>
 
 
-</h2>
+<a href="#fastfuels_sdk.v1.inventories" class="headerlink" title="Permanent link">&para;</a></h2>
 
     <div class="doc doc-contents first">
 
@@ -5263,7 +5282,7 @@ Default is "ascending".</p>
             <span class="doc doc-object-name doc-class-name">Inventories</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.inventories.Inventories" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -5301,7 +5320,7 @@ data from the API.</p>
           <tr class="doc-section-item">
             <td><code><span title="fastfuels_sdk.v1.inventories.Inventories.tree">tree</span></code></td>
             <td>
-                  <code>(<a class="autorefs autorefs-internal" title="TreeInventory (fastfuels_sdk.v1.inventories.TreeInventory)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a>, <span title="optional">optional</span>)</code>
+                  <code>(<a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TreeInventory&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.inventories.TreeInventory&lt;/code&gt;)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a>, <span title="optional">optional</span>)</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5344,7 +5363,7 @@ data from the API.</p>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
   </span>
 
-</h4>
+<a href="#fastfuels_sdk.v1.inventories.Inventories.from_domain_id" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_domain_id</span><span class="p">(</span><span class="n">domain_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventories</span>
 </span></code></pre></div>
 
@@ -5397,7 +5416,7 @@ The fetched data is then used to initialize and return an <code>Inventories</cod
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Inventories (fastfuels_sdk.v1.inventories.Inventories)" href="#fastfuels_sdk.v1.inventories.Inventories">Inventories</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Inventories&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.inventories.Inventories&lt;/code&gt;)" href="#fastfuels_sdk.v1.inventories.Inventories">Inventories</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5427,7 +5446,7 @@ using the domain ID.</p>
             <span class="doc doc-object-name doc-function-name">get</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.inventories.Inventories.get" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get</span><span class="p">(</span><span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
 </span></code></pre></div>
 
@@ -5482,7 +5501,7 @@ Default is <code>False</code>.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Inventories (fastfuels_sdk.v1.inventories.Inventories)" href="#fastfuels_sdk.v1.inventories.Inventories">Inventories</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Inventories&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.inventories.Inventories&lt;/code&gt;)" href="#fastfuels_sdk.v1.inventories.Inventories">Inventories</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5515,7 +5534,7 @@ Default is <code>False</code>.</p>
             <span class="doc doc-object-name doc-function-name">create_tree_inventory</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.inventories.Inventories.create_tree_inventory" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory</span><span class="p">(</span><span class="n">sources</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="n">TreeInventorySource</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">TreeInventorySource</span><span class="p">],</span> <span class="n">tree_map</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TreeMapSource</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">treatments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TreeInventory</span>
 </span></code></pre></div>
 
@@ -5718,7 +5737,7 @@ If False (default), leaves this object unchanged.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="TreeInventory (fastfuels_sdk.v1.inventories.TreeInventory)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TreeInventory&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.inventories.TreeInventory&lt;/code&gt;)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5800,7 +5819,7 @@ If False (default), leaves this object unchanged.</p>
             <span class="doc doc-object-name doc-function-name">create_tree_inventory_from_treemap</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.inventories.Inventories.create_tree_inventory_from_treemap" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_from_treemap</span><span class="p">(</span><span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;2022&#39;</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">canopy_height_map_source</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">treatments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TreeInventory</span>
 </span></code></pre></div>
 
@@ -6036,7 +6055,7 @@ Available masks:
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="TreeInventory (fastfuels_sdk.v1.inventories.TreeInventory)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TreeInventory&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.inventories.TreeInventory&lt;/code&gt;)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6135,7 +6154,7 @@ Available masks:
             <span class="doc doc-object-name doc-function-name">create_tree_inventory_from_file_upload</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.inventories.Inventories.create_tree_inventory_from_file_upload" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_from_file_upload</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TreeInventory</span>
 </span></code></pre></div>
 
@@ -6205,7 +6224,7 @@ The file must include the following columns:
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="TreeInventory (fastfuels_sdk.v1.inventories.TreeInventory)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TreeInventory&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.inventories.TreeInventory&lt;/code&gt;)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6297,7 +6316,7 @@ Use wait_until_completed() to wait for processing to finish.</p>
             <span class="doc doc-object-name doc-function-name">create_tree_inventory_from_point_cloud</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.inventories.Inventories.create_tree_inventory_from_point_cloud" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_from_point_cloud</span><span class="p">(</span><span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TreeInventory</span>
 </span></code></pre></div>
 
@@ -6356,7 +6375,7 @@ If False (default), returns a new inventory object without modifying this instan
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="TreeInventory (fastfuels_sdk.v1.inventories.TreeInventory)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TreeInventory&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.inventories.TreeInventory&lt;/code&gt;)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6398,7 +6417,7 @@ If False (default), returns a new inventory object without modifying this instan
             <span class="doc doc-object-name doc-class-name">TreeInventory</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.inventories.TreeInventory" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -6560,7 +6579,7 @@ exporting data in multiple formats.</p>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="get (fastfuels_sdk.v1.inventories.TreeInventory.get)" href="#fastfuels_sdk.v1.inventories.TreeInventory.get">get</a></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;get&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.inventories.TreeInventory.get&lt;/code&gt;)" href="#fastfuels_sdk.v1.inventories.TreeInventory.get">get</a></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Fetch the latest inventory data.</p>
@@ -6568,7 +6587,7 @@ exporting data in multiple formats.</p>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="wait_until_completed (fastfuels_sdk.v1.inventories.TreeInventory.wait_until_completed)" href="#fastfuels_sdk.v1.inventories.TreeInventory.wait_until_completed">wait_until_completed</a></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;wait_until_completed&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.inventories.TreeInventory.wait_until_completed&lt;/code&gt;)" href="#fastfuels_sdk.v1.inventories.TreeInventory.wait_until_completed">wait_until_completed</a></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Wait for inventory processing to finish.</p>
@@ -6576,7 +6595,7 @@ exporting data in multiple formats.</p>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="delete (fastfuels_sdk.v1.inventories.TreeInventory.delete)" href="#fastfuels_sdk.v1.inventories.TreeInventory.delete">delete</a></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;delete&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.inventories.TreeInventory.delete&lt;/code&gt;)" href="#fastfuels_sdk.v1.inventories.TreeInventory.delete">delete</a></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Permanently remove this inventory.</p>
@@ -6584,7 +6603,7 @@ exporting data in multiple formats.</p>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="create_export (fastfuels_sdk.v1.inventories.TreeInventory.create_export)" href="#fastfuels_sdk.v1.inventories.TreeInventory.create_export">create_export</a></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;create_export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.inventories.TreeInventory.create_export&lt;/code&gt;)" href="#fastfuels_sdk.v1.inventories.TreeInventory.create_export">create_export</a></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Create an export of the inventory data.</p>
@@ -6592,7 +6611,7 @@ exporting data in multiple formats.</p>
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="get_export (fastfuels_sdk.v1.inventories.TreeInventory.get_export)" href="#fastfuels_sdk.v1.inventories.TreeInventory.get_export">get_export</a></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-function-name&quot;&gt;get_export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.inventories.TreeInventory.get_export&lt;/code&gt;)" href="#fastfuels_sdk.v1.inventories.TreeInventory.get_export">get_export</a></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Check status of an existing export.</p>
@@ -6654,7 +6673,7 @@ Export : Handles exporting inventory data</p>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
   </span>
 
-</h4>
+<a href="#fastfuels_sdk.v1.inventories.TreeInventory.from_domain_id" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_domain_id</span><span class="p">(</span><span class="n">domain_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TreeInventory</span>
 </span></code></pre></div>
 
@@ -6708,7 +6727,7 @@ context of your domain.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="TreeInventory (fastfuels_sdk.v1.inventories.TreeInventory)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TreeInventory&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.inventories.TreeInventory&lt;/code&gt;)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6784,7 +6803,7 @@ does not exist.</p>
             <span class="doc doc-object-name doc-function-name">get</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.inventories.TreeInventory.get" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get</span><span class="p">(</span><span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
 </span></code></pre></div>
 
@@ -6841,7 +6860,7 @@ instance with the latest data, leaving the current instance unchanged.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="TreeInventory (fastfuels_sdk.v1.inventories.TreeInventory)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TreeInventory&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.inventories.TreeInventory&lt;/code&gt;)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6935,7 +6954,7 @@ Key attributes that may be updated include:
             <span class="doc doc-object-name doc-function-name">wait_until_completed</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.inventories.TreeInventory.wait_until_completed" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">wait_until_completed</span><span class="p">(</span><span class="n">step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">600</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TreeInventory</span>
 </span></code></pre></div>
 
@@ -7044,7 +7063,7 @@ a new instance when complete.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="TreeInventory (fastfuels_sdk.v1.inventories.TreeInventory)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TreeInventory&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.inventories.TreeInventory&lt;/code&gt;)" href="#fastfuels_sdk.v1.inventories.TreeInventory">TreeInventory</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7152,7 +7171,7 @@ data.</p>
             <span class="doc doc-object-name doc-function-name">delete</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.inventories.TreeInventory.delete" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">delete</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
@@ -7254,7 +7273,7 @@ data.</p>
             <span class="doc doc-object-name doc-function-name">create_export</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.inventories.TreeInventory.create_export" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_export</span><span class="p">(</span><span class="n">export_format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Export</span>
 </span></code></pre></div>
 
@@ -7312,7 +7331,7 @@ provides methods for monitoring progress and downloading the result.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Export (fastfuels_sdk.v1.exports.Export)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.exports.Export&lt;/code&gt;)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7412,7 +7431,7 @@ an error communicating with the API.</p>
             <span class="doc doc-object-name doc-function-name">get_export</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.inventories.TreeInventory.get_export" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_export</span><span class="p">(</span><span class="n">export_format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Export</span>
 </span></code></pre></div>
 
@@ -7469,7 +7488,7 @@ and to get the download URL once it's ready.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Export (fastfuels_sdk.v1.exports.Export)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.exports.Export&lt;/code&gt;)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7578,7 +7597,7 @@ and to get the download URL once it's ready.</p>
             <span class="doc doc-object-name doc-module-name">fastfuels_sdk.v1.features</span>
 
 
-</h2>
+<a href="#fastfuels_sdk.v1.features" class="headerlink" title="Permanent link">&para;</a></h2>
 
     <div class="doc doc-contents first">
 
@@ -7611,7 +7630,7 @@ and to get the download URL once it's ready.</p>
             <span class="doc doc-object-name doc-class-name">Features</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.features.Features" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -7647,7 +7666,7 @@ and to get the download URL once it's ready.</p>
           <tr class="doc-section-item">
             <td><code><span title="fastfuels_sdk.v1.features.Features.road">road</span></code></td>
             <td>
-                  <code>(<a class="autorefs autorefs-internal" title="RoadFeature (fastfuels_sdk.v1.features.RoadFeature)" href="#fastfuels_sdk.v1.features.RoadFeature">RoadFeature</a>, <span title="optional">optional</span>)</code>
+                  <code>(<a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;RoadFeature&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.features.RoadFeature&lt;/code&gt;)" href="#fastfuels_sdk.v1.features.RoadFeature">RoadFeature</a>, <span title="optional">optional</span>)</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7658,7 +7677,7 @@ and to get the download URL once it's ready.</p>
           <tr class="doc-section-item">
             <td><code><span title="fastfuels_sdk.v1.features.Features.water">water</span></code></td>
             <td>
-                  <code>(<a class="autorefs autorefs-internal" title="WaterFeature (fastfuels_sdk.v1.features.WaterFeature)" href="#fastfuels_sdk.v1.features.WaterFeature">WaterFeature</a>, <span title="optional">optional</span>)</code>
+                  <code>(<a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;WaterFeature&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.features.WaterFeature&lt;/code&gt;)" href="#fastfuels_sdk.v1.features.WaterFeature">WaterFeature</a>, <span title="optional">optional</span>)</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7725,7 +7744,7 @@ WaterFeature : Water body structure</p>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
   </span>
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.Features.from_domain_id" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_domain_id</span><span class="p">(</span><span class="n">domain_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Features</span>
 </span></code></pre></div>
 
@@ -7776,7 +7795,7 @@ WaterFeature : Water body structure</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Features (fastfuels_sdk.v1.features.Features)" href="#fastfuels_sdk.v1.features.Features">Features</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Features&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.features.Features&lt;/code&gt;)" href="#fastfuels_sdk.v1.features.Features">Features</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7820,7 +7839,7 @@ WaterFeature : Water body structure</p>
             <span class="doc doc-object-name doc-function-name">get</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.Features.get" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get</span><span class="p">(</span><span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Features</span>
 </span></code></pre></div>
 
@@ -7872,7 +7891,7 @@ If False (default), returns a new Features instance.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Features (fastfuels_sdk.v1.features.Features)" href="#fastfuels_sdk.v1.features.Features">Features</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Features&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.features.Features&lt;/code&gt;)" href="#fastfuels_sdk.v1.features.Features">Features</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7911,7 +7930,7 @@ If False (default), returns a new Features instance.</p>
             <span class="doc doc-object-name doc-function-name">create_road_feature</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.Features.create_road_feature" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_road_feature</span><span class="p">(</span><span class="n">sources</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="n">RoadFeatureSource</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="n">RoadFeatureSource</span><span class="p">],</span> <span class="n">geojson</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Geojson</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RoadFeature</span>
 </span></code></pre></div>
 
@@ -7998,7 +8017,7 @@ If False (default), leaves this instance unchanged.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="RoadFeature (fastfuels_sdk.v1.features.RoadFeature)" href="#fastfuels_sdk.v1.features.RoadFeature">RoadFeature</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;RoadFeature&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.features.RoadFeature&lt;/code&gt;)" href="#fastfuels_sdk.v1.features.RoadFeature">RoadFeature</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8053,7 +8072,7 @@ Features.create_road_feature_from_geodataframe : Simpler method for GeoDataFrame
             <span class="doc doc-object-name doc-function-name">create_road_feature_from_osm</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.Features.create_road_feature_from_osm" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_road_feature_from_osm</span><span class="p">(</span><span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RoadFeature</span>
 </span></code></pre></div>
 
@@ -8107,7 +8126,7 @@ If False (default), leaves this instance unchanged.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="RoadFeature (fastfuels_sdk.v1.features.RoadFeature)" href="#fastfuels_sdk.v1.features.RoadFeature">RoadFeature</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;RoadFeature&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.features.RoadFeature&lt;/code&gt;)" href="#fastfuels_sdk.v1.features.RoadFeature">RoadFeature</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8148,7 +8167,7 @@ If False (default), leaves this instance unchanged.</p>
             <span class="doc doc-object-name doc-function-name">create_road_feature_from_geodataframe</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.Features.create_road_feature_from_geodataframe" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_road_feature_from_geodataframe</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RoadFeature</span>
 </span></code></pre></div>
 
@@ -8219,7 +8238,7 @@ If False (default), leaves this instance unchanged.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="RoadFeature (fastfuels_sdk.v1.features.RoadFeature)" href="#fastfuels_sdk.v1.features.RoadFeature">RoadFeature</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;RoadFeature&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.features.RoadFeature&lt;/code&gt;)" href="#fastfuels_sdk.v1.features.RoadFeature">RoadFeature</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8276,7 +8295,7 @@ Features.create_road_feature_from_osm : Simpler method for OSM data</p>
             <span class="doc doc-object-name doc-function-name">create_water_feature</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.Features.create_water_feature" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_water_feature</span><span class="p">(</span><span class="n">sources</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="n">WaterFeatureSource</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="n">WaterFeatureSource</span><span class="p">],</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WaterFeature</span>
 </span></code></pre></div>
 
@@ -8345,7 +8364,7 @@ If False (default), leaves this instance unchanged.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="WaterFeature (fastfuels_sdk.v1.features.WaterFeature)" href="#fastfuels_sdk.v1.features.WaterFeature">WaterFeature</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;WaterFeature&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.features.WaterFeature&lt;/code&gt;)" href="#fastfuels_sdk.v1.features.WaterFeature">WaterFeature</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8387,7 +8406,7 @@ If False (default), leaves this instance unchanged.</p>
             <span class="doc doc-object-name doc-function-name">create_water_feature_from_osm</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.Features.create_water_feature_from_osm" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_water_feature_from_osm</span><span class="p">(</span><span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WaterFeature</span>
 </span></code></pre></div>
 
@@ -8441,7 +8460,7 @@ If False (default), leaves this instance unchanged.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="WaterFeature (fastfuels_sdk.v1.features.WaterFeature)" href="#fastfuels_sdk.v1.features.WaterFeature">WaterFeature</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;WaterFeature&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.features.WaterFeature&lt;/code&gt;)" href="#fastfuels_sdk.v1.features.WaterFeature">WaterFeature</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8492,7 +8511,7 @@ If False (default), leaves this instance unchanged.</p>
             <span class="doc doc-object-name doc-class-name">RoadFeature</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.features.RoadFeature" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -8644,7 +8663,7 @@ road locations, types, and attributes.</p>
             <span class="doc doc-object-name doc-function-name">get</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.RoadFeature.get" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get</span><span class="p">(</span><span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RoadFeature</span>
 </span></code></pre></div>
 
@@ -8696,7 +8715,7 @@ If False (default), returns a new RoadFeature instance.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="RoadFeature (fastfuels_sdk.v1.features.RoadFeature)" href="#fastfuels_sdk.v1.features.RoadFeature">RoadFeature</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;RoadFeature&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.features.RoadFeature&lt;/code&gt;)" href="#fastfuels_sdk.v1.features.RoadFeature">RoadFeature</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8731,7 +8750,7 @@ If False (default), returns a new RoadFeature instance.</p>
             <span class="doc doc-object-name doc-function-name">wait_until_completed</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.RoadFeature.wait_until_completed" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">wait_until_completed</span><span class="p">(</span><span class="n">step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">600</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RoadFeature</span>
 </span></code></pre></div>
 
@@ -8833,7 +8852,7 @@ If False, returns a new instance.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="RoadFeature (fastfuels_sdk.v1.features.RoadFeature)" href="#fastfuels_sdk.v1.features.RoadFeature">RoadFeature</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;RoadFeature&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.features.RoadFeature&lt;/code&gt;)" href="#fastfuels_sdk.v1.features.RoadFeature">RoadFeature</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8866,7 +8885,7 @@ If False, returns a new instance.</p>
             <span class="doc doc-object-name doc-function-name">get_data</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.RoadFeature.get_data" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_data</span><span class="p">(</span><span class="n">page</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FeatureDataResponse</span>
 </span></code></pre></div>
 
@@ -9018,7 +9037,7 @@ data can be retrieved.</p>
             <span class="doc doc-object-name doc-function-name">get_all_data</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.RoadFeature.get_all_data" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_all_data</span><span class="p">(</span><span class="n">size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FeatureDataResponse</span>
 </span></code></pre></div>
 
@@ -9160,7 +9179,7 @@ Defaults to 1000 (maximum) for efficiency.</p>
             <span class="doc doc-object-name doc-function-name">delete</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.RoadFeature.delete" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">delete</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
@@ -9225,7 +9244,7 @@ any ongoing processing jobs.</p>
             <span class="doc doc-object-name doc-class-name">WaterFeature</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.features.WaterFeature" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -9361,7 +9380,7 @@ types, and attributes.</p>
             <span class="doc doc-object-name doc-function-name">get</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.WaterFeature.get" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get</span><span class="p">(</span><span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WaterFeature</span>
 </span></code></pre></div>
 
@@ -9413,7 +9432,7 @@ If False (default), returns a new WaterFeature instance.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="WaterFeature (fastfuels_sdk.v1.features.WaterFeature)" href="#fastfuels_sdk.v1.features.WaterFeature">WaterFeature</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;WaterFeature&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.features.WaterFeature&lt;/code&gt;)" href="#fastfuels_sdk.v1.features.WaterFeature">WaterFeature</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -9448,7 +9467,7 @@ If False (default), returns a new WaterFeature instance.</p>
             <span class="doc doc-object-name doc-function-name">wait_until_completed</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.WaterFeature.wait_until_completed" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">wait_until_completed</span><span class="p">(</span><span class="n">step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">600</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WaterFeature</span>
 </span></code></pre></div>
 
@@ -9550,7 +9569,7 @@ If False, returns a new instance.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="WaterFeature (fastfuels_sdk.v1.features.WaterFeature)" href="#fastfuels_sdk.v1.features.WaterFeature">WaterFeature</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;WaterFeature&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.features.WaterFeature&lt;/code&gt;)" href="#fastfuels_sdk.v1.features.WaterFeature">WaterFeature</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -9583,7 +9602,7 @@ If False, returns a new instance.</p>
             <span class="doc doc-object-name doc-function-name">get_data</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.WaterFeature.get_data" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_data</span><span class="p">(</span><span class="n">page</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FeatureDataResponse</span>
 </span></code></pre></div>
 
@@ -9735,7 +9754,7 @@ data can be retrieved.</p>
             <span class="doc doc-object-name doc-function-name">get_all_data</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.WaterFeature.get_all_data" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_all_data</span><span class="p">(</span><span class="n">size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FeatureDataResponse</span>
 </span></code></pre></div>
 
@@ -9877,7 +9896,7 @@ Defaults to 1000 (maximum) for efficiency.</p>
             <span class="doc doc-object-name doc-function-name">delete</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.features.WaterFeature.delete" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">delete</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
@@ -9951,7 +9970,7 @@ any ongoing processing jobs.</p>
             <span class="doc doc-object-name doc-module-name">fastfuels_sdk.v1.grids</span>
 
 
-</h2>
+<a href="#fastfuels_sdk.v1.grids" class="headerlink" title="Permanent link">&para;</a></h2>
 
     <div class="doc doc-contents first">
 
@@ -9982,7 +10001,7 @@ any ongoing processing jobs.</p>
             <span class="doc doc-object-name doc-class-name">Grids</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.grids.Grids" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -10022,7 +10041,7 @@ formats for use in fire behavior modeling.</p>
           <tr class="doc-section-item">
             <td><code><span title="fastfuels_sdk.v1.grids.Grids.tree">tree</span></code></td>
             <td>
-                  <code>(<a class="autorefs autorefs-internal" title="TreeGrid (fastfuels_sdk.v1.grids.tree_grid.TreeGrid)" href="#fastfuels_sdk.v1.grids.TreeGrid">TreeGrid</a>, <span title="optional">optional</span>)</code>
+                  <code>(<a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TreeGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.tree_grid.TreeGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.TreeGrid">TreeGrid</a>, <span title="optional">optional</span>)</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -10033,7 +10052,7 @@ formats for use in fire behavior modeling.</p>
           <tr class="doc-section-item">
             <td><code><span title="fastfuels_sdk.v1.grids.Grids.surface">surface</span></code></td>
             <td>
-                  <code>(<a class="autorefs autorefs-internal" title="SurfaceGrid (fastfuels_sdk.v1.grids.surface_grid.SurfaceGrid)" href="#fastfuels_sdk.v1.grids.SurfaceGrid">SurfaceGrid</a>, <span title="optional">optional</span>)</code>
+                  <code>(<a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SurfaceGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.surface_grid.SurfaceGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.SurfaceGrid">SurfaceGrid</a>, <span title="optional">optional</span>)</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -10044,7 +10063,7 @@ formats for use in fire behavior modeling.</p>
           <tr class="doc-section-item">
             <td><code><span title="fastfuels_sdk.v1.grids.Grids.topography">topography</span></code></td>
             <td>
-                  <code>(<a class="autorefs autorefs-internal" title="TopographyGrid (fastfuels_sdk.v1.grids.topography_grid.TopographyGrid)" href="#fastfuels_sdk.v1.grids.TopographyGrid">TopographyGrid</a>, <span title="optional">optional</span>)</code>
+                  <code>(<a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TopographyGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.topography_grid.TopographyGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.TopographyGrid">TopographyGrid</a>, <span title="optional">optional</span>)</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -10055,7 +10074,7 @@ formats for use in fire behavior modeling.</p>
           <tr class="doc-section-item">
             <td><code><span title="fastfuels_sdk.v1.grids.Grids.feature">feature</span></code></td>
             <td>
-                  <code>(<a class="autorefs autorefs-internal" title="FeatureGrid (fastfuels_sdk.v1.grids.feature_grid.FeatureGrid)" href="#fastfuels_sdk.v1.grids.FeatureGrid">FeatureGrid</a>, <span title="optional">optional</span>)</code>
+                  <code>(<a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;FeatureGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.feature_grid.FeatureGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.FeatureGrid">FeatureGrid</a>, <span title="optional">optional</span>)</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -10124,7 +10143,7 @@ FeatureGrid : Geographic features</p>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
   </span>
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.Grids.from_domain_id" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_domain_id</span><span class="p">(</span><span class="n">domain_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grids</span>
 </span></code></pre></div>
 
@@ -10175,7 +10194,7 @@ FeatureGrid : Geographic features</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Grids (fastfuels_sdk.v1.grids.grids.Grids)" href="#fastfuels_sdk.v1.grids.Grids">Grids</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Grids&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.grids.Grids&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.Grids">Grids</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -10209,7 +10228,7 @@ FeatureGrid : Geographic features</p>
             <span class="doc doc-object-name doc-function-name">get</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.Grids.get" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get</span><span class="p">(</span><span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grids</span>
 </span></code></pre></div>
 
@@ -10261,7 +10280,7 @@ If False (default), returns a new Grids instance.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Grids (fastfuels_sdk.v1.grids.grids.Grids)" href="#fastfuels_sdk.v1.grids.Grids">Grids</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Grids&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.grids.Grids&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.Grids">Grids</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -10295,7 +10314,7 @@ If False (default), returns a new Grids instance.</p>
             <span class="doc doc-object-name doc-function-name">create_surface_grid</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.Grids.create_surface_grid" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_surface_grid</span><span class="p">(</span><span class="n">attributes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">fuel_load</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fuel_depth</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fuel_moisture</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">savr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fbfm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurfaceGrid</span>
 </span></code></pre></div>
 
@@ -10468,7 +10487,7 @@ If False (default), leaves this object unchanged.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="SurfaceGrid (fastfuels_sdk.v1.grids.surface_grid.SurfaceGrid)" href="#fastfuels_sdk.v1.grids.SurfaceGrid">SurfaceGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SurfaceGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.surface_grid.SurfaceGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.SurfaceGrid">SurfaceGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -10516,7 +10535,7 @@ have a "pending" status.</p>
             <span class="doc doc-object-name doc-function-name">create_topography_grid</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.Grids.create_topography_grid" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_topography_grid</span><span class="p">(</span><span class="n">attributes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">elevation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">slope</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">aspect</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TopographyGrid</span>
 </span></code></pre></div>
 
@@ -10675,7 +10694,7 @@ If False (default), leaves this object unchanged.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="TopographyGrid (fastfuels_sdk.v1.grids.topography_grid.TopographyGrid)" href="#fastfuels_sdk.v1.grids.TopographyGrid">TopographyGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TopographyGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.topography_grid.TopographyGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.TopographyGrid">TopographyGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -10729,7 +10748,7 @@ have a "pending" status.</p>
             <span class="doc doc-object-name doc-function-name">create_tree_grid</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.Grids.create_tree_grid" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_grid</span><span class="p">(</span><span class="n">attributes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">bulk_density</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">spcd</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fuel_moisture</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">savr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tree_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TreeGrid</span>
 </span></code></pre></div>
 
@@ -10846,9 +10865,10 @@ parameter validation.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>SAVR</code>
+                <code>savr</code>
             </td>
             <td>
+                  <code><span title="dict">dict</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -10865,7 +10885,7 @@ parameter validation.</p>
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -10900,7 +10920,7 @@ If False (default), leaves this object unchanged.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="TreeGrid (fastfuels_sdk.v1.grids.tree_grid.TreeGrid)" href="#fastfuels_sdk.v1.grids.TreeGrid">TreeGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TreeGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.tree_grid.TreeGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.TreeGrid">TreeGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -10955,7 +10975,7 @@ have a "pending" status.</p>
             <span class="doc doc-object-name doc-function-name">create_feature_grid</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.Grids.create_feature_grid" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_feature_grid</span><span class="p">(</span><span class="n">attributes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FeatureGrid</span>
 </span></code></pre></div>
 
@@ -11028,7 +11048,7 @@ If False (default), leaves this object unchanged.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="FeatureGrid (fastfuels_sdk.v1.grids.feature_grid.FeatureGrid)" href="#fastfuels_sdk.v1.grids.FeatureGrid">FeatureGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;FeatureGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.feature_grid.FeatureGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.FeatureGrid">FeatureGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -11075,7 +11095,7 @@ have a "pending" status.</p>
             <span class="doc doc-object-name doc-function-name">create_export</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.Grids.create_export" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_export</span><span class="p">(</span><span class="n">export_format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Export</span>
 </span></code></pre></div>
 
@@ -11128,7 +11148,7 @@ have a "pending" status.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Export (fastfuels_sdk.v1.exports.Export)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.exports.Export&lt;/code&gt;)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -11169,7 +11189,7 @@ have a "pending" status.</p>
             <span class="doc doc-object-name doc-function-name">get_export</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.Grids.get_export" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_export</span><span class="p">(</span><span class="n">export_format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Export</span>
 </span></code></pre></div>
 
@@ -11222,7 +11242,7 @@ have a "pending" status.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Export (fastfuels_sdk.v1.exports.Export)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.exports.Export&lt;/code&gt;)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -11265,7 +11285,7 @@ have a "pending" status.</p>
             <span class="doc doc-object-name doc-class-name">TreeGrid</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.grids.TreeGrid" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -11308,7 +11328,7 @@ have a "pending" status.</p>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
   </span>
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGrid.from_domain_id" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_domain_id</span><span class="p">(</span><span class="n">domain_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TreeGrid</span>
 </span></code></pre></div>
 
@@ -11359,7 +11379,7 @@ have a "pending" status.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="TreeGrid (fastfuels_sdk.v1.grids.tree_grid.TreeGrid)" href="#fastfuels_sdk.v1.grids.TreeGrid">TreeGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TreeGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.tree_grid.TreeGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.TreeGrid">TreeGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -11389,7 +11409,7 @@ have a "pending" status.</p>
             <span class="doc doc-object-name doc-function-name">get</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGrid.get" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get</span><span class="p">(</span><span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TreeGrid</span>
 </span></code></pre></div>
 
@@ -11441,7 +11461,7 @@ If False (default), returns a new TreeGrid instance.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="TreeGrid (fastfuels_sdk.v1.grids.tree_grid.TreeGrid)" href="#fastfuels_sdk.v1.grids.TreeGrid">TreeGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TreeGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.tree_grid.TreeGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.TreeGrid">TreeGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -11476,7 +11496,7 @@ If False (default), returns a new TreeGrid instance.</p>
             <span class="doc doc-object-name doc-function-name">wait_until_completed</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGrid.wait_until_completed" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">wait_until_completed</span><span class="p">(</span><span class="n">step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">600</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;TreeGrid&#39;</span>
 </span></code></pre></div>
 
@@ -11582,7 +11602,7 @@ instance when complete.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="TreeGrid (fastfuels_sdk.v1.grids.tree_grid.TreeGrid)" href="#fastfuels_sdk.v1.grids.TreeGrid">TreeGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TreeGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.tree_grid.TreeGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.TreeGrid">TreeGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -11669,7 +11689,7 @@ from fastfuels_sdk import TreeGrid</p>
             <span class="doc doc-object-name doc-function-name">get_attributes</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGrid.get_attributes" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_attributes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">GridAttributeMetadataResponse</span>
 </span></code></pre></div>
 
@@ -11728,7 +11748,7 @@ including dimensions, chunking, and attribute details.</p>
             <span class="doc doc-object-name doc-function-name">create_export</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGrid.create_export" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_export</span><span class="p">(</span><span class="n">export_format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Export</span>
 </span></code></pre></div>
 
@@ -11780,7 +11800,7 @@ including dimensions, chunking, and attribute details.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Export (fastfuels_sdk.v1.exports.Export)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.exports.Export&lt;/code&gt;)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -11812,7 +11832,7 @@ including dimensions, chunking, and attribute details.</p>
             <span class="doc doc-object-name doc-function-name">get_export</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGrid.get_export" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_export</span><span class="p">(</span><span class="n">export_format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Export</span>
 </span></code></pre></div>
 
@@ -11864,7 +11884,7 @@ including dimensions, chunking, and attribute details.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Export (fastfuels_sdk.v1.exports.Export)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.exports.Export&lt;/code&gt;)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -11896,7 +11916,7 @@ including dimensions, chunking, and attribute details.</p>
             <span class="doc doc-object-name doc-function-name">delete</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGrid.delete" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">delete</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
@@ -11960,7 +11980,7 @@ any ongoing processing jobs.</p>
             <span class="doc doc-object-name doc-class-name">FeatureGrid</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.grids.FeatureGrid" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -12003,7 +12023,7 @@ any ongoing processing jobs.</p>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
   </span>
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.FeatureGrid.from_domain_id" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_domain_id</span><span class="p">(</span><span class="n">domain_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;FeatureGrid&#39;</span>
 </span></code></pre></div>
 
@@ -12054,7 +12074,7 @@ any ongoing processing jobs.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="FeatureGrid (fastfuels_sdk.v1.grids.feature_grid.FeatureGrid)" href="#fastfuels_sdk.v1.grids.FeatureGrid">FeatureGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;FeatureGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.feature_grid.FeatureGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.FeatureGrid">FeatureGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -12084,7 +12104,7 @@ any ongoing processing jobs.</p>
             <span class="doc doc-object-name doc-function-name">get</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.FeatureGrid.get" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get</span><span class="p">(</span><span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;FeatureGrid&#39;</span>
 </span></code></pre></div>
 
@@ -12136,7 +12156,7 @@ If False (default), returns a new FeatureGrid instance.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="FeatureGrid (fastfuels_sdk.v1.grids.feature_grid.FeatureGrid)" href="#fastfuels_sdk.v1.grids.FeatureGrid">FeatureGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;FeatureGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.feature_grid.FeatureGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.FeatureGrid">FeatureGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -12171,7 +12191,7 @@ If False (default), returns a new FeatureGrid instance.</p>
             <span class="doc doc-object-name doc-function-name">wait_until_completed</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.FeatureGrid.wait_until_completed" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">wait_until_completed</span><span class="p">(</span><span class="n">step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">600</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;FeatureGrid&#39;</span>
 </span></code></pre></div>
 
@@ -12277,7 +12297,7 @@ instance when complete.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="FeatureGrid (fastfuels_sdk.v1.grids.feature_grid.FeatureGrid)" href="#fastfuels_sdk.v1.grids.FeatureGrid">FeatureGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;FeatureGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.feature_grid.FeatureGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.FeatureGrid">FeatureGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -12380,7 +12400,7 @@ FeatureGrid instance (if in_place=False) with the completed grid data.</p>
             <span class="doc doc-object-name doc-function-name">get_attributes</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.FeatureGrid.get_attributes" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_attributes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">GridAttributeMetadataResponse</span>
 </span></code></pre></div>
 
@@ -12439,7 +12459,7 @@ including dimensions, chunking, and attribute details.</p>
             <span class="doc doc-object-name doc-function-name">delete</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.FeatureGrid.delete" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">delete</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
@@ -12503,7 +12523,7 @@ any ongoing processing jobs.</p>
             <span class="doc doc-object-name doc-class-name">SurfaceGrid</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGrid" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -12546,7 +12566,7 @@ any ongoing processing jobs.</p>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
   </span>
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGrid.from_domain_id" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_domain_id</span><span class="p">(</span><span class="n">domain_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGrid&#39;</span>
 </span></code></pre></div>
 
@@ -12597,7 +12617,7 @@ any ongoing processing jobs.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="SurfaceGrid (fastfuels_sdk.v1.grids.surface_grid.SurfaceGrid)" href="#fastfuels_sdk.v1.grids.SurfaceGrid">SurfaceGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SurfaceGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.surface_grid.SurfaceGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.SurfaceGrid">SurfaceGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -12627,7 +12647,7 @@ any ongoing processing jobs.</p>
             <span class="doc doc-object-name doc-function-name">get</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGrid.get" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get</span><span class="p">(</span><span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGrid&#39;</span>
 </span></code></pre></div>
 
@@ -12679,7 +12699,7 @@ If False (default), returns a new SurfaceGrid instance.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="SurfaceGrid (fastfuels_sdk.v1.grids.surface_grid.SurfaceGrid)" href="#fastfuels_sdk.v1.grids.SurfaceGrid">SurfaceGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SurfaceGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.surface_grid.SurfaceGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.SurfaceGrid">SurfaceGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -12714,7 +12734,7 @@ If False (default), returns a new SurfaceGrid instance.</p>
             <span class="doc doc-object-name doc-function-name">wait_until_completed</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGrid.wait_until_completed" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">wait_until_completed</span><span class="p">(</span><span class="n">step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">600</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGrid&#39;</span>
 </span></code></pre></div>
 
@@ -12820,7 +12840,7 @@ instance when complete.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="SurfaceGrid (fastfuels_sdk.v1.grids.surface_grid.SurfaceGrid)" href="#fastfuels_sdk.v1.grids.SurfaceGrid">SurfaceGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SurfaceGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.surface_grid.SurfaceGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.SurfaceGrid">SurfaceGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -12923,7 +12943,7 @@ SurfaceGrid instance (if in_place=False) with the completed grid data.</p>
             <span class="doc doc-object-name doc-function-name">get_attributes</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGrid.get_attributes" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_attributes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">GridAttributeMetadataResponse</span>
 </span></code></pre></div>
 
@@ -12982,7 +13002,7 @@ including dimensions, chunking, and attribute details.</p>
             <span class="doc doc-object-name doc-function-name">create_export</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGrid.create_export" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_export</span><span class="p">(</span><span class="n">export_format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Export</span>
 </span></code></pre></div>
 
@@ -13035,7 +13055,7 @@ including dimensions, chunking, and attribute details.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Export (fastfuels_sdk.v1.exports.Export)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.exports.Export&lt;/code&gt;)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -13067,7 +13087,7 @@ including dimensions, chunking, and attribute details.</p>
             <span class="doc doc-object-name doc-function-name">get_export</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGrid.get_export" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_export</span><span class="p">(</span><span class="n">export_format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Export</span>
 </span></code></pre></div>
 
@@ -13120,7 +13140,7 @@ including dimensions, chunking, and attribute details.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Export (fastfuels_sdk.v1.exports.Export)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.exports.Export&lt;/code&gt;)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -13152,7 +13172,7 @@ including dimensions, chunking, and attribute details.</p>
             <span class="doc doc-object-name doc-function-name">delete</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGrid.delete" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">delete</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
@@ -13216,7 +13236,7 @@ any ongoing processing jobs.</p>
             <span class="doc doc-object-name doc-class-name">TopographyGrid</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.grids.TopographyGrid" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -13259,7 +13279,7 @@ any ongoing processing jobs.</p>
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
   </span>
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGrid.from_domain_id" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_domain_id</span><span class="p">(</span><span class="n">domain_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;TopographyGrid&#39;</span>
 </span></code></pre></div>
 
@@ -13310,7 +13330,7 @@ any ongoing processing jobs.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="TopographyGrid (fastfuels_sdk.v1.grids.topography_grid.TopographyGrid)" href="#fastfuels_sdk.v1.grids.TopographyGrid">TopographyGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TopographyGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.topography_grid.TopographyGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.TopographyGrid">TopographyGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -13340,7 +13360,7 @@ any ongoing processing jobs.</p>
             <span class="doc doc-object-name doc-function-name">get</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGrid.get" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get</span><span class="p">(</span><span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;TopographyGrid&#39;</span>
 </span></code></pre></div>
 
@@ -13392,7 +13412,7 @@ If False (default), returns a new TopographyGrid instance.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="TopographyGrid (fastfuels_sdk.v1.grids.topography_grid.TopographyGrid)" href="#fastfuels_sdk.v1.grids.TopographyGrid">TopographyGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TopographyGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.topography_grid.TopographyGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.TopographyGrid">TopographyGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -13427,7 +13447,7 @@ If False (default), returns a new TopographyGrid instance.</p>
             <span class="doc doc-object-name doc-function-name">wait_until_completed</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGrid.wait_until_completed" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">wait_until_completed</span><span class="p">(</span><span class="n">step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">600</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;TopographyGrid&#39;</span>
 </span></code></pre></div>
 
@@ -13533,7 +13553,7 @@ instance when complete.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="TopographyGrid (fastfuels_sdk.v1.grids.topography_grid.TopographyGrid)" href="#fastfuels_sdk.v1.grids.TopographyGrid">TopographyGrid</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;TopographyGrid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.topography_grid.TopographyGrid&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.TopographyGrid">TopographyGrid</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -13636,7 +13656,7 @@ TopographyGrid instance (if in_place=False) with the completed grid data.</p>
             <span class="doc doc-object-name doc-function-name">get_attributes</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGrid.get_attributes" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_attributes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">GridAttributeMetadataResponse</span>
 </span></code></pre></div>
 
@@ -13695,7 +13715,7 @@ including dimensions, chunking, and attribute details.</p>
             <span class="doc doc-object-name doc-function-name">create_export</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGrid.create_export" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_export</span><span class="p">(</span><span class="n">export_format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Export</span>
 </span></code></pre></div>
 
@@ -13748,7 +13768,7 @@ including dimensions, chunking, and attribute details.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Export (fastfuels_sdk.v1.exports.Export)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.exports.Export&lt;/code&gt;)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -13780,7 +13800,7 @@ including dimensions, chunking, and attribute details.</p>
             <span class="doc doc-object-name doc-function-name">get_export</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGrid.get_export" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_export</span><span class="p">(</span><span class="n">export_format</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Export</span>
 </span></code></pre></div>
 
@@ -13833,7 +13853,7 @@ including dimensions, chunking, and attribute details.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Export (fastfuels_sdk.v1.exports.Export)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.exports.Export&lt;/code&gt;)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -13865,7 +13885,7 @@ including dimensions, chunking, and attribute details.</p>
             <span class="doc doc-object-name doc-function-name">delete</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGrid.delete" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">delete</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
@@ -13929,7 +13949,7 @@ any ongoing processing jobs.</p>
             <span class="doc doc-object-name doc-class-name">TreeGridBuilder</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.grids.TreeGridBuilder" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -13966,7 +13986,7 @@ any ongoing processing jobs.</p>
             <span class="doc doc-object-name doc-function-name">with_bulk_density_from_tree_inventory</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGridBuilder.with_bulk_density_from_tree_inventory" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_bulk_density_from_tree_inventory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s1">&#39;TreeGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -13992,7 +14012,7 @@ any ongoing processing jobs.</p>
             <span class="doc doc-object-name doc-function-name">with_uniform_bulk_density</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGridBuilder.with_uniform_bulk_density" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_uniform_bulk_density</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;TreeGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -14049,7 +14069,7 @@ any ongoing processing jobs.</p>
             <span class="doc doc-object-name doc-function-name">with_savr_from_tree_inventory</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGridBuilder.with_savr_from_tree_inventory" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_savr_from_tree_inventory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s1">&#39;TreeGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -14075,7 +14095,7 @@ any ongoing processing jobs.</p>
             <span class="doc doc-object-name doc-function-name">with_spcd_from_tree_inventory</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGridBuilder.with_spcd_from_tree_inventory" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_spcd_from_tree_inventory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s1">&#39;TreeGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -14101,7 +14121,7 @@ any ongoing processing jobs.</p>
             <span class="doc doc-object-name doc-function-name">with_tree_id_from_tree_inventory</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGridBuilder.with_tree_id_from_tree_inventory" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_tree_id_from_tree_inventory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s1">&#39;TreeGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -14129,7 +14149,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">with_uniform_fuel_moisture</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGridBuilder.with_uniform_fuel_moisture" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_uniform_fuel_moisture</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;TreeGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -14186,7 +14206,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">build</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGridBuilder.build" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">build</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s1">&#39;TreeGrid&#39;</span>
 </span></code></pre></div>
 
@@ -14215,7 +14235,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">clear</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGridBuilder.clear" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">clear</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s1">&#39;TreeGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -14235,7 +14255,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">to_dict</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TreeGridBuilder.to_dict" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span>
 </span></code></pre></div>
 
@@ -14264,7 +14284,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-class-name">SurfaceGridBuilder</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -14301,7 +14321,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">with_uniform_fuel_load</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder.with_uniform_fuel_load" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_uniform_fuel_load</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">feature_masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -14374,7 +14394,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">with_uniform_fuel_load_by_size_class</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder.with_uniform_fuel_load_by_size_class" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_uniform_fuel_load_by_size_class</span><span class="p">(</span><span class="n">one_hour</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ten_hour</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">hundred_hour</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">live_herbaceous</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">live_woody</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -14521,7 +14541,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">with_fuel_load_from_landfire</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder.with_fuel_load_from_landfire" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_fuel_load_from_landfire</span><span class="p">(</span><span class="n">product</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;2022&#39;</span><span class="p">,</span> <span class="n">interpolation_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;nearest&#39;</span><span class="p">,</span> <span class="n">curing_live_herbaceous</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">curing_live_woody</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_non_burnable</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -14699,7 +14719,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">with_uniform_fuel_depth</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder.with_uniform_fuel_depth" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_uniform_fuel_depth</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">feature_masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -14772,7 +14792,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">with_fuel_depth_from_landfire</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder.with_fuel_depth_from_landfire" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_fuel_depth_from_landfire</span><span class="p">(</span><span class="n">product</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;2022&#39;</span><span class="p">,</span> <span class="n">interpolation_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;nearest&#39;</span><span class="p">,</span> <span class="n">feature_masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_non_burnable</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -14899,7 +14919,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">with_uniform_fuel_moisture</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder.with_uniform_fuel_moisture" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_uniform_fuel_moisture</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">feature_masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -14975,7 +14995,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">with_uniform_fuel_moisture_by_size_class</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder.with_uniform_fuel_moisture_by_size_class" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_uniform_fuel_moisture_by_size_class</span><span class="p">(</span><span class="n">one_hour</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ten_hour</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">hundred_hour</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">live_herbaceous</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">live_woody</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -15119,7 +15139,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">with_uniform_fbfm</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder.with_uniform_fbfm" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_uniform_fbfm</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">feature_masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -15192,7 +15212,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">with_fbfm_from_landfire</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder.with_fbfm_from_landfire" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_fbfm_from_landfire</span><span class="p">(</span><span class="n">product</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;2022&#39;</span><span class="p">,</span> <span class="n">interpolation_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;nearest&#39;</span><span class="p">,</span> <span class="n">feature_masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_non_burnable</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -15319,7 +15339,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">with_uniform_savr</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder.with_uniform_savr" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_uniform_savr</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">feature_masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -15395,7 +15415,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">with_savr_from_landfire</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder.with_savr_from_landfire" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_savr_from_landfire</span><span class="p">(</span><span class="n">product</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;2022&#39;</span><span class="p">,</span> <span class="n">interpolation_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;nearest&#39;</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_non_burnable</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -15539,7 +15559,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">with_modification</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder.with_modification" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_modification</span><span class="p">(</span><span class="n">actions</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="n">SurfaceGridModificationAction</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurfaceGridModificationAction</span><span class="p">],</span> <span class="n">conditions</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="n">SurfaceGridModificationCondition</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurfaceGridModificationCondition</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -15615,7 +15635,7 @@ allowing voxels to be traced back to the underlying tree inventory.</p>
             <span class="doc doc-object-name doc-function-name">with_spatial_modification</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder.with_spatial_modification" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_spatial_modification</span><span class="p">(</span><span class="n">actions</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="n">SurfaceGridModificationAction</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurfaceGridModificationAction</span><span class="p">],</span> <span class="n">geometry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">operator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;within&#39;</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">crs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">additional_conditions</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="n">SurfaceGridModificationCondition</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">SurfaceGridModificationCondition</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -15759,7 +15779,7 @@ attribute conditions.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="SurfaceGridBuilder (fastfuels_sdk.v1.grids.surface_grid_builder.SurfaceGridBuilder)" href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder">SurfaceGridBuilder</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;SurfaceGridBuilder&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.grids.surface_grid_builder.SurfaceGridBuilder&lt;/code&gt;)" href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder">SurfaceGridBuilder</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -15828,7 +15848,7 @@ attribute conditions.</p>
             <span class="doc doc-object-name doc-function-name">build</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder.build" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">build</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGrid&#39;</span>
 </span></code></pre></div>
 
@@ -15857,7 +15877,7 @@ attribute conditions.</p>
             <span class="doc doc-object-name doc-function-name">clear</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.SurfaceGridBuilder.clear" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">clear</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s1">&#39;SurfaceGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -15886,7 +15906,7 @@ attribute conditions.</p>
             <span class="doc doc-object-name doc-class-name">TopographyGridBuilder</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.grids.TopographyGridBuilder" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -15923,7 +15943,7 @@ attribute conditions.</p>
             <span class="doc doc-object-name doc-function-name">with_elevation_from_3dep</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGridBuilder.with_elevation_from_3dep" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_elevation_from_3dep</span><span class="p">(</span><span class="n">interpolation_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;cubic&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;TopographyGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -15943,7 +15963,7 @@ attribute conditions.</p>
             <span class="doc doc-object-name doc-function-name">with_elevation_from_landfire</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGridBuilder.with_elevation_from_landfire" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_elevation_from_landfire</span><span class="p">(</span><span class="n">interpolation_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;cubic&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;TopographyGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -15963,7 +15983,7 @@ attribute conditions.</p>
             <span class="doc doc-object-name doc-function-name">with_elevation_from_uniform_value</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGridBuilder.with_elevation_from_uniform_value" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_elevation_from_uniform_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;TopographyGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -15983,7 +16003,7 @@ attribute conditions.</p>
             <span class="doc doc-object-name doc-function-name">with_aspect_from_3dep</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGridBuilder.with_aspect_from_3dep" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_aspect_from_3dep</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s1">&#39;TopographyGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -16003,7 +16023,7 @@ attribute conditions.</p>
             <span class="doc doc-object-name doc-function-name">with_aspect_from_landfire</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGridBuilder.with_aspect_from_landfire" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_aspect_from_landfire</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s1">&#39;TopographyGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -16023,7 +16043,7 @@ attribute conditions.</p>
             <span class="doc doc-object-name doc-function-name">with_slope_from_3dep</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGridBuilder.with_slope_from_3dep" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_slope_from_3dep</span><span class="p">(</span><span class="n">interpolation_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;cubic&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;TopographyGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -16043,7 +16063,7 @@ attribute conditions.</p>
             <span class="doc doc-object-name doc-function-name">with_slope_from_landfire</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGridBuilder.with_slope_from_landfire" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_slope_from_landfire</span><span class="p">(</span><span class="n">interpolation_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;cubic&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;TopographyGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -16063,7 +16083,7 @@ attribute conditions.</p>
             <span class="doc doc-object-name doc-function-name">build</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGridBuilder.build" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">build</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s1">&#39;TopographyGrid&#39;</span>
 </span></code></pre></div>
 
@@ -16092,7 +16112,7 @@ attribute conditions.</p>
             <span class="doc doc-object-name doc-function-name">clear</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.grids.TopographyGridBuilder.clear" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">clear</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s1">&#39;TopographyGridBuilder&#39;</span>
 </span></code></pre></div>
 
@@ -16130,7 +16150,7 @@ attribute conditions.</p>
             <span class="doc doc-object-name doc-module-name">fastfuels_sdk.v1.exports</span>
 
 
-</h2>
+<a href="#fastfuels_sdk.v1.exports" class="headerlink" title="Permanent link">&para;</a></h2>
 
     <div class="doc doc-contents first">
 
@@ -16163,7 +16183,7 @@ attribute conditions.</p>
             <span class="doc doc-object-name doc-class-name">Export</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.exports.Export" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
@@ -16295,7 +16315,7 @@ waiting for completion, and downloading exports.</p>
             <span class="doc doc-object-name doc-function-name">__init__</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.exports.Export.__init__" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span>
 </span></code></pre></div>
 
@@ -16368,7 +16388,7 @@ waiting for completion, and downloading exports.</p>
             <span class="doc doc-object-name doc-function-name">get</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.exports.Export.get" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get</span><span class="p">(</span><span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Export</span>
 </span></code></pre></div>
 
@@ -16420,7 +16440,7 @@ If False, returns a new Export object. Default is False.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Export (fastfuels_sdk.v1.exports.Export)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.exports.Export&lt;/code&gt;)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -16444,7 +16464,7 @@ or a new Export object with the fetched data (in_place=False)</p>
             <span class="doc doc-object-name doc-function-name">wait_until_completed</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.exports.Export.wait_until_completed" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">wait_until_completed</span><span class="p">(</span><span class="n">step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">600</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Export</span>
 </span></code></pre></div>
 
@@ -16544,7 +16564,7 @@ If False, returns a new Export object. Default is True.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Export (fastfuels_sdk.v1.exports.Export)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.exports.Export&lt;/code&gt;)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -16590,7 +16610,7 @@ If False, returns a new Export object. Default is True.</p>
             <span class="doc doc-object-name doc-function-name">to_file</span>
 
 
-</h4>
+<a href="#fastfuels_sdk.v1.exports.Export.to_file" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">to_file</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
@@ -16683,7 +16703,7 @@ the file will be saved as "{resource}_{sub_resource}.{format}" in that directory
             <span class="doc doc-object-name doc-module-name">fastfuels_sdk.v1.convenience</span>
 
 
-</h2>
+<a href="#fastfuels_sdk.v1.convenience" class="headerlink" title="Permanent link">&para;</a></h2>
 
     <div class="doc doc-contents first">
 
@@ -16716,7 +16736,7 @@ the file will be saved as "{resource}_{sub_resource}.{format}" in that directory
             <span class="doc doc-object-name doc-function-name">export_roi</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.convenience.export_roi" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">export_roi</span><span class="p">(</span><span class="n">roi</span><span class="p">:</span> <span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">export_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">export_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;QUIC-Fire&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">topography_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">surface_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tree_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">features_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tree_inventory_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Export</span>
 </span></code></pre></div>
 
@@ -16993,7 +17013,7 @@ with road and water feature masks.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Export (fastfuels_sdk.v1.exports.Export)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.exports.Export&lt;/code&gt;)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -17144,7 +17164,7 @@ they are applied in the following order:</p>
             <span class="doc doc-object-name doc-function-name">export_roi_to_quicfire</span>
 
 
-</h3>
+<a href="#fastfuels_sdk.v1.convenience.export_roi_to_quicfire" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">export_roi_to_quicfire</span><span class="p">(</span><span class="n">roi</span><span class="p">:</span> <span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">export_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">topography_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">surface_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tree_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">features_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tree_inventory_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Export</span>
 </span></code></pre></div>
 
@@ -17310,7 +17330,7 @@ use export_roi() directly.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="Export (fastfuels_sdk.v1.exports.Export)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Export&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v1.exports.Export&lt;/code&gt;)" href="#fastfuels_sdk.v1.exports.Export">Export</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -17366,18 +17386,65 @@ use export_roi() directly.</p>
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
         
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
       </main>
       
         <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../tutorials/point_cloud_example/" class="md-footer__link md-footer__link--prev" aria-label="Previous: ALS Point Cloud">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                ALS Point Cloud
+              </div>
+            </div>
+          </a>
+        
+        
+      </nav>
+    
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
       <div class="md-copyright">
   
+    <div class="md-copyright__highlight">
+      Copyright &copy; Silvx Labs
+    </div>
+  
   
     Made with
     <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
       Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/silvxlabs/fastfuels-sdk-python" target="_blank" rel="noopener" title="FastFuels SDK on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
     </a>
   
 </div>
@@ -17395,10 +17462,10 @@ use export_roi() directly.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.top", "navigation.tracking", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
