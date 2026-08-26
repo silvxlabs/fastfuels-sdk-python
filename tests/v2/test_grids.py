@@ -30,6 +30,7 @@ from fastfuels_sdk.v2.grids import (
     create_canopy_height_grid_from_meta,
     create_canopy_height_grid_from_naip_chm,
     create_canopy_height_grid_from_point_cloud,
+    create_dead_fuel_moisture_grid_from_fosberg,
     create_fuel_grid_from_fccs_lookup,
     create_fuel_grid_from_fbfm13_lookup,
     create_fuel_grid_from_fbfm40_lookup,
@@ -68,6 +69,7 @@ from fastfuels_sdk.v2.client_library.models import (
     InventoryColumnCanopyBiomassSource,
     FccsLookupBand,
     Fbfm13LookupBand,
+    FuelMoistureMonth,
     GridAlignmentDomainTarget,
     GridAlignmentGridTarget,
     GridAlignmentNativeTarget,
@@ -82,6 +84,7 @@ from fastfuels_sdk.v2.client_library.models import (
     Modifier,
     Operator,
     PointCloudType,
+    RelativeElevation,
     ResamplingMethod,
     TopographyBand,
     UploadBandDefinition,
@@ -678,6 +681,276 @@ class TestCreateSurfaceFuelGridFromDuet:
         finally:
             if surface is not None:
                 surface.delete()
+            voxels.delete()
+
+
+class TestCreateDeadFuelMoistureGridFromFosberg:
+    @staticmethod
+    def _topo_grid(status=JobStatus.COMPLETED, omit=None):
+        bands = [
+            ("slope", BandType.CONTINUOUS),
+            ("aspect", BandType.CONTINUOUS),
+        ]
+        return Grid(
+            id="topo-grid-id",
+            domain_id="domain-id",
+            status=status,
+            source=GridSource(),
+            bands=[
+                Band(key=key, type_=type_, index=index)
+                for index, (key, type_) in enumerate(bands)
+                if key != omit
+            ],
+        )
+
+    @staticmethod
+    def _irradiance_grid(status=JobStatus.COMPLETED, omit=None):
+        bands = [("irradiance.surface.relative", BandType.CONTINUOUS)]
+        return Grid(
+            id="irradiance-grid-id",
+            domain_id="domain-id",
+            status=status,
+            source=GridSource(),
+            bands=[
+                Band(key=key, type_=type_, index=index)
+                for index, (key, type_) in enumerate(bands)
+                if key != omit
+            ],
+        )
+
+    def _patch_endpoint(self, monkeypatch):
+        created = Grid(
+            id="fosberg-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_fosberg_fuel_moisture_grid,
+            "sync_detailed",
+            fake_create,
+        )
+        return captured, client
+
+    def test_builds_request_from_completed_grids(self, monkeypatch):
+        captured, client = self._patch_endpoint(monkeypatch)
+
+        grid = create_dead_fuel_moisture_grid_from_fosberg(
+            self._topo_grid(),
+            self._irradiance_grid(),
+            dry_bulb_temp=75.0,
+            relative_humidity=20.0,
+            time=1200,
+            month="July",
+            elevation="near",
+            name="Fosberg moisture",
+            tags=["test"],
+        )
+
+        assert grid.id == "fosberg-grid-id"
+        assert captured["domain_id"] == "domain-id"
+        assert captured["client"] is client
+        body = captured["body"]
+        assert body.source_topography_grid_id == "topo-grid-id"
+        assert body.source_irradiance_grid_id == "irradiance-grid-id"
+        assert body.dry_bulb_temp == 75.0
+        assert body.relative_humidity == 20.0
+        assert body.time == 1200
+        assert body.month == FuelMoistureMonth.JULY
+        assert body.elevation == RelativeElevation.NEAR
+        assert body.name == "Fosberg moisture"
+        assert body.tags == ["test"]
+
+    def test_elevation_defaults_to_unset(self, monkeypatch):
+        captured, _ = self._patch_endpoint(monkeypatch)
+
+        create_dead_fuel_moisture_grid_from_fosberg(
+            self._topo_grid(),
+            self._irradiance_grid(),
+            dry_bulb_temp=75.0,
+            relative_humidity=20.0,
+            time=1200,
+            month=FuelMoistureMonth.AUGUST,
+        )
+
+        assert captured["body"].elevation is UNSET
+
+    def test_accepts_grid_ids_with_one_object(self, monkeypatch):
+        # Irradiance passed as a bare id; the domain is resolved from the
+        # topography Grid object.
+        captured, _ = self._patch_endpoint(monkeypatch)
+
+        create_dead_fuel_moisture_grid_from_fosberg(
+            self._topo_grid(),
+            "some-irradiance-id",
+            dry_bulb_temp=75.0,
+            relative_humidity=20.0,
+            time=1200,
+            month="July",
+        )
+
+        assert captured["domain_id"] == "domain-id"
+        assert captured["body"].source_irradiance_grid_id == "some-irradiance-id"
+
+    def test_requires_domain_when_both_ids(self, monkeypatch):
+        self._patch_endpoint(monkeypatch)
+        with pytest.raises(ValueError, match="resolve the domain"):
+            create_dead_fuel_moisture_grid_from_fosberg(
+                "topo-id",
+                "irradiance-id",
+                dry_bulb_temp=75.0,
+                relative_humidity=20.0,
+                time=1200,
+                month="July",
+            )
+
+    def test_requires_completed_topography_grid(self):
+        with pytest.raises(ValueError, match=r"Call \.wait\(\)"):
+            create_dead_fuel_moisture_grid_from_fosberg(
+                self._topo_grid(status=JobStatus.PENDING),
+                self._irradiance_grid(),
+                dry_bulb_temp=75.0,
+                relative_humidity=20.0,
+                time=1200,
+                month="July",
+            )
+
+    def test_requires_completed_irradiance_grid(self):
+        with pytest.raises(ValueError, match=r"Call \.wait\(\)"):
+            create_dead_fuel_moisture_grid_from_fosberg(
+                self._topo_grid(),
+                self._irradiance_grid(status=JobStatus.PENDING),
+                dry_bulb_temp=75.0,
+                relative_humidity=20.0,
+                time=1200,
+                month="July",
+            )
+
+    def test_requires_topography_bands(self):
+        with pytest.raises(ValueError, match="aspect"):
+            create_dead_fuel_moisture_grid_from_fosberg(
+                self._topo_grid(omit="aspect"),
+                self._irradiance_grid(),
+                dry_bulb_temp=75.0,
+                relative_humidity=20.0,
+                time=1200,
+                month="July",
+            )
+
+    def test_requires_irradiance_band(self):
+        with pytest.raises(ValueError, match="irradiance.surface.relative"):
+            create_dead_fuel_moisture_grid_from_fosberg(
+                self._topo_grid(),
+                self._irradiance_grid(omit="irradiance.surface.relative"),
+                dry_bulb_temp=75.0,
+                relative_humidity=20.0,
+                time=1200,
+                month="July",
+            )
+
+    @pytest.mark.parametrize(
+        "kwargs,error",
+        [
+            ({"dry_bulb_temp": 9}, ValueError),
+            ({"dry_bulb_temp": "hot"}, TypeError),
+            ({"relative_humidity": -1}, ValueError),
+            ({"relative_humidity": 101}, ValueError),
+            ({"time": 759}, ValueError),
+            ({"time": 2000}, ValueError),
+            ({"time": 1275}, ValueError),
+            ({"time": 12.0}, TypeError),
+        ],
+    )
+    def test_validates_request_parameters(self, kwargs, error):
+        params = dict(
+            dry_bulb_temp=75.0,
+            relative_humidity=20.0,
+            time=1200,
+            month="July",
+        )
+        params.update(kwargs)
+        with pytest.raises(error):
+            create_dead_fuel_moisture_grid_from_fosberg(
+                self._topo_grid(),
+                self._irradiance_grid(),
+                **params,
+            )
+
+    def test_create_live(self, completed_tree_inventory):
+        voxels = completed_tree_inventory.voxelize(
+            horizontal_resolution_m=2,
+            vertical_resolution_m=1,
+            bands=["leaf_area_density"],
+            name="test_fosberg_lad",
+            tags=["test"],
+        )
+        topo = None
+        irradiance = None
+        moisture = None
+        try:
+            voxels.wait()
+            # Surface irradiance and the Fosberg model require the topography,
+            # LAD, and irradiance grids to share one horizontal lattice, so
+            # align the topography grid to the voxelized LAD grid.
+            # elevation feeds the leaflux surface draping; slope + aspect feed
+            # the Fosberg model.
+            topo = create_topography_grid_from_3dep(
+                completed_tree_inventory.domain_id,
+                align_to=voxels,
+                bands=["elevation", "slope", "aspect"],
+                name="test_fosberg_topo",
+                tags=["test"],
+            )
+            topo.wait()
+            irradiance = create_irradiance_grid_from_leaflux(
+                voxels,
+                date_time=datetime.datetime(
+                    2020, 7, 1, 18, 0, tzinfo=datetime.timezone.utc
+                ),
+                source_terrain_grid=topo,
+                bands=["irradiance.surface.relative"],
+                name="test_fosberg_irradiance",
+                tags=["test"],
+            )
+            irradiance.wait()
+            moisture = create_dead_fuel_moisture_grid_from_fosberg(
+                topo,
+                irradiance,
+                dry_bulb_temp=75.0,
+                relative_humidity=20.0,
+                time=1200,
+                month="July",
+                elevation="near",
+                name="test_fosberg_moisture",
+                tags=["test"],
+            )
+            moisture.wait()
+            assert moisture.status == JobStatus.COMPLETED
+            assert {band.key for band in moisture.bands} == {"fuel_moisture.dead.1hr"}
+            values = moisture.to_numpy("fuel_moisture.dead.1hr")
+            assert values.ndim == 2
+            assert np.isfinite(values).any()
+        finally:
+            if moisture is not None:
+                moisture.delete()
+            if irradiance is not None:
+                irradiance.delete()
+            if topo is not None:
+                topo.delete()
             voxels.delete()
 
 
