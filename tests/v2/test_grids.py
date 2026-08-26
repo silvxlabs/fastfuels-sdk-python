@@ -73,7 +73,6 @@ from fastfuels_sdk.v2.client_library.models import (
 from fastfuels_sdk.v2.client_library.types import UNSET, Response
 from fastfuels_sdk.v2.exceptions import (
     NotFoundException,
-    UnprocessableEntityException,
     expect,
 )
 from fastfuels_sdk.v2.modifications import mask
@@ -564,7 +563,7 @@ class TestCreateIrradianceGridFromLeaflux:
         assert grid.id == "irradiance-grid-id"
         assert captured["domain_id"] == "domain-id"
         assert captured["client"] is client
-        assert captured["body"].source_grid_id == "lad-grid-id"
+        assert captured["body"].source_lad_grid_id == "lad-grid-id"
         assert captured["body"].date_time == when
         assert captured["body"].source_terrain_grid_id == "terrain-grid-id"
         assert captured["body"].bands == [
@@ -600,7 +599,7 @@ class TestCreateIrradianceGridFromLeaflux:
         )
 
         assert captured["domain_id"] == "domain-id"
-        assert captured["body"].source_grid_id == "lad-grid-id"
+        assert captured["body"].source_lad_grid_id == "lad-grid-id"
         assert captured["body"].source_terrain_grid_id == "terrain-grid-id"
 
     def test_requires_domain_for_id_source(self):
@@ -624,16 +623,6 @@ class TestCreateIrradianceGridFromLeaflux:
                 date_time=datetime.datetime(2024, 1, 1, tzinfo=datetime.timezone.utc),
             )
 
-    # The deployed API renamed the request field to source_lad_grid_id
-    # (86a5a67), but the generated client still serializes source_grid_id, so
-    # the create call 422s until the client is regenerated. strict=False lets
-    # this xfail now and flip to passing once the client catches up.
-    @pytest.mark.xfail(
-        reason="generated client sends source_grid_id; deployed API expects "
-        "source_lad_grid_id (pending client regen)",
-        raises=UnprocessableEntityException,
-        strict=False,
-    )
     def test_create_live(self, completed_tree_inventory):
         voxels = completed_tree_inventory.voxelize(
             horizontal_resolution_m=2,

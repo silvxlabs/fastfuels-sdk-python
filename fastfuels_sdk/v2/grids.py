@@ -2274,12 +2274,8 @@ def create_irradiance_grid_from_leaflux(
             "an id."
         )
 
-    # The generated client (and the deployed API/spec it was built from) names
-    # this field source_grid_id. API commit 86a5a67 renames it to
-    # source_lad_grid_id; the client and this wrapper update on the next regen
-    # once the API rebuilds.
     request_body = CreateLeafluxIrradianceRequest(
-        source_grid_id=_grid_id(source_grid),
+        source_lad_grid_id=_grid_id(source_grid),
         date_time=date_time,
         source_terrain_grid_id=(
             _grid_id(source_terrain_grid) if source_terrain_grid is not None else UNSET
