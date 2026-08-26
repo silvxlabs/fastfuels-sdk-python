@@ -22,6 +22,7 @@ from fastfuels_sdk.v2.client_library.api.grids import (
     create_compose_grid,
     create_duet_grid,
     create_fccs_lookup,
+    create_fosberg_fuel_moisture_grid,
     create_fbfm13_lookup,
     create_fbfm40_lookup,
     create_geotiff_upload,
@@ -88,6 +89,7 @@ from fastfuels_sdk.v2.client_library.models import (
     CreateFccsLookupRequest,
     CreateFbfm13LookupRequest,
     CreateFbfm40LookupRequest,
+    CreateFosbergFuelMoistureRequest,
     CreateGeoTIFFUploadRequest,
     CreateInventoryCanopyRequest,
     CreateLandfireCanopyRequest,
@@ -111,6 +113,7 @@ from fastfuels_sdk.v2.client_library.models import (
     FccsLookupBand,
     Fbfm13LookupBand,
     Fbfm40LookupBand,
+    FuelMoistureMonth,
     GridAlignmentDomainTarget,
     GridAlignmentGridTarget,
     GridAlignmentNativeTarget,
@@ -133,6 +136,7 @@ from fastfuels_sdk.v2.client_library.models import (
     ListGridsResponse,
     MetaCHMVersion,
     NonBurnableFuelModel,
+    RelativeElevation,
     ResamplingMethod,
     SortOrder,
     ThreeDepResolution,
@@ -171,6 +175,7 @@ __all__ = [
     "create_grid_from_compose",
     "create_uniform_grid",
     "create_surface_fuel_grid_from_duet",
+    "create_dead_fuel_moisture_grid_from_fosberg",
     "create_fuel_grid_from_fccs_lookup",
     "create_fuel_grid_from_fbfm13_lookup",
     "create_fuel_grid_from_fbfm40_lookup",
@@ -2620,6 +2625,167 @@ def _duet_integer(name: str, value, *, minimum: int, maximum: int) -> int:
         raise TypeError(f"{name} must be a whole number.")
     if not minimum <= value <= maximum:
         raise ValueError(f"{name} must be between {minimum} and {maximum}.")
+    return value
+
+
+def create_dead_fuel_moisture_grid_from_fosberg(
+    source_topography_grid,
+    source_irradiance_grid,
+    dry_bulb_temp: float,
+    relative_humidity: float,
+    time: int,
+    month,
+    elevation=None,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+) -> Grid:
+    """Create a Fosberg 1-hour dead fuel moisture grid from two grids.
+
+    Derives a grid with a single ``fuel_moisture.dead.1hr`` band (percent)
+    using the Fosberg & Deeming 1-hour dead fuel moisture model. The output
+    inherits the topography grid's domain, CRS, transform, and georeference.
+
+    Parameters
+    ----------
+    source_topography_grid : Grid or str
+        A completed 2D topography grid (or its id) carrying ``slope`` and
+        ``aspect`` bands, both in degrees.
+    source_irradiance_grid : Grid or str
+        A completed Leaflux irradiance grid (or its id) carrying an
+        ``irradiance.surface.relative`` band; per-cell shading is derived
+        from it. Must belong to the same domain as the topography grid.
+    dry_bulb_temp : float
+        Dry-bulb air temperature in degrees Fahrenheit. Must be >= 10.
+    relative_humidity : float
+        Relative humidity as a percent, from 0 through 100.
+    time : int
+        Local time of day in 24-hour HHMM form (e.g. 1200 for noon), from
+        0800 through 1959.
+    month : FuelMoistureMonth or str
+        Month of the burn scenario, selecting the Fosberg correction table
+        (``FuelMoistureMonth`` member or a month name such as ``"July"``).
+    elevation : RelativeElevation or str, optional
+        Site elevation relative to the reference weather station
+        (``RelativeElevation`` member or one of ``"below"``, ``"near"``,
+        ``"above"``): ``below`` = 1000-2000 ft below the station, ``near`` =
+        within 1000 ft (no correction), ``above`` = 1000-2000 ft above. This
+        is a Fosberg correction category, not the topography elevation band.
+    name, description : str, optional
+        Metadata for the new grid.
+    tags : List[str], optional
+        Tags for the new grid.
+
+    Returns
+    -------
+    Grid
+        The new pending Fosberg dead fuel moisture Grid.
+
+    Raises
+    ------
+    TypeError
+        If ``dry_bulb_temp``, ``relative_humidity``, or ``time`` is not a
+        number, or ``time`` is not a whole number.
+    ValueError
+        If a parameter is out of range, a source grid passed as a Grid is not
+        completed or lacks a required band, or the domain cannot be resolved
+        because both source grids were passed as bare ids.
+    """
+    # Local band/completion checks only apply when a Grid object is supplied;
+    # bare ids are validated server-side. The domain id is taken from whichever
+    # source grid is a Grid object.
+    topo_id, topo_domain = _resolve_fosberg_source_grid(
+        source_topography_grid,
+        required_bands={"slope", "aspect"},
+        kind="topography",
+        action="derive a Fosberg dead fuel moisture grid from",
+    )
+    irradiance_id, irradiance_domain = _resolve_fosberg_source_grid(
+        source_irradiance_grid,
+        required_bands={"irradiance.surface.relative"},
+        kind="irradiance",
+        action="derive a Fosberg dead fuel moisture grid from",
+    )
+    domain_id = topo_domain if topo_domain is not None else irradiance_domain
+    if domain_id is None:
+        raise ValueError(
+            "Cannot resolve the domain from grid ids alone. Pass at least one "
+            "source grid as a Grid object, or load them with "
+            "get_grid(domain, id) first."
+        )
+
+    dry_bulb_temp = _fosberg_number("dry_bulb_temp", dry_bulb_temp, minimum=10)
+    relative_humidity = _fosberg_number(
+        "relative_humidity", relative_humidity, minimum=0, maximum=100
+    )
+    time = _fosberg_time(time)
+    month = month if isinstance(month, FuelMoistureMonth) else FuelMoistureMonth(month)
+    if elevation is None:
+        elevation = UNSET
+    elif not isinstance(elevation, RelativeElevation):
+        elevation = RelativeElevation(elevation)
+
+    request_body = CreateFosbergFuelMoistureRequest(
+        source_topography_grid_id=topo_id,
+        source_irradiance_grid_id=irradiance_id,
+        dry_bulb_temp=dry_bulb_temp,
+        relative_humidity=relative_humidity,
+        time=time,
+        month=month,
+        elevation=elevation,
+        name=name,
+        description=description,
+        tags=_opt(tags),
+    )
+    response = create_fosberg_fuel_moisture_grid.sync_detailed(
+        domain_id,
+        client=ensure_client(),
+        body=request_body,
+    )
+    return Grid._from_model(expect(response, HTTPStatus.CREATED))
+
+
+def _resolve_fosberg_source_grid(grid, *, required_bands, kind: str, action: str):
+    """Resolve a Fosberg source grid to ``(grid_id, domain_id_or_None)``.
+
+    When ``grid`` is a Grid, require it be completed and carry every band in
+    ``required_bands`` and return its domain id. When it is a bare id string,
+    skip local validation (the server validates) and return ``None`` for the
+    domain id.
+    """
+    if not isinstance(grid, Grid):
+        return grid, None
+    grid._require_completed(action)
+    band_keys = {band.key for band in grid.bands}
+    missing = sorted(set(required_bands) - band_keys)
+    if missing:
+        raise ValueError(
+            f"{kind} grid {grid.id} lacks required bands: {missing}. "
+            f"Available bands: {sorted(band_keys)}."
+        )
+    return grid.id, grid.domain_id
+
+
+def _fosberg_number(name: str, value, *, minimum=None, maximum=None):
+    """Validate a bounded Fosberg weather parameter."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TypeError(f"{name} must be a number.")
+    if minimum is not None and value < minimum:
+        raise ValueError(f"{name} must be >= {minimum}.")
+    if maximum is not None and value > maximum:
+        raise ValueError(f"{name} must be <= {maximum}.")
+    return value
+
+
+def _fosberg_time(value) -> int:
+    """Validate a Fosberg local time of day in 24-hour HHMM form."""
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise TypeError("time must be a whole number in HHMM form.")
+    minute = value % 100
+    if not 0 <= minute <= 59:
+        raise ValueError("time must be a valid HHMM clock time (minutes 00-59).")
+    if not 800 <= value <= 1959:
+        raise ValueError("time must be between 0800 and 1959 (HHMM).")
     return value
 
 
