@@ -120,6 +120,21 @@ grid = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
 )
 ```
 
+To pin a LANDFIRE vintage, pass `version` (`"2024"` or `"2025"`); it defaults
+to the API's current version. A completed grid reports the calendar year its
+fuels represent on `grid.represented_year`:
+
+```python
+grid = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
+    domain, version="2024", output_resolution_m=30
+)
+```
+
+```python
+>>> grid.represented_year
+2024
+```
+
 ### Look up fuel parameters from FBFM40 codes
 
 The `fbfm` band holds codes, not the quantities a fire model consumes. To
@@ -239,10 +254,59 @@ Use `output_resolution_m` or `align_to` to choose a different lattice. See the
 [Point clouds guide](point-clouds.md#create-a-point-cloud-from-usgs-3dep) to
 create an airborne point cloud from USGS 3DEP.
 
+To control how each cell reduces its above-ground returns to a height, set
+`aggregation` to `"max"` (the default), `"mean"`, `"median"`, or
+`"percentile"`; `"percentile"` requires a `percentile` (0-100). The
+`spike_filter` argument removes lone spurious returns: leave it unset for the
+API's default filter, pass `False` to keep every return, or pass a mapping of
+thresholds to tune it:
+
+```python
+chm = ff.grids.create_canopy_height_grid_from_point_cloud(
+    point_cloud,
+    output_resolution_m=2,
+    aggregation="percentile",
+    percentile=95,
+    spike_filter={"min_canopy_footprint_m": 5, "min_prominence_m": 30},
+)
+chm.wait()
+```
+
 !!! tip "NAIP-CHM is a surface model"
     NAIP-CHM is a digital surface model and retains buildings and other
     infrastructure. To keep only vegetation, mask out built-up areas — see
     [Mask out features](#mask-out-features).
+
+### Derive canopy fuels from a tree inventory
+
+To compute the crown-fire bands directly from a completed
+[tree inventory](inventories.md) rather than from LANDFIRE, pass the inventory
+to `create_canopy_fuel_grid_from_inventory`. It derives canopy bulk density
+(`cbd`), canopy base height (`cbh`), canopy height (`chm`), canopy cover
+(`cc`), and canopy fuel load (`cfl`) from the inventory's trees; only live
+trees contribute. The bands share keys and units with the LANDFIRE canopy
+source, and the output defaults to 30 m cells:
+
+```python
+canopy = ff.grids.create_canopy_fuel_grid_from_inventory(
+    inventory,
+    bands=["cbd", "cbh", "chm", "cc", "cfl"],
+    output_resolution_m=30,
+)
+canopy.wait()
+```
+
+```python
+>>> {band.key for band in canopy.bands}
+{'cbd', 'cbh', 'chm', 'cc', 'cfl'}
+```
+
+The default four bands (`cbd`, `cbh`, `chm`, `cc`) drop `cfl`; pass `bands`
+to choose. Method keyword arguments tune how each band is derived — the
+biomass source (`biomass_equations` or `biomass_column`), and per-band
+reduction methods (`cbd`, `cbh`, `chm`, `cc`), among others. See
+`create_canopy_fuel_grid_from_inventory` in the [Reference](../reference.md)
+for the full surface. Pass `align_to` to match another grid's lattice exactly.
 
 ## 3D tree fuel grids (voxelization)
 
@@ -346,6 +410,120 @@ surface.wait()
 Use a `value` target to set every occupied cell to a constant, `max` with an
 optional `min` to scale by extrema, or `mean` and `sd` to scale by moments.
 Omit `calibration` only when you want the raw DUET values.
+
+## Solar irradiance grids
+
+!!! warning "Beta"
+    LeafLux irradiance grids are a new v2 grid family and still stabilizing.
+
+To compute solar irradiance through the canopy at a single instant, pass a
+completed 3D grid carrying a `leaf_area_density` band — a voxel grid from
+[voxelization](#3d-tree-fuel-grids-voxelization) — to
+`create_irradiance_grid_from_leaflux` with a UTC `date_time`. Light is
+attenuated through the leaf area density with a Beer-Lambert
+`extinction_coefficient` (default 0.5). For what solar irradiance means, see
+the [FastFuels documentation](https://docs.fastfuels.silvxlabs.com).
+
+The `irradiance.canopy.relative` band needs no terrain:
+
+```python
+import datetime
+
+irradiance = ff.grids.create_irradiance_grid_from_leaflux(
+    voxels,
+    date_time=datetime.datetime(2024, 7, 1, 18, 0, tzinfo=datetime.timezone.utc),
+    bands=["irradiance.canopy.relative"],
+)
+irradiance.wait()
+```
+
+The `irradiance.surface.relative` band (the default) drapes light onto the
+ground, so it needs a terrain grid sharing the source grid's **exact
+horizontal lattice** and carrying an `elevation` band. Build that terrain grid
+with `align_to=<source grid>` and pass it as `source_terrain_grid`; without a
+lattice-matched terrain grid the API returns a 422:
+
+```python
+topo = ff.grids.create_topography_grid_from_3dep(
+    domain, align_to=voxels, bands=["elevation"]
+)
+topo.wait()
+
+irradiance = ff.grids.create_irradiance_grid_from_leaflux(
+    voxels,
+    date_time=datetime.datetime(2024, 7, 1, 18, 0, tzinfo=datetime.timezone.utc),
+    source_terrain_grid=topo,
+    bands=["irradiance.surface.relative"],
+)
+irradiance.wait()
+```
+
+See [Align grids to each other](#align-grids-to-each-other) for how `align_to`
+matches a lattice exactly.
+
+## Fuel moisture grids
+
+!!! warning "Beta"
+    Fosberg dead fuel moisture grids are a new v2 grid family and still
+    stabilizing.
+
+To estimate 1-hour dead fuel moisture with the Fosberg model, pass a
+topography grid and a surface-irradiance grid to
+`create_dead_fuel_moisture_grid_from_fosberg` along with the weather inputs.
+The result carries a single `fuel_moisture.dead.1hr` band (percent). For the
+Fosberg 1-hr dead fuel moisture model itself, see the
+[FastFuels documentation](https://docs.fastfuels.silvxlabs.com).
+
+The topography, leaf-area-density, and surface-irradiance grids all feed the
+same Fosberg cells, so they must land on **one shared lattice** — build the
+topography and irradiance grids against the voxel grid with `align_to=`. The
+topography grid supplies `slope` and `aspect` to Fosberg and `elevation` to
+the irradiance surface draping:
+
+```python
+import datetime
+import fastfuels_sdk.v2 as ff
+
+# A voxel grid carrying leaf area density (see 3D tree fuel grids, above).
+voxels = inventory.voxelize(
+    horizontal_resolution_m=2, vertical_resolution_m=1, bands=["leaf_area_density"]
+)
+voxels.wait()
+
+topo = ff.grids.create_topography_grid_from_3dep(
+    domain, align_to=voxels, bands=["elevation", "slope", "aspect"]
+)
+topo.wait()
+
+irradiance = ff.grids.create_irradiance_grid_from_leaflux(
+    voxels,
+    date_time=datetime.datetime(2020, 7, 1, 18, 0, tzinfo=datetime.timezone.utc),
+    source_terrain_grid=topo,
+    bands=["irradiance.surface.relative"],
+)
+irradiance.wait()
+
+moisture = ff.grids.create_dead_fuel_moisture_grid_from_fosberg(
+    topo, irradiance,
+    dry_bulb_temp=75.0,       # degrees Fahrenheit, >= 10
+    relative_humidity=20.0,   # percent, 0-100
+    time=1200,                # local HHMM, 0800-1959
+    month="July",
+    elevation="near",         # Fosberg correction category: below/near/above
+)
+moisture.wait()
+```
+
+```python
+>>> [band.key for band in moisture.bands]
+['fuel_moisture.dead.1hr']
+```
+
+!!! warning "Grids must share one lattice"
+    Passing topography, leaf-area-density, and irradiance grids that sit on
+    different lattices is the most common failure. Build the topography and
+    irradiance grids against the voxel grid with `align_to=` — see
+    [Align grids to each other](#align-grids-to-each-other).
 
 ## Uniform grids
 
