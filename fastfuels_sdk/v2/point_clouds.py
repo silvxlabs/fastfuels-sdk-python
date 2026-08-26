@@ -5,19 +5,21 @@ fastfuels_sdk/v2/point_clouds.py
 # Core imports
 import json
 from http import HTTPStatus
-from typing import List, Optional
+from typing import List, Optional, Sequence, Union
 
 # Internal imports
 from fastfuels_sdk.v2._jobs import wait as _wait
 from fastfuels_sdk.v2._uploads import put_upload
 from fastfuels_sdk.v2.api import ensure_client
-from fastfuels_sdk.v2.exceptions import expect
+from fastfuels_sdk.v2.exceptions import expect, raise_for_response
 from fastfuels_sdk.v2.client_library.api.point_clouds import (
     check_3dep_point_cloud_coverage,
     create_3dep_point_cloud as create_3dep_point_cloud_endpoint,
     create_point_cloud_upload,
     delete_point_cloud,
     get_point_cloud as get_point_cloud_endpoint,
+    get_point_cloud_data_binary,
+    get_point_cloud_data_metadata,
     list_point_clouds as list_point_clouds_endpoint,
     list_point_clouds_cross_domain,
     update_point_cloud,
@@ -26,17 +28,20 @@ from fastfuels_sdk.v2.client_library.models import (
     PointCloud as PointCloudModel,
     CreatePointCloudUploadRequest,
     CreateThreeDepPointCloudRequest,
+    JobStatus,
     ListPointCloudsResponse,
+    PointCloudDataMetadata,
     PointCloudThreeDepCoverageResponse,
     PointCloudSortField,
     PointCloudType,
     SortOrder,
     UpdatePointCloudRequestBody,
 )
-from fastfuels_sdk.v2.client_library.types import UNSET
+from fastfuels_sdk.v2.client_library.types import UNSET, Response
 
 # External imports
 import attrs
+import numpy as np
 
 __all__ = [
     "PointCloud",
@@ -61,6 +66,43 @@ def _opt(value):
 def _point_cloud_type(value) -> PointCloudType:
     """Coerce a string or enum member to a ``PointCloudType``."""
     return value if isinstance(value, PointCloudType) else PointCloudType(value)
+
+
+# X/Y/Z are stored as scaled integers and decoded per axis in this order.
+_XYZ = ("X", "Y", "Z")
+
+
+def _csv(values) -> Optional[str]:
+    """Render a scalar or sequence as the comma-separated query string the
+    tile endpoints expect, or ``None`` to omit the parameter."""
+    if values is None:
+        return None
+    if isinstance(values, str):
+        return values
+    return ",".join(str(v) for v in values)
+
+
+def _decode_point_cloud_tile(content: bytes, headers) -> dict:
+    """Decode one binary point-cloud tile into ``{column: np.ndarray}``.
+
+    The tile endpoint returns ``application/octet-stream``: one contiguous
+    little-endian column block after another in ``X-Data-Columns`` order (see
+    ``get_point_cloud_data_binary``). Every block holds ``X-Data-Count`` values
+    of the matching dtype in ``X-Data-Dtypes``. ``X``, ``Y``, and ``Z`` remain
+    the stored scaled integers.
+    """
+    columns = headers["X-Data-Columns"].split(",")
+    dtypes = headers["X-Data-Dtypes"].split(",")
+    count = int(headers["X-Data-Count"])
+
+    blocks = {}
+    start = 0
+    for name, dtype_str in zip(columns, dtypes):
+        dtype = np.dtype(dtype_str).newbyteorder("<")
+        stop = start + count * dtype.itemsize
+        blocks[name] = np.frombuffer(content[start:stop], dtype=dtype)
+        start = stop
+    return blocks
 
 
 class PointCloud(PointCloudModel):
@@ -266,6 +308,234 @@ class PointCloud(PointCloudModel):
             self.domain_id, self.id, client=ensure_client()
         )
         expect(response, HTTPStatus.NO_CONTENT)
+
+    def _require_completed(self, action: str) -> None:
+        """Raise if the point cloud is not completed, before deriving from it."""
+        if self.status != JobStatus.COMPLETED:
+            raise ValueError(
+                f"Cannot {action} a point cloud with status '{self.status}'. Call "
+                ".wait() until it completes first."
+            )
+
+    def metadata(self) -> PointCloudDataMetadata:
+        """Return the point cloud's tile index without downloading any points.
+
+        The metadata is the entry point for reading data: it lists the occupied
+        tiles, the stored columns and their dtypes, the coordinate encoding
+        (``scales``/``offsets``), and the cumulative point count at each level
+        of detail. :meth:`to_numpy` and :meth:`to_dataframe` page over the tiles
+        it reports.
+
+        Returns
+        -------
+        PointCloudDataMetadata
+            The tile catalogue: ``tile_m``, ``lod_levels``, ``crs``,
+            ``bounds``, ``scales``, ``offsets``, ``columns``, and ``tiles``.
+
+        Raises
+        ------
+        ValueError
+            If the point cloud is not completed.
+        NotFoundException
+            If the point cloud no longer exists.
+
+        Examples
+        --------
+        >>> pc = ff.get_point_cloud(domain, "abc123").wait()
+        >>> meta = pc.metadata()
+        >>> len(meta.tiles)
+        4
+        """
+        self._require_completed("read data metadata from")
+        response = get_point_cloud_data_metadata.sync_detailed(
+            self.domain_id, self.id, client=ensure_client()
+        )
+        return expect(response)
+
+    def _request_tile(self, tile_x, tile_y, lod, classes, columns):
+        """GET one binary tile as a raw octet-stream ``httpx.Response``.
+
+        Bypasses ``get_point_cloud_data_binary.sync_detailed()``, whose
+        generated parser casts the binary body to ``str``. We reuse its
+        ``_get_kwargs()`` for correct URL/param construction, then issue the
+        request through the shared client and read the bytes/headers directly.
+        """
+        kwargs = get_point_cloud_data_binary._get_kwargs(
+            self.domain_id,
+            self.id,
+            tile_x,
+            tile_y,
+            lod=_opt(lod),
+            classes=_opt(classes),
+            columns=_opt(columns),
+        )
+        return ensure_client().get_httpx_client().request(**kwargs)
+
+    def _read_tile(self, tile_x, tile_y, lod, classes, columns) -> dict:
+        """Fetch and decode one tile into ``{column: np.ndarray}``."""
+        response = self._request_tile(tile_x, tile_y, lod, classes, columns)
+        if response.status_code != HTTPStatus.OK:
+            raise_for_response(
+                Response(
+                    status_code=HTTPStatus(response.status_code),
+                    content=response.content,
+                    headers=response.headers,
+                    parsed=None,
+                )
+            )
+        return _decode_point_cloud_tile(response.content, response.headers)
+
+    def _read_columns(self, lod, classes, columns):
+        """Page over every occupied tile and concatenate each column.
+
+        Returns ``(metadata, order, columns_dict)`` where ``order`` is the
+        column order the tiles reported and ``columns_dict`` maps each name to
+        the points concatenated across all tiles (``X``/``Y``/``Z`` still the
+        stored scaled integers).
+        """
+        classes_param = _csv(classes)
+        columns_param = _csv(columns)
+
+        meta = self.metadata()
+        order = None
+        accumulated = {}
+        for tile in meta.tiles:
+            blocks = self._read_tile(
+                tile.tile_x, tile.tile_y, lod, classes_param, columns_param
+            )
+            if order is None:
+                order = list(blocks.keys())
+            for name, block in blocks.items():
+                accumulated.setdefault(name, []).append(block)
+
+        if order is None:
+            # No occupied tiles: return empty, correctly-typed columns using the
+            # dtypes the metadata advertises.
+            order = list(columns) if columns else list(meta.columns.additional_keys)
+            empty = {
+                name: np.frombuffer(b"", dtype=np.dtype(meta.columns[name]))
+                for name in order
+            }
+            return meta, order, empty
+
+        result = {name: np.concatenate(accumulated[name]) for name in order}
+        return meta, order, result
+
+    def _decode_xyz(self, meta, columns: dict) -> None:
+        """Decode stored ``X``/``Y``/``Z`` integers to CRS coordinates in place."""
+        for axis, name in enumerate(_XYZ):
+            if name in columns:
+                columns[name] = columns[name] * meta.scales[axis] + meta.offsets[axis]
+
+    def to_dataframe(
+        self,
+        lod: Optional[int] = None,
+        classes: Optional[Union[int, Sequence[int], str]] = None,
+        columns: Optional[Sequence[str]] = None,
+        decode_coordinates: bool = True,
+    ):
+        """Read this point cloud's points into an in-memory pandas DataFrame.
+
+        Pages over every occupied tile and stacks them into one frame, one row
+        per point and one column per stored attribute (``X``, ``Y``, ``Z``,
+        ``classification``, and any source columns such as ``intensity``).
+
+        Parameters
+        ----------
+        lod : int, optional
+            Inclusive level-of-detail ceiling. ``0`` is the coarsest sample and
+            each higher value adds finer points; ``None`` (default) reads every
+            point. Valid values are ``0`` through ``lod_levels - 1`` from
+            :meth:`metadata`.
+        classes : int or sequence of int or str, optional
+            ASPRS classification codes to keep (e.g. ``[2, 5]`` for ground and
+            high vegetation). ``None`` (default) keeps every class.
+        columns : sequence of str, optional
+            Stored columns to read, in the returned order. ``None`` (default)
+            reads every stored column (see :meth:`metadata`).
+        decode_coordinates : bool, optional
+            If True (default), ``X``/``Y``/``Z`` are decoded to CRS coordinates
+            (floats). If False, they stay the stored scaled integers.
+
+        Returns
+        -------
+        pandas.DataFrame
+            One row per point, columns in ``columns`` order (or the point
+            cloud's stored order).
+
+        Raises
+        ------
+        ValueError
+            If the point cloud is not completed.
+
+        Examples
+        --------
+        >>> pc = ff.get_point_cloud(domain, "abc123").wait()
+        >>> df = pc.to_dataframe(classes=[2])
+        >>> df.columns.tolist()
+        ['X', 'Y', 'Z', 'classification']
+        """
+        import pandas as pd
+
+        self._require_completed("read data from")
+        meta, order, cols = self._read_columns(lod, classes, columns)
+        if decode_coordinates:
+            self._decode_xyz(meta, cols)
+        return pd.DataFrame({name: cols[name] for name in order})
+
+    def to_numpy(
+        self,
+        lod: Optional[int] = None,
+        classes: Optional[Union[int, Sequence[int], str]] = None,
+        columns: Sequence[str] = _XYZ,
+        decode_coordinates: bool = True,
+    ) -> "np.ndarray":
+        """Read this point cloud's points into an in-memory NumPy array.
+
+        Pages over every occupied tile and stacks the requested columns into a
+        single ``(N, k)`` array, where ``N`` is the total number of points and
+        ``k`` is the number of columns. All columns share the ``float64`` dtype
+        of the returned array.
+
+        Parameters
+        ----------
+        lod : int, optional
+            Inclusive level-of-detail ceiling. ``0`` is the coarsest sample and
+            each higher value adds finer points; ``None`` (default) reads every
+            point. Valid values are ``0`` through ``lod_levels - 1`` from
+            :meth:`metadata`.
+        classes : int or sequence of int or str, optional
+            ASPRS classification codes to keep (e.g. ``[2, 5]`` for ground and
+            high vegetation). ``None`` (default) keeps every class.
+        columns : sequence of str, optional
+            Columns to stack into the array, in order. Defaults to the
+            ``("X", "Y", "Z")`` coordinates.
+        decode_coordinates : bool, optional
+            If True (default), ``X``/``Y``/``Z`` are decoded to CRS coordinates.
+            If False, they stay the stored scaled integers.
+
+        Returns
+        -------
+        numpy.ndarray
+            A ``(N, k)`` ``float64`` array of the requested columns.
+
+        Raises
+        ------
+        ValueError
+            If the point cloud is not completed.
+
+        Examples
+        --------
+        >>> pc = ff.get_point_cloud(domain, "abc123").wait()
+        >>> points = pc.to_numpy()
+        >>> points.shape
+        (48213, 3)
+        """
+        self._require_completed("read data from")
+        meta, order, cols = self._read_columns(lod, classes, list(columns))
+        if decode_coordinates:
+            self._decode_xyz(meta, cols)
+        return np.column_stack([cols[name].astype(np.float64) for name in order])
 
     def to_json(self) -> str:
         """Serialize the complete PointCloud object to a JSON string.
