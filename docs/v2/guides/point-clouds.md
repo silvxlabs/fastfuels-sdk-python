@@ -111,6 +111,72 @@ Point clouds are addressed by their domain and id:
 pc = ff.get_point_cloud(domain, "4a56bae0cd5e481aa1617cb894a9a7f3")
 ```
 
+## Read point cloud data
+
+To read a completed point cloud's points into memory, call `to_numpy()` or
+`to_dataframe()`; both page over every occupied tile and stack them into one
+array or frame. `to_numpy()` returns an `(N, k)` `float64` array of the
+requested `columns`, defaulting to the `X`/`Y`/`Z` coordinates:
+
+```python
+pc = ff.get_point_cloud(domain, "4a56bae0cd5e481aa1617cb894a9a7f3").wait()
+
+points = pc.to_numpy()
+```
+
+```python
+>>> points.shape
+(48213, 3)
+```
+
+`to_dataframe()` returns one row per point and one column per stored attribute
+(`X`, `Y`, `Z`, `classification`, and any source columns such as `intensity`):
+
+```python
+df = pc.to_dataframe()
+```
+
+```python
+>>> df.columns.tolist()
+['X', 'Y', 'Z', 'classification']
+```
+
+To read fewer points, narrow the output with these arguments (shared by both
+methods):
+
+- **`lod`** — an inclusive level-of-detail ceiling. `0` is the coarsest sample
+  and each higher value adds finer points; omit it to read every point. Valid
+  values are `0` through `lod_levels - 1` (see `metadata()` below).
+- **`classes`** — ASPRS classification codes to keep, e.g. `[2, 5]` for ground
+  and high vegetation.
+- **`columns`** — the stored columns to read, in the returned order.
+- **`decode_coordinates`** — `True` (default) decodes `X`/`Y`/`Z` to CRS
+  coordinates; `False` keeps them as the stored scaled integers.
+
+```python
+# Ground returns only, as CRS coordinates.
+ground = pc.to_dataframe(classes=[2], columns=["X", "Y", "Z", "classification"])
+```
+
+To inspect the tile index — occupied tiles, stored columns and dtypes, the
+coordinate encoding, and the point count at each level of detail — without
+downloading any points, call `metadata()`:
+
+```python
+meta = pc.metadata()
+```
+
+```python
+>>> meta.lod_levels
+5
+>>> len(meta.tiles)
+4
+```
+
+!!! tip "Wait before reading"
+    `metadata()`, `to_numpy()`, and `to_dataframe()` require a completed point
+    cloud; call `wait()` first or they raise `ValueError`.
+
 ## List point clouds
 
 To list your point clouds, optionally narrowed to a domain, a scan type, a
