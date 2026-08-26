@@ -3,6 +3,7 @@ fastfuels_sdk/v2/grids.py
 """
 
 # Core imports
+import datetime
 import json
 import re
 from collections.abc import Mapping
@@ -31,6 +32,7 @@ from fastfuels_sdk.v2.client_library.api.grids import (
     create_landfire_fbfm40,
     create_landfire_fccs,
     create_landfire_topography,
+    create_leaflux_irradiance_grid,
     create_meta_chm,
     create_naip_chm,
     create_netcdf_upload,
@@ -77,6 +79,11 @@ from fastfuels_sdk.v2.client_library.models import (
     ComposeLiteral,
     ComposeSelect,
     CreateDuetRequest,
+    ChmMaxAggregation,
+    ChmMeanAggregation,
+    ChmMedianAggregation,
+    ChmPercentileAggregation,
+    ChmSpikeFilter,
     CreateComposeRequest,
     CreateFccsLookupRequest,
     CreateFbfm13LookupRequest,
@@ -88,6 +95,7 @@ from fastfuels_sdk.v2.client_library.models import (
     CreateLandfireFbfm40Request,
     CreateLandfireFccsRequest,
     CreateLandfireTopographyRequest,
+    CreateLeafluxIrradianceRequest,
     CreateMetaChmRequest,
     CreateNaipChmRequest,
     CreateNetcdfUploadRequest,
@@ -121,6 +129,7 @@ from fastfuels_sdk.v2.client_library.models import (
     LandfireFbfm40Version,
     LandfireFccsVersion,
     LandfireTopographyVersion,
+    LeafluxBand,
     ListGridsResponse,
     MetaCHMVersion,
     NonBurnableFuelModel,
@@ -165,6 +174,7 @@ __all__ = [
     "create_fuel_grid_from_fccs_lookup",
     "create_fuel_grid_from_fbfm13_lookup",
     "create_fuel_grid_from_fbfm40_lookup",
+    "create_irradiance_grid_from_leaflux",
     "list_grids",
     "get_grid",
     "check_3dep_coverage",
@@ -174,6 +184,11 @@ __all__ = [
 def _domain_id(domain) -> str:
     """Resolve a Domain object or a domain-id string to the id string."""
     return getattr(domain, "id", domain)
+
+
+def _grid_id(grid) -> str:
+    """Resolve a Grid object or a grid-id string to the id string."""
+    return getattr(grid, "id", grid)
 
 
 def _enum_list(values, enum_cls):
@@ -231,6 +246,62 @@ def _build_alignment(
             resolution=_opt(output_resolution_m), method=method
         )
     return UNSET
+
+
+def _build_chm_aggregation(aggregation, percentile):
+    """Translate an aggregation keyword into a CHM aggregation target.
+
+    Returns a ``Chm{Max,Mean,Median,Percentile}Aggregation`` or ``UNSET`` (let
+    the API choose its default).
+
+    - ``aggregation="max"`` / ``"mean"`` / ``"median"`` selects that statistic.
+    - ``aggregation="percentile"`` requires ``percentile`` (0-100).
+    - ``percentile`` is only valid with ``aggregation="percentile"``.
+    """
+    if aggregation is None and percentile is None:
+        return UNSET
+    if aggregation == "percentile":
+        if percentile is None:
+            raise ValueError('aggregation="percentile" requires a percentile value.')
+        return ChmPercentileAggregation(percentile=percentile)
+    if percentile is not None:
+        raise ValueError('percentile is only used with aggregation="percentile".')
+    methods = {
+        "max": ChmMaxAggregation,
+        "mean": ChmMeanAggregation,
+        "median": ChmMedianAggregation,
+    }
+    if aggregation not in methods:
+        raise ValueError(
+            'aggregation must be one of "max", "mean", "median", or '
+            f'"percentile", got {aggregation!r}.'
+        )
+    return methods[aggregation]()
+
+
+def _build_chm_spike_filter(spike_filter):
+    """Translate a spike-filter keyword into a CHM spike-filter target.
+
+    - ``None`` -> ``UNSET`` (the API applies its default filter).
+    - ``False`` -> ``None`` (disable filtering, keeping every return).
+    - ``True`` -> a default ``ChmSpikeFilter``.
+    - a mapping -> a ``ChmSpikeFilter`` built from its fields.
+    - a ``ChmSpikeFilter`` -> passed through unchanged.
+    """
+    if spike_filter is None:
+        return UNSET
+    if spike_filter is False:
+        return None
+    if spike_filter is True:
+        return ChmSpikeFilter()
+    if isinstance(spike_filter, ChmSpikeFilter):
+        return spike_filter
+    if isinstance(spike_filter, Mapping):
+        return ChmSpikeFilter(**spike_filter)
+    raise ValueError(
+        "spike_filter must be a bool, a mapping of filter fields, or a "
+        f"ChmSpikeFilter, got {spike_filter!r}."
+    )
 
 
 def _fill_for(dtype, nodata=None):
@@ -368,6 +439,21 @@ class Grid(GridModel):
                 return grid_band
         keys = [b.key for b in self.bands]
         raise ValueError(f"Grid has no band {band!r}. Available bands: {keys}.")
+
+    @property
+    def represented_year(self) -> Optional[int]:
+        """Calendar year the fuel data represents, as reported by the API.
+
+        Populated on LANDFIRE fuel model grids. For an annual product this is
+        the landscape vintage (the ``version``); for a seasonal product it is
+        the projected season year read from the LANDFIRE Product Service
+        catalog. ``None`` when the source does not report a year.
+        """
+        # `source` is a free-form GridSource, so read the server-set `year`
+        # off its additional properties rather than a typed attribute.
+        if self.source is None:
+            return None
+        return self.source.additional_properties.get("year")
 
     @classmethod
     def from_id(cls, domain_id: str, grid_id: str) -> "Grid":
@@ -1527,6 +1613,9 @@ def create_canopy_height_grid_from_point_cloud(
     output_resolution_m: Optional[float] = None,
     align_to=None,
     resampling: Optional[str] = None,
+    aggregation: Optional[str] = None,
+    percentile: Optional[float] = None,
+    spike_filter=None,
     extent_buffer_cells: int = 0,
     name: str = "",
     description: str = "",
@@ -1546,6 +1635,19 @@ def create_canopy_height_grid_from_point_cloud(
         Match the lattice of an existing grid (or its id).
     resampling : str, optional
         Resampling method for the continuous canopy-height band.
+    aggregation : str, optional
+        Statistic each cell reduces its above-ground return heights with: one of
+        ``"max"``, ``"mean"``, ``"median"``, or ``"percentile"``. Defaults to the
+        API's ``"max"``.
+    percentile : float, optional
+        Rank to take (0-100), used only with ``aggregation="percentile"``. 100 is
+        the tallest return and 50 the median.
+    spike_filter : bool, Mapping, or ChmSpikeFilter, optional
+        Removal of lone spurious returns. ``None`` (the default) applies the
+        API's default filter; ``False`` disables it, keeping every return;
+        ``True`` applies a default ``ChmSpikeFilter``; a mapping of filter fields
+        (``min_canopy_footprint_m``, ``min_prominence_m``) or a ``ChmSpikeFilter``
+        sets custom thresholds.
     extent_buffer_cells : int, optional
         Result-grid cells to buffer around the domain extent (0-10, default 0).
     name, description : str, optional
@@ -1563,7 +1665,8 @@ def create_canopy_height_grid_from_point_cloud(
     Raises
     ------
     ValueError
-        If the point cloud is not completed or is not airborne.
+        If the point cloud is not completed or is not airborne, or if the
+        aggregation and percentile arguments are inconsistent.
     """
     if point_cloud.status != JobStatus.COMPLETED:
         raise ValueError(
@@ -1583,6 +1686,8 @@ def create_canopy_height_grid_from_point_cloud(
             align_to,
             resampling=resampling,
         ),
+        aggregation=_build_chm_aggregation(aggregation, percentile),
+        spike_filter=_build_chm_spike_filter(spike_filter),
         extent_buffer_cells=extent_buffer_cells,
         name=name,
         description=description,
@@ -2516,6 +2621,98 @@ def _duet_integer(name: str, value, *, minimum: int, maximum: int) -> int:
     if not minimum <= value <= maximum:
         raise ValueError(f"{name} must be between {minimum} and {maximum}.")
     return value
+
+
+def create_irradiance_grid_from_leaflux(
+    source_grid,
+    date_time: datetime.datetime,
+    source_terrain_grid=None,
+    bands: Optional[list] = None,
+    extinction_coefficient: float = 0.5,
+    domain=None,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+) -> Grid:
+    """Create a 3D LeafLux solar-irradiance grid from a source fuel grid.
+
+    Computes solar irradiance through the canopy at a single instant, attenuating
+    light through the source grid's leaf area density with a Beer-Lambert
+    extinction coefficient. An optional 2D terrain grid supplies surface
+    elevation for the surface-irradiance band.
+
+    Parameters
+    ----------
+    source_grid : Grid or str
+        A completed 3D grid (or its id) carrying a ``leaf_area_density`` band.
+    date_time : datetime.datetime
+        The UTC instant at which to compute irradiance.
+    source_terrain_grid : Grid or str, optional
+        A 2D terrain grid (or its id) in the same domain, used for the
+        surface-irradiance band.
+    bands : list, optional
+        Irradiance bands to produce (``LeafluxBand`` members or their string
+        keys, e.g. "irradiance.surface.relative",
+        "irradiance.canopy.relative"). Defaults to
+        ``irradiance.surface.relative``.
+    extinction_coefficient : float, optional
+        Beer-Lambert extinction coefficient applied to the leaf area density
+        (default 0.5).
+    domain : Domain or str, optional
+        The domain (or its id) to create the grid in. Required only when
+        ``source_grid`` is given as an id; inferred from the grid otherwise.
+    name, description : str, optional
+        Metadata for the new grid.
+    tags : List[str], optional
+        Tags for the new grid.
+
+    Returns
+    -------
+    Grid
+        The new pending irradiance Grid.
+
+    Raises
+    ------
+    ValueError
+        If ``source_grid`` is a Grid that is not completed or lacks a
+        ``leaf_area_density`` band, or if ``domain`` is required but not given.
+    """
+    if isinstance(source_grid, Grid):
+        source_grid._require_completed("create a LeafLux irradiance grid from")
+        band_keys = [band.key for band in source_grid.bands]
+        if "leaf_area_density" not in band_keys:
+            raise ValueError(
+                f"Grid {source_grid.id} has no 'leaf_area_density' band; pass a "
+                f"3D grid with leaf area density. Available bands: {band_keys}."
+            )
+
+    domain_id = (
+        _domain_id(domain)
+        if domain is not None
+        else getattr(source_grid, "domain_id", None)
+    )
+    if domain_id is None:
+        raise ValueError(
+            "Pass source_grid as a Grid, or supply domain= when source_grid is "
+            "an id."
+        )
+
+    request_body = CreateLeafluxIrradianceRequest(
+        source_lad_grid_id=_grid_id(source_grid),
+        date_time=date_time,
+        source_terrain_grid_id=(
+            _grid_id(source_terrain_grid) if source_terrain_grid is not None else UNSET
+        ),
+        bands=_enum_list(bands, LeafluxBand),
+        extinction_coefficient=extinction_coefficient,
+        name=name,
+        description=description,
+        tags=_opt(tags),
+    )
+    response = create_leaflux_irradiance_grid.sync_detailed(
+        domain_id, client=ensure_client(), body=request_body
+    )
+    return Grid._from_model(expect(response, HTTPStatus.CREATED))
 
 
 # ---------------------------------------------------------------------------
