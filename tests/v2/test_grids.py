@@ -92,6 +92,7 @@ from fastfuels_sdk.v2.client_library.models import (
 from fastfuels_sdk.v2.client_library.types import UNSET, Response
 from fastfuels_sdk.v2.exceptions import (
     NotFoundException,
+    UnprocessableEntityException,
     expect,
 )
 from fastfuels_sdk.v2.modifications import mask
@@ -1347,6 +1348,109 @@ class TestCreateFuelModelGridFromLandfireFbfm40:
                 SimpleNamespace(id="domain-id"),
                 version="1999",
             )
+
+    def test_season_passed_through(self, monkeypatch):
+        # A seasonal request forwards both the seasonal version and the
+        # season window to the request body.
+        created = Grid(
+            id="fbfm40-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(grids.create_landfire_fbfm40, "sync_detailed", fake_create)
+
+        create_fuel_model_grid_from_landfire_fbfm40(
+            SimpleNamespace(id="domain-id"),
+            version="2025",
+            season="SP",
+        )
+
+        assert captured["body"].version.value == "2025"
+        assert captured["body"].season.value == "SP"
+
+    def test_rejects_unknown_season(self):
+        with pytest.raises(ValueError):
+            create_fuel_model_grid_from_landfire_fbfm40(
+                SimpleNamespace(id="domain-id"),
+                version="2025",
+                season="WINTER",
+            )
+
+    def test_create_seasonal_reports_projected_year(self):
+        # LANDFIRE Seasonal Fuels (version 2025 + SP is spring 2026). The
+        # projected season year is resolved from the live LFPS catalog at
+        # request time and surfaces as represented_year on the pending grid
+        # -- so the wiring is confirmed without waiting for the grid to build
+        # (the build submits a real, up-to-20-minute on-demand LFPS job).
+        #
+        # Seasonal Fuels is a geographically limited pilot served live by the
+        # LANDFIRE Product Service, so this needs a domain inside the current
+        # spring coverage region (a small box in northern Arizona). Coverage is
+        # a moving boundary; if LFPS isn't serving this domain/season when the
+        # test runs, skip rather than fail -- the request wiring itself is
+        # covered by test_season_passed_through.
+        domain = Domain.from_geojson(
+            {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {},
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [-110.276, 35.749],
+                                    [-110.252, 35.749],
+                                    [-110.252, 35.769],
+                                    [-110.276, 35.769],
+                                    [-110.276, 35.749],
+                                ]
+                            ],
+                        },
+                    }
+                ],
+            },
+            name="throwaway_seasonal_domain",
+            tags=["sdk-test"],
+        )
+        try:
+            try:
+                grid = create_fuel_model_grid_from_landfire_fbfm40(
+                    domain,
+                    version="2025",
+                    season="SP",
+                    output_resolution_m=30,
+                    name="throwaway_fbfm40_seasonal",
+                    tags=["test"],
+                )
+            except UnprocessableEntityException as exc:
+                pytest.skip(
+                    f"LANDFIRE Seasonal Fuels not serving this domain/season: {exc}"
+                )
+
+            # Do NOT wait(): completion submits a live 20-minute LFPS job.
+            assert grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
+            # version 2025 + SP projects to spring 2026, read from the catalog.
+            assert grid.represented_year == 2026
+            grid.delete()
+        finally:
+            domain.delete(force=True)
 
 
 class TestRepresentedYear:
