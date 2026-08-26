@@ -21,18 +21,20 @@ class CreateLeafluxIrradianceRequest:
     grid's geometry, so there is no resolution input.
 
         Attributes:
-            source_grid_id (str): ID of a completed 3D grid that has a `leaf_area_density` band.
+            source_lad_grid_id (str): ID of the completed 3D fuel grid whose `leaf_area_density` (LAD) band drives the Beer-
+                Lambert light attenuation. This is the primary input the irradiance field is computed from. Named for the band
+                it consumes so it reads unambiguously alongside `source_terrain_grid_id`.
             date_time (datetime.datetime): UTC instant at which to compute irradiance.
             name (str | Unset):  Default: ''.
             description (str | Unset):  Default: ''.
             tags (list[str] | Unset):
-            source_terrain_grid_id (None | str | Unset): (optional) 2D terrain grid in the same domain, used for surface
-                irradiance.
+            source_terrain_grid_id (None | str | Unset): (optional) ID of a completed 2D terrain grid (with an `elevation`
+                band) in the same domain, used to drape the surface irradiance band over real terrain instead of a flat plane.
             bands (list[LeafluxBand] | Unset): Which output bands to produce. Defaults to `irradiance.surface.relative`.
             extinction_coefficient (float | Unset): Beer-Lambert extinction coefficient (leaflux `extn`). Default: 0.5.
     """
 
-    source_grid_id: str
+    source_lad_grid_id: str
     date_time: datetime.datetime
     name: str | Unset = ""
     description: str | Unset = ""
@@ -42,7 +44,7 @@ class CreateLeafluxIrradianceRequest:
     extinction_coefficient: float | Unset = 0.5
 
     def to_dict(self) -> dict[str, Any]:
-        source_grid_id = self.source_grid_id
+        source_lad_grid_id = self.source_lad_grid_id
 
         date_time = self.date_time.isoformat()
 
@@ -73,7 +75,7 @@ class CreateLeafluxIrradianceRequest:
 
         field_dict.update(
             {
-                "source_grid_id": source_grid_id,
+                "source_lad_grid_id": source_lad_grid_id,
                 "date_time": date_time,
             }
         )
@@ -95,7 +97,7 @@ class CreateLeafluxIrradianceRequest:
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         d = dict(src_dict)
-        source_grid_id = d.pop("source_grid_id")
+        source_lad_grid_id = d.pop("source_lad_grid_id")
 
         date_time = datetime.datetime.fromisoformat(d.pop("date_time"))
 
@@ -128,7 +130,7 @@ class CreateLeafluxIrradianceRequest:
         extinction_coefficient = d.pop("extinction_coefficient", UNSET)
 
         create_leaflux_irradiance_request = cls(
-            source_grid_id=source_grid_id,
+            source_lad_grid_id=source_lad_grid_id,
             date_time=date_time,
             name=name,
             description=description,
