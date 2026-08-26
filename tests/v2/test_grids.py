@@ -17,6 +17,8 @@ from fastfuels_sdk.v2.calibrations import duet_calibration
 from fastfuels_sdk.v2.grids import (
     Grid,
     _build_alignment,
+    _build_chm_aggregation,
+    _build_chm_spike_filter,
     _decode_grid_chunk,
     _domain_id,
     _enum_list,
@@ -44,10 +46,20 @@ from fastfuels_sdk.v2.grids import (
     list_grids,
 )
 from fastfuels_sdk.v2.api import ensure_client
+from fastfuels_sdk.v2.domains import Domain
+from fastfuels_sdk.v2.point_clouds import (
+    create_point_cloud_from_3dep,
+    check_3dep_coverage as check_3dep_point_cloud_coverage,
+)
 from fastfuels_sdk.v2.client_library.api.grids import get_grid_data_json
 from fastfuels_sdk.v2.client_library.models import (
     Band,
     BandType,
+    ChmMaxAggregation,
+    ChmMeanAggregation,
+    ChmMedianAggregation,
+    ChmPercentileAggregation,
+    ChmSpikeFilter,
     ContinuousBandSummary,
     DuetBand,
     FccsLookupBand,
@@ -267,6 +279,51 @@ class TestCreateCanopyHeightGridFromNaipChm:
         grid.delete()
 
 
+@pytest.fixture(scope="module")
+def covered_3dep_point_cloud():
+    """A completed ALS point cloud over a Bondurant, WY domain with stable
+    3DEP LiDAR coverage. Owns its own domain so the live CHM test can build
+    grids inside it without touching the shared session domain.
+    """
+    geojson = {
+        "type": "FeatureCollection",
+        "crs": {"type": "name", "properties": {"name": "EPSG:32612"}},
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [522800, 4720400],
+                            [523300, 4720400],
+                            [523300, 4720900],
+                            [522800, 4720900],
+                            [522800, 4720400],
+                        ]
+                    ],
+                },
+            }
+        ],
+    }
+    domain = Domain.from_geojson(
+        geojson,
+        name="test_point_cloud_chm_domain",
+        tags=["sdk-test"],
+    )
+    coverage = check_3dep_point_cloud_coverage(domain)
+    point_cloud = create_point_cloud_from_3dep(
+        domain,
+        datasets=[coverage.datasets[0].name],
+        name="test_point_cloud_chm_source",
+        tags=["sdk-test"],
+    )
+    point_cloud.wait()
+    yield point_cloud
+    domain.delete(force=True)
+
+
 class TestCreateCanopyHeightGridFromPointCloud:
     @staticmethod
     def _point_cloud(status=JobStatus.COMPLETED, type_=PointCloudType.ALS):
@@ -329,6 +386,128 @@ class TestCreateCanopyHeightGridFromPointCloud:
             create_canopy_height_grid_from_point_cloud(
                 self._point_cloud(type_=PointCloudType.TLS)
             )
+
+    def _capture_body(self, monkeypatch, **kwargs):
+        created = Grid(
+            id="grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[Band(key="chm", type_=BandType.CONTINUOUS, index=0, unit="m")],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        monkeypatch.setattr(grids, "ensure_client", lambda: object())
+        monkeypatch.setattr(grids.create_point_cloud_chm, "sync_detailed", fake_create)
+        create_canopy_height_grid_from_point_cloud(self._point_cloud(), **kwargs)
+        return captured["body"]
+
+    def test_defaults_leave_aggregation_and_spike_filter_unset(self, monkeypatch):
+        body = self._capture_body(monkeypatch)
+        assert body.aggregation is UNSET
+        assert body.spike_filter is UNSET
+
+    def test_percentile_aggregation_in_request(self, monkeypatch):
+        body = self._capture_body(monkeypatch, aggregation="percentile", percentile=95)
+        assert isinstance(body.aggregation, ChmPercentileAggregation)
+        assert body.aggregation.percentile == 95
+
+    def test_spike_filter_thresholds_in_request(self, monkeypatch):
+        body = self._capture_body(
+            monkeypatch,
+            spike_filter={"min_canopy_footprint_m": 5, "min_prominence_m": 30},
+        )
+        assert isinstance(body.spike_filter, ChmSpikeFilter)
+        assert body.spike_filter.min_canopy_footprint_m == 5
+        assert body.spike_filter.min_prominence_m == 30
+
+    def test_spike_filter_false_disables(self, monkeypatch):
+        body = self._capture_body(monkeypatch, spike_filter=False)
+        assert body.spike_filter is None
+
+    def test_create_live(self, covered_3dep_point_cloud):
+        grid = None
+        try:
+            grid = create_canopy_height_grid_from_point_cloud(
+                covered_3dep_point_cloud,
+                output_resolution_m=2,
+                aggregation="percentile",
+                percentile=95,
+                spike_filter={"min_canopy_footprint_m": 5, "min_prominence_m": 30},
+                name="test_point_cloud_chm",
+                tags=["sdk-test"],
+            )
+            grid.wait()
+            assert grid.status == JobStatus.COMPLETED
+            assert {band.key for band in grid.bands} == {"chm"}
+            heights = grid.to_numpy("chm")
+            assert heights.ndim == 2
+            assert np.isfinite(heights).any()
+        finally:
+            if grid is not None:
+                grid.delete()
+
+
+class TestBuildChmAggregation:
+    def test_none_is_unset(self):
+        assert _build_chm_aggregation(None, None) is UNSET
+
+    def test_max_mean_median(self):
+        assert isinstance(_build_chm_aggregation("max", None), ChmMaxAggregation)
+        assert isinstance(_build_chm_aggregation("mean", None), ChmMeanAggregation)
+        assert isinstance(_build_chm_aggregation("median", None), ChmMedianAggregation)
+
+    def test_percentile_carries_value(self):
+        agg = _build_chm_aggregation("percentile", 90)
+        assert isinstance(agg, ChmPercentileAggregation)
+        assert agg.percentile == 90
+
+    def test_percentile_requires_value(self):
+        with pytest.raises(ValueError, match="requires a percentile"):
+            _build_chm_aggregation("percentile", None)
+
+    def test_percentile_only_with_percentile_method(self):
+        with pytest.raises(ValueError, match="only used with"):
+            _build_chm_aggregation("max", 90)
+        with pytest.raises(ValueError, match="only used with"):
+            _build_chm_aggregation(None, 90)
+
+    def test_unknown_method_raises(self):
+        with pytest.raises(ValueError, match="aggregation must be one of"):
+            _build_chm_aggregation("mode", None)
+
+
+class TestBuildChmSpikeFilter:
+    def test_none_is_unset(self):
+        assert _build_chm_spike_filter(None) is UNSET
+
+    def test_false_disables(self):
+        assert _build_chm_spike_filter(False) is None
+
+    def test_true_is_default_filter(self):
+        assert isinstance(_build_chm_spike_filter(True), ChmSpikeFilter)
+
+    def test_mapping_sets_fields(self):
+        sf = _build_chm_spike_filter({"min_prominence_m": 40})
+        assert isinstance(sf, ChmSpikeFilter)
+        assert sf.min_prominence_m == 40
+
+    def test_instance_passes_through(self):
+        sf = ChmSpikeFilter(min_canopy_footprint_m=4)
+        assert _build_chm_spike_filter(sf) is sf
+
+    def test_invalid_raises(self):
+        with pytest.raises(ValueError, match="spike_filter must be"):
+            _build_chm_spike_filter("aggressive")
 
 
 class TestCreateSurfaceFuelGridFromDuet:
