@@ -20,11 +20,12 @@ class DenseGridData:
     """
     Attributes:
         format_ (Literal['dense']):
-        values (list[float | int]):
+        values (list[float | int | None]): Flat list of every cell in the chunk. `null` marks a cell with no data — a
+            float band stores those as NaN, which JSON cannot represent.
     """
 
     format_: Literal["dense"]
-    values: list[float | int]
+    values: list[float | int | None]
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -32,7 +33,7 @@ class DenseGridData:
 
         values = []
         for values_item_data in self.values:
-            values_item: float | int
+            values_item: float | int | None
             values_item = values_item_data
             values.append(values_item)
 
@@ -58,8 +59,10 @@ class DenseGridData:
         _values = d.pop("values")
         for values_item_data in _values:
 
-            def _parse_values_item(data: object) -> float | int:
-                return cast(float | int, data)
+            def _parse_values_item(data: object) -> float | int | None:
+                if data is None:
+                    return data
+                return cast(float | int | None, data)
 
             values_item = _parse_values_item(values_item_data)
 

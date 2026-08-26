@@ -20,15 +20,17 @@ class SparseGridData:
     """
     Attributes:
         format_ (Literal['sparse']):
-        fill_value (float | int | None):
+        fill_value (float | int | None): The band's fill value; cells holding it are omitted from `indices`. `null` when
+            the fill is nodata (a float band's NaN) or the band declares none.
         indices (list[int]):
-        values (list[float | int]):
+        values (list[float | int | None]): Values of the cells named by `indices`. `null` marks a cell with no data,
+            which only arises when the band declares no fill value and so every cell is listed.
     """
 
     format_: Literal["sparse"]
     fill_value: float | int | None
     indices: list[int]
-    values: list[float | int]
+    values: list[float | int | None]
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -41,7 +43,7 @@ class SparseGridData:
 
         values = []
         for values_item_data in self.values:
-            values_item: float | int
+            values_item: float | int | None
             values_item = values_item_data
             values.append(values_item)
 
@@ -78,8 +80,10 @@ class SparseGridData:
         _values = d.pop("values")
         for values_item_data in _values:
 
-            def _parse_values_item(data: object) -> float | int:
-                return cast(float | int, data)
+            def _parse_values_item(data: object) -> float | int | None:
+                if data is None:
+                    return data
+                return cast(float | int | None, data)
 
             values_item = _parse_values_item(values_item_data)
 

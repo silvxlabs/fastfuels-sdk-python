@@ -81,7 +81,21 @@ def sync_detailed(
      # Create a CHM Grid from a Point Cloud
 
     Creates a grid with canopy height data rasterized from a point cloud. Each
-    cell holds the greatest height above ground of any return that falls in it.
+    cell reduces the heights above ground of the returns that fall in it to one
+    value — by default the greatest of them.
+
+    ## Aggregation
+
+    Which statistic that is matters more as cells grow, because a cell 1 m
+    across describes a crown while a cell 30 m across describes a stand, and a
+    maximum reports the tallest tree in either. Measured on one cloud
+    rasterized twice, the same returns gave a mean height of 4.83 m at 1 m
+    cells and 15.48 m at 10 m.
+
+    `max` is the tallest return. `mean` averages every return, so a cell that
+    is half canopy and half gap reads between the two. `median` and
+    `percentile` take a rank, which is what keeps one surviving noise return
+    from setting a cell on its own.
 
     The resulting grid carries the same `chm` band as the Meta, NAIP, and
     LANDFIRE canopy sources, so it can be used anywhere they can — including as
@@ -116,6 +130,19 @@ def sync_detailed(
       the new cell size. The target grid must be in this domain's CRS.
       `target: \"native\"` is not supported — a point cloud has no pixel anchor
       to preserve.
+    - **spike_filter**: (optional) Removal of lone spurious returns. Under the
+      default `max` aggregation a cell takes the tallest return in it, so one
+      bad return — a bird, haze — sets the cell unless the cloud classified it
+      as noise, and many clouds do not. Such a return leaves a shape real
+      canopy cannot: a single cell towering over everything around it. Both
+      fields are in meters, so they mean the same thing at any resolution. Send
+      `null` to keep every return. A `mean`, `median`, or `percentile`
+      aggregation already resists a lone return, so the filter matters most
+      with `max`.
+    - **aggregation**: (optional) The statistic above, as
+      `{\"method\": \"max\" | \"mean\" | \"median\" | \"percentile\"}`. `percentile`
+      carries the rank it takes, as in
+      `{\"method\": \"percentile\", \"percentile\": 98}`. Defaults to `max`.
     - **name**, **description**, **tags**: (optional) Metadata.
 
     ## Response
@@ -166,7 +193,21 @@ def sync(
      # Create a CHM Grid from a Point Cloud
 
     Creates a grid with canopy height data rasterized from a point cloud. Each
-    cell holds the greatest height above ground of any return that falls in it.
+    cell reduces the heights above ground of the returns that fall in it to one
+    value — by default the greatest of them.
+
+    ## Aggregation
+
+    Which statistic that is matters more as cells grow, because a cell 1 m
+    across describes a crown while a cell 30 m across describes a stand, and a
+    maximum reports the tallest tree in either. Measured on one cloud
+    rasterized twice, the same returns gave a mean height of 4.83 m at 1 m
+    cells and 15.48 m at 10 m.
+
+    `max` is the tallest return. `mean` averages every return, so a cell that
+    is half canopy and half gap reads between the two. `median` and
+    `percentile` take a rank, which is what keeps one surviving noise return
+    from setting a cell on its own.
 
     The resulting grid carries the same `chm` band as the Meta, NAIP, and
     LANDFIRE canopy sources, so it can be used anywhere they can — including as
@@ -201,6 +242,19 @@ def sync(
       the new cell size. The target grid must be in this domain's CRS.
       `target: \"native\"` is not supported — a point cloud has no pixel anchor
       to preserve.
+    - **spike_filter**: (optional) Removal of lone spurious returns. Under the
+      default `max` aggregation a cell takes the tallest return in it, so one
+      bad return — a bird, haze — sets the cell unless the cloud classified it
+      as noise, and many clouds do not. Such a return leaves a shape real
+      canopy cannot: a single cell towering over everything around it. Both
+      fields are in meters, so they mean the same thing at any resolution. Send
+      `null` to keep every return. A `mean`, `median`, or `percentile`
+      aggregation already resists a lone return, so the filter matters most
+      with `max`.
+    - **aggregation**: (optional) The statistic above, as
+      `{\"method\": \"max\" | \"mean\" | \"median\" | \"percentile\"}`. `percentile`
+      carries the rank it takes, as in
+      `{\"method\": \"percentile\", \"percentile\": 98}`. Defaults to `max`.
     - **name**, **description**, **tags**: (optional) Metadata.
 
     ## Response
@@ -246,7 +300,21 @@ async def asyncio_detailed(
      # Create a CHM Grid from a Point Cloud
 
     Creates a grid with canopy height data rasterized from a point cloud. Each
-    cell holds the greatest height above ground of any return that falls in it.
+    cell reduces the heights above ground of the returns that fall in it to one
+    value — by default the greatest of them.
+
+    ## Aggregation
+
+    Which statistic that is matters more as cells grow, because a cell 1 m
+    across describes a crown while a cell 30 m across describes a stand, and a
+    maximum reports the tallest tree in either. Measured on one cloud
+    rasterized twice, the same returns gave a mean height of 4.83 m at 1 m
+    cells and 15.48 m at 10 m.
+
+    `max` is the tallest return. `mean` averages every return, so a cell that
+    is half canopy and half gap reads between the two. `median` and
+    `percentile` take a rank, which is what keeps one surviving noise return
+    from setting a cell on its own.
 
     The resulting grid carries the same `chm` band as the Meta, NAIP, and
     LANDFIRE canopy sources, so it can be used anywhere they can — including as
@@ -281,6 +349,19 @@ async def asyncio_detailed(
       the new cell size. The target grid must be in this domain's CRS.
       `target: \"native\"` is not supported — a point cloud has no pixel anchor
       to preserve.
+    - **spike_filter**: (optional) Removal of lone spurious returns. Under the
+      default `max` aggregation a cell takes the tallest return in it, so one
+      bad return — a bird, haze — sets the cell unless the cloud classified it
+      as noise, and many clouds do not. Such a return leaves a shape real
+      canopy cannot: a single cell towering over everything around it. Both
+      fields are in meters, so they mean the same thing at any resolution. Send
+      `null` to keep every return. A `mean`, `median`, or `percentile`
+      aggregation already resists a lone return, so the filter matters most
+      with `max`.
+    - **aggregation**: (optional) The statistic above, as
+      `{\"method\": \"max\" | \"mean\" | \"median\" | \"percentile\"}`. `percentile`
+      carries the rank it takes, as in
+      `{\"method\": \"percentile\", \"percentile\": 98}`. Defaults to `max`.
     - **name**, **description**, **tags**: (optional) Metadata.
 
     ## Response
@@ -329,7 +410,21 @@ async def asyncio(
      # Create a CHM Grid from a Point Cloud
 
     Creates a grid with canopy height data rasterized from a point cloud. Each
-    cell holds the greatest height above ground of any return that falls in it.
+    cell reduces the heights above ground of the returns that fall in it to one
+    value — by default the greatest of them.
+
+    ## Aggregation
+
+    Which statistic that is matters more as cells grow, because a cell 1 m
+    across describes a crown while a cell 30 m across describes a stand, and a
+    maximum reports the tallest tree in either. Measured on one cloud
+    rasterized twice, the same returns gave a mean height of 4.83 m at 1 m
+    cells and 15.48 m at 10 m.
+
+    `max` is the tallest return. `mean` averages every return, so a cell that
+    is half canopy and half gap reads between the two. `median` and
+    `percentile` take a rank, which is what keeps one surviving noise return
+    from setting a cell on its own.
 
     The resulting grid carries the same `chm` band as the Meta, NAIP, and
     LANDFIRE canopy sources, so it can be used anywhere they can — including as
@@ -364,6 +459,19 @@ async def asyncio(
       the new cell size. The target grid must be in this domain's CRS.
       `target: \"native\"` is not supported — a point cloud has no pixel anchor
       to preserve.
+    - **spike_filter**: (optional) Removal of lone spurious returns. Under the
+      default `max` aggregation a cell takes the tallest return in it, so one
+      bad return — a bird, haze — sets the cell unless the cloud classified it
+      as noise, and many clouds do not. Such a return leaves a shape real
+      canopy cannot: a single cell towering over everything around it. Both
+      fields are in meters, so they mean the same thing at any resolution. Send
+      `null` to keep every return. A `mean`, `median`, or `percentile`
+      aggregation already resists a lone return, so the filter matters most
+      with `max`.
+    - **aggregation**: (optional) The statistic above, as
+      `{\"method\": \"max\" | \"mean\" | \"median\" | \"percentile\"}`. `percentile`
+      carries the rank it takes, as in
+      `{\"method\": \"percentile\", \"percentile\": 98}`. Defaults to `max`.
     - **name**, **description**, **tags**: (optional) Metadata.
 
     ## Response

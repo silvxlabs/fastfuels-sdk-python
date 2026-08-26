@@ -130,9 +130,8 @@ def sync_detailed(
 
     ## Error Responses
 
-    - **422**: No 3DEP lidar covers this domain, a pinned acquisition is
-      unknown or does not overlap the domain, or the fetch would exceed the
-      point budget.
+    - **422**: No 3DEP lidar covers this domain, or a pinned acquisition is
+      unknown or does not overlap the domain.
     - **429**: A quota was exceeded.
     - **503**: The USGS 3DEP catalog is temporarily unreachable.
 
@@ -219,9 +218,8 @@ def sync(
 
     ## Error Responses
 
-    - **422**: No 3DEP lidar covers this domain, a pinned acquisition is
-      unknown or does not overlap the domain, or the fetch would exceed the
-      point budget.
+    - **422**: No 3DEP lidar covers this domain, or a pinned acquisition is
+      unknown or does not overlap the domain.
     - **429**: A quota was exceeded.
     - **503**: The USGS 3DEP catalog is temporarily unreachable.
 
@@ -303,9 +301,8 @@ async def asyncio_detailed(
 
     ## Error Responses
 
-    - **422**: No 3DEP lidar covers this domain, a pinned acquisition is
-      unknown or does not overlap the domain, or the fetch would exceed the
-      point budget.
+    - **422**: No 3DEP lidar covers this domain, or a pinned acquisition is
+      unknown or does not overlap the domain.
     - **429**: A quota was exceeded.
     - **503**: The USGS 3DEP catalog is temporarily unreachable.
 
@@ -390,9 +387,8 @@ async def asyncio(
 
     ## Error Responses
 
-    - **422**: No 3DEP lidar covers this domain, a pinned acquisition is
-      unknown or does not overlap the domain, or the fetch would exceed the
-      point budget.
+    - **422**: No 3DEP lidar covers this domain, or a pinned acquisition is
+      unknown or does not overlap the domain.
     - **429**: A quota was exceeded.
     - **503**: The USGS 3DEP catalog is temporarily unreachable.
 

@@ -9,6 +9,11 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
+    from ..models.chm_max_aggregation import ChmMaxAggregation
+    from ..models.chm_mean_aggregation import ChmMeanAggregation
+    from ..models.chm_median_aggregation import ChmMedianAggregation
+    from ..models.chm_percentile_aggregation import ChmPercentileAggregation
+    from ..models.chm_spike_filter import ChmSpikeFilter
     from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
     from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
     from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
@@ -52,6 +57,11 @@ class CreatePointCloudChmRequest:
                 alignment target. Default `target="domain"` anchors output cells to the domain origin so cross-source
                 composition works by construction. `target="native"` preserves the source pixel anchor. `target="grid"` aligns
                 to an existing grid by id.
+            spike_filter (ChmSpikeFilter | None | Unset): Removal of lone spurious returns. Omit for the defaults; send
+                `null` to keep every return, leaving unclassified noise in the grid.
+            aggregation (ChmMaxAggregation | ChmMeanAggregation | ChmMedianAggregation | ChmPercentileAggregation | Unset):
+                Statistic each cell reduces the heights above ground of its returns with. Carries `percentile` only on `method:
+                percentile`.
     """
 
     source_point_cloud_id: str
@@ -66,9 +76,21 @@ class CreatePointCloudChmRequest:
         | GridAlignmentNativeTarget
         | Unset
     ) = UNSET
+    spike_filter: ChmSpikeFilter | None | Unset = UNSET
+    aggregation: (
+        ChmMaxAggregation
+        | ChmMeanAggregation
+        | ChmMedianAggregation
+        | ChmPercentileAggregation
+        | Unset
+    ) = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.chm_max_aggregation import ChmMaxAggregation
+        from ..models.chm_mean_aggregation import ChmMeanAggregation
+        from ..models.chm_median_aggregation import ChmMedianAggregation
+        from ..models.chm_spike_filter import ChmSpikeFilter
         from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
         from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
 
@@ -101,6 +123,26 @@ class CreatePointCloudChmRequest:
         else:
             alignment = self.alignment.to_dict()
 
+        spike_filter: dict[str, Any] | None | Unset
+        if isinstance(self.spike_filter, Unset):
+            spike_filter = UNSET
+        elif isinstance(self.spike_filter, ChmSpikeFilter):
+            spike_filter = self.spike_filter.to_dict()
+        else:
+            spike_filter = self.spike_filter
+
+        aggregation: dict[str, Any] | Unset
+        if isinstance(self.aggregation, Unset):
+            aggregation = UNSET
+        elif (
+            isinstance(self.aggregation, ChmMaxAggregation)
+            or isinstance(self.aggregation, ChmMeanAggregation)
+            or isinstance(self.aggregation, ChmMedianAggregation)
+        ):
+            aggregation = self.aggregation.to_dict()
+        else:
+            aggregation = self.aggregation.to_dict()
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -120,11 +162,20 @@ class CreatePointCloudChmRequest:
             field_dict["extent_buffer_cells"] = extent_buffer_cells
         if alignment is not UNSET:
             field_dict["alignment"] = alignment
+        if spike_filter is not UNSET:
+            field_dict["spike_filter"] = spike_filter
+        if aggregation is not UNSET:
+            field_dict["aggregation"] = aggregation
 
         return field_dict
 
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
+        from ..models.chm_max_aggregation import ChmMaxAggregation
+        from ..models.chm_mean_aggregation import ChmMeanAggregation
+        from ..models.chm_median_aggregation import ChmMedianAggregation
+        from ..models.chm_percentile_aggregation import ChmPercentileAggregation
+        from ..models.chm_spike_filter import ChmSpikeFilter
         from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
         from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
         from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
@@ -184,6 +235,66 @@ class CreatePointCloudChmRequest:
 
         alignment = _parse_alignment(d.pop("alignment", UNSET))
 
+        def _parse_spike_filter(data: object) -> ChmSpikeFilter | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                spike_filter_type_0 = ChmSpikeFilter.from_dict(data)
+
+                return spike_filter_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(ChmSpikeFilter | None | Unset, data)
+
+        spike_filter = _parse_spike_filter(d.pop("spike_filter", UNSET))
+
+        def _parse_aggregation(
+            data: object,
+        ) -> (
+            ChmMaxAggregation
+            | ChmMeanAggregation
+            | ChmMedianAggregation
+            | ChmPercentileAggregation
+            | Unset
+        ):
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                aggregation_type_0 = ChmMaxAggregation.from_dict(data)
+
+                return aggregation_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                aggregation_type_1 = ChmMeanAggregation.from_dict(data)
+
+                return aggregation_type_1
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                aggregation_type_2 = ChmMedianAggregation.from_dict(data)
+
+                return aggregation_type_2
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            if not isinstance(data, dict):
+                raise TypeError()
+            aggregation_type_3 = ChmPercentileAggregation.from_dict(data)
+
+            return aggregation_type_3
+
+        aggregation = _parse_aggregation(d.pop("aggregation", UNSET))
+
         create_point_cloud_chm_request = cls(
             source_point_cloud_id=source_point_cloud_id,
             name=name,
@@ -192,6 +303,8 @@ class CreatePointCloudChmRequest:
             modifications=modifications,
             extent_buffer_cells=extent_buffer_cells,
             alignment=alignment,
+            spike_filter=spike_filter,
+            aggregation=aggregation,
         )
 
         create_point_cloud_chm_request.additional_properties = d

@@ -5,6 +5,7 @@ from .allometry_biomass_source import AllometryBiomassSource
 from .allometry_biomass_source_component_states import (
     AllometryBiomassSourceComponentStates,
 )
+from .allometry_canopy_biomass_source import AllometryCanopyBiomassSource
 from .allometry_max_crown_radius_source import AllometryMaxCrownRadiusSource
 from .application import Application
 from .application_quota_overrides_type_0 import ApplicationQuotaOverridesType0
@@ -18,8 +19,38 @@ from .biomass_component import BiomassComponent
 from .biomass_component_state import BiomassComponentState
 from .biomass_equations import BiomassEquations
 from .biomass_unit import BiomassUnit
+from .canopy_allometry_max_crown_radius_source import (
+    CanopyAllometryMaxCrownRadiusSource,
+)
+from .canopy_available_fuel import CanopyAvailableFuel
+from .canopy_biomass_equations import CanopyBiomassEquations
+from .canopy_branchwood import CanopyBranchwood
+from .canopy_branchwood_size_partition import CanopyBranchwoodSizePartition
+from .canopy_cbd_depth import CanopyCbdDepth
+from .canopy_cbd_load_over_depth import CanopyCbdLoadOverDepth
+from .canopy_cbd_running_mean import CanopyCbdRunningMean
+from .canopy_cbh_mean import CanopyCbhMean
+from .canopy_cbh_minimum import CanopyCbhMinimum
+from .canopy_cbh_percentile import CanopyCbhPercentile
+from .canopy_cc_cover_fraction import CanopyCcCoverFraction
+from .canopy_cc_crown_overlap import CanopyCcCrownOverlap
+from .canopy_cc_crown_union import CanopyCcCrownUnion
+from .canopy_chm_height_percentile import CanopyChmHeightPercentile
+from .canopy_crown_width_equations import CanopyCrownWidthEquations
+from .canopy_fuelcalc_crown_class_adjustment import CanopyFuelcalcCrownClassAdjustment
+from .canopy_horizontal_distribution import CanopyHorizontalDistribution
+from .canopy_no_crown_class_adjustment import CanopyNoCrownClassAdjustment
+from .canopy_profile_threshold import CanopyProfileThreshold
+from .canopy_running_mean_edge import CanopyRunningMeanEdge
+from .canopy_species_inclusion import CanopySpeciesInclusion
+from .canopy_vertical_distribution import CanopyVerticalDistribution
 from .categorical_band_summary import CategoricalBandSummary
 from .categorical_column_summary import CategoricalColumnSummary
+from .chm_max_aggregation import ChmMaxAggregation
+from .chm_mean_aggregation import ChmMeanAggregation
+from .chm_median_aggregation import ChmMedianAggregation
+from .chm_percentile_aggregation import ChmPercentileAggregation
+from .chm_spike_filter import ChmSpikeFilter
 from .chunks import Chunks
 from .chunks_count_by_axis_type_0 import ChunksCountByAxisType0
 from .column import Column
@@ -41,11 +72,13 @@ from .create_duet_request import CreateDuetRequest
 from .create_fbfm_13_lookup_request import CreateFbfm13LookupRequest
 from .create_fbfm_40_lookup_request import CreateFbfm40LookupRequest
 from .create_fccs_lookup_request import CreateFccsLookupRequest
+from .create_fosberg_fuel_moisture_request import CreateFosbergFuelMoistureRequest
 from .create_gdam_inventory_request import CreateGdamInventoryRequest
 from .create_gdam_inventory_request_impute_columns_item import (
     CreateGdamInventoryRequestImputeColumnsItem,
 )
 from .create_geo_tiff_upload_request import CreateGeoTIFFUploadRequest
+from .create_inventory_canopy_request import CreateInventoryCanopyRequest
 from .create_inventory_upload_request import CreateInventoryUploadRequest
 from .create_key_request import CreateKeyRequest
 from .create_key_response import CreateKeyResponse
@@ -56,6 +89,7 @@ from .create_landfire_fccs_request import CreateLandfireFccsRequest
 from .create_landfire_topography_request import CreateLandfireTopographyRequest
 from .create_layerset_rasterize_request import CreateLayersetRasterizeRequest
 from .create_layerset_request_body import CreateLayersetRequestBody
+from .create_leaflux_irradiance_request import CreateLeafluxIrradianceRequest
 from .create_meta_chm_request import CreateMetaChmRequest
 from .create_naip_chm_request import CreateNaipChmRequest
 from .create_netcdf_upload_request import CreateNetcdfUploadRequest
@@ -107,6 +141,7 @@ from .feature_type import FeatureType
 from .fia_species_group_share import FIASpeciesGroupShare
 from .field_source import FieldSource
 from .fine_biomass_config import FineBiomassConfig
+from .fuel_moisture_month import FuelMoistureMonth
 from .geo_json_crs import GeoJsonCRS
 from .geo_json_crs_properties import GeoJsonCRSProperties
 from .geo_json_feature import GeoJsonFeature
@@ -148,6 +183,8 @@ from .inventory import Inventory
 from .inventory_attribute import InventoryAttribute
 from .inventory_basal_area_treatment import InventoryBasalAreaTreatment
 from .inventory_biomass_column import InventoryBiomassColumn
+from .inventory_canopy_band import InventoryCanopyBand
+from .inventory_column_canopy_biomass_source import InventoryColumnCanopyBiomassSource
 from .inventory_column_mapping import InventoryColumnMapping
 from .inventory_column_max_crown_radius_source import (
     InventoryColumnMaxCrownRadiusSource,
@@ -198,6 +235,7 @@ from .landfire_canopy_version import LandfireCanopyVersion
 from .landfire_fbfm_13_version import LandfireFbfm13Version
 from .landfire_fbfm_40_version import LandfireFbfm40Version
 from .landfire_fccs_version import LandfireFccsVersion
+from .landfire_season import LandfireSeason
 from .landfire_topography_version import LandfireTopographyVersion
 from .landscape_export_alignment_domain_target import (
     LandscapeExportAlignmentDomainTarget,
@@ -212,6 +250,7 @@ from .layerset_crs import LayersetCrs
 from .layerset_crs_properties import LayersetCrsProperties
 from .layerset_feature import LayersetFeature
 from .layerset_properties import LayersetProperties
+from .leaflux_band import LeafluxBand
 from .line_string import LineString
 from .list_applications_response import ListApplicationsResponse
 from .list_domains_response import ListDomainsResponse
@@ -233,11 +272,17 @@ from .operator import Operator
 from .overlap_method import OverlapMethod
 from .point import Point
 from .point_cloud import PointCloud
+from .point_cloud_data_metadata import PointCloudDataMetadata
+from .point_cloud_data_metadata_columns import PointCloudDataMetadataColumns
 from .point_cloud_georeference import PointCloudGeoreference
 from .point_cloud_sort_field import PointCloudSortField
 from .point_cloud_source import PointCloudSource
 from .point_cloud_summary import PointCloudSummary
 from .point_cloud_three_dep_coverage_response import PointCloudThreeDepCoverageResponse
+from .point_cloud_tile_data_response import PointCloudTileDataResponse
+from .point_cloud_tile_data_response_columns import PointCloudTileDataResponseColumns
+from .point_cloud_tile_data_response_data import PointCloudTileDataResponseData
+from .point_cloud_tile_metadata import PointCloudTileMetadata
 from .point_cloud_type import PointCloudType
 from .point_cloud_upload_created_response import PointCloudUploadCreatedResponse
 from .point_cloud_upload_spec import PointCloudUploadSpec
@@ -252,6 +297,7 @@ from .quicfire_export_request import QuicfireExportRequest
 from .quicfire_export_request_moist_merge import QuicfireExportRequestMoistMerge
 from .quota_exceeded_detail import QuotaExceededDetail
 from .quotas import Quotas
+from .relative_elevation import RelativeElevation
 from .remove_action import RemoveAction
 from .resampling_method import ResamplingMethod
 from .resolution_3d import Resolution3D
@@ -292,6 +338,7 @@ __all__ = (
     "Access",
     "AllometryBiomassSource",
     "AllometryBiomassSourceComponentStates",
+    "AllometryCanopyBiomassSource",
     "AllometryMaxCrownRadiusSource",
     "Application",
     "ApplicationQuotaOverridesType0",
@@ -305,8 +352,36 @@ __all__ = (
     "BiomassComponentState",
     "BiomassEquations",
     "BiomassUnit",
+    "CanopyAllometryMaxCrownRadiusSource",
+    "CanopyAvailableFuel",
+    "CanopyBiomassEquations",
+    "CanopyBranchwood",
+    "CanopyBranchwoodSizePartition",
+    "CanopyCbdDepth",
+    "CanopyCbdLoadOverDepth",
+    "CanopyCbdRunningMean",
+    "CanopyCbhMean",
+    "CanopyCbhMinimum",
+    "CanopyCbhPercentile",
+    "CanopyCcCoverFraction",
+    "CanopyCcCrownOverlap",
+    "CanopyCcCrownUnion",
+    "CanopyChmHeightPercentile",
+    "CanopyCrownWidthEquations",
+    "CanopyFuelcalcCrownClassAdjustment",
+    "CanopyHorizontalDistribution",
+    "CanopyNoCrownClassAdjustment",
+    "CanopyProfileThreshold",
+    "CanopyRunningMeanEdge",
+    "CanopySpeciesInclusion",
+    "CanopyVerticalDistribution",
     "CategoricalBandSummary",
     "CategoricalColumnSummary",
+    "ChmMaxAggregation",
+    "ChmMeanAggregation",
+    "ChmMedianAggregation",
+    "ChmPercentileAggregation",
+    "ChmSpikeFilter",
     "Chunks",
     "ChunksCountByAxisType0",
     "Column",
@@ -328,9 +403,11 @@ __all__ = (
     "CreateFbfm13LookupRequest",
     "CreateFbfm40LookupRequest",
     "CreateFccsLookupRequest",
+    "CreateFosbergFuelMoistureRequest",
     "CreateGdamInventoryRequest",
     "CreateGdamInventoryRequestImputeColumnsItem",
     "CreateGeoTIFFUploadRequest",
+    "CreateInventoryCanopyRequest",
     "CreateInventoryUploadRequest",
     "CreateKeyRequest",
     "CreateKeyResponse",
@@ -341,6 +418,7 @@ __all__ = (
     "CreateLandfireTopographyRequest",
     "CreateLayersetRasterizeRequest",
     "CreateLayersetRequestBody",
+    "CreateLeafluxIrradianceRequest",
     "CreateMetaChmRequest",
     "CreateNaipChmRequest",
     "CreateNetcdfUploadRequest",
@@ -390,6 +468,7 @@ __all__ = (
     "FeatureType",
     "FieldSource",
     "FineBiomassConfig",
+    "FuelMoistureMonth",
     "GeoJsonCRS",
     "GeoJsonCRSProperties",
     "GeoJsonFeature",
@@ -427,6 +506,8 @@ __all__ = (
     "InventoryAttribute",
     "InventoryBasalAreaTreatment",
     "InventoryBiomassColumn",
+    "InventoryCanopyBand",
+    "InventoryColumnCanopyBiomassSource",
     "InventoryColumnMapping",
     "InventoryColumnMaxCrownRadiusSource",
     "InventoryColumnsBiomassSource",
@@ -467,6 +548,7 @@ __all__ = (
     "LandfireFbfm13Version",
     "LandfireFbfm40Version",
     "LandfireFccsVersion",
+    "LandfireSeason",
     "LandfireTopographyVersion",
     "LandscapeExportAlignmentDomainTarget",
     "LandscapeExportAlignmentGridTarget",
@@ -477,6 +559,7 @@ __all__ = (
     "LayersetCrsProperties",
     "LayersetFeature",
     "LayersetProperties",
+    "LeafluxBand",
     "LineString",
     "ListApplicationsResponse",
     "ListDomainsResponse",
@@ -498,11 +581,17 @@ __all__ = (
     "OverlapMethod",
     "Point",
     "PointCloud",
+    "PointCloudDataMetadata",
+    "PointCloudDataMetadataColumns",
     "PointCloudGeoreference",
     "PointCloudSortField",
     "PointCloudSource",
     "PointCloudSummary",
     "PointCloudThreeDepCoverageResponse",
+    "PointCloudTileDataResponse",
+    "PointCloudTileDataResponseColumns",
+    "PointCloudTileDataResponseData",
+    "PointCloudTileMetadata",
     "PointCloudType",
     "PointCloudUploadCreatedResponse",
     "PointCloudUploadSpec",
@@ -515,6 +604,7 @@ __all__ = (
     "QuicfireExportRequestMoistMerge",
     "QuotaExceededDetail",
     "Quotas",
+    "RelativeElevation",
     "RemoveAction",
     "ResamplingMethod",
     "Resolution3D",

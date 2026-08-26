@@ -24,6 +24,7 @@ class InventoryColumnMapping:
             height (None | str | Unset):
             fia_species_code (None | str | Unset):
             fia_status_code (None | str | Unset):
+            fia_crown_class_code (None | str | Unset):
             dbh (None | str | Unset):
             crown_ratio (None | str | Unset):
     """
@@ -33,6 +34,7 @@ class InventoryColumnMapping:
     height: None | str | Unset = UNSET
     fia_species_code: None | str | Unset = UNSET
     fia_status_code: None | str | Unset = UNSET
+    fia_crown_class_code: None | str | Unset = UNSET
     dbh: None | str | Unset = UNSET
     crown_ratio: None | str | Unset = UNSET
 
@@ -67,6 +69,12 @@ class InventoryColumnMapping:
         else:
             fia_status_code = self.fia_status_code
 
+        fia_crown_class_code: None | str | Unset
+        if isinstance(self.fia_crown_class_code, Unset):
+            fia_crown_class_code = UNSET
+        else:
+            fia_crown_class_code = self.fia_crown_class_code
+
         dbh: None | str | Unset
         if isinstance(self.dbh, Unset):
             dbh = UNSET
@@ -92,6 +100,8 @@ class InventoryColumnMapping:
             field_dict["fia_species_code"] = fia_species_code
         if fia_status_code is not UNSET:
             field_dict["fia_status_code"] = fia_status_code
+        if fia_crown_class_code is not UNSET:
+            field_dict["fia_crown_class_code"] = fia_crown_class_code
         if dbh is not UNSET:
             field_dict["dbh"] = dbh
         if crown_ratio is not UNSET:
@@ -148,6 +158,17 @@ class InventoryColumnMapping:
 
         fia_status_code = _parse_fia_status_code(d.pop("fia_status_code", UNSET))
 
+        def _parse_fia_crown_class_code(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        fia_crown_class_code = _parse_fia_crown_class_code(
+            d.pop("fia_crown_class_code", UNSET)
+        )
+
         def _parse_dbh(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -172,6 +193,7 @@ class InventoryColumnMapping:
             height=height,
             fia_species_code=fia_species_code,
             fia_status_code=fia_status_code,
+            fia_crown_class_code=fia_crown_class_code,
             dbh=dbh,
             crown_ratio=crown_ratio,
         )

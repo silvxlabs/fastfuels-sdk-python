@@ -63,24 +63,31 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[HTTPValidationError | PointCloud]:
-    """Get a point cloud by ID
+    r"""Get a point cloud by ID
 
-     # Get Point Cloud
+     # Get a Point Cloud
 
-    Retrieves a specific point cloud resource by its unique identifier.
+    Returns one point-cloud resource by ID. This endpoint returns resource
+    metadata and processing state; it does not return the individual points.
+    Use `/data/metadata` and the tile data endpoints for point values after the
+    resource reaches `status=\"completed\"`.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain the point cloud belongs to.
-    - **point_cloud_id**: (string) The unique 32-character hex identifier.
+    - **domain_id**: Domain the point cloud belongs to.
+    - **point_cloud_id**: Unique point-cloud identifier.
 
     ## Response
 
-    Returns the point cloud resource.
+    The complete point-cloud resource, including its acquisition `type`,
+    `source` provenance, processing `status`, georeference, content summary,
+    checksum, and user-editable metadata. Derived fields such as `georeference`
+    and `summary` are null until processing completes.
 
     ## Error Responses
 
-    - **404 Not Found**: The point cloud does not exist or the user does not have access.
+    - **404 Not Found**: The point cloud does not exist, belongs to another
+      domain, or is not accessible to the caller.
 
     Args:
         domain_id (str):
@@ -112,24 +119,31 @@ def sync(
     *,
     client: AuthenticatedClient,
 ) -> HTTPValidationError | PointCloud | None:
-    """Get a point cloud by ID
+    r"""Get a point cloud by ID
 
-     # Get Point Cloud
+     # Get a Point Cloud
 
-    Retrieves a specific point cloud resource by its unique identifier.
+    Returns one point-cloud resource by ID. This endpoint returns resource
+    metadata and processing state; it does not return the individual points.
+    Use `/data/metadata` and the tile data endpoints for point values after the
+    resource reaches `status=\"completed\"`.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain the point cloud belongs to.
-    - **point_cloud_id**: (string) The unique 32-character hex identifier.
+    - **domain_id**: Domain the point cloud belongs to.
+    - **point_cloud_id**: Unique point-cloud identifier.
 
     ## Response
 
-    Returns the point cloud resource.
+    The complete point-cloud resource, including its acquisition `type`,
+    `source` provenance, processing `status`, georeference, content summary,
+    checksum, and user-editable metadata. Derived fields such as `georeference`
+    and `summary` are null until processing completes.
 
     ## Error Responses
 
-    - **404 Not Found**: The point cloud does not exist or the user does not have access.
+    - **404 Not Found**: The point cloud does not exist, belongs to another
+      domain, or is not accessible to the caller.
 
     Args:
         domain_id (str):
@@ -156,24 +170,31 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
 ) -> Response[HTTPValidationError | PointCloud]:
-    """Get a point cloud by ID
+    r"""Get a point cloud by ID
 
-     # Get Point Cloud
+     # Get a Point Cloud
 
-    Retrieves a specific point cloud resource by its unique identifier.
+    Returns one point-cloud resource by ID. This endpoint returns resource
+    metadata and processing state; it does not return the individual points.
+    Use `/data/metadata` and the tile data endpoints for point values after the
+    resource reaches `status=\"completed\"`.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain the point cloud belongs to.
-    - **point_cloud_id**: (string) The unique 32-character hex identifier.
+    - **domain_id**: Domain the point cloud belongs to.
+    - **point_cloud_id**: Unique point-cloud identifier.
 
     ## Response
 
-    Returns the point cloud resource.
+    The complete point-cloud resource, including its acquisition `type`,
+    `source` provenance, processing `status`, georeference, content summary,
+    checksum, and user-editable metadata. Derived fields such as `georeference`
+    and `summary` are null until processing completes.
 
     ## Error Responses
 
-    - **404 Not Found**: The point cloud does not exist or the user does not have access.
+    - **404 Not Found**: The point cloud does not exist, belongs to another
+      domain, or is not accessible to the caller.
 
     Args:
         domain_id (str):
@@ -203,24 +224,31 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
 ) -> HTTPValidationError | PointCloud | None:
-    """Get a point cloud by ID
+    r"""Get a point cloud by ID
 
-     # Get Point Cloud
+     # Get a Point Cloud
 
-    Retrieves a specific point cloud resource by its unique identifier.
+    Returns one point-cloud resource by ID. This endpoint returns resource
+    metadata and processing state; it does not return the individual points.
+    Use `/data/metadata` and the tile data endpoints for point values after the
+    resource reaches `status=\"completed\"`.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain the point cloud belongs to.
-    - **point_cloud_id**: (string) The unique 32-character hex identifier.
+    - **domain_id**: Domain the point cloud belongs to.
+    - **point_cloud_id**: Unique point-cloud identifier.
 
     ## Response
 
-    Returns the point cloud resource.
+    The complete point-cloud resource, including its acquisition `type`,
+    `source` provenance, processing `status`, georeference, content summary,
+    checksum, and user-editable metadata. Derived fields such as `georeference`
+    and `summary` are null until processing completes.
 
     ## Error Responses
 
-    - **404 Not Found**: The point cloud does not exist or the user does not have access.
+    - **404 Not Found**: The point cloud does not exist, belongs to another
+      domain, or is not accessible to the caller.
 
     Args:
         domain_id (str):

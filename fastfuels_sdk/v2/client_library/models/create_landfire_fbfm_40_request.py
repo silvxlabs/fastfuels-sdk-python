@@ -7,6 +7,7 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.landfire_fbfm_40_version import LandfireFbfm40Version
+from ..models.landfire_season import LandfireSeason
 from ..models.non_burnable_fuel_model import NonBurnableFuelModel
 from ..types import UNSET, Unset
 
@@ -49,8 +50,11 @@ class CreateLandfireFbfm40Request:
                 alignment target. Default `target="domain"` anchors output cells to the domain origin so cross-source
                 composition works by construction. `target="native"` preserves the source pixel anchor. `target="grid"` aligns
                 to an existing grid by id.
-            version (LandfireFbfm40Version | Unset): Available LANDFIRE FBFM40 data versions.
+            version (LandfireFbfm40Version | Unset):
             remove_non_burnable (list[NonBurnableFuelModel] | None | Unset):
+            season (LandfireSeason | None | Unset): LANDFIRE Seasonal Fuels window: ES (early spring), SP (spring), SU
+                (summer), FA (fall). When set, fetches seasonal fuels from the LANDFIRE Product Service for the given season
+                instead of the staged annual release.
     """
 
     name: str | Unset = ""
@@ -66,6 +70,7 @@ class CreateLandfireFbfm40Request:
     ) = UNSET
     version: LandfireFbfm40Version | Unset = UNSET
     remove_non_burnable: list[NonBurnableFuelModel] | None | Unset = UNSET
+    season: LandfireSeason | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -117,6 +122,14 @@ class CreateLandfireFbfm40Request:
         else:
             remove_non_burnable = self.remove_non_burnable
 
+        season: None | str | Unset
+        if isinstance(self.season, Unset):
+            season = UNSET
+        elif isinstance(self.season, LandfireSeason):
+            season = self.season.value
+        else:
+            season = self.season
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -136,6 +149,8 @@ class CreateLandfireFbfm40Request:
             field_dict["version"] = version
         if remove_non_burnable is not UNSET:
             field_dict["remove_non_burnable"] = remove_non_burnable
+        if season is not UNSET:
+            field_dict["season"] = season
 
         return field_dict
 
@@ -233,6 +248,23 @@ class CreateLandfireFbfm40Request:
             d.pop("remove_non_burnable", UNSET)
         )
 
+        def _parse_season(data: object) -> LandfireSeason | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                season_type_0 = LandfireSeason(data)
+
+                return season_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(LandfireSeason | None | Unset, data)
+
+        season = _parse_season(d.pop("season", UNSET))
+
         create_landfire_fbfm_40_request = cls(
             name=name,
             description=description,
@@ -242,6 +274,7 @@ class CreateLandfireFbfm40Request:
             alignment=alignment,
             version=version,
             remove_non_burnable=remove_non_burnable,
+            season=season,
         )
 
         create_landfire_fbfm_40_request.additional_properties = d
