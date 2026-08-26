@@ -54,6 +54,11 @@ from fastfuels_sdk.v2.client_library.models import (
     ComposeLiteral,
     ComposeSelect,
     CreateDuetRequest,
+    ChmMaxAggregation,
+    ChmMeanAggregation,
+    ChmMedianAggregation,
+    ChmPercentileAggregation,
+    ChmSpikeFilter,
     CreateComposeRequest,
     CreateFccsLookupRequest,
     CreateFbfm13LookupRequest,
@@ -203,6 +208,62 @@ def _build_alignment(
             resolution=_opt(output_resolution_m), method=method
         )
     return UNSET
+
+
+def _build_chm_aggregation(aggregation, percentile):
+    """Translate an aggregation keyword into a CHM aggregation target.
+
+    Returns a ``Chm{Max,Mean,Median,Percentile}Aggregation`` or ``UNSET`` (let
+    the API choose its default).
+
+    - ``aggregation="max"`` / ``"mean"`` / ``"median"`` selects that statistic.
+    - ``aggregation="percentile"`` requires ``percentile`` (0-100).
+    - ``percentile`` is only valid with ``aggregation="percentile"``.
+    """
+    if aggregation is None and percentile is None:
+        return UNSET
+    if aggregation == "percentile":
+        if percentile is None:
+            raise ValueError('aggregation="percentile" requires a percentile value.')
+        return ChmPercentileAggregation(percentile=percentile)
+    if percentile is not None:
+        raise ValueError('percentile is only used with aggregation="percentile".')
+    methods = {
+        "max": ChmMaxAggregation,
+        "mean": ChmMeanAggregation,
+        "median": ChmMedianAggregation,
+    }
+    if aggregation not in methods:
+        raise ValueError(
+            'aggregation must be one of "max", "mean", "median", or '
+            f'"percentile", got {aggregation!r}.'
+        )
+    return methods[aggregation]()
+
+
+def _build_chm_spike_filter(spike_filter):
+    """Translate a spike-filter keyword into a CHM spike-filter target.
+
+    - ``None`` -> ``UNSET`` (the API applies its default filter).
+    - ``False`` -> ``None`` (disable filtering, keeping every return).
+    - ``True`` -> a default ``ChmSpikeFilter``.
+    - a mapping -> a ``ChmSpikeFilter`` built from its fields.
+    - a ``ChmSpikeFilter`` -> passed through unchanged.
+    """
+    if spike_filter is None:
+        return UNSET
+    if spike_filter is False:
+        return None
+    if spike_filter is True:
+        return ChmSpikeFilter()
+    if isinstance(spike_filter, ChmSpikeFilter):
+        return spike_filter
+    if isinstance(spike_filter, Mapping):
+        return ChmSpikeFilter(**spike_filter)
+    raise ValueError(
+        "spike_filter must be a bool, a mapping of filter fields, or a "
+        f"ChmSpikeFilter, got {spike_filter!r}."
+    )
 
 
 def _fill_for(dtype, nodata=None):
@@ -1199,6 +1260,9 @@ def create_canopy_height_grid_from_point_cloud(
     output_resolution_m: Optional[float] = None,
     align_to=None,
     resampling: Optional[str] = None,
+    aggregation: Optional[str] = None,
+    percentile: Optional[float] = None,
+    spike_filter=None,
     extent_buffer_cells: int = 0,
     name: str = "",
     description: str = "",
@@ -1218,6 +1282,19 @@ def create_canopy_height_grid_from_point_cloud(
         Match the lattice of an existing grid (or its id).
     resampling : str, optional
         Resampling method for the continuous canopy-height band.
+    aggregation : str, optional
+        Statistic each cell reduces its above-ground return heights with: one of
+        ``"max"``, ``"mean"``, ``"median"``, or ``"percentile"``. Defaults to the
+        API's ``"max"``.
+    percentile : float, optional
+        Rank to take (0-100), used only with ``aggregation="percentile"``. 100 is
+        the tallest return and 50 the median.
+    spike_filter : bool, Mapping, or ChmSpikeFilter, optional
+        Removal of lone spurious returns. ``None`` (the default) applies the
+        API's default filter; ``False`` disables it, keeping every return;
+        ``True`` applies a default ``ChmSpikeFilter``; a mapping of filter fields
+        (``min_canopy_footprint_m``, ``min_prominence_m``) or a ``ChmSpikeFilter``
+        sets custom thresholds.
     extent_buffer_cells : int, optional
         Result-grid cells to buffer around the domain extent (0-10, default 0).
     name, description : str, optional
@@ -1235,7 +1312,8 @@ def create_canopy_height_grid_from_point_cloud(
     Raises
     ------
     ValueError
-        If the point cloud is not completed or is not airborne.
+        If the point cloud is not completed or is not airborne, or if the
+        aggregation and percentile arguments are inconsistent.
     """
     if point_cloud.status != JobStatus.COMPLETED:
         raise ValueError(
@@ -1255,6 +1333,8 @@ def create_canopy_height_grid_from_point_cloud(
             align_to,
             resampling=resampling,
         ),
+        aggregation=_build_chm_aggregation(aggregation, percentile),
+        spike_filter=_build_chm_spike_filter(spike_filter),
         extent_buffer_cells=extent_buffer_cells,
         name=name,
         description=description,
