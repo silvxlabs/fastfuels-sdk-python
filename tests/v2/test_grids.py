@@ -3,6 +3,7 @@ tests/v2/test_grids.py
 """
 
 # Core imports
+import datetime
 import inspect
 import json
 import math
@@ -34,6 +35,7 @@ from fastfuels_sdk.v2.grids import (
     create_fuel_model_grid_from_landfire_fbfm40,
     create_fuel_model_grid_from_landfire_fccs,
     create_grid_from_geotiff,
+    create_irradiance_grid_from_leaflux,
     create_pim_grid_from_treemap,
     create_surface_fuel_grid_from_duet,
     create_topography_grid_from_3dep,
@@ -62,6 +64,7 @@ from fastfuels_sdk.v2.client_library.models import (
     GridModificationCondition,
     GridSource,
     JobStatus,
+    LeafluxBand,
     Modifier,
     Operator,
     PointCloudType,
@@ -71,7 +74,10 @@ from fastfuels_sdk.v2.client_library.models import (
     UploadBandDefinition,
 )
 from fastfuels_sdk.v2.client_library.types import UNSET, Response
-from fastfuels_sdk.v2.exceptions import NotFoundException, expect
+from fastfuels_sdk.v2.exceptions import (
+    NotFoundException,
+    expect,
+)
 from fastfuels_sdk.v2.modifications import mask
 
 # External imports
@@ -702,17 +708,6 @@ class TestCreateDeadFuelMoistureGridFromFosberg:
             )
 
     def test_create_live(self, completed_tree_inventory, completed_topography_grid):
-        import datetime
-
-        from fastfuels_sdk.v2.client_library.api.grids import (
-            create_leaflux_irradiance_grid,
-        )
-        from fastfuels_sdk.v2.client_library.models import (
-            CreateLeafluxIrradianceRequest,
-            LeafluxBand,
-        )
-        from fastfuels_sdk.v2.exceptions import ApiException
-
         voxels = completed_tree_inventory.voxelize(
             horizontal_resolution_m=2,
             vertical_resolution_m=1,
@@ -724,30 +719,17 @@ class TestCreateDeadFuelMoistureGridFromFosberg:
         moisture = None
         try:
             voxels.wait()
-            # The Fosberg grid consumes a Leaflux irradiance grid, whose SDK
-            # surface is tracked separately. When that prerequisite cannot be
-            # built, skip rather than fail this Fosberg-focused test.
-            try:
-                leaflux_response = create_leaflux_irradiance_grid.sync_detailed(
-                    voxels.domain_id,
-                    client=ensure_client(),
-                    body=CreateLeafluxIrradianceRequest(
-                        source_grid_id=voxels.id,
-                        date_time=datetime.datetime(
-                            2020, 7, 1, 18, 0, tzinfo=datetime.timezone.utc
-                        ),
-                        source_terrain_grid_id=completed_topography_grid.id,
-                        bands=[LeafluxBand.IRRADIANCE_SURFACE_RELATIVE],
-                        name="test_fosberg_irradiance",
-                        tags=["test"],
-                    ),
-                )
-                irradiance = Grid._from_model(
-                    expect(leaflux_response, HTTPStatus.CREATED)
-                )
-                irradiance.wait()
-            except ApiException as exc:
-                pytest.skip(f"Leaflux irradiance grid unavailable: {exc}")
+            irradiance = create_irradiance_grid_from_leaflux(
+                voxels,
+                date_time=datetime.datetime(
+                    2020, 7, 1, 18, 0, tzinfo=datetime.timezone.utc
+                ),
+                source_terrain_grid=completed_topography_grid,
+                bands=["irradiance.surface.relative"],
+                name="test_fosberg_irradiance",
+                tags=["test"],
+            )
+            irradiance.wait()
             if irradiance.status != JobStatus.COMPLETED:
                 pytest.skip("Leaflux irradiance grid did not complete")
 
@@ -771,6 +753,165 @@ class TestCreateDeadFuelMoistureGridFromFosberg:
         finally:
             if moisture is not None:
                 moisture.delete()
+            if irradiance is not None:
+                irradiance.delete()
+            voxels.delete()
+
+
+class TestCreateIrradianceGridFromLeaflux:
+    @staticmethod
+    def _source_grid(status=JobStatus.COMPLETED, omit=False):
+        bands = (
+            []
+            if omit
+            else [Band(key="leaf_area_density", type_=BandType.CONTINUOUS, index=0)]
+        )
+        return Grid(
+            id="lad-grid-id",
+            domain_id="domain-id",
+            status=status,
+            source=GridSource(),
+            bands=bands,
+        )
+
+    @staticmethod
+    def _patch(monkeypatch, captured):
+        created = Grid(
+            id="irradiance-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_leaflux_irradiance_grid,
+            "sync_detailed",
+            fake_create,
+        )
+        return client
+
+    def test_builds_request_from_completed_grid(self, monkeypatch):
+        captured = {}
+        client = self._patch(monkeypatch, captured)
+        when = datetime.datetime(2024, 7, 1, 18, 30, tzinfo=datetime.timezone.utc)
+
+        grid = create_irradiance_grid_from_leaflux(
+            self._source_grid(),
+            date_time=when,
+            source_terrain_grid="terrain-grid-id",
+            bands=[
+                "irradiance.canopy.relative",
+                LeafluxBand.IRRADIANCE_SURFACE_RELATIVE,
+            ],
+            extinction_coefficient=0.7,
+            name="leaflux irradiance",
+            tags=["test"],
+        )
+
+        assert grid.id == "irradiance-grid-id"
+        assert captured["domain_id"] == "domain-id"
+        assert captured["client"] is client
+        assert captured["body"].source_lad_grid_id == "lad-grid-id"
+        assert captured["body"].date_time == when
+        assert captured["body"].source_terrain_grid_id == "terrain-grid-id"
+        assert captured["body"].bands == [
+            LeafluxBand.IRRADIANCE_CANOPY_RELATIVE,
+            LeafluxBand.IRRADIANCE_SURFACE_RELATIVE,
+        ]
+        assert captured["body"].extinction_coefficient == 0.7
+        assert captured["body"].name == "leaflux irradiance"
+        assert captured["body"].tags == ["test"]
+
+    def test_defaults_leave_bands_and_terrain_unset(self, monkeypatch):
+        captured = {}
+        self._patch(monkeypatch, captured)
+
+        create_irradiance_grid_from_leaflux(
+            self._source_grid(),
+            date_time=datetime.datetime(2024, 1, 1, tzinfo=datetime.timezone.utc),
+        )
+
+        assert captured["body"].bands is UNSET
+        assert captured["body"].source_terrain_grid_id is UNSET
+        assert captured["body"].extinction_coefficient == 0.5
+
+    def test_accepts_ids_with_explicit_domain(self, monkeypatch):
+        captured = {}
+        self._patch(monkeypatch, captured)
+
+        create_irradiance_grid_from_leaflux(
+            "lad-grid-id",
+            date_time=datetime.datetime(2024, 1, 1, tzinfo=datetime.timezone.utc),
+            source_terrain_grid=SimpleNamespace(id="terrain-grid-id"),
+            domain=SimpleNamespace(id="domain-id"),
+        )
+
+        assert captured["domain_id"] == "domain-id"
+        assert captured["body"].source_lad_grid_id == "lad-grid-id"
+        assert captured["body"].source_terrain_grid_id == "terrain-grid-id"
+
+    def test_requires_domain_for_id_source(self):
+        with pytest.raises(ValueError, match="domain="):
+            create_irradiance_grid_from_leaflux(
+                "lad-grid-id",
+                date_time=datetime.datetime(2024, 1, 1, tzinfo=datetime.timezone.utc),
+            )
+
+    def test_requires_completed_source_grid(self):
+        with pytest.raises(ValueError, match=r"Call \.wait\(\)"):
+            create_irradiance_grid_from_leaflux(
+                self._source_grid(status=JobStatus.PENDING),
+                date_time=datetime.datetime(2024, 1, 1, tzinfo=datetime.timezone.utc),
+            )
+
+    def test_requires_leaf_area_density_band(self):
+        with pytest.raises(ValueError, match="leaf_area_density"):
+            create_irradiance_grid_from_leaflux(
+                self._source_grid(omit=True),
+                date_time=datetime.datetime(2024, 1, 1, tzinfo=datetime.timezone.utc),
+            )
+
+    def test_create_live(self, completed_tree_inventory):
+        voxels = completed_tree_inventory.voxelize(
+            horizontal_resolution_m=2,
+            vertical_resolution_m=1,
+            bands=["leaf_area_density"],
+            name="test_leaflux_source",
+            tags=["test"],
+        )
+        irradiance = None
+        try:
+            voxels.wait()
+            irradiance = create_irradiance_grid_from_leaflux(
+                voxels,
+                date_time=datetime.datetime(
+                    2024, 7, 1, 18, 0, tzinfo=datetime.timezone.utc
+                ),
+                bands=["irradiance.canopy.relative"],
+                name="test_leaflux_irradiance",
+                tags=["test"],
+            )
+            irradiance.wait()
+            assert irradiance.status == JobStatus.COMPLETED
+            assert "irradiance.canopy.relative" in {
+                band.key for band in irradiance.bands
+            }
+            values = irradiance.to_numpy("irradiance.canopy.relative")
+            assert values.ndim == 3
+            assert np.isfinite(values).any()
+        finally:
             if irradiance is not None:
                 irradiance.delete()
             voxels.delete()
