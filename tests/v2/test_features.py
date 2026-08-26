@@ -223,9 +223,25 @@ class TestListFeatures:
         assert layerset_feature.id in feature_ids
 
     def test_list_cross_domain(self, layerset_feature):
-        # No domain: list features across all the user's domains
-        features = list_features()
-        assert layerset_feature.id in [feature.id for feature in features]
+        # No domain: list features across all the user's domains. The SDK
+        # returns one page at a time, so search subsequent pages when the
+        # account has more than the default page size of 100 features.
+        for page in range(100):
+            features = list_features(
+                page=page,
+                size=100,
+                sort_by="created_on",
+                sort_order="descending",
+            )
+            if layerset_feature.id in [feature.id for feature in features]:
+                return
+            if len(features) < 100:
+                break
+
+        pytest.fail(
+            f"Feature {layerset_feature.id} was not found in the "
+            "cross-domain feature pages."
+        )
 
     def test_filter_by_type(
         self, test_domain, completed_road_feature, layerset_feature

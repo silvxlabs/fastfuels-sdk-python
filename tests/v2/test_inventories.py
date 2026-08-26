@@ -675,9 +675,25 @@ class TestListInventories:
         assert completed_tree_inventory.id in inventory_ids
 
     def test_list_cross_domain(self, completed_tree_inventory):
-        # No domain: list inventories across all the user's domains
-        inventory_ids = [i.id for i in list_inventories()]
-        assert completed_tree_inventory.id in inventory_ids
+        # No domain: list inventories across all the user's domains. The SDK
+        # returns one page at a time, so search subsequent pages when the
+        # account has more than the default page size of 100 inventories.
+        for page in range(100):
+            inventories = list_inventories(
+                page=page,
+                size=100,
+                sort_by="created_on",
+                sort_order="descending",
+            )
+            if completed_tree_inventory.id in [i.id for i in inventories]:
+                return
+            if len(inventories) < 100:
+                break
+
+        pytest.fail(
+            f"Inventory {completed_tree_inventory.id} was not found in the "
+            "cross-domain inventory pages."
+        )
 
     def test_filter_by_tag(self, test_domain, completed_tree_inventory):
         tagged = list_inventories(test_domain, tag="test")
