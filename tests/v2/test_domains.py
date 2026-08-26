@@ -220,7 +220,9 @@ class TestGetLattice:
 
 class TestListDomains:
     def test_list_domains(self, test_domain):
-        domains = list_domains()
+        # Sort newest-first so the just-created domain lands on the first page
+        # regardless of how many domains the account already has.
+        domains = list_domains(sort_by="created_on", sort_order="descending")
         assert test_domain.id in [domain.id for domain in domains]
 
     def test_sorting(self, test_domain):

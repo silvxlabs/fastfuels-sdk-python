@@ -17,12 +17,15 @@ from fastfuels_sdk.v2.calibrations import duet_calibration
 from fastfuels_sdk.v2.grids import (
     Grid,
     _build_alignment,
+    _build_chm_aggregation,
+    _build_chm_spike_filter,
     _decode_grid_chunk,
     _domain_id,
     _enum_list,
     _fill_for,
     _opt,
     check_3dep_coverage,
+    create_canopy_fuel_grid_from_inventory,
     create_canopy_fuel_grid_from_landfire,
     create_canopy_height_grid_from_meta,
     create_canopy_height_grid_from_naip_chm,
@@ -45,12 +48,25 @@ from fastfuels_sdk.v2.grids import (
     list_grids,
 )
 from fastfuels_sdk.v2.api import ensure_client
+from fastfuels_sdk.v2.domains import Domain
+from fastfuels_sdk.v2.point_clouds import (
+    create_point_cloud_from_3dep,
+    check_3dep_coverage as check_3dep_point_cloud_coverage,
+)
 from fastfuels_sdk.v2.client_library.api.grids import get_grid_data_json
 from fastfuels_sdk.v2.client_library.models import (
     Band,
     BandType,
+    CanopyCbhPercentile,
+    ChmMaxAggregation,
+    ChmMeanAggregation,
+    ChmMedianAggregation,
+    ChmPercentileAggregation,
+    ChmSpikeFilter,
     ContinuousBandSummary,
     DuetBand,
+    InventoryCanopyBand,
+    InventoryColumnCanopyBiomassSource,
     FccsLookupBand,
     Fbfm13LookupBand,
     FuelMoistureMonth,
@@ -270,6 +286,51 @@ class TestCreateCanopyHeightGridFromNaipChm:
         grid.delete()
 
 
+@pytest.fixture(scope="module")
+def covered_3dep_point_cloud():
+    """A completed ALS point cloud over a Bondurant, WY domain with stable
+    3DEP LiDAR coverage. Owns its own domain so the live CHM test can build
+    grids inside it without touching the shared session domain.
+    """
+    geojson = {
+        "type": "FeatureCollection",
+        "crs": {"type": "name", "properties": {"name": "EPSG:32612"}},
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [522800, 4720400],
+                            [523300, 4720400],
+                            [523300, 4720900],
+                            [522800, 4720900],
+                            [522800, 4720400],
+                        ]
+                    ],
+                },
+            }
+        ],
+    }
+    domain = Domain.from_geojson(
+        geojson,
+        name="test_point_cloud_chm_domain",
+        tags=["sdk-test"],
+    )
+    coverage = check_3dep_point_cloud_coverage(domain)
+    point_cloud = create_point_cloud_from_3dep(
+        domain,
+        datasets=[coverage.datasets[0].name],
+        name="test_point_cloud_chm_source",
+        tags=["sdk-test"],
+    )
+    point_cloud.wait()
+    yield point_cloud
+    domain.delete(force=True)
+
+
 class TestCreateCanopyHeightGridFromPointCloud:
     @staticmethod
     def _point_cloud(status=JobStatus.COMPLETED, type_=PointCloudType.ALS):
@@ -332,6 +393,128 @@ class TestCreateCanopyHeightGridFromPointCloud:
             create_canopy_height_grid_from_point_cloud(
                 self._point_cloud(type_=PointCloudType.TLS)
             )
+
+    def _capture_body(self, monkeypatch, **kwargs):
+        created = Grid(
+            id="grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[Band(key="chm", type_=BandType.CONTINUOUS, index=0, unit="m")],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        monkeypatch.setattr(grids, "ensure_client", lambda: object())
+        monkeypatch.setattr(grids.create_point_cloud_chm, "sync_detailed", fake_create)
+        create_canopy_height_grid_from_point_cloud(self._point_cloud(), **kwargs)
+        return captured["body"]
+
+    def test_defaults_leave_aggregation_and_spike_filter_unset(self, monkeypatch):
+        body = self._capture_body(monkeypatch)
+        assert body.aggregation is UNSET
+        assert body.spike_filter is UNSET
+
+    def test_percentile_aggregation_in_request(self, monkeypatch):
+        body = self._capture_body(monkeypatch, aggregation="percentile", percentile=95)
+        assert isinstance(body.aggregation, ChmPercentileAggregation)
+        assert body.aggregation.percentile == 95
+
+    def test_spike_filter_thresholds_in_request(self, monkeypatch):
+        body = self._capture_body(
+            monkeypatch,
+            spike_filter={"min_canopy_footprint_m": 5, "min_prominence_m": 30},
+        )
+        assert isinstance(body.spike_filter, ChmSpikeFilter)
+        assert body.spike_filter.min_canopy_footprint_m == 5
+        assert body.spike_filter.min_prominence_m == 30
+
+    def test_spike_filter_false_disables(self, monkeypatch):
+        body = self._capture_body(monkeypatch, spike_filter=False)
+        assert body.spike_filter is None
+
+    def test_create_live(self, covered_3dep_point_cloud):
+        grid = None
+        try:
+            grid = create_canopy_height_grid_from_point_cloud(
+                covered_3dep_point_cloud,
+                output_resolution_m=2,
+                aggregation="percentile",
+                percentile=95,
+                spike_filter={"min_canopy_footprint_m": 5, "min_prominence_m": 30},
+                name="test_point_cloud_chm",
+                tags=["sdk-test"],
+            )
+            grid.wait()
+            assert grid.status == JobStatus.COMPLETED
+            assert {band.key for band in grid.bands} == {"chm"}
+            heights = grid.to_numpy("chm")
+            assert heights.ndim == 2
+            assert np.isfinite(heights).any()
+        finally:
+            if grid is not None:
+                grid.delete()
+
+
+class TestBuildChmAggregation:
+    def test_none_is_unset(self):
+        assert _build_chm_aggregation(None, None) is UNSET
+
+    def test_max_mean_median(self):
+        assert isinstance(_build_chm_aggregation("max", None), ChmMaxAggregation)
+        assert isinstance(_build_chm_aggregation("mean", None), ChmMeanAggregation)
+        assert isinstance(_build_chm_aggregation("median", None), ChmMedianAggregation)
+
+    def test_percentile_carries_value(self):
+        agg = _build_chm_aggregation("percentile", 90)
+        assert isinstance(agg, ChmPercentileAggregation)
+        assert agg.percentile == 90
+
+    def test_percentile_requires_value(self):
+        with pytest.raises(ValueError, match="requires a percentile"):
+            _build_chm_aggregation("percentile", None)
+
+    def test_percentile_only_with_percentile_method(self):
+        with pytest.raises(ValueError, match="only used with"):
+            _build_chm_aggregation("max", 90)
+        with pytest.raises(ValueError, match="only used with"):
+            _build_chm_aggregation(None, 90)
+
+    def test_unknown_method_raises(self):
+        with pytest.raises(ValueError, match="aggregation must be one of"):
+            _build_chm_aggregation("mode", None)
+
+
+class TestBuildChmSpikeFilter:
+    def test_none_is_unset(self):
+        assert _build_chm_spike_filter(None) is UNSET
+
+    def test_false_disables(self):
+        assert _build_chm_spike_filter(False) is None
+
+    def test_true_is_default_filter(self):
+        assert isinstance(_build_chm_spike_filter(True), ChmSpikeFilter)
+
+    def test_mapping_sets_fields(self):
+        sf = _build_chm_spike_filter({"min_prominence_m": 40})
+        assert isinstance(sf, ChmSpikeFilter)
+        assert sf.min_prominence_m == 40
+
+    def test_instance_passes_through(self):
+        sf = ChmSpikeFilter(min_canopy_footprint_m=4)
+        assert _build_chm_spike_filter(sf) is sf
+
+    def test_invalid_raises(self):
+        with pytest.raises(ValueError, match="spike_filter must be"):
+            _build_chm_spike_filter("aggressive")
 
 
 class TestCreateSurfaceFuelGridFromDuet:
@@ -707,7 +890,7 @@ class TestCreateDeadFuelMoistureGridFromFosberg:
                 **params,
             )
 
-    def test_create_live(self, completed_tree_inventory, completed_topography_grid):
+    def test_create_live(self, completed_tree_inventory):
         voxels = completed_tree_inventory.voxelize(
             horizontal_resolution_m=2,
             vertical_resolution_m=1,
@@ -715,26 +898,37 @@ class TestCreateDeadFuelMoistureGridFromFosberg:
             name="test_fosberg_lad",
             tags=["test"],
         )
+        topo = None
         irradiance = None
         moisture = None
         try:
             voxels.wait()
+            # Surface irradiance and the Fosberg model require the topography,
+            # LAD, and irradiance grids to share one horizontal lattice, so
+            # align the topography grid to the voxelized LAD grid.
+            # elevation feeds the leaflux surface draping; slope + aspect feed
+            # the Fosberg model.
+            topo = create_topography_grid_from_3dep(
+                completed_tree_inventory.domain_id,
+                align_to=voxels,
+                bands=["elevation", "slope", "aspect"],
+                name="test_fosberg_topo",
+                tags=["test"],
+            )
+            topo.wait()
             irradiance = create_irradiance_grid_from_leaflux(
                 voxels,
                 date_time=datetime.datetime(
                     2020, 7, 1, 18, 0, tzinfo=datetime.timezone.utc
                 ),
-                source_terrain_grid=completed_topography_grid,
+                source_terrain_grid=topo,
                 bands=["irradiance.surface.relative"],
                 name="test_fosberg_irradiance",
                 tags=["test"],
             )
             irradiance.wait()
-            if irradiance.status != JobStatus.COMPLETED:
-                pytest.skip("Leaflux irradiance grid did not complete")
-
             moisture = create_dead_fuel_moisture_grid_from_fosberg(
-                completed_topography_grid,
+                topo,
                 irradiance,
                 dry_bulb_temp=75.0,
                 relative_humidity=20.0,
@@ -755,7 +949,175 @@ class TestCreateDeadFuelMoistureGridFromFosberg:
                 moisture.delete()
             if irradiance is not None:
                 irradiance.delete()
+            if topo is not None:
+                topo.delete()
             voxels.delete()
+
+
+class TestCreateCanopyFuelGridFromInventory:
+    @staticmethod
+    def _inventory(status=JobStatus.COMPLETED):
+        return SimpleNamespace(id="inv-id", domain_id="domain-id", status=status)
+
+    def _patch_create(self, monkeypatch):
+        """Patch the endpoint to capture the request body and return a Grid."""
+        created = Grid(
+            id="canopy-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_inventory_canopy_grid, "sync_detailed", fake_create
+        )
+        return captured
+
+    def test_builds_request_from_inventory_object(self, monkeypatch):
+        captured = self._patch_create(monkeypatch)
+
+        grid = create_canopy_fuel_grid_from_inventory(
+            self._inventory(),
+            bands=["cbd", InventoryCanopyBand.CFL],
+            biomass_equations="nsvb",
+            species_inclusion="fuelcalc_default",
+            crown_class_adjustment="fuelcalc_table",
+            min_tree_height=1.83,
+            vertical_distribution="uniform",
+            horizontal_distribution="stem",
+            max_crown_radius_equations="crookston_stage",
+            cbd="running_mean",
+            cbh="minimum",
+            chm="threshold",
+            cc="crown_union",
+            output_resolution_m=30,
+            name="canopy",
+            tags=["test"],
+        )
+
+        assert grid.id == "canopy-grid-id"
+        assert captured["domain_id"] == "domain-id"
+        body = captured["body"]
+        assert body.source_inventory_id == "inv-id"
+        assert body.bands == [InventoryCanopyBand.CBD, InventoryCanopyBand.CFL]
+        assert body.biomass_source.equations.value == "nsvb"
+        assert body.species_inclusion.value == "fuelcalc_default"
+        assert body.crown_class_adjustment.method == "fuelcalc_table"
+        assert body.min_tree_height == 1.83
+        assert body.vertical_distribution.value == "uniform"
+        assert body.horizontal_distribution.value == "stem"
+        assert body.max_crown_radius_source.equations.value == "crookston_stage"
+        assert body.cbd.method == "maximum_running_mean"
+        assert body.cbh.method == "minimum"
+        assert body.chm.method == "bulk_density_threshold"
+        assert body.cc.method == "crown_union"
+        assert body.alignment.resolution == 30
+        assert body.name == "canopy"
+        assert body.tags == ["test"]
+
+    def test_inventory_column_biomass_source(self, monkeypatch):
+        captured = self._patch_create(monkeypatch)
+
+        create_canopy_fuel_grid_from_inventory(
+            self._inventory(), biomass_column="available_canopy_fuel"
+        )
+
+        body = captured["body"]
+        assert isinstance(body.biomass_source, InventoryColumnCanopyBiomassSource)
+        assert body.biomass_source.column == "available_canopy_fuel"
+
+    def test_available_fuel_from_kwargs(self, monkeypatch):
+        captured = self._patch_create(monkeypatch)
+
+        create_canopy_fuel_grid_from_inventory(
+            self._inventory(),
+            foliage_fraction=0.9,
+            branchwood_fraction=0.5,
+            branchwood_size_partition="equations",
+        )
+
+        available_fuel = captured["body"].available_fuel
+        assert available_fuel.foliage_fraction == 0.9
+        assert available_fuel.branchwood.fraction == 0.5
+        assert available_fuel.branchwood.size_partition.value == "equations"
+
+    def test_method_objects_passed_through(self, monkeypatch):
+        captured = self._patch_create(monkeypatch)
+
+        percentile = CanopyCbhPercentile(percentile=25)
+        create_canopy_fuel_grid_from_inventory(self._inventory(), cbh=percentile)
+
+        assert captured["body"].cbh is percentile
+
+    def test_defaults_are_unset(self, monkeypatch):
+        captured = self._patch_create(monkeypatch)
+
+        create_canopy_fuel_grid_from_inventory(self._inventory())
+
+        body = captured["body"]
+        assert body.biomass_source is UNSET
+        assert body.available_fuel is UNSET
+        assert body.cbd is UNSET
+        assert body.bands is UNSET
+        assert body.alignment is UNSET
+
+    def test_bare_id_without_domain_raises(self):
+        with pytest.raises(ValueError, match="Inventory object"):
+            create_canopy_fuel_grid_from_inventory("inv-id")
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"biomass_equations": "nsvb", "biomass_column": "col"},
+            {
+                "max_crown_radius_equations": "purves",
+                "max_crown_radius_column": "col",
+            },
+            {"crown_class_adjustment": "bogus"},
+            {"cbh": "bogus_method"},
+            {"cbh": "percentile"},
+        ],
+    )
+    def test_invalid_kwargs_raise(self, kwargs):
+        with pytest.raises(ValueError):
+            create_canopy_fuel_grid_from_inventory(self._inventory(), **kwargs)
+
+    def test_create_live(self, completed_tree_inventory):
+        canopy = create_canopy_fuel_grid_from_inventory(
+            completed_tree_inventory,
+            bands=["cbd", "cbh", "chm", "cc", "cfl"],
+            output_resolution_m=30,
+            name="test_inventory_canopy",
+            tags=["test"],
+        )
+        try:
+            canopy.wait()
+            assert canopy.status == JobStatus.COMPLETED
+            assert {band.key for band in canopy.bands} == {
+                "cbd",
+                "cbh",
+                "chm",
+                "cc",
+                "cfl",
+            }
+            cbd = canopy.to_numpy("cbd")
+            assert cbd.ndim == 2
+            assert np.isfinite(cbd).any()
+        finally:
+            canopy.delete()
 
 
 class TestCreateIrradianceGridFromLeaflux:
@@ -930,6 +1292,87 @@ class TestCreateFuelModelGridFromLandfireFbfm40:
         assert grid.domain_id == test_domain.id
         assert grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
         grid.delete()
+
+    def test_create_new_version_reports_year(self, test_domain):
+        # Annual FBFM40's represented year is its version, populated on the
+        # source the moment the pending grid is returned.
+        grid = create_fuel_model_grid_from_landfire_fbfm40(
+            test_domain,
+            version="2024",
+            output_resolution_m=30,
+            name="throwaway_fbfm40_2024",
+        )
+        assert grid.represented_year == 2024
+        grid.delete()
+
+    @pytest.mark.parametrize("version", ["2024", "2025"])
+    def test_builds_request_accepts_new_versions(self, monkeypatch, version):
+        created = Grid(
+            id="fbfm40-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_landfire_fbfm40,
+            "sync_detailed",
+            fake_create,
+        )
+
+        create_fuel_model_grid_from_landfire_fbfm40(
+            SimpleNamespace(id="domain-id"),
+            version=version,
+            output_resolution_m=30,
+        )
+
+        assert captured["body"].version.value == version
+
+    def test_rejects_unknown_version(self):
+        with pytest.raises(ValueError):
+            create_fuel_model_grid_from_landfire_fbfm40(
+                SimpleNamespace(id="domain-id"),
+                version="1999",
+            )
+
+
+class TestRepresentedYear:
+    """Unit tests for the Grid.represented_year accessor (no API)."""
+
+    def test_reads_year_from_source(self):
+        source = GridSource()
+        source["year"] = 2026
+        grid = Grid(
+            id="grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=source,
+            bands=[],
+        )
+        assert grid.represented_year == 2026
+
+    def test_none_when_source_has_no_year(self):
+        grid = Grid(
+            id="grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        assert grid.represented_year is None
 
 
 class TestCreateFuelModelGridFromLandfireFbfm13:

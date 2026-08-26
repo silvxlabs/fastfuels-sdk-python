@@ -27,6 +27,7 @@ from fastfuels_sdk.v2.client_library.api.grids import (
     create_fbfm40_lookup,
     create_geotiff_upload,
     create_grid_export,
+    create_inventory_canopy_grid,
     create_landfire_canopy,
     create_landfire_fbfm13,
     create_landfire_fbfm40,
@@ -50,19 +51,47 @@ from fastfuels_sdk.v2.client_library.api.grids import (
 )
 from fastfuels_sdk.v2.client_library.models import (
     Grid as GridModel,
+    AllometryCanopyBiomassSource,
     ApplyGridModificationsRequest,
+    CanopyAllometryMaxCrownRadiusSource,
+    CanopyAvailableFuel,
+    CanopyBiomassEquations,
+    CanopyBranchwood,
+    CanopyBranchwoodSizePartition,
+    CanopyCbdLoadOverDepth,
+    CanopyCbdRunningMean,
+    CanopyCbhMean,
+    CanopyCbhMinimum,
+    CanopyCbhPercentile,
+    CanopyCcCoverFraction,
+    CanopyCcCrownOverlap,
+    CanopyCcCrownUnion,
+    CanopyChmHeightPercentile,
+    CanopyCrownWidthEquations,
+    CanopyFuelcalcCrownClassAdjustment,
+    CanopyHorizontalDistribution,
+    CanopyNoCrownClassAdjustment,
+    CanopyProfileThreshold,
+    CanopySpeciesInclusion,
+    CanopyVerticalDistribution,
     ComposeAttributeCondition,
     ComposeCompute,
     ComposeInput,
     ComposeLiteral,
     ComposeSelect,
     CreateDuetRequest,
+    ChmMaxAggregation,
+    ChmMeanAggregation,
+    ChmMedianAggregation,
+    ChmPercentileAggregation,
+    ChmSpikeFilter,
     CreateComposeRequest,
     CreateFccsLookupRequest,
     CreateFbfm13LookupRequest,
     CreateFbfm40LookupRequest,
     CreateFosbergFuelMoistureRequest,
     CreateGeoTIFFUploadRequest,
+    CreateInventoryCanopyRequest,
     CreateLandfireCanopyRequest,
     CreateLandfireFbfm13Request,
     CreateLandfireFbfm40Request,
@@ -93,6 +122,9 @@ from fastfuels_sdk.v2.client_library.models import (
     GridExportFormat,
     GridSortField,
     InlineCompute,
+    InventoryCanopyBand,
+    InventoryColumnCanopyBiomassSource,
+    InventoryColumnMaxCrownRadiusSource,
     JobStatus,
     LandfireCanopyFuelBand,
     LandfireCanopyVersion,
@@ -130,6 +162,7 @@ __all__ = [
     "create_topography_grid_from_3dep",
     "create_topography_grid_from_landfire",
     "create_canopy_fuel_grid_from_landfire",
+    "create_canopy_fuel_grid_from_inventory",
     "create_canopy_height_grid_from_meta",
     "create_canopy_height_grid_from_naip_chm",
     "create_canopy_height_grid_from_point_cloud",
@@ -218,6 +251,62 @@ def _build_alignment(
             resolution=_opt(output_resolution_m), method=method
         )
     return UNSET
+
+
+def _build_chm_aggregation(aggregation, percentile):
+    """Translate an aggregation keyword into a CHM aggregation target.
+
+    Returns a ``Chm{Max,Mean,Median,Percentile}Aggregation`` or ``UNSET`` (let
+    the API choose its default).
+
+    - ``aggregation="max"`` / ``"mean"`` / ``"median"`` selects that statistic.
+    - ``aggregation="percentile"`` requires ``percentile`` (0-100).
+    - ``percentile`` is only valid with ``aggregation="percentile"``.
+    """
+    if aggregation is None and percentile is None:
+        return UNSET
+    if aggregation == "percentile":
+        if percentile is None:
+            raise ValueError('aggregation="percentile" requires a percentile value.')
+        return ChmPercentileAggregation(percentile=percentile)
+    if percentile is not None:
+        raise ValueError('percentile is only used with aggregation="percentile".')
+    methods = {
+        "max": ChmMaxAggregation,
+        "mean": ChmMeanAggregation,
+        "median": ChmMedianAggregation,
+    }
+    if aggregation not in methods:
+        raise ValueError(
+            'aggregation must be one of "max", "mean", "median", or '
+            f'"percentile", got {aggregation!r}.'
+        )
+    return methods[aggregation]()
+
+
+def _build_chm_spike_filter(spike_filter):
+    """Translate a spike-filter keyword into a CHM spike-filter target.
+
+    - ``None`` -> ``UNSET`` (the API applies its default filter).
+    - ``False`` -> ``None`` (disable filtering, keeping every return).
+    - ``True`` -> a default ``ChmSpikeFilter``.
+    - a mapping -> a ``ChmSpikeFilter`` built from its fields.
+    - a ``ChmSpikeFilter`` -> passed through unchanged.
+    """
+    if spike_filter is None:
+        return UNSET
+    if spike_filter is False:
+        return None
+    if spike_filter is True:
+        return ChmSpikeFilter()
+    if isinstance(spike_filter, ChmSpikeFilter):
+        return spike_filter
+    if isinstance(spike_filter, Mapping):
+        return ChmSpikeFilter(**spike_filter)
+    raise ValueError(
+        "spike_filter must be a bool, a mapping of filter fields, or a "
+        f"ChmSpikeFilter, got {spike_filter!r}."
+    )
 
 
 def _fill_for(dtype, nodata=None):
@@ -355,6 +444,21 @@ class Grid(GridModel):
                 return grid_band
         keys = [b.key for b in self.bands]
         raise ValueError(f"Grid has no band {band!r}. Available bands: {keys}.")
+
+    @property
+    def represented_year(self) -> Optional[int]:
+        """Calendar year the fuel data represents, as reported by the API.
+
+        Populated on LANDFIRE fuel model grids. For an annual product this is
+        the landscape vintage (the ``version``); for a seasonal product it is
+        the projected season year read from the LANDFIRE Product Service
+        catalog. ``None`` when the source does not report a year.
+        """
+        # `source` is a free-form GridSource, so read the server-set `year`
+        # off its additional properties rather than a typed attribute.
+        if self.source is None:
+            return None
+        return self.source.additional_properties.get("year")
 
     @classmethod
     def from_id(cls, domain_id: str, grid_id: str) -> "Grid":
@@ -1075,6 +1179,306 @@ def create_canopy_fuel_grid_from_landfire(
     return Grid._from_model(expect(response, HTTPStatus.CREATED))
 
 
+# Named-method aliases for the per-band canopy reduction kwargs. Each maps a
+# friendly string to the request model built with its default parameters; a
+# caller who needs non-default parameters passes the model instance directly.
+_CBD_METHODS = {
+    "load_over_depth": CanopyCbdLoadOverDepth,
+    "running_mean": CanopyCbdRunningMean,
+}
+_CBH_METHODS = {
+    "mean": CanopyCbhMean,
+    "minimum": CanopyCbhMinimum,
+    "percentile": CanopyCbhPercentile,
+    "threshold": CanopyProfileThreshold,
+}
+_CHM_METHODS = {
+    "percentile": CanopyChmHeightPercentile,
+    "threshold": CanopyProfileThreshold,
+}
+_CC_METHODS = {
+    "cover_fraction": CanopyCcCoverFraction,
+    "crown_overlap": CanopyCcCrownOverlap,
+    "crown_union": CanopyCcCrownUnion,
+}
+
+
+def _canopy_method(value, name: str, methods: dict):
+    """Resolve a per-band canopy method kwarg to its request model or UNSET.
+
+    ``value`` may be ``None`` (UNSET), a string naming a default-parameter
+    method in ``methods``, or a prebuilt method model (passed through).
+    """
+    if value is None:
+        return UNSET
+    if isinstance(value, str):
+        factory = methods.get(value)
+        if factory is None:
+            raise ValueError(
+                f"{name} must be one of {sorted(methods)} or a canopy "
+                f"{name} method object, got {value!r}."
+            )
+        # CanopyCbhPercentile requires an explicit percentile; steer the
+        # caller to the model instead of constructing an invalid default.
+        try:
+            return factory()
+        except TypeError:
+            raise ValueError(
+                f'{name}="{value}" needs parameters; pass the method object, '
+                f"e.g. {factory.__name__}(...)."
+            ) from None
+    return value
+
+
+def _canopy_biomass_source(equations, column):
+    """Build the biomass source union from friendly kwargs, or UNSET."""
+    if equations is not None and column is not None:
+        raise ValueError("Specify at most one of biomass_equations or biomass_column.")
+    if column is not None:
+        return InventoryColumnCanopyBiomassSource(column=column)
+    if equations is not None:
+        return AllometryCanopyBiomassSource(equations=CanopyBiomassEquations(equations))
+    return UNSET
+
+
+def _canopy_available_fuel(foliage_fraction, branchwood_fraction, size_partition):
+    """Build the available-fuel reduction from friendly kwargs, or UNSET."""
+    if (
+        foliage_fraction is None
+        and branchwood_fraction is None
+        and size_partition is None
+    ):
+        return UNSET
+    branchwood = UNSET
+    if branchwood_fraction is not None or size_partition is not None:
+        branchwood = CanopyBranchwood(
+            fraction=_opt(branchwood_fraction),
+            size_partition=(
+                CanopyBranchwoodSizePartition(size_partition)
+                if size_partition is not None
+                else UNSET
+            ),
+        )
+    return CanopyAvailableFuel(
+        foliage_fraction=_opt(foliage_fraction), branchwood=branchwood
+    )
+
+
+def _canopy_max_crown_radius_source(equations, column):
+    """Build the max-crown-radius source union from friendly kwargs, or UNSET."""
+    if equations is not None and column is not None:
+        raise ValueError(
+            "Specify at most one of max_crown_radius_equations or "
+            "max_crown_radius_column."
+        )
+    if column is not None:
+        return InventoryColumnMaxCrownRadiusSource(column=column)
+    if equations is not None:
+        return CanopyAllometryMaxCrownRadiusSource(
+            equations=CanopyCrownWidthEquations(equations)
+        )
+    return UNSET
+
+
+def _canopy_crown_class_adjustment(value):
+    """Resolve the crown-class adjustment kwarg to its union model or UNSET."""
+    if value is None:
+        return UNSET
+    if value == "none":
+        return CanopyNoCrownClassAdjustment()
+    if value == "fuelcalc_table":
+        return CanopyFuelcalcCrownClassAdjustment()
+    raise ValueError(
+        f'crown_class_adjustment must be "none" or "fuelcalc_table", ' f"got {value!r}."
+    )
+
+
+def create_canopy_fuel_grid_from_inventory(
+    inventory,
+    bands: Optional[list] = None,
+    biomass_equations: Optional[str] = None,
+    biomass_column: Optional[str] = None,
+    foliage_fraction: Optional[float] = None,
+    branchwood_fraction: Optional[float] = None,
+    branchwood_size_partition: Optional[str] = None,
+    species_inclusion: Optional[str] = None,
+    crown_class_adjustment: Optional[str] = None,
+    min_tree_height: Optional[float] = None,
+    vertical_distribution: Optional[str] = None,
+    layer_depth: Optional[float] = None,
+    horizontal_distribution: Optional[str] = None,
+    max_crown_radius_equations: Optional[str] = None,
+    max_crown_radius_column: Optional[str] = None,
+    cbd=None,
+    cbh=None,
+    chm=None,
+    cc=None,
+    output_resolution_m: Optional[float] = None,
+    align_to=None,
+    resampling: Optional[str] = None,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+) -> Grid:
+    """Create a canopy fuel grid from a completed tree inventory.
+
+    Derives the canopy metrics fire models consume — canopy bulk density
+    (``cbd``), canopy base height (``cbh``), canopy height (``chm``), canopy
+    cover (``cc``), and optionally canopy fuel load (``cfl``) — for each cell
+    directly from the inventory's trees. Only live trees contribute canopy
+    fuel. The bands share keys and units with the LANDFIRE canopy source.
+
+    Parameters
+    ----------
+    inventory : Inventory or str
+        A completed tree inventory (or its id) to derive canopy metrics from.
+        Passing the id alone requires the inventory to be reachable for its
+        domain; pass the Inventory object to avoid an extra lookup.
+    bands : list, optional
+        Output bands (``InventoryCanopyBand`` members or their string keys:
+        "cbd", "cbh", "chm", "cc", "cfl"). Defaults to the four canopy bands
+        ``cbd``, ``cbh``, ``chm``, and ``cc``.
+    biomass_equations : str, optional
+        Allometric equations for crown biomass: "nsvb" (default), "jenkins",
+        or "brown_1978". Mutually exclusive with ``biomass_column``.
+    biomass_column : str, optional
+        Inventory column holding precomputed per-tree available canopy fuel,
+        used in place of allometry. Mutually exclusive with
+        ``biomass_equations``; when set, ``available_fuel``, species
+        inclusion, and crown-class adjustment do not affect fuel magnitude.
+    foliage_fraction : float, optional
+        Fraction of foliage biomass counted as available fuel (allometry
+        only, default 1.0).
+    branchwood_fraction : float, optional
+        Fraction of the branchwood size basis counted as available fuel
+        (allometry only).
+    branchwood_size_partition : str, optional
+        Size basis for the branchwood fraction: "equations",
+        "brown_proportions", or "none" (allometry only).
+    species_inclusion : str, optional
+        Which species contribute: "all_species" or "fuelcalc_default" (which
+        excludes most hardwoods).
+    crown_class_adjustment : str, optional
+        Crown-weight adjustment for canopy position: "none" (default) or
+        "fuelcalc_table".
+    min_tree_height : float, optional
+        Trees shorter than this height in meters contribute no canopy fuel
+        (default 0.0).
+    vertical_distribution : str, optional
+        How each tree's fuel stacks over its crown: "reinhardt_2006" or
+        "uniform".
+    layer_depth : float, optional
+        Vertical profile layer depth in meters (default 0.3048).
+    horizontal_distribution : str, optional
+        How a tree's fuel is attributed to cells: "crown_projected" (default)
+        or "stem".
+    max_crown_radius_equations : str, optional
+        Allometric equations for maximum crown radius: "purves" (default) or
+        "crookston_stage". Mutually exclusive with
+        ``max_crown_radius_column``.
+    max_crown_radius_column : str, optional
+        Inventory column holding per-tree maximum crown radius in meters, used
+        in place of allometry. Mutually exclusive with
+        ``max_crown_radius_equations``.
+    cbd : str or CanopyCbdLoadOverDepth or CanopyCbdRunningMean, optional
+        Canopy bulk density method: "load_over_depth", "running_mean", or a
+        method object for non-default parameters.
+    cbh : str or method object, optional
+        Canopy base height method: "mean", "minimum", "percentile",
+        "threshold", or a method object (``CanopyCbhMean``,
+        ``CanopyCbhMinimum``, ``CanopyCbhPercentile``, or
+        ``CanopyProfileThreshold``) for non-default parameters.
+    chm : str or method object, optional
+        Canopy height method: "percentile", "threshold", or a method object
+        (``CanopyChmHeightPercentile`` or ``CanopyProfileThreshold``).
+    cc : str or method object, optional
+        Canopy cover method: "cover_fraction", "crown_overlap", "crown_union",
+        or a method object for non-default parameters.
+    output_resolution_m : float, optional
+        Output cell size in meters, anchored to the domain origin. Defaults to
+        30 m when no alignment target is given.
+    align_to : Grid or str, optional
+        Match the lattice of an existing grid (or its id).
+    resampling : str, optional
+        Resampling method for the alignment target.
+    name, description : str, optional
+        Metadata for the grid.
+    tags : List[str], optional
+        Tags for the grid.
+
+    Returns
+    -------
+    Grid
+        The created Grid object (job status "pending" or "running").
+
+    Raises
+    ------
+    ValueError
+        If ``inventory`` is passed as a bare id with no resolvable domain, if
+        mutually exclusive kwargs are combined, or if a method name is
+        unknown.
+
+    Examples
+    --------
+    >>> import fastfuels_sdk.v2 as ff
+    >>> grid = ff.grids.create_canopy_fuel_grid_from_inventory(
+    ...     inventory, bands=["cbd", "cbh", "chm", "cc", "cfl"]
+    ... )
+    >>> grid.wait()
+    """
+    domain_id = getattr(inventory, "domain_id", None)
+    if domain_id is None:
+        raise ValueError(
+            "Pass an Inventory object so its domain can be resolved; a bare "
+            "inventory id does not identify a domain."
+        )
+    source_inventory_id = getattr(inventory, "id", inventory)
+
+    request_body = CreateInventoryCanopyRequest(
+        source_inventory_id=source_inventory_id,
+        biomass_source=_canopy_biomass_source(biomass_equations, biomass_column),
+        available_fuel=_canopy_available_fuel(
+            foliage_fraction, branchwood_fraction, branchwood_size_partition
+        ),
+        species_inclusion=(
+            CanopySpeciesInclusion(species_inclusion)
+            if species_inclusion is not None
+            else UNSET
+        ),
+        crown_class_adjustment=_canopy_crown_class_adjustment(crown_class_adjustment),
+        min_tree_height=_opt(min_tree_height),
+        vertical_distribution=(
+            CanopyVerticalDistribution(vertical_distribution)
+            if vertical_distribution is not None
+            else UNSET
+        ),
+        layer_depth=_opt(layer_depth),
+        horizontal_distribution=(
+            CanopyHorizontalDistribution(horizontal_distribution)
+            if horizontal_distribution is not None
+            else UNSET
+        ),
+        max_crown_radius_source=_canopy_max_crown_radius_source(
+            max_crown_radius_equations, max_crown_radius_column
+        ),
+        cbd=_canopy_method(cbd, "cbd", _CBD_METHODS),
+        cbh=_canopy_method(cbh, "cbh", _CBH_METHODS),
+        chm=_canopy_method(chm, "chm", _CHM_METHODS),
+        cc=_canopy_method(cc, "cc", _CC_METHODS),
+        bands=_enum_list(bands, InventoryCanopyBand),
+        alignment=_build_alignment(
+            output_resolution_m, align_to, resampling=resampling
+        ),
+        name=name,
+        description=description,
+        tags=_opt(tags),
+    )
+    response = create_inventory_canopy_grid.sync_detailed(
+        domain_id, client=ensure_client(), body=request_body
+    )
+    return Grid._from_model(expect(response, HTTPStatus.CREATED))
+
+
 def create_canopy_height_grid_from_meta(
     domain,
     version: Optional[str] = None,
@@ -1214,6 +1618,9 @@ def create_canopy_height_grid_from_point_cloud(
     output_resolution_m: Optional[float] = None,
     align_to=None,
     resampling: Optional[str] = None,
+    aggregation: Optional[str] = None,
+    percentile: Optional[float] = None,
+    spike_filter=None,
     extent_buffer_cells: int = 0,
     name: str = "",
     description: str = "",
@@ -1233,6 +1640,19 @@ def create_canopy_height_grid_from_point_cloud(
         Match the lattice of an existing grid (or its id).
     resampling : str, optional
         Resampling method for the continuous canopy-height band.
+    aggregation : str, optional
+        Statistic each cell reduces its above-ground return heights with: one of
+        ``"max"``, ``"mean"``, ``"median"``, or ``"percentile"``. Defaults to the
+        API's ``"max"``.
+    percentile : float, optional
+        Rank to take (0-100), used only with ``aggregation="percentile"``. 100 is
+        the tallest return and 50 the median.
+    spike_filter : bool, Mapping, or ChmSpikeFilter, optional
+        Removal of lone spurious returns. ``None`` (the default) applies the
+        API's default filter; ``False`` disables it, keeping every return;
+        ``True`` applies a default ``ChmSpikeFilter``; a mapping of filter fields
+        (``min_canopy_footprint_m``, ``min_prominence_m``) or a ``ChmSpikeFilter``
+        sets custom thresholds.
     extent_buffer_cells : int, optional
         Result-grid cells to buffer around the domain extent (0-10, default 0).
     name, description : str, optional
@@ -1250,7 +1670,8 @@ def create_canopy_height_grid_from_point_cloud(
     Raises
     ------
     ValueError
-        If the point cloud is not completed or is not airborne.
+        If the point cloud is not completed or is not airborne, or if the
+        aggregation and percentile arguments are inconsistent.
     """
     if point_cloud.status != JobStatus.COMPLETED:
         raise ValueError(
@@ -1270,6 +1691,8 @@ def create_canopy_height_grid_from_point_cloud(
             align_to,
             resampling=resampling,
         ),
+        aggregation=_build_chm_aggregation(aggregation, percentile),
+        spike_filter=_build_chm_spike_filter(spike_filter),
         extent_buffer_cells=extent_buffer_cells,
         name=name,
         description=description,
