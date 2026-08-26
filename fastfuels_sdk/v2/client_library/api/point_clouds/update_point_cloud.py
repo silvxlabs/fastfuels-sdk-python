@@ -75,42 +75,43 @@ def sync_detailed(
 ) -> Response[HTTPValidationError | PointCloud]:
     """Update a point cloud
 
-     # Update Point Cloud
+     # Update a Point Cloud
 
-    Updates the metadata of an existing point cloud. Only the fields provided in
-    the request body are modified.
+    Updates the user-editable metadata of an existing point cloud. Only fields
+    present in the request body are changed.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain the point cloud belongs to.
-    - **point_cloud_id**: (string) The unique identifier of the point cloud.
+    - **domain_id**: Domain the point cloud belongs to.
+    - **point_cloud_id**: Unique point-cloud identifier.
 
     ## Request Body
 
-    All fields are optional:
+    Every field is optional:
 
-    - **name**: (string) New name for the point cloud.
-    - **description**: (string) New description.
-    - **tags**: (array of strings) New tags (replaces existing).
+    - **name**: New human-readable name.
+    - **description**: New free-text description.
+    - **tags**: Replacement tag list. Supplying an empty list removes all tags.
 
-    ## What Cannot Be Updated
+    Omitted fields retain their current values.
 
-    The following are immutable through this endpoint:
+    ## Immutable Fields
 
-    - **id**, **domain_id**, **type**, **source**, **georeference**
-    - **created_on** (creation timestamp is permanent)
-    - **checksum** (changes only when the point cloud's content is rebuilt, never
-      via metadata updates)
+    This endpoint cannot alter stored point data or derived/provenance fields,
+    including `id`, `domain_id`, `type`, `source`, `georeference`, `summary`,
+    `status`, `created_on`, or `checksum`. A metadata-only update therefore does
+    not make resources derived from the point cloud stale.
 
-    The **modified_on** field is updated automatically.
+    `modified_on` is updated automatically.
 
     ## Response
 
-    Returns the updated point cloud resource.
+    The updated point-cloud resource.
 
     ## Error Responses
 
-    - **404 Not Found**: The point cloud does not exist or the user does not have access.
+    - **404 Not Found**: The point cloud does not exist, belongs to another
+      domain, or is not accessible to the caller.
 
     Args:
         domain_id (str):
@@ -151,42 +152,43 @@ def sync(
 ) -> HTTPValidationError | PointCloud | None:
     """Update a point cloud
 
-     # Update Point Cloud
+     # Update a Point Cloud
 
-    Updates the metadata of an existing point cloud. Only the fields provided in
-    the request body are modified.
+    Updates the user-editable metadata of an existing point cloud. Only fields
+    present in the request body are changed.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain the point cloud belongs to.
-    - **point_cloud_id**: (string) The unique identifier of the point cloud.
+    - **domain_id**: Domain the point cloud belongs to.
+    - **point_cloud_id**: Unique point-cloud identifier.
 
     ## Request Body
 
-    All fields are optional:
+    Every field is optional:
 
-    - **name**: (string) New name for the point cloud.
-    - **description**: (string) New description.
-    - **tags**: (array of strings) New tags (replaces existing).
+    - **name**: New human-readable name.
+    - **description**: New free-text description.
+    - **tags**: Replacement tag list. Supplying an empty list removes all tags.
 
-    ## What Cannot Be Updated
+    Omitted fields retain their current values.
 
-    The following are immutable through this endpoint:
+    ## Immutable Fields
 
-    - **id**, **domain_id**, **type**, **source**, **georeference**
-    - **created_on** (creation timestamp is permanent)
-    - **checksum** (changes only when the point cloud's content is rebuilt, never
-      via metadata updates)
+    This endpoint cannot alter stored point data or derived/provenance fields,
+    including `id`, `domain_id`, `type`, `source`, `georeference`, `summary`,
+    `status`, `created_on`, or `checksum`. A metadata-only update therefore does
+    not make resources derived from the point cloud stale.
 
-    The **modified_on** field is updated automatically.
+    `modified_on` is updated automatically.
 
     ## Response
 
-    Returns the updated point cloud resource.
+    The updated point-cloud resource.
 
     ## Error Responses
 
-    - **404 Not Found**: The point cloud does not exist or the user does not have access.
+    - **404 Not Found**: The point cloud does not exist, belongs to another
+      domain, or is not accessible to the caller.
 
     Args:
         domain_id (str):
@@ -222,42 +224,43 @@ async def asyncio_detailed(
 ) -> Response[HTTPValidationError | PointCloud]:
     """Update a point cloud
 
-     # Update Point Cloud
+     # Update a Point Cloud
 
-    Updates the metadata of an existing point cloud. Only the fields provided in
-    the request body are modified.
+    Updates the user-editable metadata of an existing point cloud. Only fields
+    present in the request body are changed.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain the point cloud belongs to.
-    - **point_cloud_id**: (string) The unique identifier of the point cloud.
+    - **domain_id**: Domain the point cloud belongs to.
+    - **point_cloud_id**: Unique point-cloud identifier.
 
     ## Request Body
 
-    All fields are optional:
+    Every field is optional:
 
-    - **name**: (string) New name for the point cloud.
-    - **description**: (string) New description.
-    - **tags**: (array of strings) New tags (replaces existing).
+    - **name**: New human-readable name.
+    - **description**: New free-text description.
+    - **tags**: Replacement tag list. Supplying an empty list removes all tags.
 
-    ## What Cannot Be Updated
+    Omitted fields retain their current values.
 
-    The following are immutable through this endpoint:
+    ## Immutable Fields
 
-    - **id**, **domain_id**, **type**, **source**, **georeference**
-    - **created_on** (creation timestamp is permanent)
-    - **checksum** (changes only when the point cloud's content is rebuilt, never
-      via metadata updates)
+    This endpoint cannot alter stored point data or derived/provenance fields,
+    including `id`, `domain_id`, `type`, `source`, `georeference`, `summary`,
+    `status`, `created_on`, or `checksum`. A metadata-only update therefore does
+    not make resources derived from the point cloud stale.
 
-    The **modified_on** field is updated automatically.
+    `modified_on` is updated automatically.
 
     ## Response
 
-    Returns the updated point cloud resource.
+    The updated point-cloud resource.
 
     ## Error Responses
 
-    - **404 Not Found**: The point cloud does not exist or the user does not have access.
+    - **404 Not Found**: The point cloud does not exist, belongs to another
+      domain, or is not accessible to the caller.
 
     Args:
         domain_id (str):
@@ -296,42 +299,43 @@ async def asyncio(
 ) -> HTTPValidationError | PointCloud | None:
     """Update a point cloud
 
-     # Update Point Cloud
+     # Update a Point Cloud
 
-    Updates the metadata of an existing point cloud. Only the fields provided in
-    the request body are modified.
+    Updates the user-editable metadata of an existing point cloud. Only fields
+    present in the request body are changed.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain the point cloud belongs to.
-    - **point_cloud_id**: (string) The unique identifier of the point cloud.
+    - **domain_id**: Domain the point cloud belongs to.
+    - **point_cloud_id**: Unique point-cloud identifier.
 
     ## Request Body
 
-    All fields are optional:
+    Every field is optional:
 
-    - **name**: (string) New name for the point cloud.
-    - **description**: (string) New description.
-    - **tags**: (array of strings) New tags (replaces existing).
+    - **name**: New human-readable name.
+    - **description**: New free-text description.
+    - **tags**: Replacement tag list. Supplying an empty list removes all tags.
 
-    ## What Cannot Be Updated
+    Omitted fields retain their current values.
 
-    The following are immutable through this endpoint:
+    ## Immutable Fields
 
-    - **id**, **domain_id**, **type**, **source**, **georeference**
-    - **created_on** (creation timestamp is permanent)
-    - **checksum** (changes only when the point cloud's content is rebuilt, never
-      via metadata updates)
+    This endpoint cannot alter stored point data or derived/provenance fields,
+    including `id`, `domain_id`, `type`, `source`, `georeference`, `summary`,
+    `status`, `created_on`, or `checksum`. A metadata-only update therefore does
+    not make resources derived from the point cloud stale.
 
-    The **modified_on** field is updated automatically.
+    `modified_on` is updated automatically.
 
     ## Response
 
-    Returns the updated point cloud resource.
+    The updated point-cloud resource.
 
     ## Error Responses
 
-    - **404 Not Found**: The point cloud does not exist or the user does not have access.
+    - **404 Not Found**: The point cloud does not exist, belongs to another
+      domain, or is not accessible to the caller.
 
     Args:
         domain_id (str):

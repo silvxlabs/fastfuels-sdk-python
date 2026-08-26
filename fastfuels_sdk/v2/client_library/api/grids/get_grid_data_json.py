@@ -137,8 +137,22 @@ def sync_detailed(
     **Sparse** (`array_format=sparse`): `data.format = \"sparse\"`,
     `data.indices` are flat positions of non-fill cells, `data.values` are
     their values. `data.fill_value` is the band's fill value, or `null` if
-    the band does not define one — in which case every cell is listed and no
-    compression has been applied.
+    the band's missing cells are nodata (see below) or it defines no fill at
+    all — in the latter case every cell is listed and no compression has been
+    applied.
+
+    ## Missing Cells
+
+    A cell with no data reads back as `null`. Float bands store missing cells
+    as NaN, which JSON cannot represent — a canopy height model, for instance,
+    is NaN wherever no lidar return landed. Bands that mark missing cells with
+    a sentinel value instead (the band's `nodata`) return that value as-is.
+
+    A sparse read of such a band compresses the missing cells out: they are
+    absent from `indices`, and `fill_value` is `null`. Reconstruct the chunk
+    by filling every position not named in `indices` with `null`.
+
+    The `/binary` variant is unaffected — it returns the raw NaN bit patterns.
 
     ## Errors
 
@@ -233,8 +247,22 @@ def sync(
     **Sparse** (`array_format=sparse`): `data.format = \"sparse\"`,
     `data.indices` are flat positions of non-fill cells, `data.values` are
     their values. `data.fill_value` is the band's fill value, or `null` if
-    the band does not define one — in which case every cell is listed and no
-    compression has been applied.
+    the band's missing cells are nodata (see below) or it defines no fill at
+    all — in the latter case every cell is listed and no compression has been
+    applied.
+
+    ## Missing Cells
+
+    A cell with no data reads back as `null`. Float bands store missing cells
+    as NaN, which JSON cannot represent — a canopy height model, for instance,
+    is NaN wherever no lidar return landed. Bands that mark missing cells with
+    a sentinel value instead (the band's `nodata`) return that value as-is.
+
+    A sparse read of such a band compresses the missing cells out: they are
+    absent from `indices`, and `fill_value` is `null`. Reconstruct the chunk
+    by filling every position not named in `indices` with `null`.
+
+    The `/binary` variant is unaffected — it returns the raw NaN bit patterns.
 
     ## Errors
 
@@ -324,8 +352,22 @@ async def asyncio_detailed(
     **Sparse** (`array_format=sparse`): `data.format = \"sparse\"`,
     `data.indices` are flat positions of non-fill cells, `data.values` are
     their values. `data.fill_value` is the band's fill value, or `null` if
-    the band does not define one — in which case every cell is listed and no
-    compression has been applied.
+    the band's missing cells are nodata (see below) or it defines no fill at
+    all — in the latter case every cell is listed and no compression has been
+    applied.
+
+    ## Missing Cells
+
+    A cell with no data reads back as `null`. Float bands store missing cells
+    as NaN, which JSON cannot represent — a canopy height model, for instance,
+    is NaN wherever no lidar return landed. Bands that mark missing cells with
+    a sentinel value instead (the band's `nodata`) return that value as-is.
+
+    A sparse read of such a band compresses the missing cells out: they are
+    absent from `indices`, and `fill_value` is `null`. Reconstruct the chunk
+    by filling every position not named in `indices` with `null`.
+
+    The `/binary` variant is unaffected — it returns the raw NaN bit patterns.
 
     ## Errors
 
@@ -418,8 +460,22 @@ async def asyncio(
     **Sparse** (`array_format=sparse`): `data.format = \"sparse\"`,
     `data.indices` are flat positions of non-fill cells, `data.values` are
     their values. `data.fill_value` is the band's fill value, or `null` if
-    the band does not define one — in which case every cell is listed and no
-    compression has been applied.
+    the band's missing cells are nodata (see below) or it defines no fill at
+    all — in the latter case every cell is listed and no compression has been
+    applied.
+
+    ## Missing Cells
+
+    A cell with no data reads back as `null`. Float bands store missing cells
+    as NaN, which JSON cannot represent — a canopy height model, for instance,
+    is NaN wherever no lidar return landed. Bands that mark missing cells with
+    a sentinel value instead (the band's `nodata`) return that value as-is.
+
+    A sparse read of such a band compresses the missing cells out: they are
+    absent from `indices`, and `fill_value` is `null`. Reconstruct the chunk
+    by filling every position not named in `indices` with `null`.
+
+    The `/binary` variant is unaffected — it returns the raw NaN bit patterns.
 
     ## Errors
 

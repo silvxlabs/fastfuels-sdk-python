@@ -26,18 +26,12 @@ class PointCloudThreeDepCoverageResponse:
             Empty when no lidar covers the domain.
         estimated_point_count (int): Approximate total number of points a fetch would return, summed across
             acquisitions.
-        point_budget (int): Maximum number of points a single fetch may return. Shrink the domain if the estimate
-            exceeds it.
-        exceeds_point_budget (bool): Whether the estimate is over `point_budget`. When true, a create request for this
-            domain is rejected, so check this before committing to a fetch.
     """
 
     available: bool
     coverage_fraction: float
     datasets: list[ThreeDepDatasetCoverage]
     estimated_point_count: int
-    point_budget: int
-    exceeds_point_budget: bool
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -52,10 +46,6 @@ class PointCloudThreeDepCoverageResponse:
 
         estimated_point_count = self.estimated_point_count
 
-        point_budget = self.point_budget
-
-        exceeds_point_budget = self.exceeds_point_budget
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -64,8 +54,6 @@ class PointCloudThreeDepCoverageResponse:
                 "coverage_fraction": coverage_fraction,
                 "datasets": datasets,
                 "estimated_point_count": estimated_point_count,
-                "point_budget": point_budget,
-                "exceeds_point_budget": exceeds_point_budget,
             }
         )
 
@@ -89,17 +77,11 @@ class PointCloudThreeDepCoverageResponse:
 
         estimated_point_count = d.pop("estimated_point_count")
 
-        point_budget = d.pop("point_budget")
-
-        exceeds_point_budget = d.pop("exceeds_point_budget")
-
         point_cloud_three_dep_coverage_response = cls(
             available=available,
             coverage_fraction=coverage_fraction,
             datasets=datasets,
             estimated_point_count=estimated_point_count,
-            point_budget=point_budget,
-            exceeds_point_budget=exceeds_point_budget,
         )
 
         point_cloud_three_dep_coverage_response.additional_properties = d

@@ -7,6 +7,7 @@ class LandfireFbfm40Version(str, Enum):
     VALUE_2 = "2022"
     VALUE_3 = "2023"
     VALUE_4 = "2024"
+    VALUE_5 = "2025"
 
     def __str__(self) -> str:
         return str(self.value)

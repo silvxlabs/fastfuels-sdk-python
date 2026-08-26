@@ -49,7 +49,7 @@ class CreateLandfireFbfm13Request:
                 alignment target. Default `target="domain"` anchors output cells to the domain origin so cross-source
                 composition works by construction. `target="native"` preserves the source pixel anchor. `target="grid"` aligns
                 to an existing grid by id.
-            version (LandfireFbfm13Version | Unset): Available LANDFIRE FBFM13 data versions.
+            version (LandfireFbfm13Version | Unset):
             remove_non_burnable (list[NonBurnableFuelModel] | None | Unset):
     """
 

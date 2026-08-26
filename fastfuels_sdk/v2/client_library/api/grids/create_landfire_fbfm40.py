@@ -94,11 +94,21 @@ def sync_detailed(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
+      Fetches data from a saved copy of the annual release, unless `season` is set.
+    - **season**: (optional) LANDFIRE Seasonal Fuels release: \"ES\" (early
+      spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall). Setting
+      `season` fetches data from the LANDFIRE Product Service on demand
+      rather than a saved annual copy.
 
     ## Response
 
     Returns the created Grid resource with status \"pending\". The backend will
     fetch the data and update status to \"completed\" when ready.
+
+    The response `source` reports `year`: the calendar year the fuel data
+    represents. For an annual grid this is the landscape vintage (same as
+    `version`); for a seasonal grid it is the projected season year (e.g.
+    `version` 2025 + `season` \"SP\" is spring 2026).
 
     Args:
         domain_id (str):
@@ -151,11 +161,21 @@ def sync(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
+      Fetches data from a saved copy of the annual release, unless `season` is set.
+    - **season**: (optional) LANDFIRE Seasonal Fuels release: \"ES\" (early
+      spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall). Setting
+      `season` fetches data from the LANDFIRE Product Service on demand
+      rather than a saved annual copy.
 
     ## Response
 
     Returns the created Grid resource with status \"pending\". The backend will
     fetch the data and update status to \"completed\" when ready.
+
+    The response `source` reports `year`: the calendar year the fuel data
+    represents. For an annual grid this is the landscape vintage (same as
+    `version`); for a seasonal grid it is the projected season year (e.g.
+    `version` 2025 + `season` \"SP\" is spring 2026).
 
     Args:
         domain_id (str):
@@ -203,11 +223,21 @@ async def asyncio_detailed(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
+      Fetches data from a saved copy of the annual release, unless `season` is set.
+    - **season**: (optional) LANDFIRE Seasonal Fuels release: \"ES\" (early
+      spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall). Setting
+      `season` fetches data from the LANDFIRE Product Service on demand
+      rather than a saved annual copy.
 
     ## Response
 
     Returns the created Grid resource with status \"pending\". The backend will
     fetch the data and update status to \"completed\" when ready.
+
+    The response `source` reports `year`: the calendar year the fuel data
+    represents. For an annual grid this is the landscape vintage (same as
+    `version`); for a seasonal grid it is the projected season year (e.g.
+    `version` 2025 + `season` \"SP\" is spring 2026).
 
     Args:
         domain_id (str):
@@ -258,11 +288,21 @@ async def asyncio(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
+      Fetches data from a saved copy of the annual release, unless `season` is set.
+    - **season**: (optional) LANDFIRE Seasonal Fuels release: \"ES\" (early
+      spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall). Setting
+      `season` fetches data from the LANDFIRE Product Service on demand
+      rather than a saved annual copy.
 
     ## Response
 
     Returns the created Grid resource with status \"pending\". The backend will
     fetch the data and update status to \"completed\" when ready.
+
+    The response `source` reports `year`: the calendar year the fuel data
+    represents. For an annual grid this is the landscape vintage (same as
+    `version`); for a seasonal grid it is the projected season year (e.g.
+    `version` 2025 + `season` \"SP\" is spring 2026).
 
     Args:
         domain_id (str):

@@ -63,23 +63,30 @@ def sync_detailed(
 ) -> Response[Any | HTTPValidationError]:
     """Delete a point cloud
 
-     # Delete Point Cloud
+     # Delete a Point Cloud
 
-    Permanently deletes a point cloud by its unique identifier, including the
-    stored point data in GCS. This action cannot be undone.
+    Deletes a point-cloud resource. This action cannot be undone through the
+    API. Its GCS artifact becomes orphaned and is reclaimed asynchronously by
+    the storage cleanup service; callers should treat the point cloud as deleted
+    as soon as this endpoint returns.
+
+    Deleting a point cloud does not delete grids or inventories that were
+    derived from it. Those resources retain their recorded provenance, although
+    the source point cloud can no longer be queried.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain the point cloud belongs to.
-    - **point_cloud_id**: (string) The unique identifier of the point cloud.
+    - **domain_id**: Domain the point cloud belongs to.
+    - **point_cloud_id**: Unique point-cloud identifier.
 
     ## Response
 
-    Returns HTTP 204 No Content with an empty response body.
+    HTTP `204 No Content` with an empty response body.
 
     ## Error Responses
 
-    - **404 Not Found**: The point cloud does not exist or the user does not have access.
+    - **404 Not Found**: The point cloud does not exist, belongs to another
+      domain, or is not accessible to the caller.
 
     Args:
         domain_id (str):
@@ -113,23 +120,30 @@ def sync(
 ) -> Any | HTTPValidationError | None:
     """Delete a point cloud
 
-     # Delete Point Cloud
+     # Delete a Point Cloud
 
-    Permanently deletes a point cloud by its unique identifier, including the
-    stored point data in GCS. This action cannot be undone.
+    Deletes a point-cloud resource. This action cannot be undone through the
+    API. Its GCS artifact becomes orphaned and is reclaimed asynchronously by
+    the storage cleanup service; callers should treat the point cloud as deleted
+    as soon as this endpoint returns.
+
+    Deleting a point cloud does not delete grids or inventories that were
+    derived from it. Those resources retain their recorded provenance, although
+    the source point cloud can no longer be queried.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain the point cloud belongs to.
-    - **point_cloud_id**: (string) The unique identifier of the point cloud.
+    - **domain_id**: Domain the point cloud belongs to.
+    - **point_cloud_id**: Unique point-cloud identifier.
 
     ## Response
 
-    Returns HTTP 204 No Content with an empty response body.
+    HTTP `204 No Content` with an empty response body.
 
     ## Error Responses
 
-    - **404 Not Found**: The point cloud does not exist or the user does not have access.
+    - **404 Not Found**: The point cloud does not exist, belongs to another
+      domain, or is not accessible to the caller.
 
     Args:
         domain_id (str):
@@ -158,23 +172,30 @@ async def asyncio_detailed(
 ) -> Response[Any | HTTPValidationError]:
     """Delete a point cloud
 
-     # Delete Point Cloud
+     # Delete a Point Cloud
 
-    Permanently deletes a point cloud by its unique identifier, including the
-    stored point data in GCS. This action cannot be undone.
+    Deletes a point-cloud resource. This action cannot be undone through the
+    API. Its GCS artifact becomes orphaned and is reclaimed asynchronously by
+    the storage cleanup service; callers should treat the point cloud as deleted
+    as soon as this endpoint returns.
+
+    Deleting a point cloud does not delete grids or inventories that were
+    derived from it. Those resources retain their recorded provenance, although
+    the source point cloud can no longer be queried.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain the point cloud belongs to.
-    - **point_cloud_id**: (string) The unique identifier of the point cloud.
+    - **domain_id**: Domain the point cloud belongs to.
+    - **point_cloud_id**: Unique point-cloud identifier.
 
     ## Response
 
-    Returns HTTP 204 No Content with an empty response body.
+    HTTP `204 No Content` with an empty response body.
 
     ## Error Responses
 
-    - **404 Not Found**: The point cloud does not exist or the user does not have access.
+    - **404 Not Found**: The point cloud does not exist, belongs to another
+      domain, or is not accessible to the caller.
 
     Args:
         domain_id (str):
@@ -206,23 +227,30 @@ async def asyncio(
 ) -> Any | HTTPValidationError | None:
     """Delete a point cloud
 
-     # Delete Point Cloud
+     # Delete a Point Cloud
 
-    Permanently deletes a point cloud by its unique identifier, including the
-    stored point data in GCS. This action cannot be undone.
+    Deletes a point-cloud resource. This action cannot be undone through the
+    API. Its GCS artifact becomes orphaned and is reclaimed asynchronously by
+    the storage cleanup service; callers should treat the point cloud as deleted
+    as soon as this endpoint returns.
+
+    Deleting a point cloud does not delete grids or inventories that were
+    derived from it. Those resources retain their recorded provenance, although
+    the source point cloud can no longer be queried.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain the point cloud belongs to.
-    - **point_cloud_id**: (string) The unique identifier of the point cloud.
+    - **domain_id**: Domain the point cloud belongs to.
+    - **point_cloud_id**: Unique point-cloud identifier.
 
     ## Response
 
-    Returns HTTP 204 No Content with an empty response body.
+    HTTP `204 No Content` with an empty response body.
 
     ## Error Responses
 
-    - **404 Not Found**: The point cloud does not exist or the user does not have access.
+    - **404 Not Found**: The point cloud does not exist, belongs to another
+      domain, or is not accessible to the caller.
 
     Args:
         domain_id (str):

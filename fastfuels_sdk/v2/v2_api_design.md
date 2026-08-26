@@ -292,7 +292,7 @@ operations have no SDK surface. Ordered by what unblocks a user workflow.
 - **3DEP point clouds** — `ff.point_clouds.create_point_cloud_from_3dep(
   domain, datasets=)` + `ff.point_clouds.check_3dep_coverage(domain)`
   (returns `available`, `coverage_fraction`, `estimated_point_count`,
-  `point_budget`, `exceeds_point_budget`, per-acquisition `datasets`).
+  per-acquisition `datasets`).
   Mirrors the existing `grids.check_3dep_coverage` pre-flight pattern; this
   is the first non-upload point cloud source.
 - **Point cloud → CHM** — `ff.grids.create_canopy_height_grid_from_point_cloud(

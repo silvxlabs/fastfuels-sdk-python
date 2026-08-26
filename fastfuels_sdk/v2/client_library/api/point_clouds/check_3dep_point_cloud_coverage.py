@@ -79,10 +79,9 @@ def sync_detailed(
     ## Response
 
     Reports whether any lidar is available, the fraction of the domain covered,
-    the surveys that would be read with what each contributes, and the
-    estimated point count against the per-fetch budget. `datasets[].name`
-    values can be passed as `datasets` when creating the point cloud to pin the
-    fetch.
+    the surveys that would be read with what each contributes, and roughly how
+    many points a fetch would return. `datasets[].name` values can be passed as
+    `datasets` when creating the point cloud to pin the fetch.
 
     ## Error Responses
 
@@ -132,10 +131,9 @@ def sync(
     ## Response
 
     Reports whether any lidar is available, the fraction of the domain covered,
-    the surveys that would be read with what each contributes, and the
-    estimated point count against the per-fetch budget. `datasets[].name`
-    values can be passed as `datasets` when creating the point cloud to pin the
-    fetch.
+    the surveys that would be read with what each contributes, and roughly how
+    many points a fetch would return. `datasets[].name` values can be passed as
+    `datasets` when creating the point cloud to pin the fetch.
 
     ## Error Responses
 
@@ -180,10 +178,9 @@ async def asyncio_detailed(
     ## Response
 
     Reports whether any lidar is available, the fraction of the domain covered,
-    the surveys that would be read with what each contributes, and the
-    estimated point count against the per-fetch budget. `datasets[].name`
-    values can be passed as `datasets` when creating the point cloud to pin the
-    fetch.
+    the surveys that would be read with what each contributes, and roughly how
+    many points a fetch would return. `datasets[].name` values can be passed as
+    `datasets` when creating the point cloud to pin the fetch.
 
     ## Error Responses
 
@@ -231,10 +228,9 @@ async def asyncio(
     ## Response
 
     Reports whether any lidar is available, the fraction of the domain covered,
-    the surveys that would be read with what each contributes, and the
-    estimated point count against the per-fetch budget. `datasets[].name`
-    values can be passed as `datasets` when creating the point cloud to pin the
-    fetch.
+    the surveys that would be read with what each contributes, and roughly how
+    many points a fetch would return. `datasets[].name` values can be passed as
+    `datasets` when creating the point cloud to pin the fetch.
 
     ## Error Responses
 

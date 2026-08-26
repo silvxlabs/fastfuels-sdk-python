@@ -48,7 +48,7 @@ class CreateLandfireFccsRequest:
                 alignment target. Default `target="domain"` anchors output cells to the domain origin so cross-source
                 composition works by construction. `target="native"` preserves the source pixel anchor. `target="grid"` aligns
                 to an existing grid by id.
-            version (LandfireFccsVersion | Unset): Available LANDFIRE FCCS data versions.
+            version (LandfireFccsVersion | Unset):
             remove_bare_ground (bool | Unset):  Default: False.
     """
 

@@ -94,8 +94,6 @@ class TestCreateFrom3dep:
         assert coverage.available is True
         assert coverage.coverage_fraction == pytest.approx(1.0, abs=1e-3)
         assert coverage.estimated_point_count > 0
-        assert coverage.point_budget > 0
-        assert coverage.exceeds_point_budget is False
         assert coverage.datasets
 
     def test_create_with_pinned_dataset(self, covered_3dep_domain):

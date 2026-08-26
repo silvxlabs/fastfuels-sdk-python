@@ -130,28 +130,35 @@ def sync_detailed(
 ) -> Response[HTTPValidationError | ListPointCloudsResponse]:
     """List point clouds in a domain
 
-     # List Point Clouds (Domain)
+     # List Point Clouds in a Domain
 
-    Retrieves a paginated list of the point clouds within a single domain
-    belonging to the authenticated user.
+    Returns a paginated list of point clouds owned by the authenticated caller
+    within one domain.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain to list point clouds for.
+    - **domain_id**: Domain whose point clouds should be listed.
 
     ## Query Parameters
 
-    - **page**: (integer, optional) Page number (zero-indexed). Default: 0.
-    - **size**: (integer, optional) Items per page (1-1000). Default: 100.
-    - **sort_by**: (string, optional) Field to sort by: `created_on`, `modified_on`, `name`.
-    - **sort_order**: (string, optional) Sort direction: `ascending`, `descending`.
-    - **type**: (string, optional) Filter by acquisition type: `als` or `tls`.
-    - **source**: (string, optional) Filter by source name (e.g., `3dep`, `upload`).
-    - **tag**: (string, optional) Filter point clouds that contain this tag.
+    - **page**: Zero-indexed page number. Defaults to `0`.
+    - **size**: Results per page, from `1` through `1000`. Defaults to `100`.
+    - **sort_by**: Sort by `created_on`, `modified_on`, or `name`.
+    - **sort_order**: Sort in `ascending` or `descending` order.
+    - **type**: Keep only airborne (`als`) or terrestrial (`tls`) clouds.
+    - **source**: Keep only clouds from a source such as `3dep` or `upload`.
+    - **tag**: Keep only clouds whose `tags` array contains this value.
 
     ## Response
 
-    Returns a paginated list of point clouds with metadata.
+    A standard paginated response. `point_clouds` contains the resources on the
+    requested page; `current_page`, `page_size`, and `total_items` describe the
+    page and the complete filtered result set.
+
+    ## Error Responses
+
+    - **404 Not Found**: The domain does not exist or is not accessible to the
+      caller.
 
     Args:
         domain_id (str):
@@ -162,7 +169,7 @@ def sync_detailed(
             descending).
         type_ (None | PointCloudType | Unset): Filter point clouds by acquisition type (`als` or
             `tls`).
-        source (None | str | Unset): Filter point clouds by source name (e.g., `3dep`, `upload`).
+        source (None | str | Unset): Filter point clouds by source name (for example, `3dep`).
         tag (None | str | Unset): Filter point clouds that contain this tag.
 
     Raises:
@@ -205,28 +212,35 @@ def sync(
 ) -> HTTPValidationError | ListPointCloudsResponse | None:
     """List point clouds in a domain
 
-     # List Point Clouds (Domain)
+     # List Point Clouds in a Domain
 
-    Retrieves a paginated list of the point clouds within a single domain
-    belonging to the authenticated user.
+    Returns a paginated list of point clouds owned by the authenticated caller
+    within one domain.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain to list point clouds for.
+    - **domain_id**: Domain whose point clouds should be listed.
 
     ## Query Parameters
 
-    - **page**: (integer, optional) Page number (zero-indexed). Default: 0.
-    - **size**: (integer, optional) Items per page (1-1000). Default: 100.
-    - **sort_by**: (string, optional) Field to sort by: `created_on`, `modified_on`, `name`.
-    - **sort_order**: (string, optional) Sort direction: `ascending`, `descending`.
-    - **type**: (string, optional) Filter by acquisition type: `als` or `tls`.
-    - **source**: (string, optional) Filter by source name (e.g., `3dep`, `upload`).
-    - **tag**: (string, optional) Filter point clouds that contain this tag.
+    - **page**: Zero-indexed page number. Defaults to `0`.
+    - **size**: Results per page, from `1` through `1000`. Defaults to `100`.
+    - **sort_by**: Sort by `created_on`, `modified_on`, or `name`.
+    - **sort_order**: Sort in `ascending` or `descending` order.
+    - **type**: Keep only airborne (`als`) or terrestrial (`tls`) clouds.
+    - **source**: Keep only clouds from a source such as `3dep` or `upload`.
+    - **tag**: Keep only clouds whose `tags` array contains this value.
 
     ## Response
 
-    Returns a paginated list of point clouds with metadata.
+    A standard paginated response. `point_clouds` contains the resources on the
+    requested page; `current_page`, `page_size`, and `total_items` describe the
+    page and the complete filtered result set.
+
+    ## Error Responses
+
+    - **404 Not Found**: The domain does not exist or is not accessible to the
+      caller.
 
     Args:
         domain_id (str):
@@ -237,7 +251,7 @@ def sync(
             descending).
         type_ (None | PointCloudType | Unset): Filter point clouds by acquisition type (`als` or
             `tls`).
-        source (None | str | Unset): Filter point clouds by source name (e.g., `3dep`, `upload`).
+        source (None | str | Unset): Filter point clouds by source name (for example, `3dep`).
         tag (None | str | Unset): Filter point clouds that contain this tag.
 
     Raises:
@@ -275,28 +289,35 @@ async def asyncio_detailed(
 ) -> Response[HTTPValidationError | ListPointCloudsResponse]:
     """List point clouds in a domain
 
-     # List Point Clouds (Domain)
+     # List Point Clouds in a Domain
 
-    Retrieves a paginated list of the point clouds within a single domain
-    belonging to the authenticated user.
+    Returns a paginated list of point clouds owned by the authenticated caller
+    within one domain.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain to list point clouds for.
+    - **domain_id**: Domain whose point clouds should be listed.
 
     ## Query Parameters
 
-    - **page**: (integer, optional) Page number (zero-indexed). Default: 0.
-    - **size**: (integer, optional) Items per page (1-1000). Default: 100.
-    - **sort_by**: (string, optional) Field to sort by: `created_on`, `modified_on`, `name`.
-    - **sort_order**: (string, optional) Sort direction: `ascending`, `descending`.
-    - **type**: (string, optional) Filter by acquisition type: `als` or `tls`.
-    - **source**: (string, optional) Filter by source name (e.g., `3dep`, `upload`).
-    - **tag**: (string, optional) Filter point clouds that contain this tag.
+    - **page**: Zero-indexed page number. Defaults to `0`.
+    - **size**: Results per page, from `1` through `1000`. Defaults to `100`.
+    - **sort_by**: Sort by `created_on`, `modified_on`, or `name`.
+    - **sort_order**: Sort in `ascending` or `descending` order.
+    - **type**: Keep only airborne (`als`) or terrestrial (`tls`) clouds.
+    - **source**: Keep only clouds from a source such as `3dep` or `upload`.
+    - **tag**: Keep only clouds whose `tags` array contains this value.
 
     ## Response
 
-    Returns a paginated list of point clouds with metadata.
+    A standard paginated response. `point_clouds` contains the resources on the
+    requested page; `current_page`, `page_size`, and `total_items` describe the
+    page and the complete filtered result set.
+
+    ## Error Responses
+
+    - **404 Not Found**: The domain does not exist or is not accessible to the
+      caller.
 
     Args:
         domain_id (str):
@@ -307,7 +328,7 @@ async def asyncio_detailed(
             descending).
         type_ (None | PointCloudType | Unset): Filter point clouds by acquisition type (`als` or
             `tls`).
-        source (None | str | Unset): Filter point clouds by source name (e.g., `3dep`, `upload`).
+        source (None | str | Unset): Filter point clouds by source name (for example, `3dep`).
         tag (None | str | Unset): Filter point clouds that contain this tag.
 
     Raises:
@@ -348,28 +369,35 @@ async def asyncio(
 ) -> HTTPValidationError | ListPointCloudsResponse | None:
     """List point clouds in a domain
 
-     # List Point Clouds (Domain)
+     # List Point Clouds in a Domain
 
-    Retrieves a paginated list of the point clouds within a single domain
-    belonging to the authenticated user.
+    Returns a paginated list of point clouds owned by the authenticated caller
+    within one domain.
 
     ## Path Parameters
 
-    - **domain_id**: (string) The domain to list point clouds for.
+    - **domain_id**: Domain whose point clouds should be listed.
 
     ## Query Parameters
 
-    - **page**: (integer, optional) Page number (zero-indexed). Default: 0.
-    - **size**: (integer, optional) Items per page (1-1000). Default: 100.
-    - **sort_by**: (string, optional) Field to sort by: `created_on`, `modified_on`, `name`.
-    - **sort_order**: (string, optional) Sort direction: `ascending`, `descending`.
-    - **type**: (string, optional) Filter by acquisition type: `als` or `tls`.
-    - **source**: (string, optional) Filter by source name (e.g., `3dep`, `upload`).
-    - **tag**: (string, optional) Filter point clouds that contain this tag.
+    - **page**: Zero-indexed page number. Defaults to `0`.
+    - **size**: Results per page, from `1` through `1000`. Defaults to `100`.
+    - **sort_by**: Sort by `created_on`, `modified_on`, or `name`.
+    - **sort_order**: Sort in `ascending` or `descending` order.
+    - **type**: Keep only airborne (`als`) or terrestrial (`tls`) clouds.
+    - **source**: Keep only clouds from a source such as `3dep` or `upload`.
+    - **tag**: Keep only clouds whose `tags` array contains this value.
 
     ## Response
 
-    Returns a paginated list of point clouds with metadata.
+    A standard paginated response. `point_clouds` contains the resources on the
+    requested page; `current_page`, `page_size`, and `total_items` describe the
+    page and the complete filtered result set.
+
+    ## Error Responses
+
+    - **404 Not Found**: The domain does not exist or is not accessible to the
+      caller.
 
     Args:
         domain_id (str):
@@ -380,7 +408,7 @@ async def asyncio(
             descending).
         type_ (None | PointCloudType | Unset): Filter point clouds by acquisition type (`als` or
             `tls`).
-        source (None | str | Unset): Filter point clouds by source name (e.g., `3dep`, `upload`).
+        source (None | str | Unset): Filter point clouds by source name (for example, `3dep`).
         tag (None | str | Unset): Filter point clouds that contain this tag.
 
     Raises:
