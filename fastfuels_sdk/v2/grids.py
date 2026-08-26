@@ -131,6 +131,7 @@ from fastfuels_sdk.v2.client_library.models import (
     LandfireFbfm13Version,
     LandfireFbfm40Version,
     LandfireFccsVersion,
+    LandfireSeason,
     LandfireTopographyVersion,
     LeafluxBand,
     ListGridsResponse,
@@ -1774,6 +1775,7 @@ def create_fuel_model_grid_from_landfire_fbfm13(
 def create_fuel_model_grid_from_landfire_fbfm40(
     domain,
     version: Optional[str] = None,
+    season: Optional[str] = None,
     remove_non_burnable: Optional[list] = None,
     output_resolution_m: Optional[float] = None,
     align_to=None,
@@ -1793,7 +1795,15 @@ def create_fuel_model_grid_from_landfire_fbfm40(
         The domain (or its id) to create the grid in.
     version : str, optional
         LANDFIRE version (see ``LandfireFbfm40Version``). Defaults to the API's
-        current version.
+        current version. Seasonal versions (see ``season``) are only available
+        for the LANDFIRE Seasonal Fuels vintages (e.g. "2025").
+    season : str, optional
+        LANDFIRE Seasonal Fuels window (see ``LandfireSeason``): "ES" (early
+        spring), "SP" (spring), "SU" (summer), or "FA" (fall). When set, the
+        grid is fetched from the LANDFIRE Product Service for that season rather
+        than the staged annual release, and ``version`` must be a seasonal
+        vintage (e.g. "2025"). When omitted, ``version`` must be an annual
+        vintage. ``represented_year`` reflects the projected season year.
     remove_non_burnable : list, optional
         Non-burnable fuel models to drop (``NonBurnableFuelModel`` members or
         their string keys, e.g. "NB1", "NB2").
@@ -1821,6 +1831,7 @@ def create_fuel_model_grid_from_landfire_fbfm40(
     """
     request_body = CreateLandfireFbfm40Request(
         version=LandfireFbfm40Version(version) if version is not None else UNSET,
+        season=LandfireSeason(season) if season is not None else UNSET,
         remove_non_burnable=_enum_list(remove_non_burnable, NonBurnableFuelModel),
         alignment=_build_alignment(output_resolution_m, align_to, align, resampling),
         extent_buffer_cells=extent_buffer_cells,
