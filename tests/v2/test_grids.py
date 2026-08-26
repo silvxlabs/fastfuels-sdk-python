@@ -25,6 +25,7 @@ from fastfuels_sdk.v2.grids import (
     _fill_for,
     _opt,
     check_3dep_coverage,
+    create_canopy_fuel_grid_from_inventory,
     create_canopy_fuel_grid_from_landfire,
     create_canopy_height_grid_from_meta,
     create_canopy_height_grid_from_naip_chm,
@@ -55,6 +56,7 @@ from fastfuels_sdk.v2.client_library.api.grids import get_grid_data_json
 from fastfuels_sdk.v2.client_library.models import (
     Band,
     BandType,
+    CanopyCbhPercentile,
     ChmMaxAggregation,
     ChmMeanAggregation,
     ChmMedianAggregation,
@@ -62,6 +64,8 @@ from fastfuels_sdk.v2.client_library.models import (
     ChmSpikeFilter,
     ContinuousBandSummary,
     DuetBand,
+    InventoryCanopyBand,
+    InventoryColumnCanopyBiomassSource,
     FccsLookupBand,
     Fbfm13LookupBand,
     GridAlignmentDomainTarget,
@@ -675,6 +679,172 @@ class TestCreateSurfaceFuelGridFromDuet:
             if surface is not None:
                 surface.delete()
             voxels.delete()
+
+
+class TestCreateCanopyFuelGridFromInventory:
+    @staticmethod
+    def _inventory(status=JobStatus.COMPLETED):
+        return SimpleNamespace(id="inv-id", domain_id="domain-id", status=status)
+
+    def _patch_create(self, monkeypatch):
+        """Patch the endpoint to capture the request body and return a Grid."""
+        created = Grid(
+            id="canopy-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_inventory_canopy_grid, "sync_detailed", fake_create
+        )
+        return captured
+
+    def test_builds_request_from_inventory_object(self, monkeypatch):
+        captured = self._patch_create(monkeypatch)
+
+        grid = create_canopy_fuel_grid_from_inventory(
+            self._inventory(),
+            bands=["cbd", InventoryCanopyBand.CFL],
+            biomass_equations="nsvb",
+            species_inclusion="fuelcalc_default",
+            crown_class_adjustment="fuelcalc_table",
+            min_tree_height=1.83,
+            vertical_distribution="uniform",
+            horizontal_distribution="stem",
+            max_crown_radius_equations="crookston_stage",
+            cbd="running_mean",
+            cbh="minimum",
+            chm="threshold",
+            cc="crown_union",
+            output_resolution_m=30,
+            name="canopy",
+            tags=["test"],
+        )
+
+        assert grid.id == "canopy-grid-id"
+        assert captured["domain_id"] == "domain-id"
+        body = captured["body"]
+        assert body.source_inventory_id == "inv-id"
+        assert body.bands == [InventoryCanopyBand.CBD, InventoryCanopyBand.CFL]
+        assert body.biomass_source.equations.value == "nsvb"
+        assert body.species_inclusion.value == "fuelcalc_default"
+        assert body.crown_class_adjustment.method == "fuelcalc_table"
+        assert body.min_tree_height == 1.83
+        assert body.vertical_distribution.value == "uniform"
+        assert body.horizontal_distribution.value == "stem"
+        assert body.max_crown_radius_source.equations.value == "crookston_stage"
+        assert body.cbd.method == "maximum_running_mean"
+        assert body.cbh.method == "minimum"
+        assert body.chm.method == "bulk_density_threshold"
+        assert body.cc.method == "crown_union"
+        assert body.alignment.resolution == 30
+        assert body.name == "canopy"
+        assert body.tags == ["test"]
+
+    def test_inventory_column_biomass_source(self, monkeypatch):
+        captured = self._patch_create(monkeypatch)
+
+        create_canopy_fuel_grid_from_inventory(
+            self._inventory(), biomass_column="available_canopy_fuel"
+        )
+
+        body = captured["body"]
+        assert isinstance(body.biomass_source, InventoryColumnCanopyBiomassSource)
+        assert body.biomass_source.column == "available_canopy_fuel"
+
+    def test_available_fuel_from_kwargs(self, monkeypatch):
+        captured = self._patch_create(monkeypatch)
+
+        create_canopy_fuel_grid_from_inventory(
+            self._inventory(),
+            foliage_fraction=0.9,
+            branchwood_fraction=0.5,
+            branchwood_size_partition="equations",
+        )
+
+        available_fuel = captured["body"].available_fuel
+        assert available_fuel.foliage_fraction == 0.9
+        assert available_fuel.branchwood.fraction == 0.5
+        assert available_fuel.branchwood.size_partition.value == "equations"
+
+    def test_method_objects_passed_through(self, monkeypatch):
+        captured = self._patch_create(monkeypatch)
+
+        percentile = CanopyCbhPercentile(percentile=25)
+        create_canopy_fuel_grid_from_inventory(self._inventory(), cbh=percentile)
+
+        assert captured["body"].cbh is percentile
+
+    def test_defaults_are_unset(self, monkeypatch):
+        captured = self._patch_create(monkeypatch)
+
+        create_canopy_fuel_grid_from_inventory(self._inventory())
+
+        body = captured["body"]
+        assert body.biomass_source is UNSET
+        assert body.available_fuel is UNSET
+        assert body.cbd is UNSET
+        assert body.bands is UNSET
+        assert body.alignment is UNSET
+
+    def test_bare_id_without_domain_raises(self):
+        with pytest.raises(ValueError, match="Inventory object"):
+            create_canopy_fuel_grid_from_inventory("inv-id")
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"biomass_equations": "nsvb", "biomass_column": "col"},
+            {
+                "max_crown_radius_equations": "purves",
+                "max_crown_radius_column": "col",
+            },
+            {"crown_class_adjustment": "bogus"},
+            {"cbh": "bogus_method"},
+            {"cbh": "percentile"},
+        ],
+    )
+    def test_invalid_kwargs_raise(self, kwargs):
+        with pytest.raises(ValueError):
+            create_canopy_fuel_grid_from_inventory(self._inventory(), **kwargs)
+
+    def test_create_live(self, completed_tree_inventory):
+        canopy = create_canopy_fuel_grid_from_inventory(
+            completed_tree_inventory,
+            bands=["cbd", "cbh", "chm", "cc", "cfl"],
+            output_resolution_m=30,
+            name="test_inventory_canopy",
+            tags=["test"],
+        )
+        try:
+            canopy.wait()
+            assert canopy.status == JobStatus.COMPLETED
+            assert {band.key for band in canopy.bands} == {
+                "cbd",
+                "cbh",
+                "chm",
+                "cc",
+                "cfl",
+            }
+            cbd = canopy.to_numpy("cbd")
+            assert cbd.ndim == 2
+            assert np.isfinite(cbd).any()
+        finally:
+            canopy.delete()
 
 
 class TestCreateIrradianceGridFromLeaflux:
