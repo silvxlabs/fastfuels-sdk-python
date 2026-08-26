@@ -7,8 +7,11 @@ import json
 from uuid import uuid4
 
 # Internal imports
+from fastfuels_sdk.v2.api import ensure_client
 from fastfuels_sdk.v2.point_clouds import (
     PointCloud,
+    _csv,
+    _decode_point_cloud_tile,
     _point_cloud_type,
     check_3dep_coverage,
     create_point_cloud_from_3dep,
@@ -16,11 +19,16 @@ from fastfuels_sdk.v2.point_clouds import (
     get_point_cloud,
     list_point_clouds,
 )
+from fastfuels_sdk.v2.client_library.api.point_clouds import (
+    get_point_cloud_data_json,
+)
 from fastfuels_sdk.v2.client_library.models import JobStatus, PointCloudType
+from fastfuels_sdk.v2.client_library.types import UNSET
 from fastfuels_sdk.v2.domains import Domain
-from fastfuels_sdk.v2.exceptions import NotFoundException
+from fastfuels_sdk.v2.exceptions import NotFoundException, expect
 
 # External imports
+import numpy as np
 import pytest
 
 # The test_domain fixture is session-scoped and shared (tests/v2/conftest.py).
@@ -85,6 +93,77 @@ class TestPointCloudType:
     def test_invalid_raises(self):
         with pytest.raises(ValueError):
             _point_cloud_type("mls")
+
+
+class TestCsv:
+    """Pure unit tests for the query-parameter CSV helper (no API)."""
+
+    def test_none_passes_through(self):
+        assert _csv(None) is None
+
+    def test_string_passes_through(self):
+        assert _csv("X,Y,Z") == "X,Y,Z"
+
+    def test_int_sequence_joins(self):
+        assert _csv([2, 5]) == "2,5"
+
+    def test_str_sequence_joins(self):
+        assert _csv(["X", "Y", "Z"]) == "X,Y,Z"
+
+
+class TestDecodePointCloudTile:
+    """Offline unit tests for binary tile decoding (no API required)."""
+
+    def test_decodes_blocks_in_column_order(self):
+        x = np.array([1, 2, 3], dtype="<i4")
+        z = np.array([10, 20, 30], dtype="<i4")
+        classification = np.array([2, 5, 2], dtype="u1")
+        content = x.tobytes() + z.tobytes() + classification.tobytes()
+        blocks = _decode_point_cloud_tile(
+            content,
+            {
+                "X-Data-Columns": "X,Z,classification",
+                "X-Data-Dtypes": "int32,int32,uint8",
+                "X-Data-Count": "3",
+            },
+        )
+        assert list(blocks.keys()) == ["X", "Z", "classification"]
+        assert np.array_equal(blocks["X"], x)
+        assert np.array_equal(blocks["Z"], z)
+        assert np.array_equal(blocks["classification"], classification)
+        assert blocks["classification"].dtype == np.uint8
+
+    def test_empty_tile_yields_empty_blocks(self):
+        blocks = _decode_point_cloud_tile(
+            b"",
+            {
+                "X-Data-Columns": "X,Y,Z",
+                "X-Data-Dtypes": "int32,int32,int32",
+                "X-Data-Count": "0",
+            },
+        )
+        assert all(block.size == 0 for block in blocks.values())
+
+
+class TestDataOutRequiresCompleted:
+    """The data-out surface guards on completion without touching the API."""
+
+    def _pending_cloud(self):
+        pc = PointCloud.__new__(PointCloud)
+        pc.status = JobStatus.PENDING
+        return pc
+
+    def test_metadata_requires_completed(self):
+        with pytest.raises(ValueError):
+            self._pending_cloud().metadata()
+
+    def test_to_numpy_requires_completed(self):
+        with pytest.raises(ValueError):
+            self._pending_cloud().to_numpy()
+
+    def test_to_dataframe_requires_completed(self):
+        with pytest.raises(ValueError):
+            self._pending_cloud().to_dataframe()
 
 
 class TestCreateFrom3dep:
@@ -198,3 +277,163 @@ class TestDelete:
         pc.delete()
         with pytest.raises(NotFoundException):
             PointCloud.from_id(test_domain.id, pc.id)
+
+
+@pytest.fixture(scope="module")
+def completed_3dep_point_cloud(covered_3dep_domain):
+    """A completed 3DEP point cloud for reading data out. READ-ONLY."""
+    coverage = check_3dep_coverage(covered_3dep_domain)
+    point_cloud = create_point_cloud_from_3dep(
+        covered_3dep_domain,
+        datasets=[coverage.datasets[0].name],
+        name="data_out_3dep_pc",
+    )
+    point_cloud.wait()
+    yield point_cloud
+    try:
+        point_cloud.delete()
+    except NotFoundException:
+        pass
+
+
+def _reassemble_xyz_via_json(point_cloud, lod=None, classes=None) -> np.ndarray:
+    """Reassemble decoded X/Y/Z from the JSON tile endpoint, independently of
+    the binary path used by ``to_numpy``.
+
+    This shares no code with the binary decode: it uses the generated client's
+    fully-typed JSON parser (``get_point_cloud_data_json``) rather than
+    hand-decoding raw bytes. Comparing the two arrays validates the binary
+    decode end to end -- dtype, byte order, block split, and tile paging.
+    """
+    meta = point_cloud.metadata()
+    parts = []
+    for tile in meta.tiles:
+        response = expect(
+            get_point_cloud_data_json.sync_detailed(
+                point_cloud.domain_id,
+                point_cloud.id,
+                tile.tile_x,
+                tile.tile_y,
+                client=ensure_client(),
+                lod=lod if lod is not None else UNSET,
+                classes=_csv(classes) if classes is not None else UNSET,
+                columns="X,Y,Z",
+            )
+        )
+        n = len(response.data["X"])
+        if n == 0:
+            continue
+        block = np.empty((n, 3), dtype=np.float64)
+        for axis, name in enumerate(("X", "Y", "Z")):
+            stored = np.array(response.data[name], dtype=np.float64)
+            block[:, axis] = stored * response.scales[axis] + response.offsets[axis]
+        parts.append(block)
+    return np.concatenate(parts) if parts else np.empty((0, 3), dtype=np.float64)
+
+
+def _max_json_lod(meta, n_columns) -> int:
+    """Highest LOD whose busiest tile stays under the JSON value cap (1e6).
+
+    The JSON endpoint caps a response at 1,000,000 numeric values (rows times
+    columns); the binary endpoint does not. Pick an LOD both transports can
+    serve so the two paths can be compared value for value.
+    """
+    limit = 1_000_000
+    best = 0
+    for lod in range(meta.lod_levels):
+        worst = max((tile.points_by_lod[lod] for tile in meta.tiles), default=0)
+        if worst * n_columns <= limit:
+            best = lod
+        else:
+            break
+    return best
+
+
+def _sorted_rows(points: np.ndarray) -> np.ndarray:
+    """Sort an (N, k) array by its columns, so two point sets compare equal
+    regardless of the order each transport returned them in."""
+    order = np.lexsort(tuple(points[:, i] for i in reversed(range(points.shape[1]))))
+    return points[order]
+
+
+class TestDataOut:
+    """Live tests for reading point-cloud data into memory."""
+
+    def test_metadata(self, completed_3dep_point_cloud):
+        meta = completed_3dep_point_cloud.metadata()
+        assert meta.tiles
+        assert meta.lod_levels > 0
+        assert len(meta.scales) == 3
+        assert len(meta.offsets) == 3
+        assert {"X", "Y", "Z"}.issubset(set(meta.columns.additional_keys))
+
+    def test_to_numpy_shape_and_count(self, completed_3dep_point_cloud):
+        pc = completed_3dep_point_cloud
+        meta = pc.metadata()
+        expected = sum(tile.points_by_lod[-1] for tile in meta.tiles)
+        points = pc.to_numpy()
+        assert points.shape == (expected, 3)
+        assert points.dtype == np.float64
+
+    def test_to_numpy_decodes_into_crs_bounds(self, completed_3dep_point_cloud):
+        # Decoded X/Y must land within the point cloud's reported horizontal
+        # extent; a broken decode (wrong scale/offset/byte order) would not.
+        pc = completed_3dep_point_cloud
+        meta = pc.metadata()
+        points = pc.to_numpy()
+        min_x, min_y, max_x, max_y = meta.bounds
+        assert points[:, 0].min() >= min_x - 1
+        assert points[:, 0].max() <= max_x + 1
+        assert points[:, 1].min() >= min_y - 1
+        assert points[:, 1].max() <= max_y + 1
+        assert points[:, 2].std() > 0
+
+    def test_to_numpy_matches_json_transport(self, completed_3dep_point_cloud):
+        # The binary reconstruction must agree, value for value, with an
+        # independent reassembly over the JSON tile endpoint. Both are read at
+        # an LOD the JSON endpoint can serve without hitting its value cap.
+        pc = completed_3dep_point_cloud
+        lod = _max_json_lod(pc.metadata(), n_columns=3)
+        binary = pc.to_numpy(lod=lod)
+        reference = _reassemble_xyz_via_json(pc, lod=lod)
+        assert binary.shape == reference.shape
+        assert binary.shape[0] > 0
+        assert np.allclose(_sorted_rows(binary), _sorted_rows(reference))
+
+    def test_to_numpy_raw_coordinates(self, completed_3dep_point_cloud):
+        pc = completed_3dep_point_cloud
+        raw = pc.to_numpy(decode_coordinates=False)
+        decoded = pc.to_numpy()
+        meta = pc.metadata()
+        expected = raw.copy()
+        for axis in range(3):
+            expected[:, axis] = raw[:, axis] * meta.scales[axis] + meta.offsets[axis]
+        assert np.allclose(decoded, expected)
+
+    def test_to_numpy_lod_is_subset(self, completed_3dep_point_cloud):
+        pc = completed_3dep_point_cloud
+        coarse = pc.to_numpy(lod=0)
+        full = pc.to_numpy()
+        assert coarse.shape[0] <= full.shape[0]
+        assert coarse.shape[1] == 3
+
+    def test_to_dataframe_columns_and_length(self, completed_3dep_point_cloud):
+        pc = completed_3dep_point_cloud
+        df = pc.to_dataframe()
+        meta = pc.metadata()
+        expected = sum(tile.points_by_lod[-1] for tile in meta.tiles)
+        assert len(df) == expected
+        assert {"X", "Y", "Z"}.issubset(set(df.columns))
+
+    def test_to_dataframe_column_projection(self, completed_3dep_point_cloud):
+        pc = completed_3dep_point_cloud
+        df = pc.to_dataframe(columns=["X", "Y", "Z"])
+        assert list(df.columns) == ["X", "Y", "Z"]
+
+    def test_classes_filter_returns_subset(self, completed_3dep_point_cloud):
+        pc = completed_3dep_point_cloud
+        ground = pc.to_dataframe(classes=[2], columns=["X", "Y", "Z", "classification"])
+        if not ground.empty:
+            assert set(ground["classification"].unique()) <= {2}
+        full = pc.to_dataframe(columns=["X", "Y", "Z"])
+        assert len(ground) <= len(full)
