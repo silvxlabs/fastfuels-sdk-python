@@ -24,7 +24,9 @@ class CreateFosbergFuelMoistureRequest:
             source_topography_grid_id (str): ID of a completed 2D topography grid with `slope` and `aspect` bands (both in
                 degrees).
             source_irradiance_grid_id (str): ID of a completed leaflux irradiance grid with an `irradiance.surface.relative`
-                band. Per-cell shading is derived as 1 - irradiance.surface.relative.
+                band, on the topography grid's exact horizontal lattice (equivalent CRS, y/x shape, and affine transform). Per-
+                cell shading is derived as 1 - irradiance.surface.relative. Resample one grid onto the other when their lattices
+                differ.
             dry_bulb_temp (float): Dry-bulb air temperature in degrees Fahrenheit (the Fosberg table lineage is Fahrenheit).
                 Must be >= 10.
             relative_humidity (float): Relative humidity as a percent (0-100).
