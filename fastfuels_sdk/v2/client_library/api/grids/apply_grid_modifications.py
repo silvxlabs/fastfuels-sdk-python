@@ -115,6 +115,10 @@ def sync_detailed(
 
     ## Conditions
 
+    A rule with an **empty `conditions` list applies its actions to the whole
+    grid** — every cell. Use it for a blanket adjustment (e.g. subtract a
+    constant from every cell); add conditions to narrow the selection.
+
     **Attribute conditions** compare a band's cell values against a value:
     - `band`: dot-notation band key (e.g., `fbfm`, `fuel_load.1hr`)
     - `operator`: `eq`, `ne`, `gt`, `lt`, `ge`, `le`
@@ -247,6 +251,10 @@ def sync(
 
     ## Conditions
 
+    A rule with an **empty `conditions` list applies its actions to the whole
+    grid** — every cell. Use it for a blanket adjustment (e.g. subtract a
+    constant from every cell); add conditions to narrow the selection.
+
     **Attribute conditions** compare a band's cell values against a value:
     - `band`: dot-notation band key (e.g., `fbfm`, `fuel_load.1hr`)
     - `operator`: `eq`, `ne`, `gt`, `lt`, `ge`, `le`
@@ -373,6 +381,10 @@ async def asyncio_detailed(
     both at once — usually none. Split them into one rule per feature instead.
 
     ## Conditions
+
+    A rule with an **empty `conditions` list applies its actions to the whole
+    grid** — every cell. Use it for a blanket adjustment (e.g. subtract a
+    constant from every cell); add conditions to narrow the selection.
 
     **Attribute conditions** compare a band's cell values against a value:
     - `band`: dot-notation band key (e.g., `fbfm`, `fuel_load.1hr`)
@@ -503,6 +515,10 @@ async def asyncio(
     both at once — usually none. Split them into one rule per feature instead.
 
     ## Conditions
+
+    A rule with an **empty `conditions` list applies its actions to the whole
+    grid** — every cell. Use it for a blanket adjustment (e.g. subtract a
+    constant from every cell); add conditions to narrow the selection.
 
     **Attribute conditions** compare a band's cell values against a value:
     - `band`: dot-notation band key (e.g., `fbfm`, `fuel_load.1hr`)

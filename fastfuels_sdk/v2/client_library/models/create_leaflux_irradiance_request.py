@@ -29,7 +29,9 @@ class CreateLeafluxIrradianceRequest:
             description (str | Unset):  Default: ''.
             tags (list[str] | Unset):
             source_terrain_grid_id (None | str | Unset): (optional) ID of a completed 2D terrain grid (with an `elevation`
-                band) in the same domain, used to drape the surface irradiance band over real terrain instead of a flat plane.
+                band) in the same domain and on the LAD grid's exact horizontal lattice (equivalent CRS, shape, and affine
+                transform), used to drape the surface irradiance band over real terrain instead of a flat plane. Resample the
+                terrain with the LAD grid as its alignment target when their lattices differ.
             bands (list[LeafluxBand] | Unset): Which output bands to produce. Defaults to `irradiance.surface.relative`.
             extinction_coefficient (float | Unset): Beer-Lambert extinction coefficient (leaflux `extn`). Default: 0.5.
     """

@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Any, Self, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..types import UNSET, Unset
+
 if TYPE_CHECKING:
     from ..models.inventory_expression_condition import InventoryExpressionCondition
     from ..models.inventory_feature_spatial_condition import (
@@ -26,21 +28,28 @@ T = TypeVar("T", bound="InventoryModification")
 class InventoryModification:
     """A modification rule: when all conditions match, apply actions.
 
+    An empty ``conditions`` list applies the actions to the whole inventory —
+    every tree. Combined with a RemoveAction this clears the inventory.
+
     If a RemoveAction is present, it must be the only action.
 
         Attributes:
-            conditions (list[InventoryExpressionCondition | InventoryFeatureSpatialCondition |
-                InventoryGeometrySpatialCondition | InventoryModificationCondition]):
             actions (list[InventoryModificationAction | RemoveAction]):
+            conditions (list[InventoryExpressionCondition | InventoryFeatureSpatialCondition |
+                InventoryGeometrySpatialCondition | InventoryModificationCondition] | Unset): Conditions that must all be true
+                (ANDed) for the actions to apply. An empty list applies the actions to the entire inventory — every tree.
     """
 
-    conditions: list[
-        InventoryExpressionCondition
-        | InventoryFeatureSpatialCondition
-        | InventoryGeometrySpatialCondition
-        | InventoryModificationCondition
-    ]
     actions: list[InventoryModificationAction | RemoveAction]
+    conditions: (
+        list[
+            InventoryExpressionCondition
+            | InventoryFeatureSpatialCondition
+            | InventoryGeometrySpatialCondition
+            | InventoryModificationCondition
+        ]
+        | Unset
+    ) = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -53,20 +62,6 @@ class InventoryModification:
             InventoryModificationCondition,
         )
 
-        conditions = []
-        for conditions_item_data in self.conditions:
-            conditions_item: dict[str, Any]
-            if (
-                isinstance(conditions_item_data, InventoryModificationCondition)
-                or isinstance(conditions_item_data, InventoryExpressionCondition)
-                or isinstance(conditions_item_data, InventoryGeometrySpatialCondition)
-            ):
-                conditions_item = conditions_item_data.to_dict()
-            else:
-                conditions_item = conditions_item_data.to_dict()
-
-            conditions.append(conditions_item)
-
         actions = []
         for actions_item_data in self.actions:
             actions_item: dict[str, Any]
@@ -77,14 +72,33 @@ class InventoryModification:
 
             actions.append(actions_item)
 
+        conditions: list[dict[str, Any]] | Unset = UNSET
+        if not isinstance(self.conditions, Unset):
+            conditions = []
+            for conditions_item_data in self.conditions:
+                conditions_item: dict[str, Any]
+                if (
+                    isinstance(conditions_item_data, InventoryModificationCondition)
+                    or isinstance(conditions_item_data, InventoryExpressionCondition)
+                    or isinstance(
+                        conditions_item_data, InventoryGeometrySpatialCondition
+                    )
+                ):
+                    conditions_item = conditions_item_data.to_dict()
+                else:
+                    conditions_item = conditions_item_data.to_dict()
+
+                conditions.append(conditions_item)
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
-                "conditions": conditions,
                 "actions": actions,
             }
         )
+        if conditions is not UNSET:
+            field_dict["conditions"] = conditions
 
         return field_dict
 
@@ -104,60 +118,6 @@ class InventoryModification:
         from ..models.remove_action import RemoveAction
 
         d = dict(src_dict)
-        conditions = []
-        _conditions = d.pop("conditions")
-        for conditions_item_data in _conditions:
-
-            def _parse_conditions_item(
-                data: object,
-            ) -> (
-                InventoryExpressionCondition
-                | InventoryFeatureSpatialCondition
-                | InventoryGeometrySpatialCondition
-                | InventoryModificationCondition
-            ):
-                try:
-                    if not isinstance(data, dict):
-                        raise TypeError()
-                    conditions_item_type_0 = InventoryModificationCondition.from_dict(
-                        data
-                    )
-
-                    return conditions_item_type_0
-                except (TypeError, ValueError, AttributeError, KeyError):
-                    pass
-                try:
-                    if not isinstance(data, dict):
-                        raise TypeError()
-                    conditions_item_type_1 = InventoryExpressionCondition.from_dict(
-                        data
-                    )
-
-                    return conditions_item_type_1
-                except (TypeError, ValueError, AttributeError, KeyError):
-                    pass
-                try:
-                    if not isinstance(data, dict):
-                        raise TypeError()
-                    conditions_item_type_2_type_0 = (
-                        InventoryGeometrySpatialCondition.from_dict(data)
-                    )
-
-                    return conditions_item_type_2_type_0
-                except (TypeError, ValueError, AttributeError, KeyError):
-                    pass
-                if not isinstance(data, dict):
-                    raise TypeError()
-                conditions_item_type_2_type_1 = (
-                    InventoryFeatureSpatialCondition.from_dict(data)
-                )
-
-                return conditions_item_type_2_type_1
-
-            conditions_item = _parse_conditions_item(conditions_item_data)
-
-            conditions.append(conditions_item)
-
         actions = []
         _actions = d.pop("actions")
         for actions_item_data in _actions:
@@ -183,9 +143,73 @@ class InventoryModification:
 
             actions.append(actions_item)
 
+        _conditions = d.pop("conditions", UNSET)
+        conditions: (
+            list[
+                InventoryExpressionCondition
+                | InventoryFeatureSpatialCondition
+                | InventoryGeometrySpatialCondition
+                | InventoryModificationCondition
+            ]
+            | Unset
+        ) = UNSET
+        if _conditions is not UNSET:
+            conditions = []
+            for conditions_item_data in _conditions:
+
+                def _parse_conditions_item(
+                    data: object,
+                ) -> (
+                    InventoryExpressionCondition
+                    | InventoryFeatureSpatialCondition
+                    | InventoryGeometrySpatialCondition
+                    | InventoryModificationCondition
+                ):
+                    try:
+                        if not isinstance(data, dict):
+                            raise TypeError()
+                        conditions_item_type_0 = (
+                            InventoryModificationCondition.from_dict(data)
+                        )
+
+                        return conditions_item_type_0
+                    except (TypeError, ValueError, AttributeError, KeyError):
+                        pass
+                    try:
+                        if not isinstance(data, dict):
+                            raise TypeError()
+                        conditions_item_type_1 = InventoryExpressionCondition.from_dict(
+                            data
+                        )
+
+                        return conditions_item_type_1
+                    except (TypeError, ValueError, AttributeError, KeyError):
+                        pass
+                    try:
+                        if not isinstance(data, dict):
+                            raise TypeError()
+                        conditions_item_type_2_type_0 = (
+                            InventoryGeometrySpatialCondition.from_dict(data)
+                        )
+
+                        return conditions_item_type_2_type_0
+                    except (TypeError, ValueError, AttributeError, KeyError):
+                        pass
+                    if not isinstance(data, dict):
+                        raise TypeError()
+                    conditions_item_type_2_type_1 = (
+                        InventoryFeatureSpatialCondition.from_dict(data)
+                    )
+
+                    return conditions_item_type_2_type_1
+
+                conditions_item = _parse_conditions_item(conditions_item_data)
+
+                conditions.append(conditions_item)
+
         inventory_modification = cls(
-            conditions=conditions,
             actions=actions,
+            conditions=conditions,
         )
 
         inventory_modification.additional_properties = d

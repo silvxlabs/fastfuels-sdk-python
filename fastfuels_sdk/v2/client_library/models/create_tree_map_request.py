@@ -39,8 +39,8 @@ class CreateTreeMapRequest:
                 `feature` (reference a persisted Feature resource — road, water, layerset — in the same domain by `feature_id`).
                 Both spatial variants accept `buffer_m` (meters, applied in the domain's projected CRS) to widen the geometry,
                 and `target` (`centroid` or `cell`) to choose which part of the cell is tested. Actions modify band values via
-                `replace`, `multiply`, `divide`, `add`, or `subtract`. See the `GridModification` schema for the full field
-                reference and worked examples.
+                `replace`, `multiply`, `divide`, `add`, or `subtract`. A rule with an empty `conditions` list applies its
+                actions to the whole grid. See the `GridModification` schema for the full field reference and worked examples.
             extent_buffer_cells (int | Unset): Number of result-grid cells included as a buffer around the domain extent in
                 the stored grid. The buffer is measured after the source raster is projected into the domain CRS, so a cell
                 means one cell in the returned grid rather than one source raster cell. Provides context for later operations

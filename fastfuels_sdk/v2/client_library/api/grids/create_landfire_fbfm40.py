@@ -94,11 +94,8 @@ def sync_detailed(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
-      Fetches data from a saved copy of the annual release, unless `season` is set.
     - **season**: (optional) LANDFIRE Seasonal Fuels release: \"ES\" (early
-      spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall). Setting
-      `season` fetches data from the LANDFIRE Product Service on demand
-      rather than a saved annual copy.
+      spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall).
 
     ## Response
 
@@ -161,11 +158,8 @@ def sync(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
-      Fetches data from a saved copy of the annual release, unless `season` is set.
     - **season**: (optional) LANDFIRE Seasonal Fuels release: \"ES\" (early
-      spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall). Setting
-      `season` fetches data from the LANDFIRE Product Service on demand
-      rather than a saved annual copy.
+      spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall).
 
     ## Response
 
@@ -223,11 +217,8 @@ async def asyncio_detailed(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
-      Fetches data from a saved copy of the annual release, unless `season` is set.
     - **season**: (optional) LANDFIRE Seasonal Fuels release: \"ES\" (early
-      spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall). Setting
-      `season` fetches data from the LANDFIRE Product Service on demand
-      rather than a saved annual copy.
+      spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall).
 
     ## Response
 
@@ -288,11 +279,8 @@ async def asyncio(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
-      Fetches data from a saved copy of the annual release, unless `season` is set.
     - **season**: (optional) LANDFIRE Seasonal Fuels release: \"ES\" (early
-      spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall). Setting
-      `season` fetches data from the LANDFIRE Product Service on demand
-      rather than a saved annual copy.
+      spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall).
 
     ## Response
 
