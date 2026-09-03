@@ -12,6 +12,7 @@ from ..models.non_burnable_fuel_model import NonBurnableFuelModel
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
+    from ..models.boundary_scatter import BoundaryScatter
     from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
     from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
     from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
@@ -52,6 +53,10 @@ class CreateLandfireFbfm40Request:
                 to an existing grid by id.
             version (LandfireFbfm40Version | Unset):
             remove_non_burnable (list[NonBurnableFuelModel] | None | Unset):
+            boundary_scatter (BoundaryScatter | None | Unset): Stochastic scattering of fuel model boundaries. Creates
+                ragged, natural-looking transitions between fuel model types instead of the staircase edges that nearest-
+                neighbor resampling produces at sub-30m resolutions. Non-burnable fuel model codes are protected from
+                scattering.
             season (LandfireSeason | None | Unset): LANDFIRE Seasonal Fuels window: ES (early spring), SP (spring), SU
                 (summer), FA (fall). When set, fetches seasonal fuels from the LANDFIRE Product Service for the given season
                 instead of the staged annual release.
@@ -70,10 +75,12 @@ class CreateLandfireFbfm40Request:
     ) = UNSET
     version: LandfireFbfm40Version | Unset = UNSET
     remove_non_burnable: list[NonBurnableFuelModel] | None | Unset = UNSET
+    boundary_scatter: BoundaryScatter | None | Unset = UNSET
     season: LandfireSeason | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.boundary_scatter import BoundaryScatter
         from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
         from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
 
@@ -122,6 +129,14 @@ class CreateLandfireFbfm40Request:
         else:
             remove_non_burnable = self.remove_non_burnable
 
+        boundary_scatter: dict[str, Any] | None | Unset
+        if isinstance(self.boundary_scatter, Unset):
+            boundary_scatter = UNSET
+        elif isinstance(self.boundary_scatter, BoundaryScatter):
+            boundary_scatter = self.boundary_scatter.to_dict()
+        else:
+            boundary_scatter = self.boundary_scatter
+
         season: None | str | Unset
         if isinstance(self.season, Unset):
             season = UNSET
@@ -149,6 +164,8 @@ class CreateLandfireFbfm40Request:
             field_dict["version"] = version
         if remove_non_burnable is not UNSET:
             field_dict["remove_non_burnable"] = remove_non_burnable
+        if boundary_scatter is not UNSET:
+            field_dict["boundary_scatter"] = boundary_scatter
         if season is not UNSET:
             field_dict["season"] = season
 
@@ -156,6 +173,7 @@ class CreateLandfireFbfm40Request:
 
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
+        from ..models.boundary_scatter import BoundaryScatter
         from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
         from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
         from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
@@ -248,6 +266,23 @@ class CreateLandfireFbfm40Request:
             d.pop("remove_non_burnable", UNSET)
         )
 
+        def _parse_boundary_scatter(data: object) -> BoundaryScatter | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                boundary_scatter_type_0 = BoundaryScatter.from_dict(data)
+
+                return boundary_scatter_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(BoundaryScatter | None | Unset, data)
+
+        boundary_scatter = _parse_boundary_scatter(d.pop("boundary_scatter", UNSET))
+
         def _parse_season(data: object) -> LandfireSeason | None | Unset:
             if data is None:
                 return data
@@ -274,6 +309,7 @@ class CreateLandfireFbfm40Request:
             alignment=alignment,
             version=version,
             remove_non_burnable=remove_non_burnable,
+            boundary_scatter=boundary_scatter,
             season=season,
         )
 

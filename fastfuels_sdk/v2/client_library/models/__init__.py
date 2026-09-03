@@ -19,6 +19,7 @@ from .biomass_component import BiomassComponent
 from .biomass_component_state import BiomassComponentState
 from .biomass_equations import BiomassEquations
 from .biomass_unit import BiomassUnit
+from .boundary_scatter import BoundaryScatter
 from .canopy_allometry_max_crown_radius_source import (
     CanopyAllometryMaxCrownRadiusSource,
 )
@@ -358,6 +359,7 @@ __all__ = (
     "BiomassComponentState",
     "BiomassEquations",
     "BiomassUnit",
+    "BoundaryScatter",
     "CanopyAllometryMaxCrownRadiusSource",
     "CanopyAvailableFuel",
     "CanopyBiomassEquations",
