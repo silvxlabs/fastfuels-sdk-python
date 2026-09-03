@@ -56,6 +56,7 @@ from fastfuels_sdk.v2.client_library.models import (
     Grid as GridModel,
     AllometryCanopyBiomassSource,
     ApplyGridModificationsRequest,
+    BoundaryScatter,
     CanopyAllometryMaxCrownRadiusSource,
     CanopyAvailableFuel,
     CanopyBiomassEquations,
@@ -314,6 +315,28 @@ def _build_chm_spike_filter(spike_filter):
     raise ValueError(
         "spike_filter must be a bool, a mapping of filter fields, or a "
         f"ChmSpikeFilter, got {spike_filter!r}."
+    )
+
+
+def _build_boundary_scatter(scatter):
+    """Translate a boundary_scatter kwarg into a BoundaryScatter or UNSET.
+
+    - ``None`` -> ``UNSET`` (the API omits scatter — existing behavior).
+    - ``True`` / ``{}`` -> a default ``BoundaryScatter`` (depth=10, seed=42).
+    - a mapping -> a ``BoundaryScatter`` built from its fields.
+    - a ``BoundaryScatter`` -> passed through unchanged.
+    """
+    if scatter is None:
+        return UNSET
+    if scatter is True:
+        return BoundaryScatter()
+    if isinstance(scatter, BoundaryScatter):
+        return scatter
+    if isinstance(scatter, Mapping):
+        return BoundaryScatter(**scatter)
+    raise ValueError(
+        "boundary_scatter must be True, a mapping of scatter fields, or a "
+        f"BoundaryScatter, got {scatter!r}."
     )
 
 
@@ -1719,6 +1742,7 @@ def create_fuel_model_grid_from_landfire_fbfm13(
     domain,
     version: Optional[str] = None,
     remove_non_burnable: Optional[list] = None,
+    boundary_scatter=None,
     output_resolution_m: Optional[float] = None,
     align_to=None,
     align: Optional[str] = None,
@@ -1741,6 +1765,13 @@ def create_fuel_model_grid_from_landfire_fbfm13(
     remove_non_burnable : list, optional
         Non-burnable fuel models to drop (``NonBurnableFuelModel`` members or
         their string keys, e.g. ``"NB1"``, ``"NB2"``).
+    boundary_scatter : bool, dict, or BoundaryScatter, optional
+        Stochastic scattering of fuel model boundaries to create ragged,
+        natural-looking transitions instead of staircase edges from
+        nearest-neighbor resampling. ``None`` (default) disables scatter.
+        ``True`` or ``{}`` enables scatter with defaults (``depth=10``,
+        ``seed=42``). A dict (e.g. ``{"depth": 5, "seed": 123}``) or a
+        ``BoundaryScatter`` instance sets explicit parameters.
     output_resolution_m : float, optional
         Output cell size in meters, anchored to the domain origin.
     align_to : Grid or str, optional
@@ -1766,6 +1797,7 @@ def create_fuel_model_grid_from_landfire_fbfm13(
     request_body = CreateLandfireFbfm13Request(
         version=LandfireFbfm13Version(version) if version is not None else UNSET,
         remove_non_burnable=_enum_list(remove_non_burnable, NonBurnableFuelModel),
+        boundary_scatter=_build_boundary_scatter(boundary_scatter),
         alignment=_build_alignment(output_resolution_m, align_to, align, resampling),
         extent_buffer_cells=extent_buffer_cells,
         name=name,
@@ -1784,6 +1816,7 @@ def create_fuel_model_grid_from_landfire_fbfm40(
     version: Optional[str] = None,
     season: Optional[str] = None,
     remove_non_burnable: Optional[list] = None,
+    boundary_scatter=None,
     output_resolution_m: Optional[float] = None,
     align_to=None,
     align: Optional[str] = None,
@@ -1814,6 +1847,13 @@ def create_fuel_model_grid_from_landfire_fbfm40(
     remove_non_burnable : list, optional
         Non-burnable fuel models to drop (``NonBurnableFuelModel`` members or
         their string keys, e.g. "NB1", "NB2").
+    boundary_scatter : bool, dict, or BoundaryScatter, optional
+        Stochastic scattering of fuel model boundaries to create ragged,
+        natural-looking transitions instead of staircase edges from
+        nearest-neighbor resampling. ``None`` (default) disables scatter.
+        ``True`` or ``{}`` enables scatter with defaults (``depth=10``,
+        ``seed=42``). A dict (e.g. ``{"depth": 5, "seed": 123}``) or a
+        ``BoundaryScatter`` instance sets explicit parameters.
     output_resolution_m : float, optional
         Output cell size in meters, anchored to the domain origin.
     align_to : Grid or str, optional
@@ -1840,6 +1880,7 @@ def create_fuel_model_grid_from_landfire_fbfm40(
         version=LandfireFbfm40Version(version) if version is not None else UNSET,
         season=LandfireSeason(season) if season is not None else UNSET,
         remove_non_burnable=_enum_list(remove_non_burnable, NonBurnableFuelModel),
+        boundary_scatter=_build_boundary_scatter(boundary_scatter),
         alignment=_build_alignment(output_resolution_m, align_to, align, resampling),
         extent_buffer_cells=extent_buffer_cells,
         name=name,
@@ -1857,6 +1898,7 @@ def create_fuel_model_grid_from_landfire_fccs(
     domain,
     version: Optional[str] = None,
     remove_bare_ground: bool = False,
+    boundary_scatter=None,
     output_resolution_m: Optional[float] = None,
     align_to=None,
     align: Optional[str] = None,
@@ -1878,6 +1920,13 @@ def create_fuel_model_grid_from_landfire_fccs(
         current version.
     remove_bare_ground : bool, optional
         Drop bare-ground fuelbeds (default False).
+    boundary_scatter : bool, dict, or BoundaryScatter, optional
+        Stochastic scattering of fuelbed boundaries to create ragged,
+        natural-looking transitions instead of staircase edges from
+        nearest-neighbor resampling. ``None`` (default) disables scatter.
+        ``True`` or ``{}`` enables scatter with defaults (``depth=10``,
+        ``seed=42``). A dict (e.g. ``{"depth": 5, "seed": 123}``) or a
+        ``BoundaryScatter`` instance sets explicit parameters.
     output_resolution_m : float, optional
         Output cell size in meters, anchored to the domain origin.
     align_to : Grid or str, optional
@@ -1903,6 +1952,7 @@ def create_fuel_model_grid_from_landfire_fccs(
     request_body = CreateLandfireFccsRequest(
         version=LandfireFccsVersion(version) if version is not None else UNSET,
         remove_bare_ground=remove_bare_ground,
+        boundary_scatter=_build_boundary_scatter(boundary_scatter),
         alignment=_build_alignment(output_resolution_m, align_to, align, resampling),
         extent_buffer_cells=extent_buffer_cells,
         name=name,

@@ -57,6 +57,7 @@ from fastfuels_sdk.v2.client_library.api.grids import get_grid_data_json
 from fastfuels_sdk.v2.client_library.models import (
     Band,
     BandType,
+    BoundaryScatter,
     CanopyCbhPercentile,
     ChmMaxAggregation,
     ChmMeanAggregation,
@@ -1391,6 +1392,76 @@ class TestCreateFuelModelGridFromLandfireFbfm40:
                 season="WINTER",
             )
 
+    @pytest.mark.parametrize(
+        "scatter_input,expected_depth,expected_seed",
+        [
+            (True, 10, 42),
+            ({}, 10, 42),
+            ({"depth": 5, "seed": 123}, 5, 123),
+        ],
+    )
+    def test_boundary_scatter_passed_through(
+        self, monkeypatch, scatter_input, expected_depth, expected_seed
+    ):
+        created = Grid(
+            id="fbfm40-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        monkeypatch.setattr(grids, "ensure_client", lambda: object())
+        monkeypatch.setattr(grids.create_landfire_fbfm40, "sync_detailed", fake_create)
+
+        create_fuel_model_grid_from_landfire_fbfm40(
+            SimpleNamespace(id="domain-id"),
+            boundary_scatter=scatter_input,
+        )
+
+        bs = captured["body"].boundary_scatter
+        assert isinstance(bs, BoundaryScatter)
+        assert bs.depth == expected_depth
+        assert bs.seed == expected_seed
+
+    def test_boundary_scatter_none_is_unset(self, monkeypatch):
+        created = Grid(
+            id="fbfm40-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        monkeypatch.setattr(grids, "ensure_client", lambda: object())
+        monkeypatch.setattr(grids.create_landfire_fbfm40, "sync_detailed", fake_create)
+
+        create_fuel_model_grid_from_landfire_fbfm40(
+            SimpleNamespace(id="domain-id"),
+        )
+
+        assert captured["body"].boundary_scatter is UNSET
+
     def test_create_seasonal_reports_projected_year(self):
         # LANDFIRE Seasonal Fuels (version 2025 + SP is spring 2026). The
         # projected season year is resolved from the live LFPS catalog at
@@ -1530,6 +1601,37 @@ class TestCreateFuelModelGridFromLandfireFbfm13:
         assert completed_fbfm13_grid.status == JobStatus.COMPLETED
         assert [band.key for band in completed_fbfm13_grid.bands] == ["fbfm13"]
 
+    def test_boundary_scatter_passed_through(self, monkeypatch):
+        created = Grid(
+            id="fbfm13-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        monkeypatch.setattr(grids, "ensure_client", lambda: object())
+        monkeypatch.setattr(grids.create_landfire_fbfm13, "sync_detailed", fake_create)
+
+        create_fuel_model_grid_from_landfire_fbfm13(
+            SimpleNamespace(id="domain-id"),
+            boundary_scatter={"depth": 5},
+        )
+
+        bs = captured["body"].boundary_scatter
+        assert isinstance(bs, BoundaryScatter)
+        assert bs.depth == 5
+
 
 class TestMask:
     def test_mask_payload_shape(self):
@@ -1592,6 +1694,38 @@ class TestCreateFuelModelGridFromLandfireFccs:
         assert len(grid.id) > 0
         assert grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
         grid.delete()
+
+    def test_boundary_scatter_passed_through(self, monkeypatch):
+        created = Grid(
+            id="fccs-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        monkeypatch.setattr(grids, "ensure_client", lambda: object())
+        monkeypatch.setattr(grids.create_landfire_fccs, "sync_detailed", fake_create)
+
+        create_fuel_model_grid_from_landfire_fccs(
+            SimpleNamespace(id="domain-id"),
+            boundary_scatter=True,
+        )
+
+        bs = captured["body"].boundary_scatter
+        assert isinstance(bs, BoundaryScatter)
+        assert bs.depth == 10
+        assert bs.seed == 42
 
 
 class TestCreatePimGridFromTreemap:
