@@ -232,9 +232,15 @@ from .job_status import JobStatus
 from .key import Key
 from .landfire_canopy_fuel_band import LandfireCanopyFuelBand
 from .landfire_canopy_version import LandfireCanopyVersion
+from .landfire_coverage import LandfireCoverage
+from .landfire_coverage_response import LandfireCoverageResponse
+from .landfire_create_link import LandfireCreateLink
+from .landfire_create_link_body import LandfireCreateLinkBody
 from .landfire_fbfm_13_version import LandfireFbfm13Version
 from .landfire_fbfm_40_version import LandfireFbfm40Version
 from .landfire_fccs_version import LandfireFccsVersion
+from .landfire_release_coverage import LandfireReleaseCoverage
+from .landfire_release_links import LandfireReleaseLinks
 from .landfire_season import LandfireSeason
 from .landfire_topography_version import LandfireTopographyVersion
 from .landscape_export_alignment_domain_target import (
@@ -545,9 +551,15 @@ __all__ = (
     "Key",
     "LandfireCanopyFuelBand",
     "LandfireCanopyVersion",
+    "LandfireCoverage",
+    "LandfireCoverageResponse",
+    "LandfireCreateLink",
+    "LandfireCreateLinkBody",
     "LandfireFbfm13Version",
     "LandfireFbfm40Version",
     "LandfireFccsVersion",
+    "LandfireReleaseCoverage",
+    "LandfireReleaseLinks",
     "LandfireSeason",
     "LandfireTopographyVersion",
     "LandscapeExportAlignmentDomainTarget",
