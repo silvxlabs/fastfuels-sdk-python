@@ -17,6 +17,23 @@ AI-attribution lines to commit messages, PR descriptions, or GitHub issues.
 - Never print, stage, commit, or copy credential values from `.env` into code,
   documentation, logs, commit messages, pull requests, or issues.
 
+## v2 client library is auto-generated
+
+`fastfuels_sdk/v2/client_library/` is **entirely auto-generated** from the
+live API's OpenAPI spec — never hand-edit or hand-create files in it.
+
+- **Regenerate** by running `bash generate_client.sh` from
+  `fastfuels_sdk/v2/`. It pulls the current OpenAPI spec from the
+  deployed API and overwrites `client_library/` using
+  `openapi-python-client`.
+- If an API endpoint is **missing** from the client library, the fix is
+  to regenerate (if the endpoint is already deployed to prod) or wait
+  until the API is deployed first. Never fill the gap by hand-writing
+  models or endpoint modules.
+- The **hand-written SDK layer** lives in the surrounding files
+  (`grids.py`, `point_clouds.py`, `domains.py`, etc.) — these wrap the
+  generated client and are where new SDK methods belong.
+
 ## Documentation
 
 FastFuels has two documentation properties that must stay in concert:
