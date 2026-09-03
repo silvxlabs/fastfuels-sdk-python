@@ -18,6 +18,9 @@ from fastfuels_sdk.v2.exceptions import expect, raise_for_response
 from fastfuels_sdk.v2.client_library.api.grids import (
     apply_grid_modifications as apply_grid_modifications_endpoint,
     check_3dep_coverage as check_3dep_coverage_endpoint,
+    check_landfire_fbfm13_coverage as check_landfire_fbfm13_coverage_endpoint,
+    check_landfire_fbfm40_coverage as check_landfire_fbfm40_coverage_endpoint,
+    check_landfire_fccs_coverage as check_landfire_fccs_coverage_endpoint,
     create_3dep_topography,
     create_compose_grid,
     create_duet_grid,
@@ -128,6 +131,7 @@ from fastfuels_sdk.v2.client_library.models import (
     JobStatus,
     LandfireCanopyFuelBand,
     LandfireCanopyVersion,
+    LandfireCoverageResponse,
     LandfireFbfm13Version,
     LandfireFbfm40Version,
     LandfireFccsVersion,
@@ -184,6 +188,9 @@ __all__ = [
     "list_grids",
     "get_grid",
     "check_3dep_coverage",
+    "check_landfire_fbfm40_coverage",
+    "check_landfire_fbfm13_coverage",
+    "check_landfire_fccs_coverage",
 ]
 
 
@@ -2997,5 +3004,68 @@ def check_3dep_coverage(
         _domain_id(domain),
         client=ensure_client(),
         resolution=ThreeDepResolution(resolution_m) if resolution_m else UNSET,
+    )
+    return expect(response)
+
+
+def check_landfire_fbfm40_coverage(domain) -> LandfireCoverageResponse:
+    """Check LANDFIRE FBFM40 release coverage for a domain.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to check.
+
+    Returns
+    -------
+    LandfireCoverageResponse
+        Per-release coverage, the latest fully-covering release, and
+        ready-made create-request links.
+    """
+    response = check_landfire_fbfm40_coverage_endpoint.sync_detailed(
+        _domain_id(domain),
+        client=ensure_client(),
+    )
+    return expect(response)
+
+
+def check_landfire_fbfm13_coverage(domain) -> LandfireCoverageResponse:
+    """Check LANDFIRE FBFM13 release coverage for a domain.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to check.
+
+    Returns
+    -------
+    LandfireCoverageResponse
+        Per-release coverage, the latest fully-covering release, and
+        ready-made create-request links.
+    """
+    response = check_landfire_fbfm13_coverage_endpoint.sync_detailed(
+        _domain_id(domain),
+        client=ensure_client(),
+    )
+    return expect(response)
+
+
+def check_landfire_fccs_coverage(domain) -> LandfireCoverageResponse:
+    """Check LANDFIRE FCCS release coverage for a domain.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to check.
+
+    Returns
+    -------
+    LandfireCoverageResponse
+        Per-release coverage, the latest fully-covering release, and
+        ready-made create-request links.
+    """
+    response = check_landfire_fccs_coverage_endpoint.sync_detailed(
+        _domain_id(domain),
+        client=ensure_client(),
     )
     return expect(response)
