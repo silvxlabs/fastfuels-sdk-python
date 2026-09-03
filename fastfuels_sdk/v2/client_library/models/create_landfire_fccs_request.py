@@ -10,6 +10,7 @@ from ..models.landfire_fccs_version import LandfireFccsVersion
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
+    from ..models.boundary_scatter import BoundaryScatter
     from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
     from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
     from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
@@ -50,6 +51,9 @@ class CreateLandfireFccsRequest:
                 to an existing grid by id.
             version (LandfireFccsVersion | Unset):
             remove_bare_ground (bool | Unset):  Default: False.
+            boundary_scatter (BoundaryScatter | None | Unset): Stochastic scattering of fuelbed boundaries. Creates ragged,
+                natural-looking transitions between fuelbed types instead of the staircase edges that nearest-neighbor
+                resampling produces at sub-30m resolutions. Bare ground (fuelbed 0) is protected from scattering.
     """
 
     name: str | Unset = ""
@@ -65,9 +69,11 @@ class CreateLandfireFccsRequest:
     ) = UNSET
     version: LandfireFccsVersion | Unset = UNSET
     remove_bare_ground: bool | Unset = False
+    boundary_scatter: BoundaryScatter | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.boundary_scatter import BoundaryScatter
         from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
         from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
 
@@ -104,6 +110,14 @@ class CreateLandfireFccsRequest:
 
         remove_bare_ground = self.remove_bare_ground
 
+        boundary_scatter: dict[str, Any] | None | Unset
+        if isinstance(self.boundary_scatter, Unset):
+            boundary_scatter = UNSET
+        elif isinstance(self.boundary_scatter, BoundaryScatter):
+            boundary_scatter = self.boundary_scatter.to_dict()
+        else:
+            boundary_scatter = self.boundary_scatter
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -123,11 +137,14 @@ class CreateLandfireFccsRequest:
             field_dict["version"] = version
         if remove_bare_ground is not UNSET:
             field_dict["remove_bare_ground"] = remove_bare_ground
+        if boundary_scatter is not UNSET:
+            field_dict["boundary_scatter"] = boundary_scatter
 
         return field_dict
 
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
+        from ..models.boundary_scatter import BoundaryScatter
         from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
         from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
         from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
@@ -194,6 +211,23 @@ class CreateLandfireFccsRequest:
 
         remove_bare_ground = d.pop("remove_bare_ground", UNSET)
 
+        def _parse_boundary_scatter(data: object) -> BoundaryScatter | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                boundary_scatter_type_0 = BoundaryScatter.from_dict(data)
+
+                return boundary_scatter_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(BoundaryScatter | None | Unset, data)
+
+        boundary_scatter = _parse_boundary_scatter(d.pop("boundary_scatter", UNSET))
+
         create_landfire_fccs_request = cls(
             name=name,
             description=description,
@@ -203,6 +237,7 @@ class CreateLandfireFccsRequest:
             alignment=alignment,
             version=version,
             remove_bare_ground=remove_bare_ground,
+            boundary_scatter=boundary_scatter,
         )
 
         create_landfire_fccs_request.additional_properties = d
