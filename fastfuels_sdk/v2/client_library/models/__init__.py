@@ -84,6 +84,7 @@ from .create_inventory_upload_request import CreateInventoryUploadRequest
 from .create_key_request import CreateKeyRequest
 from .create_key_response import CreateKeyResponse
 from .create_landfire_canopy_request import CreateLandfireCanopyRequest
+from .create_landfire_disturbance_request import CreateLandfireDisturbanceRequest
 from .create_landfire_fbfm_13_request import CreateLandfireFbfm13Request
 from .create_landfire_fbfm_40_request import CreateLandfireFbfm40Request
 from .create_landfire_fccs_request import CreateLandfireFccsRequest
@@ -96,6 +97,7 @@ from .create_naip_chm_request import CreateNaipChmRequest
 from .create_netcdf_upload_request import CreateNetcdfUploadRequest
 from .create_osm_road_feature_request import CreateOsmRoadFeatureRequest
 from .create_osm_water_feature_request import CreateOsmWaterFeatureRequest
+from .create_pim_chm_fusion_inventory_request import CreatePimChmFusionInventoryRequest
 from .create_pim_inventory_request import CreatePimInventoryRequest
 from .create_point_cloud_chm_request import CreatePointCloudChmRequest
 from .create_point_cloud_upload_request import CreatePointCloudUploadRequest
@@ -237,6 +239,7 @@ from .landfire_coverage import LandfireCoverage
 from .landfire_coverage_response import LandfireCoverageResponse
 from .landfire_create_link import LandfireCreateLink
 from .landfire_create_link_body import LandfireCreateLinkBody
+from .landfire_disturbance_version import LandfireDisturbanceVersion
 from .landfire_fbfm_13_version import LandfireFbfm13Version
 from .landfire_fbfm_40_version import LandfireFbfm40Version
 from .landfire_fccs_version import LandfireFccsVersion
@@ -304,6 +307,7 @@ from .quicfire_export_request import QuicfireExportRequest
 from .quicfire_export_request_moist_merge import QuicfireExportRequestMoistMerge
 from .quota_exceeded_detail import QuotaExceededDetail
 from .quotas import Quotas
+from .reimputation_method import ReimputationMethod
 from .relative_elevation import RelativeElevation
 from .remove_action import RemoveAction
 from .resampling_method import ResamplingMethod
@@ -420,6 +424,7 @@ __all__ = (
     "CreateKeyRequest",
     "CreateKeyResponse",
     "CreateLandfireCanopyRequest",
+    "CreateLandfireDisturbanceRequest",
     "CreateLandfireFbfm13Request",
     "CreateLandfireFbfm40Request",
     "CreateLandfireFccsRequest",
@@ -432,6 +437,7 @@ __all__ = (
     "CreateNetcdfUploadRequest",
     "CreateOsmRoadFeatureRequest",
     "CreateOsmWaterFeatureRequest",
+    "CreatePimChmFusionInventoryRequest",
     "CreatePimInventoryRequest",
     "CreatePointCloudChmRequest",
     "CreatePointCloudUploadRequest",
@@ -557,6 +563,7 @@ __all__ = (
     "LandfireCoverageResponse",
     "LandfireCreateLink",
     "LandfireCreateLinkBody",
+    "LandfireDisturbanceVersion",
     "LandfireFbfm13Version",
     "LandfireFbfm40Version",
     "LandfireFccsVersion",
@@ -618,6 +625,7 @@ __all__ = (
     "QuicfireExportRequestMoistMerge",
     "QuotaExceededDetail",
     "Quotas",
+    "ReimputationMethod",
     "RelativeElevation",
     "RemoveAction",
     "ResamplingMethod",

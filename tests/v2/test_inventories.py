@@ -9,11 +9,14 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 # Internal imports
-from fastfuels_sdk.v2.grids import Grid
+from fastfuels_sdk.v2.grids import Grid, create_canopy_height_grid_from_meta
 from fastfuels_sdk.v2.inventories import (
     Inventory,
+    ReimputationMethod,
+    _build_fusion_method,
     create_tree_inventory_from_file,
     create_tree_inventory_from_gdam,
+    create_tree_inventory_from_pim_chm_fusion,
     create_tree_inventory_from_pim_grid,
     get_inventory,
     list_inventories,
@@ -41,7 +44,10 @@ from fastfuels_sdk.v2.client_library.models import (
     TreeForestryMetrics,
 )
 from fastfuels_sdk.v2.client_library.types import UNSET, Response
-from fastfuels_sdk.v2.exceptions import NotFoundException
+from fastfuels_sdk.v2.exceptions import (
+    NotFoundException,
+    UnprocessableEntityException,
+)
 
 # External imports
 import numpy as np
@@ -86,6 +92,158 @@ class TestCreateTreeInventoryFromPimGrid:
         assert completed_tree_inventory.status == JobStatus.COMPLETED
         assert completed_tree_inventory.georeference is not None
         assert completed_tree_inventory.checksum
+
+
+class TestCreateTreeInventoryFromPimChmFusion:
+    @pytest.fixture(scope="class")
+    def completed_chm_grid(self, test_domain):
+        """A completed Meta CHM at 5 m: finer than the default 7.5 m
+        reimputation resolution, which must lie between the CHM and PIM
+        cell sizes.
+        """
+        grid = create_canopy_height_grid_from_meta(
+            test_domain, output_resolution_m=5, name="throwaway_fusion_chm"
+        )
+        grid.wait()
+        yield grid
+        grid.delete()
+
+    def test_create(self, test_domain, completed_pim_grid, completed_chm_grid):
+        inventory = create_tree_inventory_from_pim_chm_fusion(
+            test_domain,
+            completed_pim_grid,
+            completed_chm_grid,
+            seed=42,
+            name="throwaway_fusion_inventory",
+        )
+        assert len(inventory.id) > 0
+        assert inventory.domain_id == test_domain.id
+        assert inventory.status in (JobStatus.PENDING, JobStatus.RUNNING)
+        assert inventory.source["source_pim_grid_id"] == completed_pim_grid.id
+        assert inventory.source["source_chm_grid_id"] == completed_chm_grid.id
+        assert inventory.source["fusion"] == ["chm"]
+        assert inventory.source["method"]["name"] == "reimputation"
+        inventory.delete()
+
+    def test_accepts_grid_id_strings(
+        self, test_domain, completed_pim_grid, completed_chm_grid
+    ):
+        inventory = create_tree_inventory_from_pim_chm_fusion(
+            test_domain, completed_pim_grid.id, completed_chm_grid.id, seed=42
+        )
+        assert inventory.domain_id == test_domain.id
+        inventory.delete()
+
+    def test_method_is_recorded_on_source(
+        self, test_domain, completed_pim_grid, completed_chm_grid
+    ):
+        inventory = create_tree_inventory_from_pim_chm_fusion(
+            test_domain,
+            completed_pim_grid,
+            completed_chm_grid,
+            method={"resolution": 15, "min_height": 3.0, "cover_threshold": 0.3},
+            seed=42,
+        )
+        assert inventory.source["method"] == {
+            "name": "reimputation",
+            "resolution": 15,
+            "min_height": 3.0,
+            "cover_threshold": 0.3,
+        }
+        inventory.delete()
+
+    def test_resolution_finer_than_chm_is_rejected(
+        self, test_domain, completed_pim_grid, completed_chm_grid
+    ):
+        with pytest.raises(UnprocessableEntityException, match="finer"):
+            create_tree_inventory_from_pim_chm_fusion(
+                test_domain,
+                completed_pim_grid,
+                completed_chm_grid,
+                method=ReimputationMethod(resolution=1),
+            )
+
+    def test_completes_with_pim_columns(
+        self, test_domain, completed_pim_grid, completed_chm_grid
+    ):
+        inventory = create_tree_inventory_from_pim_chm_fusion(
+            test_domain, completed_pim_grid, completed_chm_grid, seed=42
+        )
+        inventory.wait()
+        assert inventory.status == JobStatus.COMPLETED
+        trees = inventory.to_dataframe()
+        assert len(trees) > 0
+        assert {"x", "y", "dbh", "height", "crown_ratio"} <= set(trees.columns)
+        inventory.delete()
+
+
+class TestBuildFusionMethod:
+    def test_none_is_unset(self):
+        assert _build_fusion_method(None) is UNSET
+
+    def test_model_passes_through(self):
+        method = ReimputationMethod(cover_threshold=0.5)
+        assert _build_fusion_method(method) is method
+
+    def test_mapping_builds_model(self):
+        method = _build_fusion_method({"resolution": 10, "cover_threshold": 0.3})
+        assert isinstance(method, ReimputationMethod)
+        assert method.to_dict() == {
+            "name": "reimputation",
+            "resolution": 10,
+            "min_height": 2.0,
+            "cover_threshold": 0.3,
+        }
+
+    def test_rejects_other_types(self):
+        with pytest.raises(ValueError, match="ReimputationMethod"):
+            _build_fusion_method("reimputation")
+
+    def test_request_body(self, monkeypatch):
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, body=body.to_dict())
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=InventoryModel(
+                    id="inventory-id",
+                    domain_id=domain_id,
+                    type_=InventoryType.TREE,
+                    status=JobStatus.PENDING,
+                    source=InventorySource(),
+                ),
+            )
+
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.ensure_client", lambda: object()
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.create_pim_chm_fusion_inventory.sync_detailed",
+            fake_create,
+        )
+
+        inventory = create_tree_inventory_from_pim_chm_fusion(
+            "domain-id", "pim-id", "chm-id", method={"cover_threshold": 0.3}, seed=7
+        )
+
+        assert isinstance(inventory, Inventory)
+        assert captured["domain_id"] == "domain-id"
+        assert captured["body"] == {
+            "source_pim_grid_id": "pim-id",
+            "source_chm_grid_id": "chm-id",
+            "method": {
+                "name": "reimputation",
+                "resolution": 7.5,
+                "min_height": 2.0,
+                "cover_threshold": 0.3,
+            },
+            "seed": 7,
+            "name": "",
+            "description": "",
+        }
 
 
 class TestForestryMetrics:
