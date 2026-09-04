@@ -224,6 +224,14 @@ Available now — see the [Inventories guide](inventories.md) and the
   container is gone; call `create_tree_inventory_from_pim_grid`,
   `create_tree_inventory_from_chm_grid` (new — stem isolation on a canopy
   height model), or `create_tree_inventory_from_file` on the domain.
+- **Canopy height map fusion takes a grid, not a source name.** v1's
+  `canopy_height_map_source="Meta2024"` on
+  `create_tree_inventory_from_treemap()` becomes a two-grid call: create a
+  canopy height model grid (`ff.grids.create_canopy_height_grid_from_meta`
+  or any other `chm` grid), then pass it alongside the PIM grid to
+  `ff.inventories.create_tree_inventory_from_pim_chm_fusion(domain, pim, chm)`.
+  The `method=` argument exposes the resolution, minimum canopy height, and
+  cover threshold v1 fixed internally.
 - **Upload columns changed.** v1 uploads required `TREE_ID`, `SPCD`,
   `STATUSCD`, `DIA`, `HT` columns. v2 uses the roles `x`, `y`, `height`,
   `dbh`, `crown_ratio`, `fia_species_code`, `fia_status_code`, and a
