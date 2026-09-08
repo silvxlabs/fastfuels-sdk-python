@@ -337,6 +337,28 @@ reduction methods (`cbd`, `cbh`, `chm`, `cc`), among others. See
 `create_canopy_fuel_grid_from_inventory` in the [Reference](../reference.md)
 for the full surface. Pass `align_to` to match another grid's lattice exactly.
 
+## Disturbance grids
+
+To capture recent disturbance — fire, harvest, insects, and other events that
+alter fuels — create a LANDFIRE Limited Annual Disturbance grid. The band is
+categorical, so pass `resampling="nearest"`:
+
+```python
+grid = ff.grids.create_annual_disturbance_grid_from_landfire(
+    domain, output_resolution_m=30, resampling="nearest"
+)
+grid.wait()
+```
+
+```python
+>>> {band.key for band in grid.bands}
+{'annual_disturbance'}
+```
+
+The single `annual_disturbance` band holds categorical LDist codes, fetched on
+demand from the LANDFIRE Product Service. Pass `version` to pin a vintage; it
+defaults to the API's current version.
+
 ## 3D tree fuel grids (voxelization)
 
 The 3D canopy fuel grid — per-voxel bulk density, the input 3D fire models

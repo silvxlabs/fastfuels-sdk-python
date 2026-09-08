@@ -31,6 +31,7 @@ from fastfuels_sdk.v2.grids import (
     create_canopy_height_grid_from_naip_chm,
     create_canopy_height_grid_from_point_cloud,
     create_dead_fuel_moisture_grid_from_fosberg,
+    create_annual_disturbance_grid_from_landfire,
     create_fuel_grid_from_fccs_lookup,
     create_fuel_grid_from_fbfm13_lookup,
     create_fuel_grid_from_fbfm40_lookup,
@@ -1726,6 +1727,110 @@ class TestCreateFuelModelGridFromLandfireFccs:
         assert isinstance(bs, BoundaryScatter)
         assert bs.depth == 10
         assert bs.seed == 42
+
+
+class TestCreateDisturbanceGridFromLandfire:
+    def test_create(self, test_domain):
+        grid = create_annual_disturbance_grid_from_landfire(
+            test_domain,
+            output_resolution_m=30,
+            resampling="nearest",
+            name="throwaway_disturbance",
+        )
+        assert len(grid.id) > 0
+        assert grid.domain_id == test_domain.id
+        assert grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
+        grid.delete()
+
+    def test_completed_band(self, test_domain):
+        grid = create_annual_disturbance_grid_from_landfire(
+            test_domain,
+            output_resolution_m=30,
+            resampling="nearest",
+            name="throwaway_disturbance_completed",
+        )
+        grid.wait()
+        assert grid.status == JobStatus.COMPLETED
+        assert {band.key for band in grid.bands} == {"annual_disturbance"}
+        grid.delete()
+
+    def test_builds_request(self, monkeypatch):
+        created = Grid(
+            id="disturbance-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, client=client, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        client = object()
+        monkeypatch.setattr(grids, "ensure_client", lambda: client)
+        monkeypatch.setattr(
+            grids.create_landfire_disturbance,
+            "sync_detailed",
+            fake_create,
+        )
+
+        grid = create_annual_disturbance_grid_from_landfire(
+            SimpleNamespace(id="domain-id"),
+            version="2025",
+            output_resolution_m=30,
+            resampling="nearest",
+            name="x",
+        )
+
+        assert grid.id == "disturbance-grid-id"
+        assert captured["domain_id"] == "domain-id"
+        assert captured["client"] is client
+        assert captured["body"].version.value == "2025"
+        assert captured["body"].alignment.resolution == 30
+        assert captured["body"].alignment.method.value == "nearest"
+        assert captured["body"].name == "x"
+
+    def test_version_defaults_to_unset(self, monkeypatch):
+        created = Grid(
+            id="disturbance-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        monkeypatch.setattr(grids, "ensure_client", lambda: object())
+        monkeypatch.setattr(
+            grids.create_landfire_disturbance, "sync_detailed", fake_create
+        )
+
+        create_annual_disturbance_grid_from_landfire(SimpleNamespace(id="domain-id"))
+
+        assert captured["body"].version is UNSET
+
+    def test_rejects_unknown_version(self):
+        with pytest.raises(ValueError):
+            create_annual_disturbance_grid_from_landfire(
+                SimpleNamespace(id="domain-id"),
+                version="1999",
+            )
 
 
 class TestCreatePimGridFromTreemap:
