@@ -97,6 +97,45 @@ CHM-derived inventory carries only what the canopy surface reveals — `x`,
 `y`, and `height` columns — so it cannot be voxelized directly (voxelization
 needs the per-tree measurements a PIM expansion or an upload provides).
 
+## Fuse TreeMap plots with a canopy height model
+
+To expand a PIM grid only where a canopy height model shows canopy, pass
+both completed grids to `create_tree_inventory_from_pim_chm_fusion`. The
+PIM is resampled to a finer resolution, each resampled cell keeps its
+TreeMap plot only where the CHM's canopy cover exceeds a threshold, and
+the surviving plots are expanded into trees. The CHM must carry a `chm`
+band in meters:
+
+```python
+pim = ff.grids.create_pim_grid_from_treemap(domain, output_resolution_m=30)
+chm = ff.grids.create_canopy_height_grid_from_meta(domain, output_resolution_m=1)
+ff.wait_all([pim, chm])
+
+inventory = ff.inventories.create_tree_inventory_from_pim_chm_fusion(
+    domain, pim, chm, seed=42, name="Blue Mountain fused trees"
+)
+inventory.wait()
+```
+
+The result has the same columns as a PIM expansion, so it can be voxelized
+and exported the same way. By default the PIM is resampled to 7.5 m and a
+cell keeps its plot when more than 20% of it is taller than 2 m. To change
+these, pass `method=` as a mapping of the fields (or a `ReimputationMethod`
+from `fastfuels_sdk.v2.inventories`):
+
+```python
+inventory = ff.inventories.create_tree_inventory_from_pim_chm_fusion(
+    domain,
+    pim,
+    chm,
+    method={"resolution": 10, "min_height": 3.0, "cover_threshold": 0.3},
+    seed=42,
+)
+```
+
+The resolution must be no finer than the CHM cell and no coarser than the
+PIM cell; the API rejects requests outside that range with a 422.
+
 ## Upload your own tree records
 
 To create an inventory from your own measurements, upload a `.csv`,

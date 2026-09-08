@@ -4,6 +4,7 @@ fastfuels_sdk/v2/inventories.py
 
 # Core imports
 import json
+from collections.abc import Mapping
 from http import HTTPStatus
 from io import StringIO
 from pathlib import Path
@@ -21,6 +22,7 @@ from fastfuels_sdk.v2.client_library.api.inventories import (
     create_gdam_inventory,
     create_inventory_export,
     create_inventory_upload,
+    create_pim_chm_fusion_inventory,
     create_pim_inventory,
     delete_inventory,
     duplicate_inventory as duplicate_inventory_endpoint,
@@ -40,6 +42,7 @@ from fastfuels_sdk.v2.client_library.models import (
     CreateGdamInventoryRequest,
     CreateGdamInventoryRequestImputeColumnsItem,
     CreateInventoryUploadRequest,
+    CreatePimChmFusionInventoryRequest,
     CreatePimInventoryRequest,
     CreateTreeInventoryRequest,
     CrownProfileModel,
@@ -55,6 +58,7 @@ from fastfuels_sdk.v2.client_library.models import (
     JobStatus,
     ListInventoriesResponse,
     PointProcess,
+    ReimputationMethod,
     Resolution3D,
     SortOrder,
     TreeBand,
@@ -70,10 +74,12 @@ __all__ = [
     "Inventory",
     "create_tree_inventory_from_pim_grid",
     "create_tree_inventory_from_chm_grid",
+    "create_tree_inventory_from_pim_chm_fusion",
     "create_tree_inventory_from_file",
     "create_tree_inventory_from_gdam",
     "list_inventories",
     "get_inventory",
+    "ReimputationMethod",
 ]
 
 _UPLOAD_FORMATS = {
@@ -99,6 +105,25 @@ def _enum_list(values, enum_cls):
 def _opt(value):
     """Map ``None`` to the generated UNSET sentinel, else pass through."""
     return value if value is not None else UNSET
+
+
+def _build_fusion_method(method):
+    """Translate a fusion ``method`` kwarg into a method model or UNSET.
+
+    - ``None`` -> ``UNSET`` (the API applies its default, reimputation).
+    - a ``ReimputationMethod`` -> passed through unchanged.
+    - a mapping -> a ``ReimputationMethod`` built from its fields.
+    """
+    if method is None:
+        return UNSET
+    if isinstance(method, ReimputationMethod):
+        return method
+    if isinstance(method, Mapping):
+        return ReimputationMethod(**method)
+    raise ValueError(
+        "method must be a ReimputationMethod or a mapping of its fields, "
+        f"got {method!r}."
+    )
 
 
 class Inventory(InventoryModel):
@@ -957,6 +982,115 @@ def create_tree_inventory_from_chm_grid(
         treatments=_opt(treatments),
     )
     response = create_chm_inventory.sync_detailed(
+        _domain_id(domain), client=ensure_client(), body=request_body
+    )
+    return Inventory._from_model(expect(response, HTTPStatus.CREATED))
+
+
+def create_tree_inventory_from_pim_chm_fusion(
+    domain,
+    pim_grid,
+    chm_grid,
+    method=None,
+    seed: Optional[int] = None,
+    point_process: Optional[str] = None,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    modifications: Optional[list] = None,
+    treatments: Optional[list] = None,
+) -> Inventory:
+    """Create a tree inventory by fusing a PIM grid with a canopy height model.
+
+    Expands the plots of a completed PIM grid into individual trees, as
+    :func:`create_tree_inventory_from_pim_grid` does, but conditioned on a
+    completed canopy height model (CHM) grid: the PIM is resampled to the
+    method's ``resolution``, each resampled cell keeps its plot only where
+    the CHM's canopy cover (the fraction of CHM cells taller than
+    ``min_height``) exceeds ``cover_threshold``, and the surviving plots are
+    expanded. The result has the same columns as a PIM-expanded inventory.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the inventory in.
+    pim_grid : Grid or str
+        A completed PIM grid (or its id) to expand. See
+        :func:`fastfuels_sdk.v2.grids.create_pim_grid_from_treemap`.
+    chm_grid : Grid or str
+        A completed canopy height model grid (or its id) with a ``chm`` band
+        in meters, used to condition the PIM. See
+        :func:`fastfuels_sdk.v2.grids.create_canopy_height_grid_from_meta`,
+        :func:`fastfuels_sdk.v2.grids.create_canopy_height_grid_from_naip_chm`,
+        and
+        :func:`fastfuels_sdk.v2.grids.create_canopy_height_grid_from_point_cloud`.
+    method : ReimputationMethod or Mapping, optional
+        Fusion algorithm and its parameters. ``None`` (the default) applies
+        the API's default, reimputation with ``resolution=7.5`` m,
+        ``min_height=2.0`` m, and ``cover_threshold=0.2``; a
+        ``ReimputationMethod`` or a mapping of its fields (``resolution``,
+        ``min_height``, ``cover_threshold``) sets them explicitly. The
+        resolution must be no finer than the CHM cell and no coarser than
+        the PIM cell.
+    seed : int, optional
+        Random seed for reproducibility. Generated randomly if omitted.
+    point_process : str, optional
+        Spatial point process for tree coordinate assignment
+        (``PointProcess`` member or its string key, e.g.
+        "inhomogeneous_poisson").
+    name, description : str, optional
+        Metadata for the inventory.
+    tags : List[str], optional
+        Tags for the inventory.
+    modifications : list, optional
+        Modification rules (``InventoryModification``) applied after
+        expansion.
+    treatments : list, optional
+        Silvicultural treatments (``InventoryBasalAreaTreatment`` or
+        ``InventoryDiameterTreatment``) applied after modifications.
+
+    Returns
+    -------
+    Inventory
+        The created Inventory object (job status "pending" or "running").
+
+    Raises
+    ------
+    ValueError
+        If ``method`` is neither a ``ReimputationMethod`` nor a mapping.
+
+    Examples
+    --------
+    >>> import fastfuels_sdk.v2 as ff
+    >>> pim = ff.grids.create_pim_grid_from_treemap(domain, output_resolution_m=30)
+    >>> chm = ff.grids.create_canopy_height_grid_from_meta(domain, output_resolution_m=1)
+    >>> ff.wait_all([pim, chm])
+    >>> inventory = ff.inventories.create_tree_inventory_from_pim_chm_fusion(
+    ...     domain, pim, chm, seed=42
+    ... )
+    >>> inventory.wait()
+
+    Keep plots only where at least 30% of the cell is canopy:
+
+    >>> inventory = ff.inventories.create_tree_inventory_from_pim_chm_fusion(
+    ...     domain, pim, chm, method={"cover_threshold": 0.3}, seed=42
+    ... )
+    """
+    request_body = CreatePimChmFusionInventoryRequest(
+        source_pim_grid_id=_domain_id(pim_grid),
+        source_chm_grid_id=_domain_id(chm_grid),
+        method=_build_fusion_method(method),
+        seed=_opt(seed),
+        point_process=(
+            PointProcess(point_process) if point_process is not None else UNSET
+        ),
+        name=name,
+        description=description,
+        tags=_opt(tags),
+        modifications=_opt(modifications),
+        treatments=_opt(treatments),
+    )
+    response = create_pim_chm_fusion_inventory.sync_detailed(
         _domain_id(domain), client=ensure_client(), body=request_body
     )
     return Inventory._from_model(expect(response, HTTPStatus.CREATED))
