@@ -32,6 +32,7 @@ from fastfuels_sdk.v2.client_library.api.grids import (
     create_grid_export,
     create_inventory_canopy_grid,
     create_landfire_canopy,
+    create_landfire_disturbance,
     create_landfire_fbfm13,
     create_landfire_fbfm40,
     create_landfire_fccs,
@@ -97,6 +98,7 @@ from fastfuels_sdk.v2.client_library.models import (
     CreateGeoTIFFUploadRequest,
     CreateInventoryCanopyRequest,
     CreateLandfireCanopyRequest,
+    CreateLandfireDisturbanceRequest,
     CreateLandfireFbfm13Request,
     CreateLandfireFbfm40Request,
     CreateLandfireFccsRequest,
@@ -133,6 +135,7 @@ from fastfuels_sdk.v2.client_library.models import (
     LandfireCanopyFuelBand,
     LandfireCanopyVersion,
     LandfireCoverageResponse,
+    LandfireDisturbanceVersion,
     LandfireFbfm13Version,
     LandfireFbfm40Version,
     LandfireFccsVersion,
@@ -175,6 +178,7 @@ __all__ = [
     "create_fuel_model_grid_from_landfire_fbfm13",
     "create_fuel_model_grid_from_landfire_fbfm40",
     "create_fuel_model_grid_from_landfire_fccs",
+    "create_annual_disturbance_grid_from_landfire",
     "create_pim_grid_from_treemap",
     "create_grid_from_geotiff",
     "create_grid_from_netcdf",
@@ -1961,6 +1965,70 @@ def create_fuel_model_grid_from_landfire_fccs(
         modifications=_opt(modifications),
     )
     response = create_landfire_fccs.sync_detailed(
+        _domain_id(domain), client=ensure_client(), body=request_body
+    )
+    return Grid._from_model(expect(response, HTTPStatus.CREATED))
+
+
+def create_annual_disturbance_grid_from_landfire(
+    domain,
+    version: Optional[str] = None,
+    output_resolution_m: Optional[float] = None,
+    align_to=None,
+    align: Optional[str] = None,
+    resampling: Optional[str] = None,
+    extent_buffer_cells: int = 0,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    modifications: Optional[list] = None,
+) -> Grid:
+    """Create a LANDFIRE Limited Annual Disturbance grid.
+
+    Produces a single categorical band, ``annual_disturbance``, holding the
+    LANDFIRE Limited Annual Disturbance (LDist) codes within the domain. The
+    source is fetched on demand from the LANDFIRE Product Service.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the grid in.
+    version : str, optional
+        LANDFIRE version (see ``LandfireDisturbanceVersion``). Defaults to the
+        API's current version.
+    output_resolution_m : float, optional
+        Output cell size in meters, anchored to the domain origin.
+    align_to : Grid or str, optional
+        Match the lattice of an existing grid (or its id).
+    align : str, optional
+        Pass ``"native"`` to keep the source raster's pixel anchor.
+    resampling : str, optional
+        Resampling method. The band is categorical, so ``"nearest"`` is the
+        sensible choice.
+    extent_buffer_cells : int, optional
+        Result-grid cells to buffer around the domain extent (0-10, default 0).
+    name, description : str, optional
+        Metadata for the grid.
+    tags : List[str], optional
+        Tags for the grid.
+    modifications : list, optional
+        Modification rules applied after the grid is built.
+
+    Returns
+    -------
+    Grid
+        The created Grid object (job status "pending" or "running").
+    """
+    request_body = CreateLandfireDisturbanceRequest(
+        version=(LandfireDisturbanceVersion(version) if version is not None else UNSET),
+        alignment=_build_alignment(output_resolution_m, align_to, align, resampling),
+        extent_buffer_cells=extent_buffer_cells,
+        name=name,
+        description=description,
+        tags=_opt(tags),
+        modifications=_opt(modifications),
+    )
+    response = create_landfire_disturbance.sync_detailed(
         _domain_id(domain), client=ensure_client(), body=request_body
     )
     return Grid._from_model(expect(response, HTTPStatus.CREATED))
