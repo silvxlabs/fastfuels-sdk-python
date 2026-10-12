@@ -92,10 +92,28 @@ inventory.wait()
 
 Stem isolation defaults to local maximum filtering with a 2 m minimum
 height. To tune the algorithm, pass a `StemIsolationLmf` or
-`StemIsolationVwf` (variable window filtering) model as `algorithm=`. A
-CHM-derived inventory carries only what the canopy surface reveals — `x`,
-`y`, and `height` columns — so it cannot be voxelized directly (voxelization
-needs the per-tree measurements a PIM expansion or an upload provides).
+`StemIsolationVwf` (variable window filtering) model as `algorithm=`.
+`StemIsolationVwf()` without arguments uses `crown_ratio=0.05` and
+`crown_offset=3.0`. A CHM-derived inventory carries only what the canopy
+surface reveals — `tree_id`, `x`, `y`, and `height` columns — so it cannot
+be voxelized directly; [impute the missing morphology with
+GDAM](#impute-missing-morphology-with-gdam) first.
+
+To also measure each tree's crown radius, pass `crown_segmentation=`. The
+CHM must be 2 m resolution or finer. `{}` segments with the API defaults;
+a mapping of `ChmInventoryCrownSegmentation` fields (e.g.
+`{"max_crown_radius": 6.0}`) tunes it:
+
+```python
+inventory = ff.inventories.create_tree_inventory_from_chm_grid(
+    domain, chm, crown_segmentation={}
+)
+```
+
+```python
+>>> [column.key for column in inventory.wait().columns]
+['tree_id', 'x', 'y', 'height', 'crown_radius']
+```
 
 ## Fuse TreeMap plots with a canopy height model
 
@@ -148,8 +166,9 @@ inventory = ff.inventories.create_tree_inventory_from_file(
 inventory.wait()
 ```
 
-The standard column roles are `x`, `y`, `height` (m), `dbh` (cm),
-`crown_ratio`, `fia_species_code`, and `fia_status_code`. Columns whose
+The standard column roles are `tree_id`, `x`, `y`, `height` (m), `dbh`
+(cm), `crown_ratio`, `crown_radius` (m), `fia_species_code`,
+`fia_status_code`, and `fia_crown_class_code`. Columns whose
 names already match need no mapping; otherwise map your file's column names
 onto the roles:
 
@@ -343,6 +362,56 @@ crown profile model using NSVB allometry. Request more bands with
 Because the result is a 3D product, it supports neither resampling nor
 grid modifications — modify the trees on the inventory instead, before
 voxelizing.
+
+## Voxelize measured crowns
+
+To draw crowns from a canopy height model instead of a crown shape model,
+detect trees on a CHM, outline their crowns as a
+[crown feature](features.md#outline-tree-crowns-on-a-canopy-height-model),
+impute the morphology voxelization needs with GDAM, and pass the crown
+feature as `crown_geometry_source`. GDAM keeps each tree's `tree_id`, so
+its trees still match their crowns:
+
+```python
+chm = ff.grids.create_canopy_height_grid_from_meta(domain, output_resolution_m=1)
+chm.wait()
+
+trees = ff.inventories.create_tree_inventory_from_chm_grid(domain, chm)
+trees.wait()
+
+crowns = ff.features.create_crown_feature_from_chm(domain, trees, chm)
+full = ff.inventories.create_tree_inventory_from_gdam(domain, trees)
+ff.wait_all([crowns, full])
+
+voxels = full.voxelize(
+    horizontal_resolution_m=2.0,
+    vertical_resolution_m=1.0,
+    crown_geometry_source=crowns,
+)
+voxels.wait()
+```
+
+`crown_geometry_source` also accepts the crown feature's id. Trees with no
+crown in the feature are drawn with `crown_profile_model` as usual. Once the
+grid completes, `source["crown_geometry_counts"]` reports how many trees got
+a measured crown and why the others were drawn parametrically:
+
+```python
+>>> voxels.source["crown_geometry_counts"]
+{'parametric_no_crown': 0, 'parametric_stem_outside_crown': 0, 'parametric_no_volume': 0, 'measured': 18218}
+```
+
+To cap per-voxel bulk density, pass `max_bulk_density=` in `kg/m**3`. It
+works with either crown source:
+
+```python
+voxels = full.voxelize(crown_geometry_source=crowns, max_bulk_density=2.0)
+```
+
+A crown feature id that doesn't exist raises `NotFoundException`; a feature
+that isn't a completed crown feature, or one whose CHM grid has been deleted,
+raises `UnprocessableEntityException`. For how measured crowns are drawn, see
+the [FastFuels documentation](https://docs.fastfuels.silvxlabs.com).
 
 ## Export an inventory
 

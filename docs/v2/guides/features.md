@@ -6,8 +6,9 @@
     from `fastfuels_sdk.v2`.
 
 Features are geographic data within a domain: roads and water bodies
-extracted from OpenStreetMap, or custom layersets of fuelbed polygons you
-upload yourself. This guide covers working with features from Python; for
+extracted from OpenStreetMap, tree crowns outlined on a canopy height model,
+or custom layersets of fuelbed polygons you upload yourself. This guide
+covers working with features from Python; for
 what features *are* and how the platform treats them, see the
 [FastFuels documentation](https://docs.fastfuels.silvxlabs.com). Coming
 from the v1 SDK? Start with the [migration guide](migration.md#features).
@@ -62,6 +63,42 @@ To extract water bodies, use the same calling convention:
 ```python
 feature = ff.features.create_water_feature_from_osm(domain, name="My Water")
 ```
+
+## Outline Tree Crowns on a Canopy Height Model
+
+To outline each detected tree's crown, pass a completed canopy height model
+(CHM) grid at 2 m resolution or finer and an inventory detected from that
+**same** grid with `create_tree_inventory_from_chm_grid`. The API rejects
+any other inventory with a 422:
+
+```python
+chm = ff.grids.create_canopy_height_grid_from_meta(domain, output_resolution_m=1)
+chm.wait()
+
+trees = ff.inventories.create_tree_inventory_from_chm_grid(domain, chm)
+trees.wait()
+
+crowns = ff.features.create_crown_feature_from_chm(domain, trees, chm)
+crowns.wait()
+```
+
+The completed feature has type `"crown"` and one row per crown, keyed by
+the seed tree's `tree_id`:
+
+```python
+>>> crowns.to_geodataframe().head()
+  id  tree_id                                           geometry
+0  0        1  POLYGON ((720379 5190852, 720379 5190849, 7203...
+1  1        2  POLYGON ((720471 5190852, 720471 5190849, 7204...
+2  2        3  POLYGON ((720504 5190852, 720504 5190850, 7205...
+3  3        4  POLYGON ((720508 5190852, 720508 5190848, 7205...
+4  4        5  POLYGON ((720570 5190852, 720570 5190850, 7205...
+```
+
+To tune segmentation, pass `crown_segmentation=` as a mapping of the
+`ChmCrownSegmentation` fields (e.g. `{"max_crown_radius": 6.0}`); the API
+default is used for any field left out. To voxelize these crowns, see
+[Voxelize measured crowns](inventories.md#voxelize-measured-crowns).
 
 ## Wait for a Feature to Complete
 
@@ -239,6 +276,7 @@ Narrow the results with filters:
 
 ```python
 roads = ff.list_features(domain, feature_type="road")
+crowns = ff.list_features(domain, feature_type="crown")
 osm_features = ff.list_features(domain, product="osm")
 tagged = ff.list_features(domain, tag="roads")
 ```

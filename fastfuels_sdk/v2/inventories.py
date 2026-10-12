@@ -676,7 +676,7 @@ class Inventory(InventoryModel):
         ...     crown_geometry_source=crowns, max_bulk_density=2.0
         ... )
         >>> voxels.wait().source["crown_geometry_counts"]
-        {'measured': 812, 'parametric_no_crown': 3, ...}
+        {'parametric_no_crown': 0, 'parametric_stem_outside_crown': 0, 'parametric_no_volume': 0, 'measured': 18218}
         """
         # Lazy import so the modules stay decoupled (grids never imports
         # inventories).
