@@ -186,6 +186,31 @@ fuels.wait()
 [('fuel_load.1hr', 'kg/m**2'), ('fuel_load.10hr', 'kg/m**2'), ('fuel_depth', 'm')]
 ```
 
+Dynamic fuel models move part of their herbaceous load from live to dead.
+Set the cured fraction with `herbaceous_curing`, from 0 (green) to 1 (fully
+cured); it defaults to 0.67. To start from a live herbaceous moisture content
+`M` (%), pass `(120 - M) / 90` clipped to 0–1. Request the cured fuel with
+`fuel_load.dead_herb` and `savr.dead_herb`, or 1-hour and dead herbaceous fuel
+combined with `fuel_load.fine_dead` and `savr.fine_dead`:
+
+```python
+fuels = ff.grids.create_fuel_grid_from_fbfm40_lookup(
+    grid,
+    bands=["fuel_load.fine_dead", "savr.fine_dead", "fuel_depth"],
+    herbaceous_curing=1.0,
+)
+fuels.wait()
+```
+
+```python
+>>> [(b.key, b.unit) for b in fuels.bands]
+[('fuel_load.fine_dead', 'kg/m**2'), ('savr.fine_dead', '1/m'), ('fuel_depth', 'm')]
+```
+
+For the FBFM40 lookup and its bands, see
+[Surface fuel from LANDFIRE](https://docs.fastfuels.silvxlabs.com/v2-beta/api/how-to-guides/grids/surface_fuel_from_landfire/)
+in the FastFuels documentation.
+
 ### Use Anderson 13 fuel models
 
 To create the Anderson 13 model set instead, select a LANDFIRE version and

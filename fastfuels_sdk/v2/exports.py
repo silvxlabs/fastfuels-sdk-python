@@ -564,7 +564,7 @@ def create_quicfire_export(
     ...     domain,
     ...     canopy_bulk_density=(voxels, "bulk_density.foliage.live"),
     ...     canopy_moisture=(canopy_moist, "fuel_moisture"),
-    ...     surface_fuel_load=(surface, "fuel_load.1hr"),
+    ...     surface_fuel_load=(surface, "fuel_load.fine_dead"),
     ...     surface_fuel_depth=(surface, "fuel_depth"),
     ...     surface_moisture=(surface_moist, "fuel_moisture"),
     ... )

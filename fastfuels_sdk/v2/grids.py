@@ -2600,6 +2600,7 @@ def create_fuel_grid_from_fbfm40_lookup(
     source_grid: "Grid",
     bands: list,
     source_band: str = "fbfm",
+    herbaceous_curing: float = 0.67,
     name: str = "",
     description: str = "",
     tags: Optional[List[str]] = None,
@@ -2621,8 +2622,18 @@ def create_fuel_grid_from_fbfm40_lookup(
     bands : list
         The FBFM40 lookup bands to produce (``Fbfm40LookupBand`` members or
         their string keys, e.g. "fuel_load.1hr", "fuel_depth").
+        "fuel_load.dead_herb" and "savr.dead_herb" give the cured herbaceous
+        fuel. "fuel_load.fine_dead" and "savr.fine_dead" combine 1-hour and
+        dead herbaceous fuel into one fine dead class (load-weighted SAVR);
+        use them as the QUIC-Fire surface fuel.
     source_band : str, optional
         The band in ``source_grid`` that holds FBFM40 codes (default "fbfm").
+    herbaceous_curing : float, optional
+        Fraction of the herbaceous load that is cured in dynamic fuel models,
+        from 0 (green) to 1 (fully cured); default 0.67. The cured fraction
+        moves from "fuel_load.live_herb" to "fuel_load.dead_herb". To start
+        from a live herbaceous moisture content ``M`` (%), pass
+        ``(120 - M) / 90`` clipped to 0-1.
     name, description : str, optional
         Metadata for the new grid.
     tags : List[str], optional
@@ -2654,6 +2665,7 @@ def create_fuel_grid_from_fbfm40_lookup(
         source_grid_id=source_grid.id,
         bands=_enum_list(bands, Fbfm40LookupBand),
         source_band=source_band,
+        herbaceous_curing=herbaceous_curing,
         name=name,
         description=description,
         tags=_opt(tags),
