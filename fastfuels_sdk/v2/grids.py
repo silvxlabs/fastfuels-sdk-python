@@ -124,6 +124,8 @@ from fastfuels_sdk.v2.client_library.models import (
     GridAlignmentGridTarget,
     GridAlignmentNativeTarget,
     GridDataArrayFormat,
+    GridLatticeDomainTarget,
+    GridLatticeGridTarget,
     GridDataOrder,
     GridExportFormat,
     GridSortField,
@@ -263,6 +265,24 @@ def _build_alignment(
         return GridAlignmentDomainTarget(
             resolution=_opt(output_resolution_m), method=method
         )
+    return UNSET
+
+
+def _build_lattice(output_resolution_m: Optional[float] = None, align_to=None):
+    """Translate lattice keywords into a method-less grid lattice target.
+
+    For grids computed per cell rather than resampled from a raster, so there
+    is no resampling method and no native target. Returns a
+    ``GridLattice{Domain,Grid}Target`` or ``UNSET`` (the API default).
+
+    ``output_resolution_m`` and ``align_to`` are mutually exclusive.
+    """
+    if output_resolution_m is not None and align_to is not None:
+        raise ValueError("Specify at most one of output_resolution_m or align_to.")
+    if align_to is not None:
+        return GridLatticeGridTarget(target="grid", grid_id=_domain_id(align_to))
+    if output_resolution_m is not None:
+        return GridLatticeDomainTarget(resolution=output_resolution_m)
     return UNSET
 
 
@@ -1350,7 +1370,6 @@ def create_canopy_fuel_grid_from_inventory(
     cc=None,
     output_resolution_m: Optional[float] = None,
     align_to=None,
-    resampling: Optional[str] = None,
     name: str = "",
     description: str = "",
     tags: Optional[List[str]] = None,
@@ -1434,8 +1453,6 @@ def create_canopy_fuel_grid_from_inventory(
         30 m when no alignment target is given.
     align_to : Grid or str, optional
         Match the lattice of an existing grid (or its id).
-    resampling : str, optional
-        Resampling method for the alignment target.
     name, description : str, optional
         Metadata for the grid.
     tags : List[str], optional
@@ -1501,9 +1518,7 @@ def create_canopy_fuel_grid_from_inventory(
         chm=_canopy_method(chm, "chm", _CHM_METHODS),
         cc=_canopy_method(cc, "cc", _CC_METHODS),
         bands=_enum_list(bands, InventoryCanopyBand),
-        alignment=_build_alignment(
-            output_resolution_m, align_to, resampling=resampling
-        ),
+        alignment=_build_lattice(output_resolution_m, align_to),
         name=name,
         description=description,
         tags=_opt(tags),
@@ -1652,7 +1667,6 @@ def create_canopy_height_grid_from_point_cloud(
     point_cloud: "PointCloud",
     output_resolution_m: Optional[float] = None,
     align_to=None,
-    resampling: Optional[str] = None,
     aggregation: Optional[str] = None,
     percentile: Optional[float] = None,
     spike_filter=None,
@@ -1673,8 +1687,6 @@ def create_canopy_height_grid_from_point_cloud(
         1 meter when no alignment target is provided.
     align_to : Grid or str, optional
         Match the lattice of an existing grid (or its id).
-    resampling : str, optional
-        Resampling method for the continuous canopy-height band.
     aggregation : str, optional
         Statistic each cell reduces its above-ground return heights with: one of
         ``"max"``, ``"mean"``, ``"median"``, or ``"percentile"``. Defaults to the
@@ -1705,7 +1717,8 @@ def create_canopy_height_grid_from_point_cloud(
     Raises
     ------
     ValueError
-        If the point cloud is not completed or is not airborne, or if the
+        If the point cloud is not completed or is not airborne, if both
+        ``output_resolution_m`` and ``align_to`` are given, or if the
         aggregation and percentile arguments are inconsistent.
     """
     if point_cloud.status != JobStatus.COMPLETED:
@@ -1721,11 +1734,7 @@ def create_canopy_height_grid_from_point_cloud(
 
     request_body = CreatePointCloudChmRequest(
         source_point_cloud_id=point_cloud.id,
-        alignment=_build_alignment(
-            output_resolution_m,
-            align_to,
-            resampling=resampling,
-        ),
+        alignment=_build_lattice(output_resolution_m, align_to),
         aggregation=_build_chm_aggregation(aggregation, percentile),
         spike_filter=_build_chm_spike_filter(spike_filter),
         extent_buffer_cells=extent_buffer_cells,
