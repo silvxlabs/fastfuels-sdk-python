@@ -4,6 +4,7 @@ tests/v2/test_features.py
 
 # Core imports
 import json
+from http import HTTPStatus
 from uuid import uuid4
 
 # Internal imports
@@ -11,6 +12,7 @@ from tests import TEST_DATA_DIR
 from tests.v2.utils import create_default_layerset_geojson
 from fastfuels_sdk.v2.features import (
     Feature,
+    create_crown_feature_from_chm,
     create_layerset_feature_from_geodataframe,
     create_layerset_feature_from_geojson,
     create_road_feature_from_osm,
@@ -18,7 +20,12 @@ from fastfuels_sdk.v2.features import (
     get_feature,
     list_features,
 )
-from fastfuels_sdk.v2.client_library.models import FeatureType, JobStatus
+from fastfuels_sdk.v2.client_library.models import (
+    ChmCrownSegmentation,
+    FeatureType,
+    JobStatus,
+)
+from fastfuels_sdk.v2.client_library.types import Response
 from fastfuels_sdk.v2.exceptions import (
     NotFoundException,
     UnprocessableEntityException,
@@ -67,6 +74,146 @@ class TestCreateOsmWaterFeature:
         assert feature.type_ == FeatureType.WATER
         assert feature.status in (JobStatus.PENDING, JobStatus.RUNNING)
         feature.delete()
+
+
+def _crown_feature_payload(domain_id="domain-id", status="pending"):
+    return {
+        "id": "feature-id",
+        "domain_id": domain_id,
+        "type": "crown",
+        "status": status,
+        "source": {
+            "name": "chm",
+            "source_inventory_id": "inventory-id",
+            "source_chm_grid_id": "chm-id",
+        },
+        "name": "",
+        "description": "",
+    }
+
+
+class TestCreateCrownFeatureFromChmRequest:
+    @pytest.fixture
+    def captured(self, monkeypatch):
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, body=body.to_dict())
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=Feature.from_dict(_crown_feature_payload(domain_id)),
+            )
+
+        monkeypatch.setattr("fastfuels_sdk.v2.features.ensure_client", lambda: object())
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.features.create_chm_crown_feature.sync_detailed",
+            fake_create,
+        )
+        return captured
+
+    def test_minimal_request_body(self, captured):
+        feature = create_crown_feature_from_chm("domain-id", "inventory-id", "chm-id")
+
+        assert isinstance(feature, Feature)
+        assert feature.type_ == FeatureType.CROWN
+        assert captured["domain_id"] == "domain-id"
+        assert captured["body"] == {
+            "source_inventory_id": "inventory-id",
+            "source_chm_grid_id": "chm-id",
+            "type": "crown",
+            "name": "",
+            "description": "",
+        }
+
+    def test_accepts_resource_objects(self, captured):
+        domain = type("D", (), {"id": "domain-id"})()
+        inventory = type("I", (), {"id": "inventory-id"})()
+        grid = type("G", (), {"id": "chm-id"})()
+
+        create_crown_feature_from_chm(domain, inventory, grid, tags=["t"])
+
+        assert captured["domain_id"] == "domain-id"
+        assert captured["body"]["source_inventory_id"] == "inventory-id"
+        assert captured["body"]["source_chm_grid_id"] == "chm-id"
+        assert captured["body"]["tags"] == ["t"]
+
+    def test_segmentation_mapping_sends_only_given_fields(self, captured):
+        create_crown_feature_from_chm(
+            "domain-id",
+            "inventory-id",
+            "chm-id",
+            crown_segmentation={"max_crown_radius": 6.0, "method": "dalponte2016"},
+        )
+
+        assert captured["body"]["crown_segmentation"] == {
+            "method": "dalponte2016",
+            "max_crown_radius": 6.0,
+        }
+
+    def test_segmentation_model(self, captured):
+        create_crown_feature_from_chm(
+            "domain-id",
+            "inventory-id",
+            "chm-id",
+            crown_segmentation=ChmCrownSegmentation(max_height=None),
+        )
+
+        segmentation = captured["body"]["crown_segmentation"]
+        assert segmentation["max_height"] is None
+        assert segmentation["max_crown_radius"] == 10.0
+
+    def test_rejects_other_segmentation_types(self, captured):
+        with pytest.raises(ValueError, match="ChmCrownSegmentation"):
+            create_crown_feature_from_chm(
+                "domain-id", "inventory-id", "chm-id", crown_segmentation=True
+            )
+        assert captured == {}
+
+
+class TestCrownFeatureParsing:
+    def test_crown_type_parses(self):
+        feature = Feature.from_dict(_crown_feature_payload(status="completed"))
+        assert feature.type_ == FeatureType.CROWN
+        assert feature.source["source_chm_grid_id"] == "chm-id"
+
+
+class TestCreateCrownFeatureFromChm:
+    def test_completed_fixture(self, test_domain, completed_crown_feature):
+        assert completed_crown_feature.domain_id == test_domain.id
+        assert completed_crown_feature.type_ == FeatureType.CROWN
+        assert completed_crown_feature.status == JobStatus.COMPLETED
+
+    def test_data_has_tree_id_and_geometry(self, completed_crown_feature):
+        gdf = completed_crown_feature.to_geodataframe()
+        assert len(gdf) > 0
+        assert "tree_id" in gdf.columns
+        assert gdf.geometry.geom_type.isin(["Polygon"]).all()
+        assert gdf["tree_id"].is_unique
+
+    def test_get_and_list(self, test_domain, completed_crown_feature):
+        feature = get_feature(test_domain, completed_crown_feature.id)
+        assert feature.type_ == FeatureType.CROWN
+
+        features = list_features(test_domain, feature_type="crown")
+        assert completed_crown_feature.id in [f.id for f in features]
+        assert all(f.type_ == FeatureType.CROWN for f in features)
+
+    def test_inventory_from_other_source_rejected(
+        self, test_domain, completed_tree_inventory, completed_fine_chm_grid
+    ):
+        # A PIM-expanded inventory was not detected from the CHM grid
+        with pytest.raises(UnprocessableEntityException, match="not detected"):
+            create_crown_feature_from_chm(
+                test_domain, completed_tree_inventory, completed_fine_chm_grid
+            )
+
+    def test_missing_inventory(self, test_domain, completed_fine_chm_grid):
+        with pytest.raises(NotFoundException):
+            create_crown_feature_from_chm(
+                test_domain, uuid4().hex, completed_fine_chm_grid
+            )
 
 
 class TestCreateLayerset:

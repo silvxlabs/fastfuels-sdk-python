@@ -4,6 +4,7 @@ fastfuels_sdk/v2/features.py
 
 # Core imports
 import json
+from collections.abc import Mapping
 from http import HTTPStatus
 from typing import Any, Dict, List, Optional
 
@@ -12,6 +13,7 @@ from fastfuels_sdk.v2._jobs import wait as _wait
 from fastfuels_sdk.v2.api import ensure_client
 from fastfuels_sdk.v2.exceptions import expect
 from fastfuels_sdk.v2.client_library.api.features import (
+    create_chm_crown_feature,
     create_layerset,
     create_osm_road_feature,
     create_osm_water_feature,
@@ -25,6 +27,8 @@ from fastfuels_sdk.v2.client_library.api.features import (
 )
 from fastfuels_sdk.v2.client_library.models import (
     Feature as FeatureModel,
+    ChmCrownSegmentation,
+    CreateChmCrownFeatureRequest,
     CreateLayersetRequestBody,
     CreateOsmRoadFeatureRequest,
     CreateOsmWaterFeatureRequest,
@@ -78,11 +82,11 @@ class Feature(FeatureModel):
     """Feature resource for the FastFuels v2 API.
 
     Represents geographic features within a domain: roads and water
-    bodies sourced from OpenStreetMap, or user-uploaded layersets of
-    fuelbed polygons. Features are asynchronous job resources — OSM
-    features are generated in the background and expose a
-    ``status``/``progress`` lifecycle, while layerset uploads complete
-    synchronously.
+    bodies sourced from OpenStreetMap, tree crowns segmented on a canopy
+    height model, or user-uploaded layersets of fuelbed polygons.
+    Features are asynchronous job resources — OSM and crown features are
+    generated in the background and expose a ``status``/``progress``
+    lifecycle, while layerset uploads complete synchronously.
 
     The Feature resource itself is geometry-free; the generated geodata
     is retrieved through the data methods (:meth:`get_data_metadata`,
@@ -96,7 +100,8 @@ class Feature(FeatureModel):
     domain_id : str
         Identifier of the domain the feature belongs to.
     type_ : FeatureType
-        Type of geographic feature: "road", "water", or "layerset".
+        Type of geographic feature: "road", "water", "crown", or
+        "layerset".
     status : JobStatus
         Job status: "pending", "running", "completed", or "failed".
     source : FeatureSource
@@ -134,6 +139,7 @@ class Feature(FeatureModel):
     --------
     create_road_feature_from_osm : Create a road feature from OpenStreetMap.
     create_water_feature_from_osm : Create a water feature from OpenStreetMap.
+    create_crown_feature_from_chm : Outline tree crowns on a canopy height model.
     create_layerset_feature_from_geojson : Upload a custom layerset of fuelbed polygons.
     Feature.to_geodataframe : Retrieve the feature data as a GeoDataFrame.
     Feature.rasterize : Rasterize a layerset feature into a grid.
@@ -652,6 +658,115 @@ def create_water_feature_from_osm(
     return Feature._from_model(expect(response, HTTPStatus.CREATED))
 
 
+def create_crown_feature_from_chm(
+    domain,
+    source_inventory,
+    source_chm_grid,
+    crown_segmentation=None,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+) -> Feature:
+    """Outline each detected tree's crown on a canopy height model.
+
+    Starts a background job that grows one crown per inventory tree on the
+    CHM, from the CHM cell containing the tree's ``x``, ``y``. Crowns never
+    overlap. A tree gets no crown if it lies outside the CHM, sits on a
+    no-data cell, or shares its cell with a taller tree. Use
+    :meth:`Feature.wait` to block until the crowns are ready.
+
+    The inventory must hold trees detected from the same CHM: create it
+    with :func:`fastfuels_sdk.v2.inventories.create_tree_inventory_from_chm_grid`
+    from ``source_chm_grid``. Any other inventory, including one detected
+    from a different CHM grid, is rejected.
+
+    The completed Feature has one row per crown with a ``tree_id`` column
+    (the seed tree's ``tree_id``) and a ``geometry`` column (a Polygon in
+    the domain CRS, traced along CHM cell edges); read it with
+    :meth:`Feature.to_geodataframe`. Pass the Feature to
+    :meth:`fastfuels_sdk.v2.inventories.Inventory.voxelize` as
+    ``crown_geometry_source`` to voxelize measured crowns.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the feature in.
+    source_inventory : Inventory or str
+        A completed tree inventory (or its id) created by
+        :func:`fastfuels_sdk.v2.inventories.create_tree_inventory_from_chm_grid`
+        from ``source_chm_grid``. Each tree seeds one crown.
+    source_chm_grid : Grid or str
+        The completed canopy height model grid (or its id) the inventory was
+        detected from, with a ``chm`` band in meters at 2 m resolution or
+        finer.
+    crown_segmentation : ChmCrownSegmentation or Mapping, optional
+        Segmentation settings: a ``ChmCrownSegmentation`` or a mapping of
+        its fields (``method``, ``min_relative_height``,
+        ``min_relative_crown_height``, ``max_crown_radius``, ``min_height``,
+        ``max_height``). The API default is used for any field left out.
+    name : str, optional
+        Name for the feature.
+    description : str, optional
+        Description of the feature.
+    tags : List[str], optional
+        Tags for organizing the feature.
+
+    Returns
+    -------
+    Feature
+        The created Feature object (type "crown", job status "pending" or
+        "running").
+
+    Raises
+    ------
+    ValueError
+        If ``crown_segmentation`` is neither a ``ChmCrownSegmentation`` nor
+        a mapping.
+    NotFoundException
+        If the domain, inventory, or CHM grid does not exist.
+    UnprocessableEntityException
+        If the inventory was not created by
+        :func:`fastfuels_sdk.v2.inventories.create_tree_inventory_from_chm_grid`
+        from ``source_chm_grid``, has no ``tree_id`` column, or is not
+        completed; or if the grid has no ``chm`` band in meters, is coarser
+        than 2 m, or is not completed.
+
+    Examples
+    --------
+    >>> import fastfuels_sdk.v2 as ff
+    >>> chm = ff.grids.create_canopy_height_grid_from_meta(
+    ...     domain, output_resolution_m=1
+    ... ).wait()
+    >>> trees = ff.inventories.create_tree_inventory_from_chm_grid(
+    ...     domain, chm
+    ... ).wait()
+    >>> crowns = ff.features.create_crown_feature_from_chm(domain, trees, chm)
+    >>> crowns.wait().type_
+    <FeatureType.CROWN: 'crown'>
+    """
+    if crown_segmentation is None:
+        crown_segmentation = UNSET
+    elif isinstance(crown_segmentation, Mapping):
+        crown_segmentation = ChmCrownSegmentation.from_dict(crown_segmentation)
+    elif not isinstance(crown_segmentation, ChmCrownSegmentation):
+        raise ValueError(
+            "crown_segmentation must be a ChmCrownSegmentation or a mapping of "
+            f"its fields, got {crown_segmentation!r}."
+        )
+    request_body = CreateChmCrownFeatureRequest(
+        source_inventory_id=_domain_id(source_inventory),
+        source_chm_grid_id=_domain_id(source_chm_grid),
+        crown_segmentation=crown_segmentation,
+        name=name,
+        description=description,
+        tags=_opt(tags),
+    )
+    response = create_chm_crown_feature.sync_detailed(
+        _domain_id(domain), client=ensure_client(), body=request_body
+    )
+    return Feature._from_model(expect(response, HTTPStatus.CREATED))
+
+
 def create_layerset_feature_from_geojson(
     domain,
     geojson: dict,
@@ -845,7 +960,8 @@ def list_features(
     sort_order : str, optional
         Sort direction: "ascending" or "descending".
     feature_type : str, optional
-        Only return features of this type: "road", "water", or "layerset".
+        Only return features of this type: "road", "water", "crown", or
+        "layerset".
     product : str, optional
         Only return features from this data product (e.g. "osm").
     tag : str, optional

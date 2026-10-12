@@ -10,10 +10,15 @@ from uuid import uuid4
 
 # Internal imports
 from fastfuels_sdk.v2.grids import Grid, create_canopy_height_grid_from_meta
+from fastfuels_sdk.v2.features import Feature
 from fastfuels_sdk.v2.inventories import (
+    ChmInventoryCrownSegmentation,
+    CrownFeatureCrownGeometrySource,
     Inventory,
+    ParametricCrownGeometrySource,
     ReimputationMethod,
     _build_fusion_method,
+    create_tree_inventory_from_chm_grid,
     create_tree_inventory_from_file,
     create_tree_inventory_from_gdam,
     create_tree_inventory_from_pim_chm_fusion,
@@ -40,6 +45,7 @@ from fastfuels_sdk.v2.client_library.models import (
     InventoryType,
     JobStatus,
     Modifier,
+    StemIsolationVwf,
     Operator,
     TreeForestryMetrics,
 )
@@ -595,6 +601,303 @@ class TestModificationBuilders:
             < len(completed_tree_inventory.to_dataframe())
         )
         modified.delete()
+
+
+def _created_inventory_response(domain_id):
+    return Response(
+        status_code=HTTPStatus.CREATED,
+        content=b"",
+        headers={},
+        parsed=InventoryModel(
+            id="inventory-id",
+            domain_id=domain_id,
+            type_=InventoryType.TREE,
+            status=JobStatus.PENDING,
+            source=InventorySource(),
+        ),
+    )
+
+
+class TestCreateTreeInventoryFromChmGridRequest:
+    @pytest.fixture
+    def captured(self, monkeypatch):
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, body=body.to_dict())
+            return _created_inventory_response(domain_id)
+
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.ensure_client", lambda: object()
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.create_chm_inventory.sync_detailed",
+            fake_create,
+        )
+        return captured
+
+    def test_omits_crown_segmentation_by_default(self, captured):
+        create_tree_inventory_from_chm_grid("domain-id", "chm-id")
+        assert "crown_segmentation" not in captured["body"]
+
+    def test_empty_mapping_uses_api_defaults(self, captured):
+        create_tree_inventory_from_chm_grid(
+            "domain-id", "chm-id", crown_segmentation={}
+        )
+        assert captured["body"]["crown_segmentation"] == {}
+
+    def test_crown_segmentation_model(self, captured):
+        create_tree_inventory_from_chm_grid(
+            "domain-id",
+            "chm-id",
+            crown_segmentation=ChmInventoryCrownSegmentation(max_crown_radius=6.0),
+        )
+        assert captured["body"]["crown_segmentation"]["max_crown_radius"] == 6.0
+
+    def test_rejects_other_crown_segmentation_types(self, captured):
+        with pytest.raises(ValueError, match="ChmInventoryCrownSegmentation"):
+            create_tree_inventory_from_chm_grid(
+                "domain-id", "chm-id", crown_segmentation=True
+            )
+        assert captured == {}
+
+    def test_vwf_defaults(self, captured):
+        create_tree_inventory_from_chm_grid(
+            "domain-id", "chm-id", algorithm=StemIsolationVwf()
+        )
+        algorithm = captured["body"]["algorithm"]
+        assert algorithm["name"] == "vwf"
+        assert algorithm["crown_ratio"] == 0.05
+        assert algorithm["crown_offset"] == 3.0
+
+
+class TestCreateTreeInventoryFromFileColumns:
+    def test_crown_radius_mapping(self, monkeypatch, tmp_path):
+        path = tmp_path / "trees.csv"
+        path.write_text("x,y,height,CR_M\n1,2,10,1.5\n")
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured["body"] = body.to_dict()
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=SimpleNamespace(
+                    upload=None,
+                    inventory=_created_inventory_response(domain_id).parsed,
+                ),
+            )
+
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.ensure_client", lambda: object()
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.create_inventory_upload.sync_detailed",
+            fake_create,
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.put_upload", lambda upload, path: None
+        )
+
+        create_tree_inventory_from_file(
+            "domain-id", str(path), columns={"crown_radius": "CR_M"}
+        )
+
+        assert captured["body"]["columns"] == {"crown_radius": "CR_M"}
+
+
+class TestVoxelizeRequest:
+    @staticmethod
+    def _inventory():
+        return Inventory(
+            id="inventory-id",
+            domain_id="domain-id",
+            type_=InventoryType.TREE,
+            status=JobStatus.COMPLETED,
+            source=InventorySource(),
+        )
+
+    @staticmethod
+    def _crown_feature(feature_type="crown"):
+        return Feature.from_dict(
+            {
+                "id": "feature-id",
+                "domain_id": "domain-id",
+                "type": feature_type,
+                "status": "completed",
+                "source": {},
+            }
+        )
+
+    @pytest.fixture
+    def captured(self, monkeypatch):
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, body=body.to_dict())
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=Grid.from_dict(
+                    {
+                        "id": "grid-id",
+                        "domain_id": domain_id,
+                        "status": "pending",
+                        "source": {},
+                        "bands": [],
+                    }
+                ),
+            )
+
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.ensure_client", lambda: object()
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.client_library.api.grids.create_tree_inventory_grid.sync_detailed",
+            fake_create,
+        )
+        return captured
+
+    def test_omitted_fields_are_not_sent(self, captured):
+        self._inventory().voxelize()
+        assert "crown_geometry_source" not in captured["body"]
+        assert "max_bulk_density" not in captured["body"]
+
+    @pytest.mark.parametrize(
+        "source",
+        [
+            "feature-id",
+            CrownFeatureCrownGeometrySource(feature_id="feature-id"),
+            "crown_feature_object",
+        ],
+    )
+    def test_crown_feature_source(self, captured, source):
+        if source == "crown_feature_object":
+            source = self._crown_feature()
+        self._inventory().voxelize(crown_geometry_source=source)
+        assert captured["body"]["crown_geometry_source"] == {
+            "type": "crown_feature",
+            "feature_id": "feature-id",
+        }
+
+    def test_parametric_source(self, captured):
+        self._inventory().voxelize(
+            crown_geometry_source=ParametricCrownGeometrySource()
+        )
+        assert captured["body"]["crown_geometry_source"] == {"type": "parametric"}
+
+    def test_rejects_non_crown_feature(self, captured):
+        with pytest.raises(ValueError, match="crown Feature"):
+            self._inventory().voxelize(
+                crown_geometry_source=self._crown_feature("road")
+            )
+        assert captured == {}
+
+    def test_max_bulk_density_sent(self, captured):
+        self._inventory().voxelize(max_bulk_density=2.0)
+        assert captured["body"]["max_bulk_density"] == 2.0
+
+    @pytest.mark.parametrize(
+        "status_code, exception",
+        [
+            (HTTPStatus.NOT_FOUND, NotFoundException),
+            (HTTPStatus.UNPROCESSABLE_ENTITY, UnprocessableEntityException),
+        ],
+    )
+    def test_crown_feature_errors_are_typed(self, monkeypatch, status_code, exception):
+        # The spec does not document the 404, so the generated client
+        # returns it unparsed; expect() must still raise a typed error.
+        detail = "Feature 'feature-id' not found."
+
+        def fake_create(domain_id, *, client, body):
+            return Response(
+                status_code=status_code,
+                content=json.dumps({"detail": detail}).encode(),
+                headers={},
+                parsed=None,
+            )
+
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.ensure_client", lambda: object()
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.client_library.api.grids.create_tree_inventory_grid.sync_detailed",
+            fake_create,
+        )
+        with pytest.raises(exception) as exc_info:
+            self._inventory().voxelize(crown_geometry_source="feature-id")
+        assert exc_info.value.detail == detail
+
+
+class TestMeasuredCrowns:
+    def test_chm_inventory_has_tree_id(self, completed_chm_inventory):
+        keys = [column.key for column in completed_chm_inventory.columns]
+        assert "tree_id" in keys
+
+    def test_crown_segmentation_adds_crown_radius(
+        self, test_domain, completed_fine_chm_grid
+    ):
+        inventory = create_tree_inventory_from_chm_grid(
+            test_domain,
+            completed_fine_chm_grid,
+            crown_segmentation={},
+            name="throwaway_segmented_chm_inventory",
+        )
+        inventory.wait()
+        keys = [column.key for column in inventory.columns]
+        assert "crown_radius" in keys
+        inventory.delete()
+
+    def test_voxelize_with_crown_feature(
+        self, test_domain, completed_chm_inventory, completed_crown_feature
+    ):
+        # A CHM inventory has only x, y, height; GDAM imputes the rest and
+        # keeps tree_id, so its trees still match the crowns.
+        inventory = create_tree_inventory_from_gdam(
+            test_domain, completed_chm_inventory, name="throwaway_gdam"
+        )
+        inventory.wait()
+        voxels = inventory.voxelize(
+            horizontal_resolution_m=2.0,
+            vertical_resolution_m=1.0,
+            crown_geometry_source=completed_crown_feature,
+            max_bulk_density=2.0,
+            name="throwaway_measured_voxels",
+        )
+        assert voxels.source["crown_geometry_source"] == {
+            "type": "crown_feature",
+            "feature_id": completed_crown_feature.id,
+        }
+        assert voxels.source["max_bulk_density"] == 2.0
+        voxels.wait()
+        counts = voxels.source["crown_geometry_counts"]
+        assert set(counts) == {
+            "measured",
+            "parametric_no_crown",
+            "parametric_stem_outside_crown",
+            "parametric_no_volume",
+        }
+        assert counts["measured"] > 0
+        voxels.delete()
+        inventory.delete()
+
+    def test_missing_crown_feature(self, completed_tree_inventory):
+        with pytest.raises(NotFoundException):
+            completed_tree_inventory.voxelize(crown_geometry_source=uuid4().hex)
+
+    def test_non_positive_max_bulk_density_rejected(self, completed_tree_inventory):
+        with pytest.raises(UnprocessableEntityException):
+            completed_tree_inventory.voxelize(max_bulk_density=0)
+
+    def test_non_crown_feature_rejected(
+        self, completed_tree_inventory, completed_road_feature
+    ):
+        with pytest.raises(UnprocessableEntityException, match="crown Feature"):
+            completed_tree_inventory.voxelize(
+                crown_geometry_source=completed_road_feature.id
+            )
 
 
 class TestVoxelize:

@@ -17,17 +17,22 @@ that are born complete (layerset uploads) don't need one.
 import pytest
 
 from fastfuels_sdk.v2.features import (
+    create_crown_feature_from_chm,
     create_layerset_feature_from_geojson,
     create_road_feature_from_osm,
 )
 from fastfuels_sdk.v2.grids import (
+    create_canopy_height_grid_from_meta,
     create_fuel_model_grid_from_landfire_fbfm13,
     create_fuel_model_grid_from_landfire_fbfm40,
     create_fuel_model_grid_from_landfire_fccs,
     create_pim_grid_from_treemap,
     create_topography_grid_from_3dep,
 )
-from fastfuels_sdk.v2.inventories import create_tree_inventory_from_pim_grid
+from fastfuels_sdk.v2.inventories import (
+    create_tree_inventory_from_chm_grid,
+    create_tree_inventory_from_pim_grid,
+)
 from tests.v2.utils import (
     create_default_domain,
     create_default_layerset_geojson,
@@ -163,3 +168,54 @@ def completed_tree_inventory(test_domain, completed_pim_grid):
     )
     inventory.wait()
     return inventory
+
+
+@pytest.fixture(scope="session")
+def completed_fine_chm_grid(test_domain):
+    """A completed Meta CHM at 1 m, fine enough for crown segmentation
+    (2 m or finer). READ-ONLY: shared by every module.
+    """
+    grid = create_canopy_height_grid_from_meta(
+        test_domain,
+        output_resolution_m=1,
+        name="test_fine_chm",
+        description="1 m CHM for testing v2 crown features",
+        tags=["test"],
+    )
+    grid.wait()
+    return grid
+
+
+@pytest.fixture(scope="session")
+def completed_chm_inventory(test_domain, completed_fine_chm_grid):
+    """A completed tree inventory detected from ``completed_fine_chm_grid``.
+    READ-ONLY: shared by every module.
+    """
+    inventory = create_tree_inventory_from_chm_grid(
+        test_domain,
+        completed_fine_chm_grid,
+        name="test_chm_inventory",
+        description="CHM-detected inventory for testing v2 crown features",
+        tags=["test"],
+    )
+    inventory.wait()
+    return inventory
+
+
+@pytest.fixture(scope="session")
+def completed_crown_feature(
+    test_domain, completed_chm_inventory, completed_fine_chm_grid
+):
+    """A completed crown feature built from ``completed_chm_inventory`` and
+    ``completed_fine_chm_grid``. READ-ONLY: shared by every module.
+    """
+    feature = create_crown_feature_from_chm(
+        test_domain,
+        completed_chm_inventory,
+        completed_fine_chm_grid,
+        name="test_crowns",
+        description="Crown feature for testing v2 measured crowns",
+        tags=["test"],
+    )
+    feature.wait()
+    return feature

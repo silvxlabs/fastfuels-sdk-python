@@ -38,6 +38,7 @@ from fastfuels_sdk.v2.client_library.models import (
     Inventory as InventoryModel,
     ApplyModificationsRequest,
     ApplyTreatmentsRequest,
+    ChmInventoryCrownSegmentation,
     CreateChmInventoryRequest,
     CreateGdamInventoryRequest,
     CreateGdamInventoryRequestImputeColumnsItem,
@@ -45,6 +46,7 @@ from fastfuels_sdk.v2.client_library.models import (
     CreatePimChmFusionInventoryRequest,
     CreatePimInventoryRequest,
     CreateTreeInventoryRequest,
+    CrownFeatureCrownGeometrySource,
     CrownProfileModel,
     DuplicateInventoryRequest,
     ExportInventoryRequest,
@@ -57,6 +59,7 @@ from fastfuels_sdk.v2.client_library.models import (
     InventoryUploadFormat,
     JobStatus,
     ListInventoriesResponse,
+    ParametricCrownGeometrySource,
     PointProcess,
     ReimputationMethod,
     Resolution3D,
@@ -79,6 +82,9 @@ __all__ = [
     "create_tree_inventory_from_gdam",
     "list_inventories",
     "get_inventory",
+    "ChmInventoryCrownSegmentation",
+    "CrownFeatureCrownGeometrySource",
+    "ParametricCrownGeometrySource",
     "ReimputationMethod",
 ]
 
@@ -123,6 +129,62 @@ def _build_fusion_method(method):
     raise ValueError(
         "method must be a ReimputationMethod or a mapping of its fields, "
         f"got {method!r}."
+    )
+
+
+def _build_crown_segmentation(crown_segmentation):
+    """Translate a CHM inventory ``crown_segmentation`` kwarg into a model or UNSET.
+
+    - ``None`` -> ``UNSET`` (no segmentation, no ``crown_radius`` column).
+    - a ``ChmInventoryCrownSegmentation`` -> passed through unchanged.
+    - a mapping -> a ``ChmInventoryCrownSegmentation`` built from its fields
+      (``{}`` segments with the API defaults).
+    """
+    if crown_segmentation is None:
+        return UNSET
+    if isinstance(crown_segmentation, ChmInventoryCrownSegmentation):
+        return crown_segmentation
+    if isinstance(crown_segmentation, Mapping):
+        return ChmInventoryCrownSegmentation.from_dict(crown_segmentation)
+    raise ValueError(
+        "crown_segmentation must be a ChmInventoryCrownSegmentation or a "
+        f"mapping of its fields, got {crown_segmentation!r}."
+    )
+
+
+def _build_crown_geometry_source(crown_geometry_source):
+    """Translate a voxelize ``crown_geometry_source`` kwarg into a model or UNSET.
+
+    - ``None`` -> ``UNSET`` (the API default, parametric crowns).
+    - a ``ParametricCrownGeometrySource`` or
+      ``CrownFeatureCrownGeometrySource`` -> passed through unchanged.
+    - a crown ``Feature`` -> a crown-feature source for its id.
+    - a str -> a crown-feature source for that feature id.
+    """
+    if crown_geometry_source is None:
+        return UNSET
+    if isinstance(
+        crown_geometry_source,
+        (ParametricCrownGeometrySource, CrownFeatureCrownGeometrySource),
+    ):
+        return crown_geometry_source
+    if isinstance(crown_geometry_source, str):
+        return CrownFeatureCrownGeometrySource(feature_id=crown_geometry_source)
+    # A Feature (or any object with a feature type): imported lazily so the
+    # inventories module never imports features.
+    feature_type = getattr(crown_geometry_source, "type_", None)
+    if feature_type is not None:
+        if getattr(feature_type, "value", feature_type) != "crown":
+            raise ValueError(
+                f"Feature {crown_geometry_source.id} has type "
+                f"{getattr(feature_type, 'value', feature_type)!r}; "
+                "crown_geometry_source requires a crown Feature."
+            )
+        return CrownFeatureCrownGeometrySource(feature_id=crown_geometry_source.id)
+    raise ValueError(
+        "crown_geometry_source must be a crown Feature, a feature id, a "
+        "ParametricCrownGeometrySource, or a CrownFeatureCrownGeometrySource, "
+        f"got {crown_geometry_source!r}."
     )
 
 
@@ -506,6 +568,8 @@ class Inventory(InventoryModel):
         name: str = "",
         description: str = "",
         tags: Optional[List[str]] = None,
+        crown_geometry_source=None,
+        max_bulk_density: Optional[float] = None,
     ):
         """Create a 3D voxelized tree fuel grid from this inventory.
 
@@ -526,13 +590,15 @@ class Inventory(InventoryModel):
             "savr.foliage", "spcd", "tree_id", "volume_fraction").
             Defaults to the API's standard band set.
         crown_profile_model : str, optional
-            Crown shape model used to distribute biomass: "beta" or
-            "purves".
+            Crown shape model used to distribute biomass: "purves" (the API
+            default), "beta", "cone", "cylinder", "single_ellipsoid",
+            "dual_ellipsoid", "single_paraboloid", or "dual_paraboloid".
         biomass_source : AllometryBiomassSource or InventoryColumnsBiomassSource, optional
             Where crown biomass values come from: allometry equations or
             columns of this inventory.
         max_crown_radius_source : optional
-            Where each tree's maximum crown radius comes from.
+            Where each tree's maximum crown radius comes from. Does not
+            apply to measured crowns.
         moisture_model : MoistureModel, optional
             Fuel moisture values assigned to the voxelized fuels.
         seed : int, optional
@@ -541,18 +607,60 @@ class Inventory(InventoryModel):
             Metadata for the new grid.
         tags : List[str], optional
             Tags for the new grid.
+        crown_geometry_source : Feature, str, ParametricCrownGeometrySource, or CrownFeatureCrownGeometrySource, optional
+            Where crown shapes come from. Omitted (the default) or
+            ``ParametricCrownGeometrySource()``: every crown is drawn from
+            ``crown_profile_model`` and ``max_crown_radius_source``. A
+            completed crown Feature (see
+            :func:`fastfuels_sdk.v2.features.create_crown_feature_from_chm`),
+            its id, or ``CrownFeatureCrownGeometrySource(feature_id=...)``:
+            each tree with a crown in that Feature, matched by ``tree_id``,
+            gets a measured crown. Its outline is the crown's CHM cells, its
+            top is each cell's CHM height, and its bottom follows
+            ``crown_profile_model`` up from the crown base. Trees with no
+            crown in the Feature, whose crown does not contain their stem,
+            or with no CHM height above their crown base are drawn
+            parametrically. Every tree keeps the biomass ``biomass_source``
+            gives it. Requires an inventory with a ``tree_id`` column; the
+            CHM grid the Feature was built from must still exist.
+        max_bulk_density : float, optional
+            Upper limit on bulk density, in kg/m**3; must be greater than 0.
+            In any voxel where a biomass component's bulk
+            density, live and dead combined, exceeds the limit, that
+            component's live and dead bulk density are scaled down to it,
+            keeping their live/dead split, and ``leaf_area_density`` is
+            scaled with foliage. Omitted (the default) applies no limit.
 
         Returns
         -------
         Grid
-            The new (pending) 3D voxel Grid.
+            The new (pending) 3D voxel Grid. Its ``source`` records the
+            request, including ``crown_geometry_source`` and
+            ``max_bulk_density``. With a crown Feature source,
+            ``source["source_chm_grid_id"]`` and
+            ``source["source_chm_grid_checksum"]`` record the Feature's CHM
+            grid and its checksum at creation, and once the grid completes
+            ``source["crown_geometry_counts"]`` gives the number of trees
+            drawn with a measured crown (``"measured"``) and drawn
+            parametrically because they had no crown in the Feature
+            (``"parametric_no_crown"``), their crown did not contain their
+            stem (``"parametric_stem_outside_crown"``), or they had no CHM
+            height above their crown base (``"parametric_no_volume"``).
 
         Raises
         ------
         ValueError
             If only one of ``horizontal_resolution_m`` /
-            ``vertical_resolution_m`` is given, or the inventory is not
-            completed.
+            ``vertical_resolution_m`` is given, the inventory is not
+            completed, or ``crown_geometry_source`` is a Feature that is not
+            a crown Feature.
+        NotFoundException
+            If the crown Feature does not exist in this domain.
+        UnprocessableEntityException
+            If ``max_bulk_density`` is not greater than 0, the Feature is not
+            a completed crown Feature, the CHM grid it was built from no
+            longer exists, or the inventory has no ``tree_id`` column or
+            lacks the columns voxelization needs.
 
         Examples
         --------
@@ -561,6 +669,14 @@ class Inventory(InventoryModel):
         ...     horizontal_resolution_m=2.0, vertical_resolution_m=1.0
         ... )
         >>> voxels.wait()
+
+        Draw measured crowns from a crown Feature and cap bulk density:
+
+        >>> voxels = inventory.voxelize(
+        ...     crown_geometry_source=crowns, max_bulk_density=2.0
+        ... )
+        >>> voxels.wait().source["crown_geometry_counts"]
+        {'measured': 812, 'parametric_no_crown': 3, ...}
         """
         # Lazy import so the modules stay decoupled (grids never imports
         # inventories).
@@ -570,6 +686,7 @@ class Inventory(InventoryModel):
         from fastfuels_sdk.v2.grids import Grid
 
         self._require_completed("voxelize")
+        crown_geometry_source = _build_crown_geometry_source(crown_geometry_source)
         if (horizontal_resolution_m is None) != (vertical_resolution_m is None):
             raise ValueError(
                 "horizontal_resolution_m and vertical_resolution_m must be "
@@ -592,6 +709,8 @@ class Inventory(InventoryModel):
             ),
             biomass_source=_opt(biomass_source),
             max_crown_radius_source=_opt(max_crown_radius_source),
+            crown_geometry_source=crown_geometry_source,
+            max_bulk_density=_opt(max_bulk_density),
             moisture_model=_opt(moisture_model),
             seed=_opt(seed),
             name=name,
@@ -928,11 +1047,16 @@ def create_tree_inventory_from_chm_grid(
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
     treatments: Optional[list] = None,
+    crown_segmentation=None,
 ) -> Inventory:
     """Create a tree inventory by isolating stems in a canopy height model.
 
     Detects individual trees in a completed canopy height model (CHM)
-    grid and derives a tree record from each detected stem.
+    grid and derives a tree record from each detected stem. Each tree gets
+    a ``tree_id``. To outline each detected tree's crown as a crown
+    Feature for measured-crown voxelization, pass this inventory and the
+    same CHM grid to
+    :func:`fastfuels_sdk.v2.features.create_crown_feature_from_chm`.
 
     Parameters
     ----------
@@ -947,6 +1071,9 @@ def create_tree_inventory_from_chm_grid(
         Stem isolation algorithm and its parameters: local maximum
         filtering (``StemIsolationLmf``) or variable window filtering
         (``StemIsolationVwf``). Defaults to the API's standard algorithm.
+        ``StemIsolationVwf()`` without arguments uses ``crown_ratio=0.05``
+        and ``crown_offset=3.0``: the search window diameter in meters is
+        ``crown_offset + crown_ratio * height``.
     name, description : str, optional
         Metadata for the inventory.
     tags : List[str], optional
@@ -957,11 +1084,28 @@ def create_tree_inventory_from_chm_grid(
     treatments : list, optional
         Silvicultural treatments (``InventoryBasalAreaTreatment`` or
         ``InventoryDiameterTreatment``) applied after modifications.
+    crown_segmentation : ChmInventoryCrownSegmentation or Mapping, optional
+        Segment each detected tree's crown on the CHM and add a
+        ``crown_radius`` column (m). Pass a ``ChmInventoryCrownSegmentation``
+        or a mapping of its fields (``method``, ``min_relative_height``,
+        ``min_relative_crown_height``, ``max_crown_radius``,
+        ``radius_estimator``); ``{}`` segments with the API defaults.
+        Requires a CHM cell size of 2 m or finer. Omitted (the default)
+        skips segmentation.
 
     Returns
     -------
     Inventory
         The created Inventory object (job status "pending" or "running").
+
+    Raises
+    ------
+    ValueError
+        If ``crown_segmentation`` is neither a
+        ``ChmInventoryCrownSegmentation`` nor a mapping.
+    UnprocessableEntityException
+        If ``crown_segmentation`` is given and the CHM cell size is coarser
+        than 2 m.
 
     Examples
     --------
@@ -971,10 +1115,17 @@ def create_tree_inventory_from_chm_grid(
     ...     domain, chm.wait()
     ... )
     >>> inventory.wait()
+
+    Add a measured ``crown_radius`` column:
+
+    >>> inventory = ff.inventories.create_tree_inventory_from_chm_grid(
+    ...     domain, chm, crown_segmentation={}
+    ... )
     """
     request_body = CreateChmInventoryRequest(
         source_chm_grid_id=_domain_id(chm_grid),
         algorithm=_opt(algorithm),
+        crown_segmentation=_build_crown_segmentation(crown_segmentation),
         name=name,
         description=description,
         tags=_opt(tags),
@@ -1124,9 +1275,11 @@ def create_tree_inventory_from_file(
     columns : dict or InventoryColumnMapping, optional
         Mapping from the standard column roles to your file's column
         names, e.g. ``{"x": "X_UTM", "y": "Y_UTM", "dbh": "DBH_CM"}``.
-        Roles: "x", "y", "height", "dbh", "crown_ratio",
-        "fia_species_code", "fia_status_code". Columns whose names
-        already match need no mapping.
+        Roles: "tree_id", "x", "y", "height", "dbh", "crown_ratio",
+        "crown_radius", "fia_species_code", "fia_status_code",
+        "fia_crown_class_code". Columns whose names already match need no
+        mapping. ``crown_radius`` is a measured crown radius in meters
+        (> 0 and <= 20; null for trees without a measurement).
     name, description : str, optional
         Metadata for the inventory.
     tags : List[str], optional
