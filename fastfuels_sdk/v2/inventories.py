@@ -159,7 +159,8 @@ def _build_crown_geometry_source(crown_geometry_source):
     - a ``ParametricCrownGeometrySource`` or
       ``CrownFeatureCrownGeometrySource`` -> passed through unchanged.
     - a crown ``Feature`` -> a crown-feature source for its id.
-    - a str -> a crown-feature source for that feature id.
+    - ``"parametric"`` -> ``ParametricCrownGeometrySource()``.
+    - any other str -> a crown-feature source for that feature id.
     """
     if crown_geometry_source is None:
         return UNSET
@@ -168,6 +169,8 @@ def _build_crown_geometry_source(crown_geometry_source):
         (ParametricCrownGeometrySource, CrownFeatureCrownGeometrySource),
     ):
         return crown_geometry_source
+    if crown_geometry_source == "parametric":
+        return ParametricCrownGeometrySource()
     if isinstance(crown_geometry_source, str):
         return CrownFeatureCrownGeometrySource(feature_id=crown_geometry_source)
     # A Feature (or any object with a feature type): imported lazily so the
@@ -608,7 +611,9 @@ class Inventory(InventoryModel):
         tags : List[str], optional
             Tags for the new grid.
         crown_geometry_source : Feature, str, ParametricCrownGeometrySource, or CrownFeatureCrownGeometrySource, optional
-            Where crown shapes come from. Omitted (the default) or
+            Where crown shapes come from. The string ``"parametric"`` means
+            ``ParametricCrownGeometrySource()``; any other string is a crown
+            Feature id. Omitted (the default) or
             ``ParametricCrownGeometrySource()``: every crown is drawn from
             ``crown_profile_model`` and ``max_crown_radius_source``. A
             completed crown Feature (see

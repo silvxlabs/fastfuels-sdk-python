@@ -782,6 +782,18 @@ class TestVoxelizeRequest:
             "feature_id": "feature-id",
         }
 
+    def test_parametric_string(self, captured):
+        self._inventory().voxelize(crown_geometry_source="parametric")
+        assert captured["body"]["crown_geometry_source"] == {"type": "parametric"}
+
+    def test_other_string_is_a_feature_id(self, captured):
+        feature_id = uuid4().hex
+        self._inventory().voxelize(crown_geometry_source=feature_id)
+        assert captured["body"]["crown_geometry_source"] == {
+            "type": "crown_feature",
+            "feature_id": feature_id,
+        }
+
     def test_parametric_source(self, captured):
         self._inventory().voxelize(
             crown_geometry_source=ParametricCrownGeometrySource()
