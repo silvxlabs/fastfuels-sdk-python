@@ -444,7 +444,9 @@ class TestQuicfireExport:
         )
         fbfm.wait()
         surface = create_fuel_grid_from_fbfm40_lookup(
-            fbfm, bands=["fuel_load.1hr", "fuel_depth"], name="qf_surface_lookup"
+            fbfm,
+            bands=["fuel_load.fine_dead", "fuel_depth"],
+            name="qf_surface_lookup",
         )
         surface.wait()
         return surface
@@ -521,7 +523,7 @@ class TestQuicfireExport:
             test_domain,
             canopy_bulk_density=(voxel_grid, "bulk_density.foliage.live"),
             canopy_moisture=(voxel_grid, "fuel_moisture.live"),
-            surface_fuel_load=(lookup_surface_grid, "fuel_load.1hr"),
+            surface_fuel_load=(lookup_surface_grid, "fuel_load.fine_dead"),
             surface_fuel_depth=(lookup_surface_grid, "fuel_depth"),
             surface_moisture=(surface_grid, "fuel_moisture.1hr"),
             topography=(aligned_topography_grid, "elevation"),

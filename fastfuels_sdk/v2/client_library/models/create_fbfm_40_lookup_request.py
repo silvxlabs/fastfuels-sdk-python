@@ -27,6 +27,9 @@ class CreateFbfm40LookupRequest:
             source_grid_id (str): Grid containing FBFM40 codes
             bands (list[Fbfm40LookupBand]):
             source_band (str | Unset): Band in source grid containing FBFM codes Default: 'fbfm'.
+            herbaceous_curing (float | Unset): Fraction of herbaceous load that is cured (0 = green, 1 = fully cured). In
+                dynamic fuel models, this fraction of the live herbaceous load moves to dead herbaceous fuel. Defaults to 0.67,
+                the two-thirds-cured reference scenario of Scott and Burgan (2005). Default: 0.67.
             name (str | Unset):  Default: ''.
             description (str | Unset):  Default: ''.
             tags (list[str] | Unset):
@@ -36,6 +39,7 @@ class CreateFbfm40LookupRequest:
     source_grid_id: str
     bands: list[Fbfm40LookupBand]
     source_band: str | Unset = "fbfm"
+    herbaceous_curing: float | Unset = 0.67
     name: str | Unset = ""
     description: str | Unset = ""
     tags: list[str] | Unset = UNSET
@@ -51,6 +55,8 @@ class CreateFbfm40LookupRequest:
             bands.append(bands_item)
 
         source_band = self.source_band
+
+        herbaceous_curing = self.herbaceous_curing
 
         name = self.name
 
@@ -77,6 +83,8 @@ class CreateFbfm40LookupRequest:
         )
         if source_band is not UNSET:
             field_dict["source_band"] = source_band
+        if herbaceous_curing is not UNSET:
+            field_dict["herbaceous_curing"] = herbaceous_curing
         if name is not UNSET:
             field_dict["name"] = name
         if description is not UNSET:
@@ -104,6 +112,8 @@ class CreateFbfm40LookupRequest:
 
         source_band = d.pop("source_band", UNSET)
 
+        herbaceous_curing = d.pop("herbaceous_curing", UNSET)
+
         name = d.pop("name", UNSET)
 
         description = d.pop("description", UNSET)
@@ -123,6 +133,7 @@ class CreateFbfm40LookupRequest:
             source_grid_id=source_grid_id,
             bands=bands,
             source_band=source_band,
+            herbaceous_curing=herbaceous_curing,
             name=name,
             description=description,
             tags=tags,

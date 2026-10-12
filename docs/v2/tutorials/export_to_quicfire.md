@@ -195,17 +195,18 @@ ff.wait_all([topography, fbfm, pim], verbose=True)
 ```
 
 With the FBFM40 codes in hand, we look up the actual fuel quantities QUIC-Fire
-consumes — 1-hour fuel load and fuel-bed depth — which produces a new grid:
+consumes — fine dead fuel load (1-hour plus cured herbaceous fuel) and
+fuel-bed depth — which produces a new grid:
 
 ```python
 surface = ff.grids.create_fuel_grid_from_fbfm40_lookup(
-    fbfm, bands=["fuel_load.1hr", "fuel_depth"]
+    fbfm, bands=["fuel_load.fine_dead", "fuel_depth"]
 )
 ```
 
 ```python
 >>> [(b.key, b.unit) for b in surface.bands]
-[('fuel_load.1hr', 'kg/m**2'), ('fuel_depth', 'm')]
+[('fuel_load.fine_dead', 'kg/m**2'), ('fuel_depth', 'm')]
 ```
 
 LANDFIRE doesn't carry fuel moisture (it's a weather-driven scenario input),
@@ -268,7 +269,7 @@ export = ff.exports.create_quicfire_export(
     domain,
     canopy_bulk_density=(voxels, "bulk_density.foliage.live"),
     canopy_moisture=(voxels, "fuel_moisture.live"),
-    surface_fuel_load=(surface, "fuel_load.1hr"),
+    surface_fuel_load=(surface, "fuel_load.fine_dead"),
     surface_fuel_depth=(surface, "fuel_depth"),
     surface_moisture=(moisture, "fuel_moisture.1hr"),
     topography=(topography, "elevation"),

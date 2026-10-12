@@ -93,9 +93,16 @@ def sync_detailed(
     - **bands**: (required) Bands to look up. Valid values:
       - `fuel_load.1hr`, `fuel_load.10hr`, `fuel_load.100hr` - Dead fuel loads (kg/m**2)
       - `fuel_load.live_herb`, `fuel_load.live_woody` - Live fuel loads (kg/m**2)
+      - `fuel_load.dead_herb` - Cured herbaceous fuel load (kg/m**2)
+      - `fuel_load.fine_dead` - 1-hr plus dead herbaceous fuel load (kg/m**2)
       - `savr.1hr`, `savr.10hr`, `savr.100hr` - Dead fuel SAV ratios (1/m)
       - `savr.live_herb`, `savr.live_woody` - Live fuel SAV ratios (1/m)
+      - `savr.dead_herb` - Dead herbaceous SAV ratio (1/m)
+      - `savr.fine_dead` - Load-weighted SAV ratio of 1-hr and dead herbaceous fuel (1/m)
       - `fuel_depth` - Fuel bed depth (m)
+    - **herbaceous_curing**: (optional) Fraction of herbaceous load that is
+      cured, from 0 (green) to 1 (fully cured). Defaults to 0.67. See
+      Herbaceous Curing below.
     - **source_band**: (optional) Band in source grid containing FBFM codes. Defaults to `\"fbfm\"`.
     - **name**: (optional) Name for the grid.
     - **description**: (optional) Description.
@@ -113,6 +120,26 @@ def sync_detailed(
     - **TU** (timber-understory): 161–165
     - **TL** (timber litter): 181–189
     - **SB** (slash-blowdown): 201–204
+
+    ## Herbaceous Curing
+
+    Every fuel model with live herbaceous load is a dynamic model (Scott and
+    Burgan 2005). In a dynamic model, `herbaceous_curing` of the live
+    herbaceous load moves to a separate dead herbaceous class:
+
+    - `fuel_load.live_herb` = (1 - `herbaceous_curing`) x herbaceous load
+    - `fuel_load.dead_herb` = `herbaceous_curing` x herbaceous load
+
+    Dead herbaceous fuel keeps the herbaceous SAV ratio and takes the dead
+    1-hr fuel moisture. Live woody fuel never cures. `fuel_load.1hr` and
+    `savr.1hr` are unaffected by curing.
+
+    `fuel_load.fine_dead` and `savr.fine_dead` combine 1-hr and dead
+    herbaceous fuel into a single fine dead fuel class, for models that take
+    one surface fuel class, such as the QUIC-Fire export.
+
+    To start from a live herbaceous moisture content `M` (%) instead, use
+    `herbaceous_curing` = (120 - `M`) / 90, clipped to 0-1.
 
     Cells with no fuel model in the source grid (nodata) remain nodata in every
     output band. Any other code not listed above, including 0, fails the job
@@ -185,9 +212,16 @@ def sync(
     - **bands**: (required) Bands to look up. Valid values:
       - `fuel_load.1hr`, `fuel_load.10hr`, `fuel_load.100hr` - Dead fuel loads (kg/m**2)
       - `fuel_load.live_herb`, `fuel_load.live_woody` - Live fuel loads (kg/m**2)
+      - `fuel_load.dead_herb` - Cured herbaceous fuel load (kg/m**2)
+      - `fuel_load.fine_dead` - 1-hr plus dead herbaceous fuel load (kg/m**2)
       - `savr.1hr`, `savr.10hr`, `savr.100hr` - Dead fuel SAV ratios (1/m)
       - `savr.live_herb`, `savr.live_woody` - Live fuel SAV ratios (1/m)
+      - `savr.dead_herb` - Dead herbaceous SAV ratio (1/m)
+      - `savr.fine_dead` - Load-weighted SAV ratio of 1-hr and dead herbaceous fuel (1/m)
       - `fuel_depth` - Fuel bed depth (m)
+    - **herbaceous_curing**: (optional) Fraction of herbaceous load that is
+      cured, from 0 (green) to 1 (fully cured). Defaults to 0.67. See
+      Herbaceous Curing below.
     - **source_band**: (optional) Band in source grid containing FBFM codes. Defaults to `\"fbfm\"`.
     - **name**: (optional) Name for the grid.
     - **description**: (optional) Description.
@@ -205,6 +239,26 @@ def sync(
     - **TU** (timber-understory): 161–165
     - **TL** (timber litter): 181–189
     - **SB** (slash-blowdown): 201–204
+
+    ## Herbaceous Curing
+
+    Every fuel model with live herbaceous load is a dynamic model (Scott and
+    Burgan 2005). In a dynamic model, `herbaceous_curing` of the live
+    herbaceous load moves to a separate dead herbaceous class:
+
+    - `fuel_load.live_herb` = (1 - `herbaceous_curing`) x herbaceous load
+    - `fuel_load.dead_herb` = `herbaceous_curing` x herbaceous load
+
+    Dead herbaceous fuel keeps the herbaceous SAV ratio and takes the dead
+    1-hr fuel moisture. Live woody fuel never cures. `fuel_load.1hr` and
+    `savr.1hr` are unaffected by curing.
+
+    `fuel_load.fine_dead` and `savr.fine_dead` combine 1-hr and dead
+    herbaceous fuel into a single fine dead fuel class, for models that take
+    one surface fuel class, such as the QUIC-Fire export.
+
+    To start from a live herbaceous moisture content `M` (%) instead, use
+    `herbaceous_curing` = (120 - `M`) / 90, clipped to 0-1.
 
     Cells with no fuel model in the source grid (nodata) remain nodata in every
     output band. Any other code not listed above, including 0, fails the job
@@ -272,9 +326,16 @@ async def asyncio_detailed(
     - **bands**: (required) Bands to look up. Valid values:
       - `fuel_load.1hr`, `fuel_load.10hr`, `fuel_load.100hr` - Dead fuel loads (kg/m**2)
       - `fuel_load.live_herb`, `fuel_load.live_woody` - Live fuel loads (kg/m**2)
+      - `fuel_load.dead_herb` - Cured herbaceous fuel load (kg/m**2)
+      - `fuel_load.fine_dead` - 1-hr plus dead herbaceous fuel load (kg/m**2)
       - `savr.1hr`, `savr.10hr`, `savr.100hr` - Dead fuel SAV ratios (1/m)
       - `savr.live_herb`, `savr.live_woody` - Live fuel SAV ratios (1/m)
+      - `savr.dead_herb` - Dead herbaceous SAV ratio (1/m)
+      - `savr.fine_dead` - Load-weighted SAV ratio of 1-hr and dead herbaceous fuel (1/m)
       - `fuel_depth` - Fuel bed depth (m)
+    - **herbaceous_curing**: (optional) Fraction of herbaceous load that is
+      cured, from 0 (green) to 1 (fully cured). Defaults to 0.67. See
+      Herbaceous Curing below.
     - **source_band**: (optional) Band in source grid containing FBFM codes. Defaults to `\"fbfm\"`.
     - **name**: (optional) Name for the grid.
     - **description**: (optional) Description.
@@ -292,6 +353,26 @@ async def asyncio_detailed(
     - **TU** (timber-understory): 161–165
     - **TL** (timber litter): 181–189
     - **SB** (slash-blowdown): 201–204
+
+    ## Herbaceous Curing
+
+    Every fuel model with live herbaceous load is a dynamic model (Scott and
+    Burgan 2005). In a dynamic model, `herbaceous_curing` of the live
+    herbaceous load moves to a separate dead herbaceous class:
+
+    - `fuel_load.live_herb` = (1 - `herbaceous_curing`) x herbaceous load
+    - `fuel_load.dead_herb` = `herbaceous_curing` x herbaceous load
+
+    Dead herbaceous fuel keeps the herbaceous SAV ratio and takes the dead
+    1-hr fuel moisture. Live woody fuel never cures. `fuel_load.1hr` and
+    `savr.1hr` are unaffected by curing.
+
+    `fuel_load.fine_dead` and `savr.fine_dead` combine 1-hr and dead
+    herbaceous fuel into a single fine dead fuel class, for models that take
+    one surface fuel class, such as the QUIC-Fire export.
+
+    To start from a live herbaceous moisture content `M` (%) instead, use
+    `herbaceous_curing` = (120 - `M`) / 90, clipped to 0-1.
 
     Cells with no fuel model in the source grid (nodata) remain nodata in every
     output band. Any other code not listed above, including 0, fails the job
@@ -362,9 +443,16 @@ async def asyncio(
     - **bands**: (required) Bands to look up. Valid values:
       - `fuel_load.1hr`, `fuel_load.10hr`, `fuel_load.100hr` - Dead fuel loads (kg/m**2)
       - `fuel_load.live_herb`, `fuel_load.live_woody` - Live fuel loads (kg/m**2)
+      - `fuel_load.dead_herb` - Cured herbaceous fuel load (kg/m**2)
+      - `fuel_load.fine_dead` - 1-hr plus dead herbaceous fuel load (kg/m**2)
       - `savr.1hr`, `savr.10hr`, `savr.100hr` - Dead fuel SAV ratios (1/m)
       - `savr.live_herb`, `savr.live_woody` - Live fuel SAV ratios (1/m)
+      - `savr.dead_herb` - Dead herbaceous SAV ratio (1/m)
+      - `savr.fine_dead` - Load-weighted SAV ratio of 1-hr and dead herbaceous fuel (1/m)
       - `fuel_depth` - Fuel bed depth (m)
+    - **herbaceous_curing**: (optional) Fraction of herbaceous load that is
+      cured, from 0 (green) to 1 (fully cured). Defaults to 0.67. See
+      Herbaceous Curing below.
     - **source_band**: (optional) Band in source grid containing FBFM codes. Defaults to `\"fbfm\"`.
     - **name**: (optional) Name for the grid.
     - **description**: (optional) Description.
@@ -382,6 +470,26 @@ async def asyncio(
     - **TU** (timber-understory): 161–165
     - **TL** (timber litter): 181–189
     - **SB** (slash-blowdown): 201–204
+
+    ## Herbaceous Curing
+
+    Every fuel model with live herbaceous load is a dynamic model (Scott and
+    Burgan 2005). In a dynamic model, `herbaceous_curing` of the live
+    herbaceous load moves to a separate dead herbaceous class:
+
+    - `fuel_load.live_herb` = (1 - `herbaceous_curing`) x herbaceous load
+    - `fuel_load.dead_herb` = `herbaceous_curing` x herbaceous load
+
+    Dead herbaceous fuel keeps the herbaceous SAV ratio and takes the dead
+    1-hr fuel moisture. Live woody fuel never cures. `fuel_load.1hr` and
+    `savr.1hr` are unaffected by curing.
+
+    `fuel_load.fine_dead` and `savr.fine_dead` combine 1-hr and dead
+    herbaceous fuel into a single fine dead fuel class, for models that take
+    one surface fuel class, such as the QUIC-Fire export.
+
+    To start from a live herbaceous moisture content `M` (%) instead, use
+    `herbaceous_curing` = (120 - `M`) / 90, clipped to 0-1.
 
     Cells with no fuel model in the source grid (nodata) remain nodata in every
     output band. Any other code not listed above, including 0, fails the job

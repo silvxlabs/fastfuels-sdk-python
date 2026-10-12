@@ -71,6 +71,7 @@ from fastfuels_sdk.v2.client_library.models import (
     InventoryColumnCanopyBiomassSource,
     FccsLookupBand,
     Fbfm13LookupBand,
+    Fbfm40LookupBand,
     FuelMoistureMonth,
     GridAlignmentDomainTarget,
     GridAlignmentGridTarget,
@@ -2101,6 +2102,101 @@ class TestApplyModifications:
 
 
 class TestFbfm40Lookup:
+    @staticmethod
+    def _capture_request(monkeypatch):
+        created = Grid(
+            id="fuel-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.PENDING,
+            source=GridSource(),
+            bands=[],
+        )
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=created,
+            )
+
+        monkeypatch.setattr(grids, "ensure_client", lambda: object())
+        monkeypatch.setattr(grids.create_fbfm40_lookup, "sync_detailed", fake_create)
+        return captured
+
+    @staticmethod
+    def _source():
+        return Grid(
+            id="fbfm40-grid-id",
+            domain_id="domain-id",
+            status=JobStatus.COMPLETED,
+            source=GridSource(),
+            bands=[Band(key="fbfm", type_=BandType.CATEGORICAL, index=0)],
+        )
+
+    def test_herbaceous_curing_defaults_to_two_thirds(self, monkeypatch):
+        captured = self._capture_request(monkeypatch)
+        create_fuel_grid_from_fbfm40_lookup(self._source(), bands=["fuel_load.1hr"])
+        assert captured["body"].herbaceous_curing == 0.67
+        assert captured["body"].to_dict()["herbaceous_curing"] == 0.67
+
+    def test_builds_request_with_curing_and_new_bands(self, monkeypatch):
+        captured = self._capture_request(monkeypatch)
+        create_fuel_grid_from_fbfm40_lookup(
+            self._source(),
+            bands=[
+                "fuel_load.dead_herb",
+                "fuel_load.fine_dead",
+                "savr.dead_herb",
+                Fbfm40LookupBand.SAVR_FINE_DEAD,
+            ],
+            herbaceous_curing=0.25,
+        )
+        body = captured["body"]
+        assert captured["domain_id"] == "domain-id"
+        assert body.herbaceous_curing == 0.25
+        assert body.bands == [
+            Fbfm40LookupBand.FUEL_LOAD_DEAD_HERB,
+            Fbfm40LookupBand.FUEL_LOAD_FINE_DEAD,
+            Fbfm40LookupBand.SAVR_DEAD_HERB,
+            Fbfm40LookupBand.SAVR_FINE_DEAD,
+        ]
+
+    def test_lookup_curing_and_fine_dead_bands(self, completed_fbfm40_grid):
+        fuel_grid = create_fuel_grid_from_fbfm40_lookup(
+            completed_fbfm40_grid,
+            bands=[
+                "fuel_load.dead_herb",
+                "fuel_load.fine_dead",
+                "savr.dead_herb",
+                "savr.fine_dead",
+            ],
+            herbaceous_curing=0.4,
+            name="throwaway_curing_lookup",
+        )
+        try:
+            assert [(b.key, b.unit) for b in fuel_grid.bands] == [
+                ("fuel_load.dead_herb", "kg/m**2"),
+                ("fuel_load.fine_dead", "kg/m**2"),
+                ("savr.dead_herb", "1/m"),
+                ("savr.fine_dead", "1/m"),
+            ]
+            source = fuel_grid.source.additional_properties
+            assert source["herbaceous_curing"] == 0.4
+        finally:
+            fuel_grid.delete()
+
+    @pytest.mark.parametrize("curing", [-0.1, 1.5])
+    def test_lookup_rejects_out_of_range_curing(self, completed_fbfm40_grid, curing):
+        with pytest.raises(UnprocessableEntityException):
+            create_fuel_grid_from_fbfm40_lookup(
+                completed_fbfm40_grid,
+                bands=["fuel_load.fine_dead"],
+                herbaceous_curing=curing,
+            )
+
     def test_lookup_returns_new_pending_grid(self, completed_fbfm40_grid):
         fuel_grid = create_fuel_grid_from_fbfm40_lookup(
             completed_fbfm40_grid,
