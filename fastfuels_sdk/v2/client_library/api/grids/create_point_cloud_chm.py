@@ -128,8 +128,6 @@ def sync_detailed(
       matches that grid cell-for-cell, and the output covers the target's
       extent rather than the domain's; giving one keeps the target's origin at
       the new cell size. The target grid must be in this domain's CRS.
-      `target: \"native\"` is not supported — a point cloud has no pixel anchor
-      to preserve.
     - **spike_filter**: (optional) Removal of lone spurious returns. Under the
       default `max` aggregation a cell takes the tallest return in it, so one
       bad return — a bird, haze — sets the cell unless the cloud classified it
@@ -240,8 +238,6 @@ def sync(
       matches that grid cell-for-cell, and the output covers the target's
       extent rather than the domain's; giving one keeps the target's origin at
       the new cell size. The target grid must be in this domain's CRS.
-      `target: \"native\"` is not supported — a point cloud has no pixel anchor
-      to preserve.
     - **spike_filter**: (optional) Removal of lone spurious returns. Under the
       default `max` aggregation a cell takes the tallest return in it, so one
       bad return — a bird, haze — sets the cell unless the cloud classified it
@@ -347,8 +343,6 @@ async def asyncio_detailed(
       matches that grid cell-for-cell, and the output covers the target's
       extent rather than the domain's; giving one keeps the target's origin at
       the new cell size. The target grid must be in this domain's CRS.
-      `target: \"native\"` is not supported — a point cloud has no pixel anchor
-      to preserve.
     - **spike_filter**: (optional) Removal of lone spurious returns. Under the
       default `max` aggregation a cell takes the tallest return in it, so one
       bad return — a bird, haze — sets the cell unless the cloud classified it
@@ -457,8 +451,6 @@ async def asyncio(
       matches that grid cell-for-cell, and the output covers the target's
       extent rather than the domain's; giving one keeps the target's origin at
       the new cell size. The target grid must be in this domain's CRS.
-      `target: \"native\"` is not supported — a point cloud has no pixel anchor
-      to preserve.
     - **spike_filter**: (optional) Removal of lone spurious returns. Under the
       default `max` aggregation a cell takes the tallest return in it, so one
       bad return — a bird, haze — sets the cell unless the cloud classified it

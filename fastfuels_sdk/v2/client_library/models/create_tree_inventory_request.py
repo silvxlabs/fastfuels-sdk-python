@@ -12,11 +12,15 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.allometry_biomass_source import AllometryBiomassSource
     from ..models.allometry_max_crown_radius_source import AllometryMaxCrownRadiusSource
+    from ..models.crown_feature_crown_geometry_source import (
+        CrownFeatureCrownGeometrySource,
+    )
     from ..models.inventory_column_max_crown_radius_source import (
         InventoryColumnMaxCrownRadiusSource,
     )
     from ..models.inventory_columns_biomass_source import InventoryColumnsBiomassSource
     from ..models.moisture_model import MoistureModel
+    from ..models.parametric_crown_geometry_source import ParametricCrownGeometrySource
     from ..models.resolution_3d import Resolution3D
 
 
@@ -45,9 +49,24 @@ class CreateTreeInventoryRequest:
             biomass_source (AllometryBiomassSource | InventoryColumnsBiomassSource | Unset): Biomass source and requested
                 biomass components.
             max_crown_radius_source (AllometryMaxCrownRadiusSource | InventoryColumnMaxCrownRadiusSource | Unset): Source of
-                each tree's maximum crown radius. Defaults to the crown profile model's allometric value. Use `{"type":
-                "inventory_column", "column": ...}` to read a per-tree maximum crown radius (m) from an inventory column (e.g.
-                derived from LiDAR); the crown profile model still controls the crown shape — only the peak radius is rescaled.
+                each tree's maximum crown radius. `{"type": "allometry"}` (default): the Purves et al. (2007) maximum crown
+                radius for `purves`, `cone`, `cylinder`, and the ellipsoid and paraboloid shapes, so a tree's crown is equally
+                wide under each of them and only the shape changes; `beta` uses its own allometric radius. `{"type":
+                "inventory_column", "column": ...}`: read a per-tree maximum crown radius (m) from an inventory column (e.g.
+                derived from LiDAR); `crown_profile_model` still sets the crown shape.
+            crown_geometry_source (CrownFeatureCrownGeometrySource | ParametricCrownGeometrySource | Unset): Where crown
+                shapes come from. `{"type": "parametric"}` (default): every crown is drawn from `crown_profile_model` and
+                `max_crown_radius_source`. `{"type": "crown_feature", "feature_id": ...}`: a tree with a crown in the crown
+                Feature, matched by `tree_id`, gets a measured crown. Its outline is the crown's CHM cells, its top is each
+                cell's CHM height, and its bottom follows `crown_profile_model` up from the crown base, at least one voxel below
+                the top but never below the crown base. `max_crown_radius_source` does not apply to measured crowns. A tree with
+                no crown in the Feature, whose crown does not contain its stem, or with no CHM height above its crown base, is
+                drawn parametrically. Crowns of trees not in the inventory are ignored. Every tree keeps the mass
+                `biomass_source` gives it. Requires an inventory with a `tree_id` column.
+            max_bulk_density (float | None | Unset): Upper limit on bulk density, in kg/m**3. In any voxel where a biomass
+                component's bulk density, live and dead combined, exceeds the limit, that component's live and dead bulk density
+                are scaled down to it, keeping their live/dead split, and `leaf_area_density` is scaled with foliage. Fuel above
+                the limit is removed from the grid. Omit for no limit.
             moisture_model (MoistureModel | None | Unset): Live/dead fuel moisture model. Applied only when matching
                 fuel_moisture bands are requested. Live defaults to uniform 100.0; dead defaults to uniform 10.0.
             seed (int | Unset): Random seed for reproducibility. Controls stochastic tree voxel sampling and biomass
@@ -68,6 +87,10 @@ class CreateTreeInventoryRequest:
     max_crown_radius_source: (
         AllometryMaxCrownRadiusSource | InventoryColumnMaxCrownRadiusSource | Unset
     ) = UNSET
+    crown_geometry_source: (
+        CrownFeatureCrownGeometrySource | ParametricCrownGeometrySource | Unset
+    ) = UNSET
+    max_bulk_density: float | None | Unset = UNSET
     moisture_model: MoistureModel | None | Unset = UNSET
     seed: int | Unset = UNSET
 
@@ -77,6 +100,9 @@ class CreateTreeInventoryRequest:
             AllometryMaxCrownRadiusSource,
         )
         from ..models.moisture_model import MoistureModel
+        from ..models.parametric_crown_geometry_source import (
+            ParametricCrownGeometrySource,
+        )
 
         source_inventory_id = self.source_inventory_id
 
@@ -119,6 +145,20 @@ class CreateTreeInventoryRequest:
         else:
             max_crown_radius_source = self.max_crown_radius_source.to_dict()
 
+        crown_geometry_source: dict[str, Any] | Unset
+        if isinstance(self.crown_geometry_source, Unset):
+            crown_geometry_source = UNSET
+        elif isinstance(self.crown_geometry_source, ParametricCrownGeometrySource):
+            crown_geometry_source = self.crown_geometry_source.to_dict()
+        else:
+            crown_geometry_source = self.crown_geometry_source.to_dict()
+
+        max_bulk_density: float | None | Unset
+        if isinstance(self.max_bulk_density, Unset):
+            max_bulk_density = UNSET
+        else:
+            max_bulk_density = self.max_bulk_density
+
         moisture_model: dict[str, Any] | None | Unset
         if isinstance(self.moisture_model, Unset):
             moisture_model = UNSET
@@ -152,6 +192,10 @@ class CreateTreeInventoryRequest:
             field_dict["biomass_source"] = biomass_source
         if max_crown_radius_source is not UNSET:
             field_dict["max_crown_radius_source"] = max_crown_radius_source
+        if crown_geometry_source is not UNSET:
+            field_dict["crown_geometry_source"] = crown_geometry_source
+        if max_bulk_density is not UNSET:
+            field_dict["max_bulk_density"] = max_bulk_density
         if moisture_model is not UNSET:
             field_dict["moisture_model"] = moisture_model
         if seed is not UNSET:
@@ -165,6 +209,9 @@ class CreateTreeInventoryRequest:
         from ..models.allometry_max_crown_radius_source import (
             AllometryMaxCrownRadiusSource,
         )
+        from ..models.crown_feature_crown_geometry_source import (
+            CrownFeatureCrownGeometrySource,
+        )
         from ..models.inventory_column_max_crown_radius_source import (
             InventoryColumnMaxCrownRadiusSource,
         )
@@ -172,6 +219,9 @@ class CreateTreeInventoryRequest:
             InventoryColumnsBiomassSource,
         )
         from ..models.moisture_model import MoistureModel
+        from ..models.parametric_crown_geometry_source import (
+            ParametricCrownGeometrySource,
+        )
         from ..models.resolution_3d import Resolution3D
 
         d = dict(src_dict)
@@ -256,6 +306,42 @@ class CreateTreeInventoryRequest:
             d.pop("max_crown_radius_source", UNSET)
         )
 
+        def _parse_crown_geometry_source(
+            data: object,
+        ) -> CrownFeatureCrownGeometrySource | ParametricCrownGeometrySource | Unset:
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                crown_geometry_source_type_0 = ParametricCrownGeometrySource.from_dict(
+                    data
+                )
+
+                return crown_geometry_source_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            if not isinstance(data, dict):
+                raise TypeError()
+            crown_geometry_source_type_1 = CrownFeatureCrownGeometrySource.from_dict(
+                data
+            )
+
+            return crown_geometry_source_type_1
+
+        crown_geometry_source = _parse_crown_geometry_source(
+            d.pop("crown_geometry_source", UNSET)
+        )
+
+        def _parse_max_bulk_density(data: object) -> float | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(float | None | Unset, data)
+
+        max_bulk_density = _parse_max_bulk_density(d.pop("max_bulk_density", UNSET))
+
         def _parse_moisture_model(data: object) -> MoistureModel | None | Unset:
             if data is None:
                 return data
@@ -285,6 +371,8 @@ class CreateTreeInventoryRequest:
             crown_profile_model=crown_profile_model,
             biomass_source=biomass_source,
             max_crown_radius_source=max_crown_radius_source,
+            crown_geometry_source=crown_geometry_source,
+            max_bulk_density=max_bulk_density,
             moisture_model=moisture_model,
             seed=seed,
         )

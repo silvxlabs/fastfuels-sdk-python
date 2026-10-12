@@ -19,7 +19,14 @@ class GridModificationCondition:
 
         Attributes:
             band (str): The band to check (dot-notation key)
-            operator (Operator): Comparison operators for attribute-based conditions.
+            operator (Operator): Comparison operators for condition clauses.
+
+                A condition ``{attribute, operator, value}`` *tests* the attribute against
+                the value (e.g. ``le`` selects where attribute ≤ value) to choose which
+                cells/trees an action applies to. Conditions only select; they never
+                change data. These are relational operators; the arithmetic side of a
+                modification is spelled ``modifier`` (see :class:`Modifier`) so the two
+                clause roles stay distinct.
             value (float | int | list[float | int | str] | str): The value(s) to compare against
     """
 

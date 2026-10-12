@@ -31,9 +31,8 @@ if TYPE_CHECKING:
     )
     from ..models.canopy_no_crown_class_adjustment import CanopyNoCrownClassAdjustment
     from ..models.canopy_profile_threshold import CanopyProfileThreshold
-    from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
-    from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
-    from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
+    from ..models.grid_lattice_domain_target import GridLatticeDomainTarget
+    from ..models.grid_lattice_grid_target import GridLatticeGridTarget
     from ..models.inventory_column_canopy_biomass_source import (
         InventoryColumnCanopyBiomassSource,
     )
@@ -113,10 +112,9 @@ class CreateInventoryCanopyRequest:
             tags (list[str] | Unset):
             bands (list[InventoryCanopyBand] | Unset): Which output bands to produce. Defaults to the four LANDFIRE-parity
                 canopy bands; add `cfl` for canopy fuel load.
-            alignment (GridAlignmentDomainTarget | GridAlignmentGridTarget | GridAlignmentNativeTarget | Unset): Output
-                lattice. Against the domain (`target: 'domain'`, the default) `resolution` defaults to 30 m — an inventory has
-                no native cell size to inherit. Against another grid (`target: 'grid'`) omitting `resolution` matches that
-                grid's lattice exactly. `target: 'native'` is not supported.
+            alignment (GridLatticeDomainTarget | GridLatticeGridTarget | Unset): Output lattice. Against the domain
+                (`target: 'domain'`, the default) `resolution` defaults to 30 m — an inventory has no native cell size to
+                inherit. Against another grid (`target: 'grid'`) omitting `resolution` matches that grid's lattice exactly.
     """
 
     source_inventory_id: str
@@ -154,12 +152,7 @@ class CreateInventoryCanopyRequest:
     description: str | Unset = ""
     tags: list[str] | Unset = UNSET
     bands: list[InventoryCanopyBand] | Unset = UNSET
-    alignment: (
-        GridAlignmentDomainTarget
-        | GridAlignmentGridTarget
-        | GridAlignmentNativeTarget
-        | Unset
-    ) = UNSET
+    alignment: GridLatticeDomainTarget | GridLatticeGridTarget | Unset = UNSET
 
     def to_dict(self) -> dict[str, Any]:
         from ..models.allometry_canopy_biomass_source import (
@@ -182,8 +175,7 @@ class CreateInventoryCanopyRequest:
             CanopyNoCrownClassAdjustment,
         )
         from ..models.canopy_profile_threshold import CanopyProfileThreshold
-        from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
-        from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
+        from ..models.grid_lattice_domain_target import GridLatticeDomainTarget
 
         source_inventory_id = self.source_inventory_id
 
@@ -300,9 +292,7 @@ class CreateInventoryCanopyRequest:
         alignment: dict[str, Any] | Unset
         if isinstance(self.alignment, Unset):
             alignment = UNSET
-        elif isinstance(self.alignment, GridAlignmentDomainTarget) or isinstance(
-            self.alignment, GridAlignmentNativeTarget
-        ):
+        elif isinstance(self.alignment, GridLatticeDomainTarget):
             alignment = self.alignment.to_dict()
         else:
             alignment = self.alignment.to_dict()
@@ -378,9 +368,8 @@ class CreateInventoryCanopyRequest:
             CanopyNoCrownClassAdjustment,
         )
         from ..models.canopy_profile_threshold import CanopyProfileThreshold
-        from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
-        from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
-        from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
+        from ..models.grid_lattice_domain_target import GridLatticeDomainTarget
+        from ..models.grid_lattice_grid_target import GridLatticeGridTarget
         from ..models.inventory_column_canopy_biomass_source import (
             InventoryColumnCanopyBiomassSource,
         )
@@ -695,35 +684,22 @@ class CreateInventoryCanopyRequest:
 
         def _parse_alignment(
             data: object,
-        ) -> (
-            GridAlignmentDomainTarget
-            | GridAlignmentGridTarget
-            | GridAlignmentNativeTarget
-            | Unset
-        ):
+        ) -> GridLatticeDomainTarget | GridLatticeGridTarget | Unset:
             if isinstance(data, Unset):
                 return data
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                alignment_type_0 = GridAlignmentDomainTarget.from_dict(data)
+                alignment_type_0 = GridLatticeDomainTarget.from_dict(data)
 
                 return alignment_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
-            try:
-                if not isinstance(data, dict):
-                    raise TypeError()
-                alignment_type_1 = GridAlignmentNativeTarget.from_dict(data)
-
-                return alignment_type_1
-            except (TypeError, ValueError, AttributeError, KeyError):
-                pass
             if not isinstance(data, dict):
                 raise TypeError()
-            alignment_type_2 = GridAlignmentGridTarget.from_dict(data)
+            alignment_type_1 = GridLatticeGridTarget.from_dict(data)
 
-            return alignment_type_2
+            return alignment_type_1
 
         alignment = _parse_alignment(d.pop("alignment", UNSET))
 

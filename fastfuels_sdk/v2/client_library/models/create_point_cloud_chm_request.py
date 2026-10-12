@@ -14,9 +14,8 @@ if TYPE_CHECKING:
     from ..models.chm_median_aggregation import ChmMedianAggregation
     from ..models.chm_percentile_aggregation import ChmPercentileAggregation
     from ..models.chm_spike_filter import ChmSpikeFilter
-    from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
-    from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
-    from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
+    from ..models.grid_lattice_domain_target import GridLatticeDomainTarget
+    from ..models.grid_lattice_grid_target import GridLatticeGridTarget
     from ..models.grid_modification import GridModification
 
 
@@ -53,10 +52,10 @@ class CreatePointCloudChmRequest:
                 means one cell in the returned grid rather than one source raster cell. Provides context for later operations
                 (resample, reproject, focal filters, derivative calculations) that are sensitive to edges. Default 0 adds no
                 buffer. Maximum: 10 cells. Default: 0.
-            alignment (GridAlignmentDomainTarget | GridAlignmentGridTarget | GridAlignmentNativeTarget | Unset): Per-fetch
-                alignment target. Default `target="domain"` anchors output cells to the domain origin so cross-source
-                composition works by construction. `target="native"` preserves the source pixel anchor. `target="grid"` aligns
-                to an existing grid by id.
+            alignment (GridLatticeDomainTarget | GridLatticeGridTarget | Unset): Output lattice. Against the domain
+                (`target: 'domain'`, the default) `resolution` defaults to 1 m — a point cloud has no native cell size to
+                inherit. Against another grid (`target: 'grid'`) omitting `resolution` matches that grid cell-for-cell; the
+                target grid must be in this domain's CRS.
             spike_filter (ChmSpikeFilter | None | Unset): Removal of lone spurious returns. Omit for the defaults; send
                 `null` to keep every return, leaving unclassified noise in the grid.
             aggregation (ChmMaxAggregation | ChmMeanAggregation | ChmMedianAggregation | ChmPercentileAggregation | Unset):
@@ -70,12 +69,7 @@ class CreatePointCloudChmRequest:
     tags: list[str] | Unset = UNSET
     modifications: list[GridModification] | Unset = UNSET
     extent_buffer_cells: int | Unset = 0
-    alignment: (
-        GridAlignmentDomainTarget
-        | GridAlignmentGridTarget
-        | GridAlignmentNativeTarget
-        | Unset
-    ) = UNSET
+    alignment: GridLatticeDomainTarget | GridLatticeGridTarget | Unset = UNSET
     spike_filter: ChmSpikeFilter | None | Unset = UNSET
     aggregation: (
         ChmMaxAggregation
@@ -91,8 +85,7 @@ class CreatePointCloudChmRequest:
         from ..models.chm_mean_aggregation import ChmMeanAggregation
         from ..models.chm_median_aggregation import ChmMedianAggregation
         from ..models.chm_spike_filter import ChmSpikeFilter
-        from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
-        from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
+        from ..models.grid_lattice_domain_target import GridLatticeDomainTarget
 
         source_point_cloud_id = self.source_point_cloud_id
 
@@ -116,9 +109,7 @@ class CreatePointCloudChmRequest:
         alignment: dict[str, Any] | Unset
         if isinstance(self.alignment, Unset):
             alignment = UNSET
-        elif isinstance(self.alignment, GridAlignmentDomainTarget) or isinstance(
-            self.alignment, GridAlignmentNativeTarget
-        ):
+        elif isinstance(self.alignment, GridLatticeDomainTarget):
             alignment = self.alignment.to_dict()
         else:
             alignment = self.alignment.to_dict()
@@ -176,9 +167,8 @@ class CreatePointCloudChmRequest:
         from ..models.chm_median_aggregation import ChmMedianAggregation
         from ..models.chm_percentile_aggregation import ChmPercentileAggregation
         from ..models.chm_spike_filter import ChmSpikeFilter
-        from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
-        from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
-        from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
+        from ..models.grid_lattice_domain_target import GridLatticeDomainTarget
+        from ..models.grid_lattice_grid_target import GridLatticeGridTarget
         from ..models.grid_modification import GridModification
 
         d = dict(src_dict)
@@ -203,35 +193,22 @@ class CreatePointCloudChmRequest:
 
         def _parse_alignment(
             data: object,
-        ) -> (
-            GridAlignmentDomainTarget
-            | GridAlignmentGridTarget
-            | GridAlignmentNativeTarget
-            | Unset
-        ):
+        ) -> GridLatticeDomainTarget | GridLatticeGridTarget | Unset:
             if isinstance(data, Unset):
                 return data
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                alignment_type_0 = GridAlignmentDomainTarget.from_dict(data)
+                alignment_type_0 = GridLatticeDomainTarget.from_dict(data)
 
                 return alignment_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
-            try:
-                if not isinstance(data, dict):
-                    raise TypeError()
-                alignment_type_1 = GridAlignmentNativeTarget.from_dict(data)
-
-                return alignment_type_1
-            except (TypeError, ValueError, AttributeError, KeyError):
-                pass
             if not isinstance(data, dict):
                 raise TypeError()
-            alignment_type_2 = GridAlignmentGridTarget.from_dict(data)
+            alignment_type_1 = GridLatticeGridTarget.from_dict(data)
 
-            return alignment_type_2
+            return alignment_type_1
 
         alignment = _parse_alignment(d.pop("alignment", UNSET))
 

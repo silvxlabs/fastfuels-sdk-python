@@ -113,6 +113,14 @@ def sync_detailed(
     your file. Omit entries where the file already uses v2 names. Required
     in the file: `x`, `y`, `height`.
 
+    ## Tree IDs
+
+    Every tree gets a `tree_id`. To keep your own IDs, provide a `tree_id`
+    column (or map one): its values must be non-null numbers in
+    1 … 2,147,483,647, cast to integers and then unique across the file, or
+    processing fails with `SCHEMA_VALIDATION_ERROR`. Without one, IDs
+    1 … N are generated in file row order over the trees inside the domain.
+
     Args:
         domain_id (str):
         body (CreateInventoryUploadRequest):
@@ -176,6 +184,14 @@ def sync(
     your file. Omit entries where the file already uses v2 names. Required
     in the file: `x`, `y`, `height`.
 
+    ## Tree IDs
+
+    Every tree gets a `tree_id`. To keep your own IDs, provide a `tree_id`
+    column (or map one): its values must be non-null numbers in
+    1 … 2,147,483,647, cast to integers and then unique across the file, or
+    processing fails with `SCHEMA_VALIDATION_ERROR`. Without one, IDs
+    1 … N are generated in file row order over the trees inside the domain.
+
     Args:
         domain_id (str):
         body (CreateInventoryUploadRequest):
@@ -235,6 +251,14 @@ async def asyncio_detailed(
     Use the `columns` field to map v2 column names to the column names in
     your file. Omit entries where the file already uses v2 names. Required
     in the file: `x`, `y`, `height`.
+
+    ## Tree IDs
+
+    Every tree gets a `tree_id`. To keep your own IDs, provide a `tree_id`
+    column (or map one): its values must be non-null numbers in
+    1 … 2,147,483,647, cast to integers and then unique across the file, or
+    processing fails with `SCHEMA_VALIDATION_ERROR`. Without one, IDs
+    1 … N are generated in file row order over the trees inside the domain.
 
     Args:
         domain_id (str):
@@ -296,6 +320,14 @@ async def asyncio(
     Use the `columns` field to map v2 column names to the column names in
     your file. Omit entries where the file already uses v2 names. Required
     in the file: `x`, `y`, `height`.
+
+    ## Tree IDs
+
+    Every tree gets a `tree_id`. To keep your own IDs, provide a `tree_id`
+    column (or map one): its values must be non-null numbers in
+    1 … 2,147,483,647, cast to integers and then unique across the file, or
+    processing fails with `SCHEMA_VALIDATION_ERROR`. Without one, IDs
+    1 … N are generated in file row order over the trees inside the domain.
 
     Args:
         domain_id (str):

@@ -22,7 +22,9 @@ class UserMeResponse:
     Attributes:
         id (str): The authenticated owner's unique ID.
         kind (UserMeResponseKind): Whether the credential authenticated a user or an application.
-        tier (str): The quota tier in effect for this owner.
+        tier (str): The quota tier in effect for this owner. Anonymous (guest) sign-ins resolve to the `guest` tier:
+            reduced limits, and resources are deleted 24 hours after they are created. Convert to a full account to keep
+            them.
         quotas (Quotas): Usage limits for an owner. Field defaults are the standard tier.
     """
 

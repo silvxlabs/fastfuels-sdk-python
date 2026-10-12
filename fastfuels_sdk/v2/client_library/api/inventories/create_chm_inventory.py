@@ -93,6 +93,10 @@ def sync_detailed(
     - **source_chm_grid_id**: (required) ID of a completed CHM grid.
     - **algorithm**: (optional) Configuration for the stem isolation algorithm. Must specify `\"name\":
     \"lmf\"` or `\"name\": \"vwf\"`. Defaults to LMF.
+    - **crown_segmentation**: (optional) Segment each tree's crown on the CHM
+      (`dalponte2016` region growing) and add a `crown_radius` column (m).
+      Requires a CHM cell size of 2 m or finer. Default parameters are
+      provisional.
     - **type**: (optional) Entity type. Default: ``\"tree\"``.
     - **name**: (optional) Name for the inventory.
     - **description**: (optional) Description.
@@ -152,6 +156,10 @@ def sync(
     - **source_chm_grid_id**: (required) ID of a completed CHM grid.
     - **algorithm**: (optional) Configuration for the stem isolation algorithm. Must specify `\"name\":
     \"lmf\"` or `\"name\": \"vwf\"`. Defaults to LMF.
+    - **crown_segmentation**: (optional) Segment each tree's crown on the CHM
+      (`dalponte2016` region growing) and add a `crown_radius` column (m).
+      Requires a CHM cell size of 2 m or finer. Default parameters are
+      provisional.
     - **type**: (optional) Entity type. Default: ``\"tree\"``.
     - **name**: (optional) Name for the inventory.
     - **description**: (optional) Description.
@@ -206,6 +214,10 @@ async def asyncio_detailed(
     - **source_chm_grid_id**: (required) ID of a completed CHM grid.
     - **algorithm**: (optional) Configuration for the stem isolation algorithm. Must specify `\"name\":
     \"lmf\"` or `\"name\": \"vwf\"`. Defaults to LMF.
+    - **crown_segmentation**: (optional) Segment each tree's crown on the CHM
+      (`dalponte2016` region growing) and add a `crown_radius` column (m).
+      Requires a CHM cell size of 2 m or finer. Default parameters are
+      provisional.
     - **type**: (optional) Entity type. Default: ``\"tree\"``.
     - **name**: (optional) Name for the inventory.
     - **description**: (optional) Description.
@@ -263,6 +275,10 @@ async def asyncio(
     - **source_chm_grid_id**: (required) ID of a completed CHM grid.
     - **algorithm**: (optional) Configuration for the stem isolation algorithm. Must specify `\"name\":
     \"lmf\"` or `\"name\": \"vwf\"`. Defaults to LMF.
+    - **crown_segmentation**: (optional) Segment each tree's crown on the CHM
+      (`dalponte2016` region growing) and add a `crown_radius` column (m).
+      Requires a CHM cell size of 2 m or finer. Default parameters are
+      provisional.
     - **type**: (optional) Entity type. Default: ``\"tree\"``.
     - **name**: (optional) Name for the inventory.
     - **description**: (optional) Description.

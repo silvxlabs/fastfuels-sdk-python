@@ -10,6 +10,7 @@ from ..models.inventory_type import InventoryType
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
+    from ..models.chm_inventory_crown_segmentation import ChmInventoryCrownSegmentation
     from ..models.inventory_basal_area_treatment import InventoryBasalAreaTreatment
     from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
     from ..models.inventory_modification import InventoryModification
@@ -31,6 +32,11 @@ class CreateChmInventoryRequest:
         description (str | Unset):  Default: ''.
         tags (list[str] | Unset):
         algorithm (StemIsolationLmf | StemIsolationVwf | Unset): Stem isolation algorithm and its parameters.
+        crown_segmentation (ChmInventoryCrownSegmentation | None | Unset): Segment each detected tree's crown on the CHM
+            and add a `crown_radius` column (m). Crowns grow outward from each treetop over CHM cells within the detection
+            height range and stop at the crown's edge; each cell belongs to at most one tree. Every tree gets a radius of at
+            least one cell's area-equivalent radius, capped at `max_crown_radius`. Requires a CHM cell size of 2 m or finer.
+            Omit to skip segmentation.
         modifications (list[InventoryModification] | Unset): Modifications to apply after stem extraction.
         treatments (list[InventoryBasalAreaTreatment | InventoryDiameterTreatment] | Unset): Silvicultural treatments
             thin against tree diameter, so they require a diameter (`dbh`) column. CHM stem isolation produces only height
@@ -43,6 +49,7 @@ class CreateChmInventoryRequest:
     description: str | Unset = ""
     tags: list[str] | Unset = UNSET
     algorithm: StemIsolationLmf | StemIsolationVwf | Unset = UNSET
+    crown_segmentation: ChmInventoryCrownSegmentation | None | Unset = UNSET
     modifications: list[InventoryModification] | Unset = UNSET
     treatments: (
         list[InventoryBasalAreaTreatment | InventoryDiameterTreatment] | Unset
@@ -50,6 +57,9 @@ class CreateChmInventoryRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.chm_inventory_crown_segmentation import (
+            ChmInventoryCrownSegmentation,
+        )
         from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
         from ..models.stem_isolation_lmf import StemIsolationLmf
 
@@ -74,6 +84,14 @@ class CreateChmInventoryRequest:
             algorithm = self.algorithm.to_dict()
         else:
             algorithm = self.algorithm.to_dict()
+
+        crown_segmentation: dict[str, Any] | None | Unset
+        if isinstance(self.crown_segmentation, Unset):
+            crown_segmentation = UNSET
+        elif isinstance(self.crown_segmentation, ChmInventoryCrownSegmentation):
+            crown_segmentation = self.crown_segmentation.to_dict()
+        else:
+            crown_segmentation = self.crown_segmentation
 
         modifications: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.modifications, Unset):
@@ -111,6 +129,8 @@ class CreateChmInventoryRequest:
             field_dict["tags"] = tags
         if algorithm is not UNSET:
             field_dict["algorithm"] = algorithm
+        if crown_segmentation is not UNSET:
+            field_dict["crown_segmentation"] = crown_segmentation
         if modifications is not UNSET:
             field_dict["modifications"] = modifications
         if treatments is not UNSET:
@@ -120,6 +140,9 @@ class CreateChmInventoryRequest:
 
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
+        from ..models.chm_inventory_crown_segmentation import (
+            ChmInventoryCrownSegmentation,
+        )
         from ..models.inventory_basal_area_treatment import InventoryBasalAreaTreatment
         from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
         from ..models.inventory_modification import InventoryModification
@@ -162,6 +185,29 @@ class CreateChmInventoryRequest:
             return algorithm_type_1
 
         algorithm = _parse_algorithm(d.pop("algorithm", UNSET))
+
+        def _parse_crown_segmentation(
+            data: object,
+        ) -> ChmInventoryCrownSegmentation | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                crown_segmentation_type_0 = ChmInventoryCrownSegmentation.from_dict(
+                    data
+                )
+
+                return crown_segmentation_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(ChmInventoryCrownSegmentation | None | Unset, data)
+
+        crown_segmentation = _parse_crown_segmentation(
+            d.pop("crown_segmentation", UNSET)
+        )
 
         _modifications = d.pop("modifications", UNSET)
         modifications: list[InventoryModification] | Unset = UNSET
@@ -212,6 +258,7 @@ class CreateChmInventoryRequest:
             description=description,
             tags=tags,
             algorithm=algorithm,
+            crown_segmentation=crown_segmentation,
             modifications=modifications,
             treatments=treatments,
         )

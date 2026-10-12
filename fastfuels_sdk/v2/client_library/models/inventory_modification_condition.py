@@ -22,8 +22,16 @@ class InventoryModificationCondition:
 
         Attributes:
             attribute (InventoryAttribute): Attributes available for inventory modifications.
-            operator (Operator): Comparison operators for attribute-based conditions.
-            value (float | int | list[float | int | str] | str): The value(s) to compare against
+            operator (Operator): Comparison operators for condition clauses.
+
+                A condition ``{attribute, operator, value}`` *tests* the attribute against
+                the value (e.g. ``le`` selects where attribute ≤ value) to choose which
+                cells/trees an action applies to. Conditions only select; they never
+                change data. These are relational operators; the arithmetic side of a
+                modification is spelled ``modifier`` (see :class:`Modifier`) so the two
+                clause roles stay distinct.
+            value (float | int | list[float | int | str] | str): The value(s) to compare against. A list with `eq` matches
+                any of its values; with `ne`, none of them.
             unit (None | str | Unset): Optional pint-compatible unit for the value (e.g., 'in', 'ft', 'mm'). Converted to
                 the attribute's native unit before comparison.
     """

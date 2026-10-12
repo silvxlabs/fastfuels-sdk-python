@@ -31,17 +31,17 @@ class StemIsolationVwf:
                 the tallest known tree; set to null to disable the ceiling. Default: 120.0.
             spatial_resolution (float | None | Unset): Spatial resolution of the CHM. If omitted, it will be automatically
                 inferred from the source grid metadata.
-            crown_ratio (float | Unset): Multiplier used to dynamically scale the search window based on pixel height.
-                Default: 0.1.
-            crown_offset (float | Unset): Constant offset (in meters) added to the dynamic search window. Default: 1.0.
+            crown_ratio (float | Unset): Window diameter added per meter of height. The search window diameter (in meters)
+                is crown_offset + crown_ratio × height, converted to a whole, odd number of pixels of at least 3. Default: 0.05.
+            crown_offset (float | Unset): Window diameter (in meters) at zero height. Default: 3.0.
     """
 
     name: Literal["vwf"] | Unset = "vwf"
     min_height: float | Unset = 2.0
     max_height: float | None | Unset = 120.0
     spatial_resolution: float | None | Unset = UNSET
-    crown_ratio: float | Unset = 0.1
-    crown_offset: float | Unset = 1.0
+    crown_ratio: float | Unset = 0.05
+    crown_offset: float | Unset = 3.0
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

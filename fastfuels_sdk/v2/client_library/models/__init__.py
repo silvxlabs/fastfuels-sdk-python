@@ -47,6 +47,8 @@ from .canopy_species_inclusion import CanopySpeciesInclusion
 from .canopy_vertical_distribution import CanopyVerticalDistribution
 from .categorical_band_summary import CategoricalBandSummary
 from .categorical_column_summary import CategoricalColumnSummary
+from .chm_crown_segmentation import ChmCrownSegmentation
+from .chm_inventory_crown_segmentation import ChmInventoryCrownSegmentation
 from .chm_max_aggregation import ChmMaxAggregation
 from .chm_mean_aggregation import ChmMeanAggregation
 from .chm_median_aggregation import ChmMedianAggregation
@@ -67,6 +69,7 @@ from .continuous_band_summary import ContinuousBandSummary
 from .continuous_column_summary import ContinuousColumnSummary
 from .count_usage import CountUsage
 from .create_application_request import CreateApplicationRequest
+from .create_chm_crown_feature_request import CreateChmCrownFeatureRequest
 from .create_chm_inventory_request import CreateChmInventoryRequest
 from .create_compose_request import CreateComposeRequest
 from .create_duet_request import CreateDuetRequest
@@ -110,7 +113,10 @@ from .create_three_dep_topography_request import CreateThreeDepTopographyRequest
 from .create_tree_inventory_request import CreateTreeInventoryRequest
 from .create_tree_map_request import CreateTreeMapRequest
 from .create_uniform_request import CreateUniformRequest
+from .crown_feature_crown_geometry_source import CrownFeatureCrownGeometrySource
 from .crown_profile_model import CrownProfileModel
+from .crown_radius_estimator import CrownRadiusEstimator
+from .crown_segmentation_method import CrownSegmentationMethod
 from .dense_grid_data import DenseGridData
 from .distribution import Distribution
 from .domain import Domain
@@ -171,6 +177,8 @@ from .grid_geometry_spatial_condition_crs_type_0 import (
 from .grid_geometry_spatial_condition_geometry import (
     GridGeometrySpatialConditionGeometry,
 )
+from .grid_lattice_domain_target import GridLatticeDomainTarget
+from .grid_lattice_grid_target import GridLatticeGridTarget
 from .grid_modification import GridModification
 from .grid_modification_action import GridModificationAction
 from .grid_modification_condition import GridModificationCondition
@@ -280,6 +288,7 @@ from .multi_polygon import MultiPolygon
 from .non_burnable_fuel_model import NonBurnableFuelModel
 from .operator import Operator
 from .overlap_method import OverlapMethod
+from .parametric_crown_geometry_source import ParametricCrownGeometrySource
 from .point import Point
 from .point_cloud import PointCloud
 from .point_cloud_data_metadata import PointCloudDataMetadata
@@ -389,6 +398,8 @@ __all__ = (
     "CanopyVerticalDistribution",
     "CategoricalBandSummary",
     "CategoricalColumnSummary",
+    "ChmCrownSegmentation",
+    "ChmInventoryCrownSegmentation",
     "ChmMaxAggregation",
     "ChmMeanAggregation",
     "ChmMedianAggregation",
@@ -409,6 +420,7 @@ __all__ = (
     "ContinuousColumnSummary",
     "CountUsage",
     "CreateApplicationRequest",
+    "CreateChmCrownFeatureRequest",
     "CreateChmInventoryRequest",
     "CreateComposeRequest",
     "CreateDuetRequest",
@@ -448,7 +460,10 @@ __all__ = (
     "CreateTreeInventoryRequest",
     "CreateTreeMapRequest",
     "CreateUniformRequest",
+    "CrownFeatureCrownGeometrySource",
     "CrownProfileModel",
+    "CrownRadiusEstimator",
+    "CrownSegmentationMethod",
     "DenseGridData",
     "Distribution",
     "Domain",
@@ -505,6 +520,8 @@ __all__ = (
     "GridGeometrySpatialCondition",
     "GridGeometrySpatialConditionCrsType0",
     "GridGeometrySpatialConditionGeometry",
+    "GridLatticeDomainTarget",
+    "GridLatticeGridTarget",
     "GridModification",
     "GridModificationAction",
     "GridModificationCondition",
@@ -600,6 +617,7 @@ __all__ = (
     "NonBurnableFuelModel",
     "Operator",
     "OverlapMethod",
+    "ParametricCrownGeometrySource",
     "Point",
     "PointCloud",
     "PointCloudDataMetadata",

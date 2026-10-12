@@ -19,7 +19,16 @@ class GridModificationAction:
 
         Attributes:
             band (str): The band to modify (dot-notation key)
-            modifier (Modifier): Modifiers for modification actions.
+            modifier (Modifier): Modifiers for action clauses: how a selected value is changed.
+
+                An action ``{attribute, modifier, value}`` mutates the attribute of every
+                selected cell/tree: ``add``/``subtract``/``multiply``/``divide`` apply the
+                arithmetic operation against ``value``; ``replace`` overwrites with
+                ``value``. ``add`` and friends are arithmetic operators, so they *are*
+                operators too — the field is named ``modifier`` rather than ``operator``
+                to keep it distinct from a condition's comparison operator (see
+                :class:`Operator`) and because ``replace`` is an assignment, not
+                arithmetic.
             value (float | int | str): The value to use with the modifier
     """
 
