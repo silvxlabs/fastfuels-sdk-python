@@ -114,9 +114,9 @@ def sync_detailed(
     - **TL** (timber litter): 181–189
     - **SB** (slash-blowdown): 201–204
 
-    If any cell in the source grid contains a code not in this set (including 0
-    or nodata), the job will fail with an `INVALID_FBFM_CODES` error listing
-    the invalid codes found.
+    Cells with no fuel model in the source grid (nodata) remain nodata in every
+    output band. Any other code not listed above, including 0, fails the job
+    with an `INVALID_FBFM_CODES` error.
 
     ## Response
 
@@ -129,6 +129,9 @@ def sync_detailed(
       same domain reference as their source).
     - The output grid inherits georeference from the source grid.
     - Non-burnable codes (NB1–NB9) produce zero values for all bands.
+    - Where a fuel model has no live herbaceous or live woody fuel, the matching
+      SAVR band holds BEHAVE's value for that class instead of the 9999
+      placeholder printed in Scott and Burgan (2005).
     - All output values are in metric units (converted from SB40 imperial values).
 
     Args:
@@ -203,9 +206,9 @@ def sync(
     - **TL** (timber litter): 181–189
     - **SB** (slash-blowdown): 201–204
 
-    If any cell in the source grid contains a code not in this set (including 0
-    or nodata), the job will fail with an `INVALID_FBFM_CODES` error listing
-    the invalid codes found.
+    Cells with no fuel model in the source grid (nodata) remain nodata in every
+    output band. Any other code not listed above, including 0, fails the job
+    with an `INVALID_FBFM_CODES` error.
 
     ## Response
 
@@ -218,6 +221,9 @@ def sync(
       same domain reference as their source).
     - The output grid inherits georeference from the source grid.
     - Non-burnable codes (NB1–NB9) produce zero values for all bands.
+    - Where a fuel model has no live herbaceous or live woody fuel, the matching
+      SAVR band holds BEHAVE's value for that class instead of the 9999
+      placeholder printed in Scott and Burgan (2005).
     - All output values are in metric units (converted from SB40 imperial values).
 
     Args:
@@ -287,9 +293,9 @@ async def asyncio_detailed(
     - **TL** (timber litter): 181–189
     - **SB** (slash-blowdown): 201–204
 
-    If any cell in the source grid contains a code not in this set (including 0
-    or nodata), the job will fail with an `INVALID_FBFM_CODES` error listing
-    the invalid codes found.
+    Cells with no fuel model in the source grid (nodata) remain nodata in every
+    output band. Any other code not listed above, including 0, fails the job
+    with an `INVALID_FBFM_CODES` error.
 
     ## Response
 
@@ -302,6 +308,9 @@ async def asyncio_detailed(
       same domain reference as their source).
     - The output grid inherits georeference from the source grid.
     - Non-burnable codes (NB1–NB9) produce zero values for all bands.
+    - Where a fuel model has no live herbaceous or live woody fuel, the matching
+      SAVR band holds BEHAVE's value for that class instead of the 9999
+      placeholder printed in Scott and Burgan (2005).
     - All output values are in metric units (converted from SB40 imperial values).
 
     Args:
@@ -374,9 +383,9 @@ async def asyncio(
     - **TL** (timber litter): 181–189
     - **SB** (slash-blowdown): 201–204
 
-    If any cell in the source grid contains a code not in this set (including 0
-    or nodata), the job will fail with an `INVALID_FBFM_CODES` error listing
-    the invalid codes found.
+    Cells with no fuel model in the source grid (nodata) remain nodata in every
+    output band. Any other code not listed above, including 0, fails the job
+    with an `INVALID_FBFM_CODES` error.
 
     ## Response
 
@@ -389,6 +398,9 @@ async def asyncio(
       same domain reference as their source).
     - The output grid inherits georeference from the source grid.
     - Non-burnable codes (NB1–NB9) produce zero values for all bands.
+    - Where a fuel model has no live herbaceous or live woody fuel, the matching
+      SAVR band holds BEHAVE's value for that class instead of the 9999
+      placeholder printed in Scott and Burgan (2005).
     - All output values are in metric units (converted from SB40 imperial values).
 
     Args:

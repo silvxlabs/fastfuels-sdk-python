@@ -101,11 +101,17 @@ def sync_detailed(
     clears the inventory of all trees; use it deliberately.
 
     **Attribute conditions** compare a single tree attribute against a value:
-    - `attribute`: one of `dbh`, `height`, `crown_ratio`, `fia_species_code`
+    - `attribute`: one of `dbh`, `height`, `crown_ratio`, `fia_species_code`,
+      `tree_id`
     - `operator`: `eq`, `ne`, `gt`, `lt`, `ge`, `le`
-      (`fia_species_code` only supports `eq`/`ne`)
+      (`fia_species_code` and `tree_id` only support `eq`/`ne`)
     - `value`: number, string, or list for `eq`/`ne`
     - `unit`: (optional) pint-compatible unit string (e.g., `\"in\"`, `\"ft\"`)
+
+    To select individual trees, test `tree_id` against a list of IDs: with
+    `eq` the rule applies to exactly the listed trees; with `ne`, to every
+    other tree. `tree_id` values are integers and take no `unit`. `tree_id`
+    can only be tested, not changed by an action.
 
     **Expression conditions** use a boolean expression:
     - `expression`: e.g., `\"dbh < 5 and height < 2\"`
@@ -161,8 +167,8 @@ def sync_detailed(
     - **404 Not Found**: The inventory does not exist, is not owned by the
       caller, or is not in this domain.
     - **422 Unprocessable Content**: The inventory is not in `completed` status
-      (and is not a retryable failed modification); or a referenced `feature_id`
-      is missing, cross-domain, or not completed.
+      (and is not a retryable failed modification), or a referenced
+      `feature_id` is missing, cross-domain, or not completed.
     - **429 Too Many Requests**: You have too many active inventory jobs in
       progress (your `max_active_inventories` quota). Wait for jobs to complete
       or delete unneeded inventories, then retry. The response detail names the
@@ -227,11 +233,17 @@ def sync(
     clears the inventory of all trees; use it deliberately.
 
     **Attribute conditions** compare a single tree attribute against a value:
-    - `attribute`: one of `dbh`, `height`, `crown_ratio`, `fia_species_code`
+    - `attribute`: one of `dbh`, `height`, `crown_ratio`, `fia_species_code`,
+      `tree_id`
     - `operator`: `eq`, `ne`, `gt`, `lt`, `ge`, `le`
-      (`fia_species_code` only supports `eq`/`ne`)
+      (`fia_species_code` and `tree_id` only support `eq`/`ne`)
     - `value`: number, string, or list for `eq`/`ne`
     - `unit`: (optional) pint-compatible unit string (e.g., `\"in\"`, `\"ft\"`)
+
+    To select individual trees, test `tree_id` against a list of IDs: with
+    `eq` the rule applies to exactly the listed trees; with `ne`, to every
+    other tree. `tree_id` values are integers and take no `unit`. `tree_id`
+    can only be tested, not changed by an action.
 
     **Expression conditions** use a boolean expression:
     - `expression`: e.g., `\"dbh < 5 and height < 2\"`
@@ -287,8 +299,8 @@ def sync(
     - **404 Not Found**: The inventory does not exist, is not owned by the
       caller, or is not in this domain.
     - **422 Unprocessable Content**: The inventory is not in `completed` status
-      (and is not a retryable failed modification); or a referenced `feature_id`
-      is missing, cross-domain, or not completed.
+      (and is not a retryable failed modification), or a referenced
+      `feature_id` is missing, cross-domain, or not completed.
     - **429 Too Many Requests**: You have too many active inventory jobs in
       progress (your `max_active_inventories` quota). Wait for jobs to complete
       or delete unneeded inventories, then retry. The response detail names the
@@ -348,11 +360,17 @@ async def asyncio_detailed(
     clears the inventory of all trees; use it deliberately.
 
     **Attribute conditions** compare a single tree attribute against a value:
-    - `attribute`: one of `dbh`, `height`, `crown_ratio`, `fia_species_code`
+    - `attribute`: one of `dbh`, `height`, `crown_ratio`, `fia_species_code`,
+      `tree_id`
     - `operator`: `eq`, `ne`, `gt`, `lt`, `ge`, `le`
-      (`fia_species_code` only supports `eq`/`ne`)
+      (`fia_species_code` and `tree_id` only support `eq`/`ne`)
     - `value`: number, string, or list for `eq`/`ne`
     - `unit`: (optional) pint-compatible unit string (e.g., `\"in\"`, `\"ft\"`)
+
+    To select individual trees, test `tree_id` against a list of IDs: with
+    `eq` the rule applies to exactly the listed trees; with `ne`, to every
+    other tree. `tree_id` values are integers and take no `unit`. `tree_id`
+    can only be tested, not changed by an action.
 
     **Expression conditions** use a boolean expression:
     - `expression`: e.g., `\"dbh < 5 and height < 2\"`
@@ -408,8 +426,8 @@ async def asyncio_detailed(
     - **404 Not Found**: The inventory does not exist, is not owned by the
       caller, or is not in this domain.
     - **422 Unprocessable Content**: The inventory is not in `completed` status
-      (and is not a retryable failed modification); or a referenced `feature_id`
-      is missing, cross-domain, or not completed.
+      (and is not a retryable failed modification), or a referenced
+      `feature_id` is missing, cross-domain, or not completed.
     - **429 Too Many Requests**: You have too many active inventory jobs in
       progress (your `max_active_inventories` quota). Wait for jobs to complete
       or delete unneeded inventories, then retry. The response detail names the
@@ -472,11 +490,17 @@ async def asyncio(
     clears the inventory of all trees; use it deliberately.
 
     **Attribute conditions** compare a single tree attribute against a value:
-    - `attribute`: one of `dbh`, `height`, `crown_ratio`, `fia_species_code`
+    - `attribute`: one of `dbh`, `height`, `crown_ratio`, `fia_species_code`,
+      `tree_id`
     - `operator`: `eq`, `ne`, `gt`, `lt`, `ge`, `le`
-      (`fia_species_code` only supports `eq`/`ne`)
+      (`fia_species_code` and `tree_id` only support `eq`/`ne`)
     - `value`: number, string, or list for `eq`/`ne`
     - `unit`: (optional) pint-compatible unit string (e.g., `\"in\"`, `\"ft\"`)
+
+    To select individual trees, test `tree_id` against a list of IDs: with
+    `eq` the rule applies to exactly the listed trees; with `ne`, to every
+    other tree. `tree_id` values are integers and take no `unit`. `tree_id`
+    can only be tested, not changed by an action.
 
     **Expression conditions** use a boolean expression:
     - `expression`: e.g., `\"dbh < 5 and height < 2\"`
@@ -532,8 +556,8 @@ async def asyncio(
     - **404 Not Found**: The inventory does not exist, is not owned by the
       caller, or is not in this domain.
     - **422 Unprocessable Content**: The inventory is not in `completed` status
-      (and is not a retryable failed modification); or a referenced `feature_id`
-      is missing, cross-domain, or not completed.
+      (and is not a retryable failed modification), or a referenced
+      `feature_id` is missing, cross-domain, or not completed.
     - **429 Too Many Requests**: You have too many active inventory jobs in
       progress (your `max_active_inventories` quota). Wait for jobs to complete
       or delete unneeded inventories, then retry. The response detail names the

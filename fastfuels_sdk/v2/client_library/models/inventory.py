@@ -51,7 +51,10 @@ class Inventory:
                 this inventory has changed since. May be null for inventories created before checksums were introduced.
             modifications (list[InventoryModification] | Unset):
             treatments (list[InventoryBasalAreaTreatment | InventoryDiameterTreatment] | Unset):
-            columns (list[Column] | Unset):
+            columns (list[Column] | Unset): Columns of the inventory's tree data, with per-column summaries. `tree_id` is a
+                stable per-tree integer (1 … 2,147,483,647), unique within the inventory. It is assigned when the inventory is
+                created and never renumbered: removing trees leaves gaps, and inventories derived from this one (duplicates,
+                allometry, modifications, treatments) keep the IDs of the trees they retain.
             forestry_metrics (None | TreeForestryMetrics | Unset):
             georeference (InventoryGeoreference | None | Unset): Spatial reference. Null until backend completes processing.
             error (JobError | None | Unset): Error details if status is 'failed'.

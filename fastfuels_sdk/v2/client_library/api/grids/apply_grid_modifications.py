@@ -149,7 +149,7 @@ def sync_detailed(
 
     - `{\"band\": \"...\", \"modifier\": \"replace|multiply|divide|add|subtract\", \"value\": ...}`
     - Non-`replace` results are clamped at zero (grid bands are physical
-      quantities).
+      quantities), except on `elevation`, which can be negative.
 
     ## Response
 
@@ -285,7 +285,7 @@ def sync(
 
     - `{\"band\": \"...\", \"modifier\": \"replace|multiply|divide|add|subtract\", \"value\": ...}`
     - Non-`replace` results are clamped at zero (grid bands are physical
-      quantities).
+      quantities), except on `elevation`, which can be negative.
 
     ## Response
 
@@ -416,7 +416,7 @@ async def asyncio_detailed(
 
     - `{\"band\": \"...\", \"modifier\": \"replace|multiply|divide|add|subtract\", \"value\": ...}`
     - Non-`replace` results are clamped at zero (grid bands are physical
-      quantities).
+      quantities), except on `elevation`, which can be negative.
 
     ## Response
 
@@ -550,7 +550,7 @@ async def asyncio(
 
     - `{\"band\": \"...\", \"modifier\": \"replace|multiply|divide|add|subtract\", \"value\": ...}`
     - Non-`replace` results are clamped at zero (grid bands are physical
-      quantities).
+      quantities), except on `elevation`, which can be negative.
 
     ## Response
 

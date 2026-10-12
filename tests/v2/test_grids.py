@@ -421,6 +421,24 @@ class TestCreateCanopyHeightGridFromPointCloud:
         create_canopy_height_grid_from_point_cloud(self._point_cloud(), **kwargs)
         return captured["body"]
 
+    @pytest.mark.parametrize(
+        "kwargs, alignment",
+        [
+            ({}, None),
+            ({"output_resolution_m": 2}, {"target": "domain", "resolution": 2}),
+            ({"align_to": "other-grid"}, {"target": "grid", "grid_id": "other-grid"}),
+        ],
+    )
+    def test_alignment_is_a_method_less_lattice(self, monkeypatch, kwargs, alignment):
+        body = self._capture_body(monkeypatch, **kwargs)
+        assert body.to_dict().get("alignment") == alignment
+
+    def test_resampling_is_not_accepted(self):
+        params = inspect.signature(
+            create_canopy_height_grid_from_point_cloud
+        ).parameters
+        assert "resampling" not in params
+
     def test_defaults_leave_aggregation_and_spike_filter_unset(self, monkeypatch):
         body = self._capture_body(monkeypatch)
         assert body.aggregation is UNSET
@@ -1030,6 +1048,30 @@ class TestCreateCanopyFuelGridFromInventory:
         assert body.alignment.resolution == 30
         assert body.name == "canopy"
         assert body.tags == ["test"]
+
+    @pytest.mark.parametrize(
+        "kwargs, alignment",
+        [
+            ({}, None),
+            ({"output_resolution_m": 10}, {"target": "domain", "resolution": 10}),
+            ({"align_to": "other-grid"}, {"target": "grid", "grid_id": "other-grid"}),
+        ],
+    )
+    def test_alignment_is_a_method_less_lattice(self, monkeypatch, kwargs, alignment):
+        captured = self._patch_create(monkeypatch)
+        create_canopy_fuel_grid_from_inventory(self._inventory(), **kwargs)
+        assert captured["body"].to_dict().get("alignment") == alignment
+
+    def test_resampling_is_not_accepted(self):
+        params = inspect.signature(create_canopy_fuel_grid_from_inventory).parameters
+        assert "resampling" not in params
+
+    def test_resolution_and_align_to_are_exclusive(self, monkeypatch):
+        self._patch_create(monkeypatch)
+        with pytest.raises(ValueError, match="at most one"):
+            create_canopy_fuel_grid_from_inventory(
+                self._inventory(), output_resolution_m=10, align_to="other-grid"
+            )
 
     def test_inventory_column_biomass_source(self, monkeypatch):
         captured = self._patch_create(monkeypatch)

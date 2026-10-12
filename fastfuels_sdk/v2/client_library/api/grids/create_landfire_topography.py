@@ -85,7 +85,7 @@ def sync_detailed(
     Available bands:
     - **elevation**: meters above sea level
     - **slope**: degrees (0-90)
-    - **aspect**: degrees clockwise from north (0-360)
+    - **aspect**: degrees clockwise from north (0-360); flat cells are 0
 
     By default all three bands are included. Use the `bands` field to select
     a subset.
@@ -146,7 +146,7 @@ def sync(
     Available bands:
     - **elevation**: meters above sea level
     - **slope**: degrees (0-90)
-    - **aspect**: degrees clockwise from north (0-360)
+    - **aspect**: degrees clockwise from north (0-360); flat cells are 0
 
     By default all three bands are included. Use the `bands` field to select
     a subset.
@@ -202,7 +202,7 @@ async def asyncio_detailed(
     Available bands:
     - **elevation**: meters above sea level
     - **slope**: degrees (0-90)
-    - **aspect**: degrees clockwise from north (0-360)
+    - **aspect**: degrees clockwise from north (0-360); flat cells are 0
 
     By default all three bands are included. Use the `bands` field to select
     a subset.
@@ -261,7 +261,7 @@ async def asyncio(
     Available bands:
     - **elevation**: meters above sea level
     - **slope**: degrees (0-90)
-    - **aspect**: degrees clockwise from north (0-360)
+    - **aspect**: degrees clockwise from north (0-360); flat cells are 0
 
     By default all three bands are included. Use the `bands` field to select
     a subset.

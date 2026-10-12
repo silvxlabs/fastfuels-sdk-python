@@ -6,6 +6,7 @@ class InventoryAttribute(str, Enum):
     DBH = "dbh"
     FIA_SPECIES_CODE = "fia_species_code"
     HEIGHT = "height"
+    TREE_ID = "tree_id"
 
     def __str__(self) -> str:
         return str(self.value)

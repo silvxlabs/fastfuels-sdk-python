@@ -109,9 +109,9 @@ def sync_detailed(
     - **NB** (non-burnable): 91, 92, 93, 98, 99
     - **Anderson 13 models**: 1–13
 
-    If any cell in the source grid contains a code not in this set (including 0
-    or nodata), the job will fail with an `INVALID_FBFM_CODES` error listing
-    the invalid codes found.
+    Cells with no fuel model in the source grid (nodata) remain nodata in every
+    output band. Any other code not listed above, including 0, fails the job
+    with an `INVALID_FBFM_CODES` error.
 
     ## Response
 
@@ -124,6 +124,8 @@ def sync_detailed(
       same domain reference as their source).
     - The output grid inherits georeference from the source grid.
     - Non-burnable codes (91-99) produce zero values for all bands.
+    - Where a fuel model has no live fuel, `savr.live_foliage` holds BEHAVE's
+      value for that class (1500 1/ft).
     - Fuel parameter values are from Anderson, Hal E. 1982. *Aids to
       determining fuel models for estimating fire behavior.* USDA Forest
       Service General Technical Report INT-122.
@@ -196,9 +198,9 @@ def sync(
     - **NB** (non-burnable): 91, 92, 93, 98, 99
     - **Anderson 13 models**: 1–13
 
-    If any cell in the source grid contains a code not in this set (including 0
-    or nodata), the job will fail with an `INVALID_FBFM_CODES` error listing
-    the invalid codes found.
+    Cells with no fuel model in the source grid (nodata) remain nodata in every
+    output band. Any other code not listed above, including 0, fails the job
+    with an `INVALID_FBFM_CODES` error.
 
     ## Response
 
@@ -211,6 +213,8 @@ def sync(
       same domain reference as their source).
     - The output grid inherits georeference from the source grid.
     - Non-burnable codes (91-99) produce zero values for all bands.
+    - Where a fuel model has no live fuel, `savr.live_foliage` holds BEHAVE's
+      value for that class (1500 1/ft).
     - Fuel parameter values are from Anderson, Hal E. 1982. *Aids to
       determining fuel models for estimating fire behavior.* USDA Forest
       Service General Technical Report INT-122.
@@ -278,9 +282,9 @@ async def asyncio_detailed(
     - **NB** (non-burnable): 91, 92, 93, 98, 99
     - **Anderson 13 models**: 1–13
 
-    If any cell in the source grid contains a code not in this set (including 0
-    or nodata), the job will fail with an `INVALID_FBFM_CODES` error listing
-    the invalid codes found.
+    Cells with no fuel model in the source grid (nodata) remain nodata in every
+    output band. Any other code not listed above, including 0, fails the job
+    with an `INVALID_FBFM_CODES` error.
 
     ## Response
 
@@ -293,6 +297,8 @@ async def asyncio_detailed(
       same domain reference as their source).
     - The output grid inherits georeference from the source grid.
     - Non-burnable codes (91-99) produce zero values for all bands.
+    - Where a fuel model has no live fuel, `savr.live_foliage` holds BEHAVE's
+      value for that class (1500 1/ft).
     - Fuel parameter values are from Anderson, Hal E. 1982. *Aids to
       determining fuel models for estimating fire behavior.* USDA Forest
       Service General Technical Report INT-122.
@@ -363,9 +369,9 @@ async def asyncio(
     - **NB** (non-burnable): 91, 92, 93, 98, 99
     - **Anderson 13 models**: 1–13
 
-    If any cell in the source grid contains a code not in this set (including 0
-    or nodata), the job will fail with an `INVALID_FBFM_CODES` error listing
-    the invalid codes found.
+    Cells with no fuel model in the source grid (nodata) remain nodata in every
+    output band. Any other code not listed above, including 0, fails the job
+    with an `INVALID_FBFM_CODES` error.
 
     ## Response
 
@@ -378,6 +384,8 @@ async def asyncio(
       same domain reference as their source).
     - The output grid inherits georeference from the source grid.
     - Non-burnable codes (91-99) produce zero values for all bands.
+    - Where a fuel model has no live fuel, `savr.live_foliage` holds BEHAVE's
+      value for that class (1500 1/ft).
     - Fuel parameter values are from Anderson, Hal E. 1982. *Aids to
       determining fuel models for estimating fire behavior.* USDA Forest
       Service General Technical Report INT-122.

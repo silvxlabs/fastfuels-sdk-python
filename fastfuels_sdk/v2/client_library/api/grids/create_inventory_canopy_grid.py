@@ -101,12 +101,12 @@ def sync_detailed(
     - **source_inventory_id**: (required) ID of a completed tree inventory in
       this domain. Required columns depend on the selected methods; the
       defaults need `x`, `y`, `height`, `crown_ratio`, `dbh`, and
-      `fia_species_code`.
+      `fia_species_code`. Required columns must have no null values; a null
+      `fia_status_code` counts as live.
     - **alignment**: (optional) Output lattice. Against the domain (the
       default) `resolution` defaults to 30 m — an inventory has no native
       cell size to inherit. Against another grid, omitting `resolution`
-      matches that grid's lattice exactly. `target: \"native\"` is not
-      supported.
+      matches that grid's lattice exactly.
     - **bands**: (optional) Defaults to `[\"cbd\", \"cbh\", \"chm\", \"cc\"]` — the
       four landscape-file canopy roles. Add `cfl` for canopy fuel load.
     - **biomass_source**: (optional) `allometry` with `nsvb` (default),
@@ -125,7 +125,9 @@ def sync_detailed(
       splits each tree's fuel over the cells its crown covers;
       `stem` assigns it to the stem cell.
     - **max_crown_radius_source**: (optional) Allometric crown radii
-      (default) or a per-tree inventory column (e.g. from LiDAR).
+      (default) or a per-tree inventory column (e.g. from LiDAR). A tree with
+      a null in that column uses its Purves radius, so a column source also
+      needs `dbh` and `fia_species_code`.
     - **cbd**, **cbh**, **chm**, **cc**: (optional) Per-band reduction
       methods. Each may only be supplied when its band is requested;
       requested bands default to the FuelCalc-style methods.
@@ -205,12 +207,12 @@ def sync(
     - **source_inventory_id**: (required) ID of a completed tree inventory in
       this domain. Required columns depend on the selected methods; the
       defaults need `x`, `y`, `height`, `crown_ratio`, `dbh`, and
-      `fia_species_code`.
+      `fia_species_code`. Required columns must have no null values; a null
+      `fia_status_code` counts as live.
     - **alignment**: (optional) Output lattice. Against the domain (the
       default) `resolution` defaults to 30 m — an inventory has no native
       cell size to inherit. Against another grid, omitting `resolution`
-      matches that grid's lattice exactly. `target: \"native\"` is not
-      supported.
+      matches that grid's lattice exactly.
     - **bands**: (optional) Defaults to `[\"cbd\", \"cbh\", \"chm\", \"cc\"]` — the
       four landscape-file canopy roles. Add `cfl` for canopy fuel load.
     - **biomass_source**: (optional) `allometry` with `nsvb` (default),
@@ -229,7 +231,9 @@ def sync(
       splits each tree's fuel over the cells its crown covers;
       `stem` assigns it to the stem cell.
     - **max_crown_radius_source**: (optional) Allometric crown radii
-      (default) or a per-tree inventory column (e.g. from LiDAR).
+      (default) or a per-tree inventory column (e.g. from LiDAR). A tree with
+      a null in that column uses its Purves radius, so a column source also
+      needs `dbh` and `fia_species_code`.
     - **cbd**, **cbh**, **chm**, **cc**: (optional) Per-band reduction
       methods. Each may only be supplied when its band is requested;
       requested bands default to the FuelCalc-style methods.
@@ -304,12 +308,12 @@ async def asyncio_detailed(
     - **source_inventory_id**: (required) ID of a completed tree inventory in
       this domain. Required columns depend on the selected methods; the
       defaults need `x`, `y`, `height`, `crown_ratio`, `dbh`, and
-      `fia_species_code`.
+      `fia_species_code`. Required columns must have no null values; a null
+      `fia_status_code` counts as live.
     - **alignment**: (optional) Output lattice. Against the domain (the
       default) `resolution` defaults to 30 m — an inventory has no native
       cell size to inherit. Against another grid, omitting `resolution`
-      matches that grid's lattice exactly. `target: \"native\"` is not
-      supported.
+      matches that grid's lattice exactly.
     - **bands**: (optional) Defaults to `[\"cbd\", \"cbh\", \"chm\", \"cc\"]` — the
       four landscape-file canopy roles. Add `cfl` for canopy fuel load.
     - **biomass_source**: (optional) `allometry` with `nsvb` (default),
@@ -328,7 +332,9 @@ async def asyncio_detailed(
       splits each tree's fuel over the cells its crown covers;
       `stem` assigns it to the stem cell.
     - **max_crown_radius_source**: (optional) Allometric crown radii
-      (default) or a per-tree inventory column (e.g. from LiDAR).
+      (default) or a per-tree inventory column (e.g. from LiDAR). A tree with
+      a null in that column uses its Purves radius, so a column source also
+      needs `dbh` and `fia_species_code`.
     - **cbd**, **cbh**, **chm**, **cc**: (optional) Per-band reduction
       methods. Each may only be supplied when its band is requested;
       requested bands default to the FuelCalc-style methods.
@@ -406,12 +412,12 @@ async def asyncio(
     - **source_inventory_id**: (required) ID of a completed tree inventory in
       this domain. Required columns depend on the selected methods; the
       defaults need `x`, `y`, `height`, `crown_ratio`, `dbh`, and
-      `fia_species_code`.
+      `fia_species_code`. Required columns must have no null values; a null
+      `fia_status_code` counts as live.
     - **alignment**: (optional) Output lattice. Against the domain (the
       default) `resolution` defaults to 30 m — an inventory has no native
       cell size to inherit. Against another grid, omitting `resolution`
-      matches that grid's lattice exactly. `target: \"native\"` is not
-      supported.
+      matches that grid's lattice exactly.
     - **bands**: (optional) Defaults to `[\"cbd\", \"cbh\", \"chm\", \"cc\"]` — the
       four landscape-file canopy roles. Add `cfl` for canopy fuel load.
     - **biomass_source**: (optional) `allometry` with `nsvb` (default),
@@ -430,7 +436,9 @@ async def asyncio(
       splits each tree's fuel over the cells its crown covers;
       `stem` assigns it to the stem cell.
     - **max_crown_radius_source**: (optional) Allometric crown radii
-      (default) or a per-tree inventory column (e.g. from LiDAR).
+      (default) or a per-tree inventory column (e.g. from LiDAR). A tree with
+      a null in that column uses its Purves radius, so a column source also
+      needs `dbh` and `fia_species_code`.
     - **cbd**, **cbh**, **chm**, **cc**: (optional) Per-band reduction
       methods. Each may only be supplied when its band is requested;
       requested bands default to the FuelCalc-style methods.
