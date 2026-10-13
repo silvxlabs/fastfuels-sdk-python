@@ -46,9 +46,12 @@ import numpy as np
 import pytest
 import rasterio
 
-# The test_domain, completed_topography_grid, and completed_tree_inventory
-# fixtures are session-scoped and shared across modules (tests/v2/conftest.py).
-# They are READ-ONLY: tests that mutate or delete create throwaway exports.
+from tests.v2.utils import real_dispatch_client
+
+# The test_domain and completed_* fixtures are session-scoped and shared
+# across modules (tests/v2/conftest.py). They are READ-ONLY: tests that mutate
+# or delete create throwaway exports. Creates skip worker dispatch unless the
+# test requests real_dispatch (see conftest.py).
 
 
 class TestFieldSource:
@@ -226,31 +229,34 @@ class TestLandscapeExport:
 
     @pytest.fixture(scope="class")
     def topography_grid(self, test_domain):
-        grid = create_topography_grid_from_3dep(
-            test_domain,
-            source_resolution_m=10,
-            output_resolution_m=30,
-            bands=["elevation", "slope", "aspect"],
-            name="landscape_topography",
-            tags=["test"],
-        )
-        grid.wait()
+        with real_dispatch_client():
+            grid = create_topography_grid_from_3dep(
+                test_domain,
+                source_resolution_m=10,
+                output_resolution_m=30,
+                bands=["elevation", "slope", "aspect"],
+                name="landscape_topography",
+                tags=["test"],
+            )
+            grid.wait()
         return grid
 
     @pytest.fixture(scope="class")
     def canopy_grid(self, test_domain):
-        grid = create_canopy_fuel_grid_from_landfire(
-            test_domain,
-            output_resolution_m=30,
-            bands=["cc", "chm", "cbh", "cbd"],
-            name="landscape_canopy",
-            tags=["test"],
-        )
-        grid.wait()
+        with real_dispatch_client():
+            grid = create_canopy_fuel_grid_from_landfire(
+                test_domain,
+                output_resolution_m=30,
+                bands=["cc", "chm", "cbh", "cbd"],
+                name="landscape_canopy",
+                tags=["test"],
+            )
+            grid.wait()
         return grid
 
     def test_landscape_roundtrip(
         self,
+        real_dispatch,
         test_domain,
         topography_grid,
         completed_fbfm40_grid,
@@ -300,8 +306,9 @@ class TestGridExportLifecycle:
     @pytest.fixture(scope="class")
     def completed_export(self, completed_topography_grid):
         """A completed GeoTIFF export of the shared topography grid."""
-        export = completed_topography_grid.export(format="geotiff", tags=["test"])
-        export.wait()
+        with real_dispatch_client():
+            export = completed_topography_grid.export(format="geotiff", tags=["test"])
+            export.wait()
         return export
 
     def test_export_returns_wrapped_record(self, completed_topography_grid):
@@ -391,7 +398,7 @@ class TestGridExportLifecycle:
 
 
 class TestInventoryExport:
-    def test_csv_roundtrip(self, completed_tree_inventory, tmp_path):
+    def test_csv_roundtrip(self, real_dispatch, completed_tree_inventory, tmp_path):
         export = completed_tree_inventory.export(format="csv")
         assert isinstance(export, Export)
         export.wait()
@@ -404,29 +411,31 @@ class TestQuicfireExport:
     @pytest.fixture(scope="class")
     def voxel_grid(self, completed_tree_inventory):
         """A 3D canopy grid carrying bulk density + moisture bands."""
-        voxels = completed_tree_inventory.voxelize(
-            horizontal_resolution_m=2.0,
-            vertical_resolution_m=1.0,
-            bands=["bulk_density.foliage.live", "fuel_moisture.live"],
-            name="qf_voxels",
-        )
-        voxels.wait()
+        with real_dispatch_client():
+            voxels = completed_tree_inventory.voxelize(
+                horizontal_resolution_m=2.0,
+                vertical_resolution_m=1.0,
+                bands=["bulk_density.foliage.live", "fuel_moisture.live"],
+                name="qf_voxels",
+            )
+            voxels.wait()
         return voxels
 
     @pytest.fixture(scope="class")
     def surface_grid(self, test_domain):
         """A 2 m uniform surface grid carrying load, depth, and moisture."""
-        grid = create_uniform_grid(
-            test_domain,
-            resolution_m=2.0,
-            bands={
-                "fuel_load.1hr": 0.5,
-                "fuel_depth": 0.3,
-                "fuel_moisture.1hr": 10.0,
-            },
-            name="qf_surface",
-        )
-        grid.wait()
+        with real_dispatch_client():
+            grid = create_uniform_grid(
+                test_domain,
+                resolution_m=2.0,
+                bands={
+                    "fuel_load.1hr": 0.5,
+                    "fuel_depth": 0.3,
+                    "fuel_moisture.1hr": 10.0,
+                },
+                name="qf_surface",
+            )
+            grid.wait()
         return grid
 
     @pytest.fixture(scope="class")
@@ -439,29 +448,31 @@ class TestQuicfireExport:
         grid (which defaults to the domain bbox at 2 m) for the export to
         slice it without resampling.
         """
-        fbfm = create_fuel_model_grid_from_landfire_fbfm40(
-            test_domain, output_resolution_m=2.0, name="qf_fbfm"
-        )
-        fbfm.wait()
-        surface = create_fuel_grid_from_fbfm40_lookup(
-            fbfm,
-            bands=["fuel_load.fine_dead", "fuel_depth"],
-            name="qf_surface_lookup",
-        )
-        surface.wait()
+        with real_dispatch_client():
+            fbfm = create_fuel_model_grid_from_landfire_fbfm40(
+                test_domain, output_resolution_m=2.0, name="qf_fbfm"
+            )
+            fbfm.wait()
+            surface = create_fuel_grid_from_fbfm40_lookup(
+                fbfm,
+                bands=["fuel_load.fine_dead", "fuel_depth"],
+                name="qf_surface_lookup",
+            )
+            surface.wait()
         return surface
 
     @pytest.fixture(scope="class")
     def aligned_topography_grid(self, test_domain):
         """3DEP elevation on the 2 m lattice, so it aligns with the fire grid."""
-        grid = create_topography_grid_from_3dep(
-            test_domain,
-            source_resolution_m=10,
-            output_resolution_m=2.0,
-            bands=["elevation"],
-            name="qf_topo",
-        )
-        grid.wait()
+        with real_dispatch_client():
+            grid = create_topography_grid_from_3dep(
+                test_domain,
+                source_resolution_m=10,
+                output_resolution_m=2.0,
+                bands=["elevation"],
+                name="qf_topo",
+            )
+            grid.wait()
         return grid
 
     def test_align_to_excludes_resolution(self, test_domain, voxel_grid):
@@ -477,7 +488,9 @@ class TestQuicfireExport:
                 horizontal_resolution_m=2.0,
             )
 
-    def test_bundle_roundtrip(self, test_domain, voxel_grid, surface_grid, tmp_path):
+    def test_bundle_roundtrip(
+        self, real_dispatch, test_domain, voxel_grid, surface_grid, tmp_path
+    ):
         export = create_quicfire_export(
             test_domain,
             canopy_bulk_density=(voxel_grid, "bulk_density.foliage.live"),
@@ -505,6 +518,7 @@ class TestQuicfireExport:
 
     def test_bundle_with_lookup_surface_and_topography(
         self,
+        real_dispatch,
         test_domain,
         voxel_grid,
         lookup_surface_grid,

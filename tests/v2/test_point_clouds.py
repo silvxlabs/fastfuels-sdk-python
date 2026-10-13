@@ -26,12 +26,16 @@ from fastfuels_sdk.v2.client_library.models import JobStatus, PointCloudType
 from fastfuels_sdk.v2.client_library.types import UNSET
 from fastfuels_sdk.v2.domains import Domain
 from fastfuels_sdk.v2.exceptions import NotFoundException, expect
+from tests.v2.utils import real_dispatch_client
 
 # External imports
 import numpy as np
 import pytest
 
 # The test_domain fixture is session-scoped and shared (tests/v2/conftest.py).
+# Creates skip worker dispatch unless the test requests real_dispatch (see
+# conftest.py); the file uploads below still reach the uploader, which the
+# bucket write triggers directly.
 #
 # There is no laspy in the test environment to author a valid LAS/LAZ, so the
 # upload tests send a tiny placeholder file: the create call and the signed PUT
@@ -283,12 +287,13 @@ class TestDelete:
 def completed_3dep_point_cloud(covered_3dep_domain):
     """A completed 3DEP point cloud for reading data out. READ-ONLY."""
     coverage = check_3dep_coverage(covered_3dep_domain)
-    point_cloud = create_point_cloud_from_3dep(
-        covered_3dep_domain,
-        datasets=[coverage.datasets[0].name],
-        name="data_out_3dep_pc",
-    )
-    point_cloud.wait()
+    with real_dispatch_client():
+        point_cloud = create_point_cloud_from_3dep(
+            covered_3dep_domain,
+            datasets=[coverage.datasets[0].name],
+            name="data_out_3dep_pc",
+        )
+        point_cloud.wait()
     yield point_cloud
     try:
         point_cloud.delete()

@@ -99,6 +99,7 @@ from fastfuels_sdk.v2.exceptions import (
     expect,
 )
 from fastfuels_sdk.v2.modifications import mask
+from tests.v2.utils import real_dispatch_client
 
 # External imports
 import numpy as np
@@ -106,9 +107,10 @@ import pytest
 import rasterio
 from rasterio.transform import from_origin
 
-# The test_domain and completed_topography_grid fixtures are session-scoped
-# and shared across modules (tests/v2/conftest.py). They are READ-ONLY:
-# tests that mutate or delete create throwaways.
+# The test_domain and completed_* fixtures are session-scoped and shared
+# across modules (tests/v2/conftest.py). They are READ-ONLY: tests that
+# mutate or delete create throwaways. Creates skip worker dispatch unless the
+# test requests real_dispatch (see conftest.py).
 
 
 class TestBuildAlignment:
@@ -324,13 +326,14 @@ def covered_3dep_point_cloud():
         tags=["sdk-test"],
     )
     coverage = check_3dep_point_cloud_coverage(domain)
-    point_cloud = create_point_cloud_from_3dep(
-        domain,
-        datasets=[coverage.datasets[0].name],
-        name="test_point_cloud_chm_source",
-        tags=["sdk-test"],
-    )
-    point_cloud.wait()
+    with real_dispatch_client():
+        point_cloud = create_point_cloud_from_3dep(
+            domain,
+            datasets=[coverage.datasets[0].name],
+            name="test_point_cloud_chm_source",
+            tags=["sdk-test"],
+        )
+        point_cloud.wait()
     yield point_cloud
     domain.delete(force=True)
 
@@ -463,7 +466,7 @@ class TestCreateCanopyHeightGridFromPointCloud:
         body = self._capture_body(monkeypatch, spike_filter=False)
         assert body.spike_filter is None
 
-    def test_create_live(self, covered_3dep_point_cloud):
+    def test_create_live(self, real_dispatch, covered_3dep_point_cloud):
         grid = None
         try:
             grid = create_canopy_height_grid_from_point_cloud(
@@ -652,7 +655,7 @@ class TestCreateSurfaceFuelGridFromDuet:
         with pytest.raises(error):
             create_surface_fuel_grid_from_duet(self._source_grid(), **kwargs)
 
-    def test_create_live(self, completed_tree_inventory):
+    def test_create_live(self, real_dispatch, completed_tree_inventory):
         voxels = completed_tree_inventory.voxelize(
             horizontal_resolution_m=2,
             vertical_resolution_m=1,
@@ -912,7 +915,7 @@ class TestCreateDeadFuelMoistureGridFromFosberg:
                 **params,
             )
 
-    def test_create_live(self, completed_tree_inventory):
+    def test_create_live(self, real_dispatch, completed_tree_inventory):
         voxels = completed_tree_inventory.voxelize(
             horizontal_resolution_m=2,
             vertical_resolution_m=1,
@@ -1141,7 +1144,7 @@ class TestCreateCanopyFuelGridFromInventory:
         with pytest.raises(ValueError):
             create_canopy_fuel_grid_from_inventory(self._inventory(), **kwargs)
 
-    def test_create_live(self, completed_tree_inventory):
+    def test_create_live(self, real_dispatch, completed_tree_inventory):
         canopy = create_canopy_fuel_grid_from_inventory(
             completed_tree_inventory,
             bands=["cbd", "cbh", "chm", "cc", "cfl"],
@@ -1291,7 +1294,7 @@ class TestCreateIrradianceGridFromLeaflux:
                 date_time=datetime.datetime(2024, 1, 1, tzinfo=datetime.timezone.utc),
             )
 
-    def test_create_live(self, completed_tree_inventory):
+    def test_create_live(self, real_dispatch, completed_tree_inventory):
         voxels = completed_tree_inventory.voxelize(
             horizontal_resolution_m=2,
             vertical_resolution_m=1,
@@ -1785,7 +1788,7 @@ class TestCreateDisturbanceGridFromLandfire:
         assert grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
         grid.delete()
 
-    def test_completed_band(self, test_domain):
+    def test_completed_band(self, real_dispatch, test_domain):
         grid = create_annual_disturbance_grid_from_landfire(
             test_domain,
             output_resolution_m=30,
@@ -1896,7 +1899,7 @@ class TestUploadCreators:
     rasterio; the NetCDF path is deferred (no on-the-fly NetCDF writer here).
     """
 
-    def test_create_grid_from_geotiff(self, test_domain, tmp_path):
+    def test_create_grid_from_geotiff(self, real_dispatch, test_domain, tmp_path):
         # Build a single-band float GeoTIFF on the domain's lattice and CRS,
         # upload it, and confirm it processes to completion. This exercises the
         # signed-upload header contract end-to-end (the unit-level check lives
@@ -2062,7 +2065,7 @@ class TestApplyModifications:
         with pytest.raises(ValueError, match="apply modifications"):
             grid.apply_modifications([])
 
-    def test_apply_modifications_rederives_in_place(self, test_domain):
+    def test_apply_modifications_rederives_in_place(self, real_dispatch, test_domain):
         # A throwaway uniform grid -- grids have no duplicate yet (#16) and the
         # shared fixture is read-only. A value-based modification (band > 0,
         # matching every cell) avoids needing a feature.
@@ -2474,7 +2477,7 @@ class TestDeleteGrid:
 
 
 class TestDuplicateGrid:
-    def test_duplicate_is_a_clone(self, completed_topography_grid):
+    def test_duplicate_is_a_clone(self, real_dispatch, completed_topography_grid):
         # Duplicating creates a new grid (the shared fixture is not mutated),
         # byte-copying the data so the copy carries the same checksum.
         copy = completed_topography_grid.duplicate(name="grid_duplicate_test")

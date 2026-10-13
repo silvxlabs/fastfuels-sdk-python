@@ -12,6 +12,13 @@ cascades to everything created inside it.
 
 Fixtures that wait on a job carry a ``completed_`` prefix; resources
 that are born complete (layerset uploads) don't need one.
+
+Every request sends the skip-dispatch header by default, so a create
+stores the resource but starts no worker job and it stays pending. Tests
+that only check what a create returns need nothing more. Tests that wait
+on a job or read its results request the ``real_dispatch`` fixture, and
+fixtures that build completed resources create them inside
+``real_dispatch_client()``.
 """
 
 import pytest
@@ -36,8 +43,28 @@ from fastfuels_sdk.v2.inventories import (
 from tests.v2.utils import (
     create_default_domain,
     create_default_layerset_geojson,
+    install_skip_dispatch_client,
+    real_dispatch_client,
     sweep_leftover_domains,
 )
+
+
+@pytest.fixture(scope="session", autouse=True)
+def skip_dispatch_by_default():
+    """Send the skip-dispatch header on every request unless a test or
+    fixture opts into real dispatch.
+    """
+    install_skip_dispatch_client()
+
+
+@pytest.fixture
+def real_dispatch():
+    """Send this test's requests without the skip-dispatch header, so its
+    creates start real worker jobs. Request it in tests that wait on a job
+    or read its results.
+    """
+    with real_dispatch_client():
+        yield
 
 
 @pytest.fixture(scope="session")
@@ -53,13 +80,14 @@ def test_domain():
 @pytest.fixture(scope="session")
 def completed_road_feature(test_domain):
     """A completed OSM road feature. READ-ONLY: shared by every module."""
-    feature = create_road_feature_from_osm(
-        test_domain,
-        name="test_road",
-        description="Road feature for testing v2 feature operations",
-        tags=["test"],
-    )
-    feature.wait()
+    with real_dispatch_client():
+        feature = create_road_feature_from_osm(
+            test_domain,
+            name="test_road",
+            description="Road feature for testing v2 feature operations",
+            tags=["test"],
+        )
+        feature.wait()
     return feature
 
 
@@ -78,14 +106,15 @@ def layerset_feature(test_domain):
 @pytest.fixture(scope="session")
 def completed_topography_grid(test_domain):
     """A completed 3DEP topography grid. READ-ONLY: shared by every module."""
-    grid = create_topography_grid_from_3dep(
-        test_domain,
-        output_resolution_m=10,
-        name="test_topography",
-        description="Topography grid for testing v2 grid operations",
-        tags=["test"],
-    )
-    grid.wait()
+    with real_dispatch_client():
+        grid = create_topography_grid_from_3dep(
+            test_domain,
+            output_resolution_m=10,
+            name="test_topography",
+            description="Topography grid for testing v2 grid operations",
+            tags=["test"],
+        )
+        grid.wait()
     return grid
 
 
@@ -95,60 +124,64 @@ def completed_fbfm40_grid(test_domain):
     every module. Provides the FBFM40 codes that
     ``create_fuel_grid_from_fbfm40_lookup`` reads.
     """
-    grid = create_fuel_model_grid_from_landfire_fbfm40(
-        test_domain,
-        output_resolution_m=30,
-        name="test_fbfm40",
-        description="FBFM40 grid for testing v2 grid lookup operations",
-        tags=["test"],
-    )
-    grid.wait()
+    with real_dispatch_client():
+        grid = create_fuel_model_grid_from_landfire_fbfm40(
+            test_domain,
+            output_resolution_m=30,
+            name="test_fbfm40",
+            description="FBFM40 grid for testing v2 grid lookup operations",
+            tags=["test"],
+        )
+        grid.wait()
     return grid
 
 
 @pytest.fixture(scope="session")
 def completed_fbfm13_grid(test_domain):
     """A completed LANDFIRE FBFM13 fuel model grid. READ-ONLY."""
-    grid = create_fuel_model_grid_from_landfire_fbfm13(
-        test_domain,
-        version="2024",
-        remove_non_burnable=["NB1", "NB2"],
-        output_resolution_m=30,
-        name="test_fbfm13",
-        description="FBFM13 grid for testing v2 grid lookup operations",
-        tags=["test"],
-    )
-    grid.wait()
+    with real_dispatch_client():
+        grid = create_fuel_model_grid_from_landfire_fbfm13(
+            test_domain,
+            version="2024",
+            remove_non_burnable=["NB1", "NB2"],
+            output_resolution_m=30,
+            name="test_fbfm13",
+            description="FBFM13 grid for testing v2 grid lookup operations",
+            tags=["test"],
+        )
+        grid.wait()
     return grid
 
 
 @pytest.fixture(scope="session")
 def completed_fccs_grid(test_domain):
     """A completed LANDFIRE FCCS fuelbed grid. READ-ONLY."""
-    grid = create_fuel_model_grid_from_landfire_fccs(
-        test_domain,
-        remove_bare_ground=True,
-        output_resolution_m=30,
-        name="test_fccs",
-        description="FCCS grid for testing v2 grid lookup operations",
-        tags=["test"],
-    )
-    grid.wait()
+    with real_dispatch_client():
+        grid = create_fuel_model_grid_from_landfire_fccs(
+            test_domain,
+            remove_bare_ground=True,
+            output_resolution_m=30,
+            name="test_fccs",
+            description="FCCS grid for testing v2 grid lookup operations",
+            tags=["test"],
+        )
+        grid.wait()
     return grid
 
 
 @pytest.fixture(scope="session")
 def completed_pim_grid(test_domain):
     """A completed TreeMap PIM grid. READ-ONLY: shared by every module."""
-    grid = create_pim_grid_from_treemap(
-        test_domain,
-        output_resolution_m=30,
-        resampling="nearest",
-        name="test_pim",
-        description="PIM grid for testing v2 inventory operations",
-        tags=["test"],
-    )
-    grid.wait()
+    with real_dispatch_client():
+        grid = create_pim_grid_from_treemap(
+            test_domain,
+            output_resolution_m=30,
+            resampling="nearest",
+            name="test_pim",
+            description="PIM grid for testing v2 inventory operations",
+            tags=["test"],
+        )
+        grid.wait()
     return grid
 
 
@@ -158,15 +191,16 @@ def completed_tree_inventory(test_domain, completed_pim_grid):
     module. Tests that mutate (update, apply_modifications) work on a
     duplicate or a throwaway instead.
     """
-    inventory = create_tree_inventory_from_pim_grid(
-        test_domain,
-        completed_pim_grid,
-        seed=42,
-        name="test_inventory",
-        description="Tree inventory for testing v2 inventory operations",
-        tags=["test"],
-    )
-    inventory.wait()
+    with real_dispatch_client():
+        inventory = create_tree_inventory_from_pim_grid(
+            test_domain,
+            completed_pim_grid,
+            seed=42,
+            name="test_inventory",
+            description="Tree inventory for testing v2 inventory operations",
+            tags=["test"],
+        )
+        inventory.wait()
     return inventory
 
 
@@ -175,14 +209,15 @@ def completed_fine_chm_grid(test_domain):
     """A completed Meta CHM at 1 m, fine enough for crown segmentation
     (2 m or finer). READ-ONLY: shared by every module.
     """
-    grid = create_canopy_height_grid_from_meta(
-        test_domain,
-        output_resolution_m=1,
-        name="test_fine_chm",
-        description="1 m CHM for testing v2 crown features",
-        tags=["test"],
-    )
-    grid.wait()
+    with real_dispatch_client():
+        grid = create_canopy_height_grid_from_meta(
+            test_domain,
+            output_resolution_m=1,
+            name="test_fine_chm",
+            description="1 m CHM for testing v2 crown features",
+            tags=["test"],
+        )
+        grid.wait()
     return grid
 
 
@@ -191,14 +226,15 @@ def completed_chm_inventory(test_domain, completed_fine_chm_grid):
     """A completed tree inventory detected from ``completed_fine_chm_grid``.
     READ-ONLY: shared by every module.
     """
-    inventory = create_tree_inventory_from_chm_grid(
-        test_domain,
-        completed_fine_chm_grid,
-        name="test_chm_inventory",
-        description="CHM-detected inventory for testing v2 crown features",
-        tags=["test"],
-    )
-    inventory.wait()
+    with real_dispatch_client():
+        inventory = create_tree_inventory_from_chm_grid(
+            test_domain,
+            completed_fine_chm_grid,
+            name="test_chm_inventory",
+            description="CHM-detected inventory for testing v2 crown features",
+            tags=["test"],
+        )
+        inventory.wait()
     return inventory
 
 
@@ -209,13 +245,14 @@ def completed_crown_feature(
     """A completed crown feature built from ``completed_chm_inventory`` and
     ``completed_fine_chm_grid``. READ-ONLY: shared by every module.
     """
-    feature = create_crown_feature_from_chm(
-        test_domain,
-        completed_chm_inventory,
-        completed_fine_chm_grid,
-        name="test_crowns",
-        description="Crown feature for testing v2 measured crowns",
-        tags=["test"],
-    )
-    feature.wait()
+    with real_dispatch_client():
+        feature = create_crown_feature_from_chm(
+            test_domain,
+            completed_chm_inventory,
+            completed_fine_chm_grid,
+            name="test_crowns",
+            description="Crown feature for testing v2 measured crowns",
+            tags=["test"],
+        )
+        feature.wait()
     return feature
