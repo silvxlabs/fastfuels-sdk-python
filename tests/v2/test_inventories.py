@@ -70,7 +70,17 @@ from tests.v2.utils import real_dispatch_client
 
 @pytest.fixture(scope="class")
 def throwaway_inventory(completed_tree_inventory):
-    """A mutable copy of the shared inventory (the fixtures are read-only)."""
+    """A mutable, pending copy of the shared inventory."""
+    inventory = completed_tree_inventory.duplicate(name="throwaway_copy")
+    yield inventory
+    inventory.delete()
+
+
+@pytest.fixture(scope="module")
+def completed_throwaway_inventory(completed_tree_inventory):
+    """A completed, mutable copy of the shared inventory. The apply tests
+    re-derive it in place in turn; each checks only its own ledger.
+    """
     with real_dispatch_client():
         inventory = completed_tree_inventory.duplicate(name="throwaway_copy")
         inventory.wait()
@@ -513,9 +523,9 @@ class TestDuplicate:
 
 class TestApplyModifications:
     def test_apply_modifications_rederives_in_place(
-        self, real_dispatch, throwaway_inventory
+        self, real_dispatch, completed_throwaway_inventory
     ):
-        copy = throwaway_inventory
+        copy = completed_throwaway_inventory
         # Rules need at least one condition; height > 0 matches every tree
         modification = InventoryModification(
             conditions=[
@@ -560,9 +570,9 @@ class TestApplyModifications:
 
 class TestApplyTreatments:
     def test_apply_treatments_rederives_in_place(
-        self, real_dispatch, throwaway_inventory
+        self, real_dispatch, completed_throwaway_inventory
     ):
-        copy = throwaway_inventory
+        copy = completed_throwaway_inventory
         original_checksum = copy.checksum
 
         treated = copy.apply_treatments([basal_area_treatment("from_below", 25.0)])
@@ -1118,16 +1128,8 @@ class TestInventoryData:
         trees = completed_tree_inventory.to_dataframe(columns=subset)
         assert list(trees.columns) == subset
 
-    @pytest.fixture(scope="class")
-    def completed_csv_export(self, completed_tree_inventory):
-        """A completed CSV export of the shared tree inventory."""
-        with real_dispatch_client():
-            export = completed_tree_inventory.export(format="csv", tags=["test"])
-            export.wait()
-        return export
-
     def test_to_dataframe_matches_csv_export(
-        self, completed_tree_inventory, completed_csv_export, tmp_path
+        self, completed_tree_inventory, completed_inventory_csv_export, tmp_path
     ):
         # Ground-truth check for to_dataframe: the records it loads from the
         # data partitions must match the same inventory the server renders to
@@ -1135,7 +1137,7 @@ class TestInventoryData:
         # the CSV round-trips floats through text, so compare order- and
         # precision-independently: equal row count, shared columns, and the
         # same multiset of values per column. Reuses the export fixture.
-        path = completed_csv_export.to_file(tmp_path / "trees.csv")
+        path = completed_inventory_csv_export.to_file(tmp_path / "trees.csv")
         from_csv = pd.read_csv(path)
         from_api = completed_tree_inventory.to_dataframe()
 

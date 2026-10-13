@@ -5,9 +5,8 @@ Session-scoped resources shared across the v2 test modules.
 
 These fixtures are READ-ONLY by convention: they are shared by every
 module in the session, so any test that mutates or deletes a resource
-must create its own throwaway instead. Expensive job resources (the
-completed OSM road feature and the completed topography grid) are built
-once per session and torn down with the domain — deleting the domain
+must create its own throwaway instead. Expensive job resources are built
+once per session and torn down with their domain — deleting the domain
 cascades to everything created inside it.
 
 Fixtures that wait on a job carry a ``completed_`` prefix; resources
@@ -39,6 +38,12 @@ from fastfuels_sdk.v2.grids import (
 from fastfuels_sdk.v2.inventories import (
     create_tree_inventory_from_chm_grid,
     create_tree_inventory_from_pim_grid,
+)
+from fastfuels_sdk.v2.domains import Domain
+from fastfuels_sdk.v2.exceptions import NotFoundException
+from fastfuels_sdk.v2.point_clouds import (
+    check_3dep_coverage as check_3dep_point_cloud_coverage,
+    create_point_cloud_from_3dep,
 )
 from tests.v2.utils import (
     create_default_domain,
@@ -105,11 +110,14 @@ def layerset_feature(test_domain):
 
 @pytest.fixture(scope="session")
 def completed_topography_grid(test_domain):
-    """A completed 3DEP topography grid. READ-ONLY: shared by every module."""
+    """A completed 3DEP topography grid at 30 m, on the same lattice as the
+    LANDFIRE fixtures. READ-ONLY: shared by every module.
+    """
     with real_dispatch_client():
         grid = create_topography_grid_from_3dep(
             test_domain,
-            output_resolution_m=10,
+            output_resolution_m=30,
+            bands=["elevation", "slope", "aspect"],
             name="test_topography",
             description="Topography grid for testing v2 grid operations",
             tags=["test"],
@@ -256,3 +264,107 @@ def completed_crown_feature(
         )
         feature.wait()
     return feature
+
+
+@pytest.fixture(scope="session")
+def completed_voxel_grid(completed_tree_inventory):
+    """A completed 2 m x 1 m voxelization of ``completed_tree_inventory``
+    carrying the bands the DUET, LeafLux, Fosberg, and QUIC-Fire tests
+    read. READ-ONLY: shared by every module.
+    """
+    with real_dispatch_client():
+        voxels = completed_tree_inventory.voxelize(
+            horizontal_resolution_m=2,
+            vertical_resolution_m=1,
+            bands=[
+                "bulk_density.foliage.live",
+                "spcd",
+                "fuel_moisture.live",
+                "leaf_area_density",
+            ],
+            name="test_voxels",
+            tags=["test"],
+        )
+        voxels.wait()
+    return voxels
+
+
+@pytest.fixture(scope="session")
+def completed_voxel_topography_grid(completed_voxel_grid):
+    """A completed 3DEP topography grid on the horizontal lattice of
+    ``completed_voxel_grid``. READ-ONLY: shared by every module.
+    """
+    with real_dispatch_client():
+        grid = create_topography_grid_from_3dep(
+            completed_voxel_grid.domain_id,
+            align_to=completed_voxel_grid,
+            bands=["elevation", "slope", "aspect"],
+            name="test_voxel_topography",
+            tags=["test"],
+        )
+        grid.wait()
+    return grid
+
+
+@pytest.fixture(scope="session")
+def completed_inventory_csv_export(completed_tree_inventory):
+    """A completed CSV export of ``completed_tree_inventory``. READ-ONLY."""
+    with real_dispatch_client():
+        export = completed_tree_inventory.export(format="csv", tags=["test"])
+        export.wait()
+    return export
+
+
+@pytest.fixture(scope="session")
+def covered_3dep_domain():
+    """A small Bondurant, WY domain with stable 3DEP LiDAR coverage."""
+    geojson = {
+        "type": "FeatureCollection",
+        "crs": {"type": "name", "properties": {"name": "EPSG:32612"}},
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [522800, 4720400],
+                            [523300, 4720400],
+                            [523300, 4720900],
+                            [522800, 4720900],
+                            [522800, 4720400],
+                        ]
+                    ],
+                },
+            }
+        ],
+    }
+    domain = Domain.from_geojson(
+        geojson,
+        name="test_3dep_point_cloud_domain",
+        tags=["sdk-test"],
+    )
+    yield domain
+    domain.delete(force=True)
+
+
+@pytest.fixture(scope="session")
+def completed_3dep_point_cloud(covered_3dep_domain):
+    """A completed ALS point cloud from 3DEP over ``covered_3dep_domain``.
+    READ-ONLY: shared by every module.
+    """
+    coverage = check_3dep_point_cloud_coverage(covered_3dep_domain)
+    with real_dispatch_client():
+        point_cloud = create_point_cloud_from_3dep(
+            covered_3dep_domain,
+            datasets=[coverage.datasets[0].name],
+            name="test_3dep_point_cloud",
+            tags=["sdk-test"],
+        )
+        point_cloud.wait()
+    yield point_cloud
+    try:
+        point_cloud.delete()
+    except NotFoundException:
+        pass

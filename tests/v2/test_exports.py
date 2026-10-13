@@ -23,7 +23,6 @@ from fastfuels_sdk.v2.grids import (
     create_canopy_fuel_grid_from_landfire,
     create_fuel_grid_from_fbfm40_lookup,
     create_fuel_model_grid_from_landfire_fbfm40,
-    create_topography_grid_from_3dep,
     create_uniform_grid,
 )
 from fastfuels_sdk.v2.client_library.models import (
@@ -228,20 +227,6 @@ class TestLandscapeExport:
         )
 
     @pytest.fixture(scope="class")
-    def topography_grid(self, test_domain):
-        with real_dispatch_client():
-            grid = create_topography_grid_from_3dep(
-                test_domain,
-                source_resolution_m=10,
-                output_resolution_m=30,
-                bands=["elevation", "slope", "aspect"],
-                name="landscape_topography",
-                tags=["test"],
-            )
-            grid.wait()
-        return grid
-
-    @pytest.fixture(scope="class")
     def canopy_grid(self, test_domain):
         with real_dispatch_client():
             grid = create_canopy_fuel_grid_from_landfire(
@@ -258,7 +243,7 @@ class TestLandscapeExport:
         self,
         real_dispatch,
         test_domain,
-        topography_grid,
+        completed_topography_grid,
         completed_fbfm40_grid,
         canopy_grid,
         tmp_path,
@@ -266,9 +251,9 @@ class TestLandscapeExport:
         export = create_landscape_export(
             test_domain,
             fire_behavior_fuel_model="fbfm40",
-            elevation=(topography_grid, "elevation"),
-            slope=(topography_grid, "slope"),
-            aspect=(topography_grid, "aspect"),
+            elevation=(completed_topography_grid, "elevation"),
+            slope=(completed_topography_grid, "slope"),
+            aspect=(completed_topography_grid, "aspect"),
             fuel_model=(completed_fbfm40_grid, "fbfm"),
             canopy_cover=(canopy_grid, "cc"),
             canopy_height=(canopy_grid, "chm"),
@@ -398,29 +383,15 @@ class TestGridExportLifecycle:
 
 
 class TestInventoryExport:
-    def test_csv_roundtrip(self, real_dispatch, completed_tree_inventory, tmp_path):
-        export = completed_tree_inventory.export(format="csv")
+    def test_csv_roundtrip(self, completed_inventory_csv_export, tmp_path):
+        export = completed_inventory_csv_export
         assert isinstance(export, Export)
-        export.wait()
         destination = export.to_file(tmp_path / "trees.csv")
         header = destination.read_text().splitlines()[0]
         assert "height" in header
 
 
 class TestQuicfireExport:
-    @pytest.fixture(scope="class")
-    def voxel_grid(self, completed_tree_inventory):
-        """A 3D canopy grid carrying bulk density + moisture bands."""
-        with real_dispatch_client():
-            voxels = completed_tree_inventory.voxelize(
-                horizontal_resolution_m=2.0,
-                vertical_resolution_m=1.0,
-                bands=["bulk_density.foliage.live", "fuel_moisture.live"],
-                name="qf_voxels",
-            )
-            voxels.wait()
-        return voxels
-
     @pytest.fixture(scope="class")
     def surface_grid(self, test_domain):
         """A 2 m uniform surface grid carrying load, depth, and moisture."""
@@ -461,40 +432,26 @@ class TestQuicfireExport:
             surface.wait()
         return surface
 
-    @pytest.fixture(scope="class")
-    def aligned_topography_grid(self, test_domain):
-        """3DEP elevation on the 2 m lattice, so it aligns with the fire grid."""
-        with real_dispatch_client():
-            grid = create_topography_grid_from_3dep(
-                test_domain,
-                source_resolution_m=10,
-                output_resolution_m=2.0,
-                bands=["elevation"],
-                name="qf_topo",
-            )
-            grid.wait()
-        return grid
-
-    def test_align_to_excludes_resolution(self, test_domain, voxel_grid):
+    def test_align_to_excludes_resolution(self, test_domain, completed_voxel_grid):
         with pytest.raises(ValueError, match="not both"):
             create_quicfire_export(
                 test_domain,
-                canopy_bulk_density=(voxel_grid, "bulk_density.foliage.live"),
-                canopy_moisture=(voxel_grid, "fuel_moisture.live"),
+                canopy_bulk_density=(completed_voxel_grid, "bulk_density.foliage.live"),
+                canopy_moisture=(completed_voxel_grid, "fuel_moisture.live"),
                 surface_fuel_load=("g", "fuel_load.1hr"),
                 surface_fuel_depth=("g", "fuel_depth"),
                 surface_moisture=("g", "fuel_moisture.1hr"),
-                align_to=voxel_grid,
+                align_to=completed_voxel_grid,
                 horizontal_resolution_m=2.0,
             )
 
     def test_bundle_roundtrip(
-        self, real_dispatch, test_domain, voxel_grid, surface_grid, tmp_path
+        self, real_dispatch, test_domain, completed_voxel_grid, surface_grid, tmp_path
     ):
         export = create_quicfire_export(
             test_domain,
-            canopy_bulk_density=(voxel_grid, "bulk_density.foliage.live"),
-            canopy_moisture=(voxel_grid, "fuel_moisture.live"),
+            canopy_bulk_density=(completed_voxel_grid, "bulk_density.foliage.live"),
+            canopy_moisture=(completed_voxel_grid, "fuel_moisture.live"),
             surface_fuel_load=(surface_grid, "fuel_load.1hr"),
             surface_fuel_depth=(surface_grid, "fuel_depth"),
             surface_moisture=(surface_grid, "fuel_moisture.1hr"),
@@ -520,10 +477,10 @@ class TestQuicfireExport:
         self,
         real_dispatch,
         test_domain,
-        voxel_grid,
+        completed_voxel_grid,
         lookup_surface_grid,
         surface_grid,
-        aligned_topography_grid,
+        completed_voxel_topography_grid,
         tmp_path,
     ):
         # The realistic QUIC-Fire workflow (and the export tutorial): surface
@@ -535,12 +492,12 @@ class TestQuicfireExport:
         # voxel grid cell-for-cell.
         export = create_quicfire_export(
             test_domain,
-            canopy_bulk_density=(voxel_grid, "bulk_density.foliage.live"),
-            canopy_moisture=(voxel_grid, "fuel_moisture.live"),
+            canopy_bulk_density=(completed_voxel_grid, "bulk_density.foliage.live"),
+            canopy_moisture=(completed_voxel_grid, "fuel_moisture.live"),
             surface_fuel_load=(lookup_surface_grid, "fuel_load.fine_dead"),
             surface_fuel_depth=(lookup_surface_grid, "fuel_depth"),
             surface_moisture=(surface_grid, "fuel_moisture.1hr"),
-            topography=(aligned_topography_grid, "elevation"),
+            topography=(completed_voxel_topography_grid, "elevation"),
             name="qf_realistic",
         )
         assert isinstance(export, Export)
