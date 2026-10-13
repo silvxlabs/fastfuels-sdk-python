@@ -272,7 +272,7 @@ class TestCreateGridFromCompose:
                 select=[compose.select("fuel_depth", reference)],
             )
 
-    def test_create_live(self, completed_fbfm40_grid):
+    def test_create_live(self, real_dispatch, completed_fbfm40_grid):
         fuel_grid = create_fuel_grid_from_fbfm40_lookup(
             completed_fbfm40_grid,
             bands=["fuel_load.1hr", "fuel_depth"],

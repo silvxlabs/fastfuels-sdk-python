@@ -24,14 +24,16 @@ from fastfuels_sdk.v2.client_library.api.point_clouds import (
 )
 from fastfuels_sdk.v2.client_library.models import JobStatus, PointCloudType
 from fastfuels_sdk.v2.client_library.types import UNSET
-from fastfuels_sdk.v2.domains import Domain
 from fastfuels_sdk.v2.exceptions import NotFoundException, expect
 
 # External imports
 import numpy as np
 import pytest
 
-# The test_domain fixture is session-scoped and shared (tests/v2/conftest.py).
+# The test_domain, covered_3dep_domain, and completed_3dep_point_cloud fixtures
+# are session-scoped and shared (tests/v2/conftest.py). Creates skip worker
+# dispatch (see conftest.py); the file uploads below still reach the uploader,
+# which the bucket write triggers directly.
 #
 # There is no laspy in the test environment to author a valid LAS/LAZ, so the
 # upload tests send a tiny placeholder file: the create call and the signed PUT
@@ -44,40 +46,6 @@ def _placeholder_laz(directory) -> str:
     path = directory / "scan.laz"
     path.write_bytes(b"\x00" * 64)
     return str(path)
-
-
-@pytest.fixture(scope="module")
-def covered_3dep_domain():
-    """A small Bondurant, WY domain with stable 3DEP LiDAR coverage."""
-    geojson = {
-        "type": "FeatureCollection",
-        "crs": {"type": "name", "properties": {"name": "EPSG:32612"}},
-        "features": [
-            {
-                "type": "Feature",
-                "properties": {},
-                "geometry": {
-                    "type": "Polygon",
-                    "coordinates": [
-                        [
-                            [522800, 4720400],
-                            [523300, 4720400],
-                            [523300, 4720900],
-                            [522800, 4720900],
-                            [522800, 4720400],
-                        ]
-                    ],
-                },
-            }
-        ],
-    }
-    domain = Domain.from_geojson(
-        geojson,
-        name="test_3dep_point_cloud_domain",
-        tags=["sdk-test"],
-    )
-    yield domain
-    domain.delete(force=True)
 
 
 class TestPointCloudType:
@@ -277,23 +245,6 @@ class TestDelete:
         pc.delete()
         with pytest.raises(NotFoundException):
             PointCloud.from_id(test_domain.id, pc.id)
-
-
-@pytest.fixture(scope="module")
-def completed_3dep_point_cloud(covered_3dep_domain):
-    """A completed 3DEP point cloud for reading data out. READ-ONLY."""
-    coverage = check_3dep_coverage(covered_3dep_domain)
-    point_cloud = create_point_cloud_from_3dep(
-        covered_3dep_domain,
-        datasets=[coverage.datasets[0].name],
-        name="data_out_3dep_pc",
-    )
-    point_cloud.wait()
-    yield point_cloud
-    try:
-        point_cloud.delete()
-    except NotFoundException:
-        pass
 
 
 def _reassemble_xyz_via_json(point_cloud, lod=None, classes=None) -> np.ndarray:

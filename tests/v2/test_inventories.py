@@ -60,16 +60,30 @@ import numpy as np
 import pandas as pd
 import pytest
 
-# The test_domain, completed_pim_grid, and completed_tree_inventory fixtures
-# are session-scoped and shared across modules (tests/v2/conftest.py). They
-# are READ-ONLY: tests that mutate or delete create throwaways (duplicates).
+from tests.v2.utils import real_dispatch_client
+
+# The test_domain and completed_* fixtures are session-scoped and shared
+# across modules (tests/v2/conftest.py). They are READ-ONLY: tests that
+# mutate or delete create throwaways (duplicates). Creates skip worker
+# dispatch unless the test requests real_dispatch (see conftest.py).
 
 
 @pytest.fixture(scope="class")
 def throwaway_inventory(completed_tree_inventory):
-    """A mutable copy of the shared inventory (the fixtures are read-only)."""
+    """A mutable, pending copy of the shared inventory."""
     inventory = completed_tree_inventory.duplicate(name="throwaway_copy")
-    inventory.wait()
+    yield inventory
+    inventory.delete()
+
+
+@pytest.fixture(scope="module")
+def completed_throwaway_inventory(completed_tree_inventory):
+    """A completed, mutable copy of the shared inventory. The apply tests
+    re-derive it in place in turn; each checks only its own ledger.
+    """
+    with real_dispatch_client():
+        inventory = completed_tree_inventory.duplicate(name="throwaway_copy")
+        inventory.wait()
     yield inventory
     inventory.delete()
 
@@ -107,10 +121,11 @@ class TestCreateTreeInventoryFromPimChmFusion:
         reimputation resolution, which must lie between the CHM and PIM
         cell sizes.
         """
-        grid = create_canopy_height_grid_from_meta(
-            test_domain, output_resolution_m=5, name="throwaway_fusion_chm"
-        )
-        grid.wait()
+        with real_dispatch_client():
+            grid = create_canopy_height_grid_from_meta(
+                test_domain, output_resolution_m=5, name="throwaway_fusion_chm"
+            )
+            grid.wait()
         yield grid
         grid.delete()
 
@@ -170,7 +185,7 @@ class TestCreateTreeInventoryFromPimChmFusion:
             )
 
     def test_completes_with_pim_columns(
-        self, test_domain, completed_pim_grid, completed_chm_grid
+        self, real_dispatch, test_domain, completed_pim_grid, completed_chm_grid
     ):
         inventory = create_tree_inventory_from_pim_chm_fusion(
             test_domain, completed_pim_grid, completed_chm_grid, seed=42
@@ -396,7 +411,7 @@ class TestCreateTreeInventoryFromFile:
         with pytest.raises(ValueError, match="upload format"):
             create_tree_inventory_from_file(test_domain, "trees.parquet")
 
-    def test_create_from_csv(self, test_domain, tmp_path):
+    def test_create_from_csv(self, real_dispatch, test_domain, tmp_path):
         # Tree records at the center of the domain, in the domain CRS
         x_center = (test_domain.bbox[0] + test_domain.bbox[2]) / 2
         y_center = (test_domain.bbox[1] + test_domain.bbox[3]) / 2
@@ -494,7 +509,7 @@ class TestUpdateInventory:
 
 
 class TestDuplicate:
-    def test_duplicate_is_a_clone(self, completed_tree_inventory):
+    def test_duplicate_is_a_clone(self, real_dispatch, completed_tree_inventory):
         copy = completed_tree_inventory.duplicate(name="duplicate_test")
         assert copy.id != completed_tree_inventory.id
         assert copy.name == "duplicate_test"
@@ -507,8 +522,10 @@ class TestDuplicate:
 
 
 class TestApplyModifications:
-    def test_apply_modifications_rederives_in_place(self, throwaway_inventory):
-        copy = throwaway_inventory
+    def test_apply_modifications_rederives_in_place(
+        self, real_dispatch, completed_throwaway_inventory
+    ):
+        copy = completed_throwaway_inventory
         # Rules need at least one condition; height > 0 matches every tree
         modification = InventoryModification(
             conditions=[
@@ -552,8 +569,10 @@ class TestApplyModifications:
 
 
 class TestApplyTreatments:
-    def test_apply_treatments_rederives_in_place(self, throwaway_inventory):
-        copy = throwaway_inventory
+    def test_apply_treatments_rederives_in_place(
+        self, real_dispatch, completed_throwaway_inventory
+    ):
+        copy = completed_throwaway_inventory
         original_checksum = copy.checksum
 
         treated = copy.apply_treatments([basal_area_treatment("from_below", 25.0)])
@@ -581,7 +600,7 @@ class TestApplyTreatments:
 
 class TestModificationBuilders:
     def test_remove_trees_at_creation(
-        self, test_domain, completed_pim_grid, completed_tree_inventory
+        self, real_dispatch, test_domain, completed_pim_grid, completed_tree_inventory
     ):
         # Verify the builders independently through the create-time path. Use
         # the same seed as the unmodified fixture so removing dbh < 10 must
@@ -849,7 +868,7 @@ class TestMeasuredCrowns:
         assert "tree_id" in keys
 
     def test_crown_segmentation_adds_crown_radius(
-        self, test_domain, completed_fine_chm_grid
+        self, real_dispatch, test_domain, completed_fine_chm_grid
     ):
         inventory = create_tree_inventory_from_chm_grid(
             test_domain,
@@ -863,7 +882,11 @@ class TestMeasuredCrowns:
         inventory.delete()
 
     def test_voxelize_with_crown_feature(
-        self, test_domain, completed_chm_inventory, completed_crown_feature
+        self,
+        real_dispatch,
+        test_domain,
+        completed_chm_inventory,
+        completed_crown_feature,
     ):
         # A CHM inventory has only x, y, height; GDAM imputes the rest and
         # keeps tree_id, so its trees still match the crowns.
@@ -1105,15 +1128,8 @@ class TestInventoryData:
         trees = completed_tree_inventory.to_dataframe(columns=subset)
         assert list(trees.columns) == subset
 
-    @pytest.fixture(scope="class")
-    def completed_csv_export(self, completed_tree_inventory):
-        """A completed CSV export of the shared tree inventory."""
-        export = completed_tree_inventory.export(format="csv", tags=["test"])
-        export.wait()
-        return export
-
     def test_to_dataframe_matches_csv_export(
-        self, completed_tree_inventory, completed_csv_export, tmp_path
+        self, completed_tree_inventory, completed_inventory_csv_export, tmp_path
     ):
         # Ground-truth check for to_dataframe: the records it loads from the
         # data partitions must match the same inventory the server renders to
@@ -1121,7 +1137,7 @@ class TestInventoryData:
         # the CSV round-trips floats through text, so compare order- and
         # precision-independently: equal row count, shared columns, and the
         # same multiset of values per column. Reuses the export fixture.
-        path = completed_csv_export.to_file(tmp_path / "trees.csv")
+        path = completed_inventory_csv_export.to_file(tmp_path / "trees.csv")
         from_csv = pd.read_csv(path)
         from_api = completed_tree_inventory.to_dataframe()
 

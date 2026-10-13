@@ -50,10 +50,6 @@ from fastfuels_sdk.v2.grids import (
 )
 from fastfuels_sdk.v2.api import ensure_client
 from fastfuels_sdk.v2.domains import Domain
-from fastfuels_sdk.v2.point_clouds import (
-    create_point_cloud_from_3dep,
-    check_3dep_coverage as check_3dep_point_cloud_coverage,
-)
 from fastfuels_sdk.v2.client_library.api.grids import get_grid_data_json
 from fastfuels_sdk.v2.client_library.models import (
     Band,
@@ -99,6 +95,7 @@ from fastfuels_sdk.v2.exceptions import (
     expect,
 )
 from fastfuels_sdk.v2.modifications import mask
+from tests.v2.utils import real_dispatch_client
 
 # External imports
 import numpy as np
@@ -106,9 +103,33 @@ import pytest
 import rasterio
 from rasterio.transform import from_origin
 
-# The test_domain and completed_topography_grid fixtures are session-scoped
-# and shared across modules (tests/v2/conftest.py). They are READ-ONLY:
-# tests that mutate or delete create throwaways.
+# The test_domain and completed_* fixtures are session-scoped and shared
+# across modules (tests/v2/conftest.py). They are READ-ONLY: tests that
+# mutate or delete create throwaways. Creates skip worker dispatch unless the
+# test requests real_dispatch (see conftest.py).
+
+
+@pytest.fixture(scope="module")
+def completed_leaflux_irradiance_grid(
+    completed_voxel_grid, completed_voxel_topography_grid
+):
+    """Completed LeafLux canopy and surface irradiance over the shared voxel
+    grid, draped on the shared terrain. READ-ONLY.
+    """
+    with real_dispatch_client():
+        irradiance = create_irradiance_grid_from_leaflux(
+            completed_voxel_grid,
+            date_time=datetime.datetime(
+                2020, 7, 1, 18, 0, tzinfo=datetime.timezone.utc
+            ),
+            source_terrain_grid=completed_voxel_topography_grid,
+            bands=["irradiance.canopy.relative", "irradiance.surface.relative"],
+            name="test_leaflux_irradiance",
+            tags=["test"],
+        )
+        irradiance.wait()
+    yield irradiance
+    irradiance.delete()
 
 
 class TestBuildAlignment:
@@ -290,51 +311,6 @@ class TestCreateCanopyHeightGridFromNaipChm:
         grid.delete()
 
 
-@pytest.fixture(scope="module")
-def covered_3dep_point_cloud():
-    """A completed ALS point cloud over a Bondurant, WY domain with stable
-    3DEP LiDAR coverage. Owns its own domain so the live CHM test can build
-    grids inside it without touching the shared session domain.
-    """
-    geojson = {
-        "type": "FeatureCollection",
-        "crs": {"type": "name", "properties": {"name": "EPSG:32612"}},
-        "features": [
-            {
-                "type": "Feature",
-                "properties": {},
-                "geometry": {
-                    "type": "Polygon",
-                    "coordinates": [
-                        [
-                            [522800, 4720400],
-                            [523300, 4720400],
-                            [523300, 4720900],
-                            [522800, 4720900],
-                            [522800, 4720400],
-                        ]
-                    ],
-                },
-            }
-        ],
-    }
-    domain = Domain.from_geojson(
-        geojson,
-        name="test_point_cloud_chm_domain",
-        tags=["sdk-test"],
-    )
-    coverage = check_3dep_point_cloud_coverage(domain)
-    point_cloud = create_point_cloud_from_3dep(
-        domain,
-        datasets=[coverage.datasets[0].name],
-        name="test_point_cloud_chm_source",
-        tags=["sdk-test"],
-    )
-    point_cloud.wait()
-    yield point_cloud
-    domain.delete(force=True)
-
-
 class TestCreateCanopyHeightGridFromPointCloud:
     @staticmethod
     def _point_cloud(status=JobStatus.COMPLETED, type_=PointCloudType.ALS):
@@ -463,11 +439,11 @@ class TestCreateCanopyHeightGridFromPointCloud:
         body = self._capture_body(monkeypatch, spike_filter=False)
         assert body.spike_filter is None
 
-    def test_create_live(self, covered_3dep_point_cloud):
+    def test_create_live(self, real_dispatch, completed_3dep_point_cloud):
         grid = None
         try:
             grid = create_canopy_height_grid_from_point_cloud(
-                covered_3dep_point_cloud,
+                completed_3dep_point_cloud,
                 output_resolution_m=2,
                 aggregation="percentile",
                 percentile=95,
@@ -652,23 +628,11 @@ class TestCreateSurfaceFuelGridFromDuet:
         with pytest.raises(error):
             create_surface_fuel_grid_from_duet(self._source_grid(), **kwargs)
 
-    def test_create_live(self, completed_tree_inventory):
-        voxels = completed_tree_inventory.voxelize(
-            horizontal_resolution_m=2,
-            vertical_resolution_m=1,
-            bands=[
-                "bulk_density.foliage.live",
-                "spcd",
-                "fuel_moisture.live",
-            ],
-            name="test_duet_source",
-            tags=["test"],
-        )
+    def test_create_live(self, real_dispatch, completed_voxel_grid):
         surface = None
         try:
-            voxels.wait()
             surface = create_surface_fuel_grid_from_duet(
-                voxels,
+                completed_voxel_grid,
                 years_since_burn=25,
                 bands=[
                     "fuel_load.grass",
@@ -703,7 +667,6 @@ class TestCreateSurfaceFuelGridFromDuet:
         finally:
             if surface is not None:
                 surface.delete()
-            voxels.delete()
 
 
 class TestCreateDeadFuelMoistureGridFromFosberg:
@@ -912,54 +875,26 @@ class TestCreateDeadFuelMoistureGridFromFosberg:
                 **params,
             )
 
-    def test_create_live(self, completed_tree_inventory):
-        voxels = completed_tree_inventory.voxelize(
-            horizontal_resolution_m=2,
-            vertical_resolution_m=1,
-            bands=["leaf_area_density"],
-            name="test_fosberg_lad",
+    def test_create_live(
+        self,
+        real_dispatch,
+        completed_voxel_topography_grid,
+        completed_leaflux_irradiance_grid,
+    ):
+        # The Fosberg model requires the topography and irradiance grids to
+        # share one horizontal lattice; both fixtures sit on the voxel grid's.
+        moisture = create_dead_fuel_moisture_grid_from_fosberg(
+            completed_voxel_topography_grid,
+            completed_leaflux_irradiance_grid,
+            dry_bulb_temp=75.0,
+            relative_humidity=20.0,
+            time=1200,
+            month="July",
+            elevation="near",
+            name="test_fosberg_moisture",
             tags=["test"],
         )
-        topo = None
-        irradiance = None
-        moisture = None
         try:
-            voxels.wait()
-            # Surface irradiance and the Fosberg model require the topography,
-            # LAD, and irradiance grids to share one horizontal lattice, so
-            # align the topography grid to the voxelized LAD grid.
-            # elevation feeds the leaflux surface draping; slope + aspect feed
-            # the Fosberg model.
-            topo = create_topography_grid_from_3dep(
-                completed_tree_inventory.domain_id,
-                align_to=voxels,
-                bands=["elevation", "slope", "aspect"],
-                name="test_fosberg_topo",
-                tags=["test"],
-            )
-            topo.wait()
-            irradiance = create_irradiance_grid_from_leaflux(
-                voxels,
-                date_time=datetime.datetime(
-                    2020, 7, 1, 18, 0, tzinfo=datetime.timezone.utc
-                ),
-                source_terrain_grid=topo,
-                bands=["irradiance.surface.relative"],
-                name="test_fosberg_irradiance",
-                tags=["test"],
-            )
-            irradiance.wait()
-            moisture = create_dead_fuel_moisture_grid_from_fosberg(
-                topo,
-                irradiance,
-                dry_bulb_temp=75.0,
-                relative_humidity=20.0,
-                time=1200,
-                month="July",
-                elevation="near",
-                name="test_fosberg_moisture",
-                tags=["test"],
-            )
             moisture.wait()
             assert moisture.status == JobStatus.COMPLETED
             assert {band.key for band in moisture.bands} == {"fuel_moisture.dead.1hr"}
@@ -967,13 +902,7 @@ class TestCreateDeadFuelMoistureGridFromFosberg:
             assert values.ndim == 2
             assert np.isfinite(values).any()
         finally:
-            if moisture is not None:
-                moisture.delete()
-            if irradiance is not None:
-                irradiance.delete()
-            if topo is not None:
-                topo.delete()
-            voxels.delete()
+            moisture.delete()
 
 
 class TestCreateCanopyFuelGridFromInventory:
@@ -1141,7 +1070,7 @@ class TestCreateCanopyFuelGridFromInventory:
         with pytest.raises(ValueError):
             create_canopy_fuel_grid_from_inventory(self._inventory(), **kwargs)
 
-    def test_create_live(self, completed_tree_inventory):
+    def test_create_live(self, real_dispatch, completed_tree_inventory):
         canopy = create_canopy_fuel_grid_from_inventory(
             completed_tree_inventory,
             bands=["cbd", "cbh", "chm", "cc", "cfl"],
@@ -1291,38 +1220,16 @@ class TestCreateIrradianceGridFromLeaflux:
                 date_time=datetime.datetime(2024, 1, 1, tzinfo=datetime.timezone.utc),
             )
 
-    def test_create_live(self, completed_tree_inventory):
-        voxels = completed_tree_inventory.voxelize(
-            horizontal_resolution_m=2,
-            vertical_resolution_m=1,
-            bands=["leaf_area_density"],
-            name="test_leaflux_source",
-            tags=["test"],
-        )
-        irradiance = None
-        try:
-            voxels.wait()
-            irradiance = create_irradiance_grid_from_leaflux(
-                voxels,
-                date_time=datetime.datetime(
-                    2024, 7, 1, 18, 0, tzinfo=datetime.timezone.utc
-                ),
-                bands=["irradiance.canopy.relative"],
-                name="test_leaflux_irradiance",
-                tags=["test"],
-            )
-            irradiance.wait()
-            assert irradiance.status == JobStatus.COMPLETED
-            assert "irradiance.canopy.relative" in {
-                band.key for band in irradiance.bands
-            }
-            values = irradiance.to_numpy("irradiance.canopy.relative")
-            assert values.ndim == 3
-            assert np.isfinite(values).any()
-        finally:
-            if irradiance is not None:
-                irradiance.delete()
-            voxels.delete()
+    def test_completed_fixture(self, completed_leaflux_irradiance_grid):
+        irradiance = completed_leaflux_irradiance_grid
+        assert irradiance.status == JobStatus.COMPLETED
+        assert {
+            "irradiance.canopy.relative",
+            "irradiance.surface.relative",
+        } <= {band.key for band in irradiance.bands}
+        values = irradiance.to_numpy("irradiance.canopy.relative")
+        assert values.ndim == 3
+        assert np.isfinite(values).any()
 
 
 class TestCreateFuelModelGridFromLandfireFbfm40:
@@ -1785,7 +1692,7 @@ class TestCreateDisturbanceGridFromLandfire:
         assert grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
         grid.delete()
 
-    def test_completed_band(self, test_domain):
+    def test_completed_band(self, real_dispatch, test_domain):
         grid = create_annual_disturbance_grid_from_landfire(
             test_domain,
             output_resolution_m=30,
@@ -1896,7 +1803,7 @@ class TestUploadCreators:
     rasterio; the NetCDF path is deferred (no on-the-fly NetCDF writer here).
     """
 
-    def test_create_grid_from_geotiff(self, test_domain, tmp_path):
+    def test_create_grid_from_geotiff(self, real_dispatch, test_domain, tmp_path):
         # Build a single-band float GeoTIFF on the domain's lattice and CRS,
         # upload it, and confirm it processes to completion. This exercises the
         # signed-upload header contract end-to-end (the unit-level check lives
@@ -2032,7 +1939,7 @@ class TestUpdateGrid:
 class TestResample:
     def test_resample_returns_new_pending_grid(self, completed_topography_grid):
         resampled = completed_topography_grid.resample(
-            output_resolution_m=30, name="resampled"
+            output_resolution_m=60, name="resampled"
         )
         assert isinstance(resampled, Grid)
         assert resampled.id != completed_topography_grid.id
@@ -2062,7 +1969,7 @@ class TestApplyModifications:
         with pytest.raises(ValueError, match="apply modifications"):
             grid.apply_modifications([])
 
-    def test_apply_modifications_rederives_in_place(self, test_domain):
+    def test_apply_modifications_rederives_in_place(self, real_dispatch, test_domain):
         # A throwaway uniform grid -- grids have no duplicate yet (#16) and the
         # shared fixture is read-only. A value-based modification (band > 0,
         # matching every cell) avoids needing a feature.
@@ -2474,7 +2381,7 @@ class TestDeleteGrid:
 
 
 class TestDuplicateGrid:
-    def test_duplicate_is_a_clone(self, completed_topography_grid):
+    def test_duplicate_is_a_clone(self, real_dispatch, completed_topography_grid):
         # Duplicating creates a new grid (the shared fixture is not mutated),
         # byte-copying the data so the copy carries the same checksum.
         copy = completed_topography_grid.duplicate(name="grid_duplicate_test")
