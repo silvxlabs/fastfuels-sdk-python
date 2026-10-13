@@ -11,44 +11,27 @@ version explicitly:
 
 import importlib
 
-# Must equal fastfuels_sdk.v1.__all__ (checked in tests/test_top_level_namespace.py).
-__all__ = [
-    "Domain",
-    "list_domains",
-    "Inventories",
-    "TreeInventory",
-    "Features",
-    "RoadFeature",
-    "WaterFeature",
-    "FeatureDataResponse",
-    "Grids",
-    "SurfaceGrid",
-    "SurfaceGridBuilder",
-    "TreeGrid",
-    "TreeGridBuilder",
-    "TopographyGrid",
-    "TopographyGridBuilder",
-    "FeatureGrid",
-    "Export",
-    "export_roi",
-    "export_roi_to_quicfire",
-    "PointClouds",
-    "AlsPointCloud",
-]
+
+def _v1():
+    return importlib.import_module("fastfuels_sdk.v1")
 
 
-# PEP 562: keep `import fastfuels_sdk.v2` from loading v1.
+# PEP 562: resolve v1's public names (and __all__, for star-imports) on first
+# access, so `import fastfuels_sdk.v2` doesn't load v1.
 def __getattr__(name):
-    # Only v1's public names (and the v1 subpackage itself) resolve here, so
-    # `from fastfuels_sdk import v2` still falls through to the submodule import.
     if name == "v1":
-        return importlib.import_module("fastfuels_sdk.v1")
-    if name in __all__:
-        value = getattr(importlib.import_module("fastfuels_sdk.v1"), name)
-        globals()[name] = value
-        return value
+        return _v1()
+    # Private names and the v2 subpackage must not load v1: the import system
+    # probes for them (e.g. `from fastfuels_sdk import v2`).
+    if name == "v2" or (name.startswith("_") and name != "__all__"):
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    v1 = _v1()
+    if name == "__all__":
+        return v1.__all__
+    if name in v1.__all__:
+        return getattr(v1, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def __dir__():
-    return sorted([*globals(), *__all__])
+    return sorted({*globals(), *_v1().__all__})

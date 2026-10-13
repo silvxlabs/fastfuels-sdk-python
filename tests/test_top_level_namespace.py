@@ -21,9 +21,12 @@ def _run(code: str) -> str:
     return result.stdout.strip()
 
 
-def test_importing_v2_does_not_load_v1():
+@pytest.mark.parametrize(
+    "statement", ["import fastfuels_sdk.v2", "from fastfuels_sdk import v2"]
+)
+def test_importing_v2_does_not_load_v1(statement):
     out = _run(
-        "import sys, fastfuels_sdk.v2; "
+        f"import sys; {statement}; "
         "print(any(m == 'fastfuels_sdk.v1' or m.startswith('fastfuels_sdk.v1.') "
         "for m in sys.modules))"
     )
