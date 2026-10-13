@@ -6,12 +6,59 @@ on:
 
 # v1 and v2 are separate live deployments with separate API keys, so each
 # suite runs as its own job with its own secret mapped to FASTFUELS_API_KEY
-# (the variable both SDKs read). While v2 is a beta preview, make only
-# `test-v1` a required status check in branch protection — `test-v2` runs
-# and reports on every PR but is intentionally NOT required, so v2-API
-# flakiness does not block v1-only changes.
+# (the variable both SDKs read). The `changes` job classifies the PR's
+# changed files and each suite runs only when its side is affected:
+#   v1 only:  fastfuels_sdk/v1/**, tests/v1/**
+#   v2 only:  fastfuels_sdk/v2/**, tests/v2/**
+#   neither:  docs/**, *.md, mkdocs.yml, LICENSE, lint config, other workflows
+#   both:     everything else (pyproject.toml, uv.lock, fastfuels_sdk/*.py,
+#             tests/__init__.py, tests/conftest.py, tests/data/**, this file,
+#             and any unrecognised path)
+# Gating is done with job-level `if:` (not `on.pull_request.paths`) so an
+# unaffected suite reports "skipped", which branch protection accepts. If the
+# `changes` job itself fails, both suites run. While v2 is a beta preview,
+# make only `test-v1` a required status check — `test-v2` is intentionally
+# NOT required, so v2-API flakiness does not block v1-only changes.
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      v1: ${{ steps.classify.outputs.v1 }}
+      v2: ${{ steps.classify.outputs.v2 }}
+    steps:
+    - name: Classify changed files
+      id: classify
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+        PR: ${{ github.event.pull_request.number }}
+      run: |
+        set -euo pipefail
+        v1=false
+        v2=false
+        # Both the new and (for renames) the old path of every changed file
+        files=$(gh api --paginate "repos/$REPO/pulls/$PR/files" \
+          --jq '.[] | .filename, (.previous_filename // empty)')
+        while IFS= read -r f; do
+          [ -z "$f" ] && continue
+          case "$f" in
+            fastfuels_sdk/v1/*|tests/v1/*) v1=true ;;
+            fastfuels_sdk/v2/*|tests/v2/*) v2=true ;;
+            .github/workflows/tests_main.yml) v1=true; v2=true ;;
+            docs/*|*.md|mkdocs.yml|LICENSE|.gitignore|.flake8|.pre-commit-config.yaml|.github/*) ;;
+            *) v1=true; v2=true ;;
+          esac
+          echo "$f -> v1=$v1 v2=$v2"
+        done <<< "$files"
+        echo "v1=$v1" >> "$GITHUB_OUTPUT"
+        echo "v2=$v2" >> "$GITHUB_OUTPUT"
+
   test-v1:
+    needs: changes
+    # Fail open: run if change detection did not succeed
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.v1 == 'true') }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -37,6 +84,9 @@ jobs:
         uv run pytest v1
 
   test-v2:
+    needs: changes
+    # Fail open: run if change detection did not succeed
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.v2 == 'true') }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
