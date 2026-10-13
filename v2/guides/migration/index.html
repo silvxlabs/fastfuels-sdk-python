@@ -1569,6 +1569,14 @@ not supported. Migrate one workflow at a time, pointing
   container is gone; call <code>create_tree_inventory_from_pim_grid</code>,
   <code>create_tree_inventory_from_chm_grid</code> (new — stem isolation on a canopy
   height model), or <code>create_tree_inventory_from_file</code> on the domain.</li>
+<li><strong>Canopy height map fusion takes a grid, not a source name.</strong> v1's
+  <code>canopy_height_map_source="Meta2024"</code> on
+  <code>create_tree_inventory_from_treemap()</code> becomes a two-grid call: create a
+  canopy height model grid (<code>ff.grids.create_canopy_height_grid_from_meta</code>
+  or any other <code>chm</code> grid), then pass it alongside the PIM grid to
+  <code>ff.inventories.create_tree_inventory_from_pim_chm_fusion(domain, pim, chm)</code>.
+  The <code>method=</code> argument exposes the resolution, minimum canopy height, and
+  cover threshold v1 fixed internally.</li>
 <li><strong>Upload columns changed.</strong> v1 uploads required <code>TREE_ID</code>, <code>SPCD</code>,
   <code>STATUSCD</code>, <code>DIA</code>, <code>HT</code> columns. v2 uses the roles <code>x</code>, <code>y</code>, <code>height</code>,
   <code>dbh</code>, <code>crown_ratio</code>, <code>fia_species_code</code>, <code>fia_status_code</code>, and a

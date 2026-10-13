@@ -579,6 +579,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#outline-tree-crowns-on-a-canopy-height-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outline Tree Crowns on a Canopy Height Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#wait-for-a-feature-to-complete" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1070,6 +1081,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#outline-tree-crowns-on-a-canopy-height-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outline Tree Crowns on a Canopy Height Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#wait-for-a-feature-to-complete" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1207,8 +1229,9 @@ development. The v1 SDK remains the default — import v2 explicitly
 from <code>fastfuels_sdk.v2</code>.</p>
 </div>
 <p>Features are geographic data within a domain: roads and water bodies
-extracted from OpenStreetMap, or custom layersets of fuelbed polygons you
-upload yourself. This guide covers working with features from Python; for
+extracted from OpenStreetMap, tree crowns outlined on a canopy height model,
+or custom layersets of fuelbed polygons you upload yourself. This guide
+covers working with features from Python; for
 what features <em>are</em> and how the platform treats them, see the
 <a href="https://docs.fastfuels.silvxlabs.com">FastFuels documentation</a>. Coming
 from the v1 SDK? Start with the <a href="../migration/#features">migration guide</a>.</p>
@@ -1248,28 +1271,56 @@ the query extent by up to 100 meters with <code>extent_buffer_m</code>:</p>
 <p>To extract water bodies, use the same calling convention:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">feature</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_water_feature_from_osm</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;My Water&quot;</span><span class="p">)</span>
 </span></code></pre></div>
+<h2 id="outline-tree-crowns-on-a-canopy-height-model">Outline Tree Crowns on a Canopy Height Model<a class="headerlink" href="#outline-tree-crowns-on-a-canopy-height-model" title="Permanent link">&para;</a></h2>
+<p>To outline each detected tree's crown, pass a completed canopy height model
+(CHM) grid at 2 m resolution or finer and an inventory detected from that
+<strong>same</strong> grid with <code>create_tree_inventory_from_chm_grid</code>. The API rejects
+any other inventory with a 422:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">chm</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_canopy_height_grid_from_meta</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">chm</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">trees</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_chm_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">chm</span><span class="p">)</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">trees</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">crowns</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_crown_feature_from_chm</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">trees</span><span class="p">,</span> <span class="n">chm</span><span class="p">)</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">crowns</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span></code></pre></div>
+<p>The completed feature has type <code>"crown"</code> and one row per crown, keyed by
+the seed tree's <code>tree_id</code>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">crowns</span><span class="o">.</span><span class="n">to_geodataframe</span><span class="p">()</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  <span class="nb">id</span>  <span class="n">tree_id</span>                                           <span class="n">geometry</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="mi">0</span>  <span class="mi">0</span>        <span class="mi">1</span>  <span class="n">POLYGON</span> <span class="p">((</span><span class="mi">720379</span> <span class="mi">5190852</span><span class="p">,</span> <span class="mi">720379</span> <span class="mi">5190849</span><span class="p">,</span> <span class="mf">7203.</span><span class="o">..</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="mi">1</span>  <span class="mi">1</span>        <span class="mi">2</span>  <span class="n">POLYGON</span> <span class="p">((</span><span class="mi">720471</span> <span class="mi">5190852</span><span class="p">,</span> <span class="mi">720471</span> <span class="mi">5190849</span><span class="p">,</span> <span class="mf">7204.</span><span class="o">..</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="mi">2</span>  <span class="mi">2</span>        <span class="mi">3</span>  <span class="n">POLYGON</span> <span class="p">((</span><span class="mi">720504</span> <span class="mi">5190852</span><span class="p">,</span> <span class="mi">720504</span> <span class="mi">5190850</span><span class="p">,</span> <span class="mf">7205.</span><span class="o">..</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="mi">3</span>  <span class="mi">3</span>        <span class="mi">4</span>  <span class="n">POLYGON</span> <span class="p">((</span><span class="mi">720508</span> <span class="mi">5190852</span><span class="p">,</span> <span class="mi">720508</span> <span class="mi">5190848</span><span class="p">,</span> <span class="mf">7205.</span><span class="o">..</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="mi">4</span>  <span class="mi">4</span>        <span class="mi">5</span>  <span class="n">POLYGON</span> <span class="p">((</span><span class="mi">720570</span> <span class="mi">5190852</span><span class="p">,</span> <span class="mi">720570</span> <span class="mi">5190850</span><span class="p">,</span> <span class="mf">7205.</span><span class="o">..</span>
+</span></code></pre></div>
+<p>To tune segmentation, pass <code>crown_segmentation=</code> as a mapping of the
+<code>ChmCrownSegmentation</code> fields (e.g. <code>{"max_crown_radius": 6.0}</code>); the API
+default is used for any field left out. To voxelize these crowns, see
+<a href="../inventories/#voxelize-measured-crowns">Voxelize measured crowns</a>.</p>
 <h2 id="wait-for-a-feature-to-complete">Wait for a Feature to Complete<a class="headerlink" href="#wait-for-a-feature-to-complete" title="Permanent link">&para;</a></h2>
 <p>To block until a feature job finishes:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">feature</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">feature</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Feature 36573c0205d147a08011693b7894c0fb: pending (5s)
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>Feature 36573c0205d147a08011693b7894c0fb: running (15s)
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Feature 36573c0205d147a08011693b7894c0fb: completed (20s)
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Feature 36573c0205d147a08011693b7894c0fb: pending (5s)
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>Feature 36573c0205d147a08011693b7894c0fb: running (15s)
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>Feature 36573c0205d147a08011693b7894c0fb: completed (20s)
 </span></code></pre></div>
 <p><code>wait</code> polls until the job reaches a terminal status and returns the
 feature (so calls chain). By default it waits indefinitely; pass <code>timeout</code>
 (seconds) to bound the wait, which raises <code>TimeoutError</code> if exceeded. A
 failed job raises <code>JobFailedError</code>, carrying the API's <code>code</code>, <code>message</code>,
 and <code>suggestion</code>. To wait on several jobs at once, use <code>ff.wait_all</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">roads</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_road_feature_from_osm</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">water</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_water_feature_from_osm</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">ff</span><span class="o">.</span><span class="n">wait_all</span><span class="p">([</span><span class="n">roads</span><span class="p">,</span> <span class="n">water</span><span class="p">])</span>  <span class="c1"># jobs run server-side in parallel</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">roads</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_road_feature_from_osm</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">water</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_water_feature_from_osm</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">ff</span><span class="o">.</span><span class="n">wait_all</span><span class="p">([</span><span class="n">roads</span><span class="p">,</span> <span class="n">water</span><span class="p">])</span>  <span class="c1"># jobs run server-side in parallel</span>
 </span></code></pre></div>
 <p>Once completed, the feature's <code>georeference</code> reports the CRS and bounds of
 the generated data:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">georeference</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>     <span class="c1"># &#39;EPSG:32611&#39;</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">georeference</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>  <span class="c1"># [720192.0, 5189446.0, 721918.0, 5190852.0]</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">georeference</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>     <span class="c1"># &#39;EPSG:32611&#39;</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">georeference</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>  <span class="c1"># [720192.0, 5189446.0, 721918.0, 5190852.0]</span>
 </span></code></pre></div>
 <h2 id="upload-a-custom-layerset">Upload a Custom Layerset<a class="headerlink" href="#upload-a-custom-layerset" title="Permanent link">&para;</a></h2>
 <p>A layerset is a FeatureCollection of fuelbed polygons you supply
@@ -1285,31 +1336,31 @@ are rejected, because rasterization requires cell sizes in meters.</p>
 <code>fuel_type</code>, <code>fuel_loading</code>, <code>fuel_height</code>, <code>percent_cover</code>, and
 <code>distribution</code> (<code>"homogeneous"</code>, <code>"random_clusters"</code>, or
 <code>"uniform_random"</code>):</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;fuelbeds.geojson&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>  <span class="c1"># projected CRS + fuelbed properties</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">geojson</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="n">feature</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_layerset_feature_from_geojson</span><span class="p">(</span>
-</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="n">domain</span><span class="p">,</span> <span class="n">geojson</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;My Fuelbeds&quot;</span>
-</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="p">)</span>
-</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
-</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="nb">print</span><span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>  <span class="c1"># completed</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;fuelbeds.geojson&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>  <span class="c1"># projected CRS + fuelbed properties</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="n">geojson</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="n">feature</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_layerset_feature_from_geojson</span><span class="p">(</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>    <span class="n">domain</span><span class="p">,</span> <span class="n">geojson</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;My Fuelbeds&quot;</span>
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="p">)</span>
+</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
+</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="nb">print</span><span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>  <span class="c1"># completed</span>
 </span></code></pre></div>
 <p>To upload from a GeoPandas GeoDataFrame instead, reproject first if
 needed — the GeoDataFrame's CRS is forwarded as-is:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="s2">&quot;fuelbeds.shp&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">epsg</span><span class="o">=</span><span class="mi">5070</span><span class="p">)</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">feature</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_layerset_feature_from_geodataframe</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">gdf</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="s2">&quot;fuelbeds.shp&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">epsg</span><span class="o">=</span><span class="mi">5070</span><span class="p">)</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="n">feature</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_layerset_feature_from_geodataframe</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">gdf</span><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="rasterize-a-layerset-into-a-grid">Rasterize a Layerset into a Grid<a class="headerlink" href="#rasterize-a-layerset-into-a-grid" title="Permanent link">&para;</a></h2>
 <p>A completed layerset feature carries vector fuelbed polygons; to burn them
 onto a raster grid, call <code>rasterize</code>. It returns a pending
 <a href="../working-with-grids/"><code>Grid</code></a>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">grid</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">rasterize</span><span class="p">(</span><span class="n">output_resolution_m</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">grid</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">grid</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">rasterize</span><span class="p">(</span><span class="n">output_resolution_m</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">grid</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </span></code></pre></div>
 <p><code>rasterize</code> takes the same alignment arguments as the grid creators
 (<code>output_resolution_m</code>, <code>align_to</code>, <code>align</code>, <code>resampling</code>) plus an
@@ -1318,89 +1369,90 @@ onto a raster grid, call <code>rasterize</code>. It returns a pending
 for the alignment model.</p>
 <h2 id="retrieve-an-existing-feature">Retrieve an Existing Feature<a class="headerlink" href="#retrieve-an-existing-feature" title="Permanent link">&para;</a></h2>
 <p>To fetch a feature using its domain and feature IDs:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">feature</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;36573c0205d147a08011693b7894c0fb&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">feature</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;36573c0205d147a08011693b7894c0fb&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="refresh-feature-data">Refresh Feature Data<a class="headerlink" href="#refresh-feature-data" title="Permanent link">&para;</a></h2>
 <p>To reload a feature's latest state from the API (for example, to check job
 progress yourself) in place:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">feature</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">feature</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
 </span></code></pre></div>
 <p><code>refresh</code> updates the feature in place and returns it. To fetch a separate
 copy by ID instead, use <code>ff.get_feature(domain, feature.id)</code>.</p>
 <h2 id="access-feature-data">Access Feature Data<a class="headerlink" href="#access-feature-data" title="Permanent link">&para;</a></h2>
 <p>The generated geodata is served in partitions. For most workflows,
 retrieve everything at once as a GeoDataFrame:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">gdf</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">to_geodataframe</span><span class="p">()</span>
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
-</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">gdf</span><span class="p">))</span>   <span class="c1"># 43</span>
-</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">gdf</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>    <span class="c1"># EPSG:32611</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">gdf</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">to_geodataframe</span><span class="p">()</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">gdf</span><span class="p">))</span>   <span class="c1"># 43</span>
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">gdf</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>    <span class="c1"># EPSG:32611</span>
 </span></code></pre></div>
 <p>Or as a single GeoJSON FeatureCollection:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">data</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
-</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;features&quot;</span><span class="p">]))</span>  <span class="c1"># 43</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">data</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;features&quot;</span><span class="p">]))</span>  <span class="c1"># 43</span>
 </span></code></pre></div>
 <p>To control retrieval partition by partition (useful for large features),
 read the partition layout first:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">metadata</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">get_data_metadata</span><span class="p">()</span>
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">total_features</span><span class="p">)</span>   <span class="c1"># 43</span>
-</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">partition_count</span><span class="p">)</span>  <span class="c1"># 1</span>
-</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
-</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">partition_count</span><span class="p">):</span>
-</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="n">partition</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">get_data_partition</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>  <span class="c1"># GeoJSON FeatureCollection</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">metadata</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">get_data_metadata</span><span class="p">()</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">total_features</span><span class="p">)</span>   <span class="c1"># 43</span>
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">partition_count</span><span class="p">)</span>  <span class="c1"># 1</span>
+</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
+</span><span id="__span-17-5"><a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">partition_count</span><span class="p">):</span>
+</span><span id="__span-17-6"><a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>    <span class="n">partition</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">get_data_partition</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>  <span class="c1"># GeoJSON FeatureCollection</span>
 </span></code></pre></div>
 <p>Data is only available once the feature is <code>"completed"</code> — earlier calls
 raise <code>UnprocessableEntityException</code>.</p>
 <h2 id="update-feature-properties">Update Feature Properties<a class="headerlink" href="#update-feature-properties" title="Permanent link">&para;</a></h2>
 <p>To modify a feature's name, description, or tags:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">feature</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;New Name&quot;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;roads&quot;</span><span class="p">,</span> <span class="s2">&quot;osm&quot;</span><span class="p">])</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="n">feature</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;New Name&quot;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;roads&quot;</span><span class="p">,</span> <span class="s2">&quot;osm&quot;</span><span class="p">])</span>
 </span></code></pre></div>
 <p><code>update</code> changes the feature in place and returns it. Only the fields you
 pass are sent; passing none makes no API call.</p>
 <h2 id="list-features">List Features<a class="headerlink" href="#list-features" title="Permanent link">&para;</a></h2>
 <p>To list features in a domain:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">features</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_features</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">features</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_features</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
 </span></code></pre></div>
 <p>To list features across all your domains, omit the domain:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="n">all_features</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_features</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="n">all_features</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_features</span><span class="p">()</span>
 </span></code></pre></div>
 <p>Narrow the results with filters:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">roads</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_features</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">feature_type</span><span class="o">=</span><span class="s2">&quot;road&quot;</span><span class="p">)</span>
-</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="n">osm_features</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_features</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">product</span><span class="o">=</span><span class="s2">&quot;osm&quot;</span><span class="p">)</span>
-</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="n">tagged</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_features</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;roads&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">roads</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_features</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">feature_type</span><span class="o">=</span><span class="s2">&quot;road&quot;</span><span class="p">)</span>
+</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="n">crowns</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_features</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">feature_type</span><span class="o">=</span><span class="s2">&quot;crown&quot;</span><span class="p">)</span>
+</span><span id="__span-21-3"><a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="n">osm_features</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_features</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">product</span><span class="o">=</span><span class="s2">&quot;osm&quot;</span><span class="p">)</span>
+</span><span id="__span-21-4"><a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="n">tagged</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_features</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;roads&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <p>Sort a page by name, creation time, or modification time:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="n">newest_first</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_features</span><span class="p">(</span>
-</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>    <span class="n">domain</span><span class="p">,</span>
-</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>    <span class="n">sort_by</span><span class="o">=</span><span class="s2">&quot;created_on&quot;</span><span class="p">,</span>
-</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>    <span class="n">sort_order</span><span class="o">=</span><span class="s2">&quot;descending&quot;</span><span class="p">,</span>
-</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="n">newest_first</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_features</span><span class="p">(</span>
+</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>    <span class="n">domain</span><span class="p">,</span>
+</span><span id="__span-22-3"><a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>    <span class="n">sort_by</span><span class="o">=</span><span class="s2">&quot;created_on&quot;</span><span class="p">,</span>
+</span><span id="__span-22-4"><a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>    <span class="n">sort_order</span><span class="o">=</span><span class="s2">&quot;descending&quot;</span><span class="p">,</span>
+</span><span id="__span-22-5"><a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="delete-a-feature">Delete a Feature<a class="headerlink" href="#delete-a-feature" title="Permanent link">&para;</a></h2>
 <p>To permanently delete a feature and its generated data:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">feature</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="n">feature</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
 </span></code></pre></div>
 <p>Deleting a domain also deletes all of its features.</p>
 <h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
 <p>Wrapper functions and methods raise typed exceptions from
 <code>fastfuels_sdk.v2.exceptions</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
-</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-</span><span id="__span-22-3"><a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>    <span class="n">NotFoundException</span><span class="p">,</span>
-</span><span id="__span-22-4"><a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>    <span class="n">UnprocessableEntityException</span><span class="p">,</span>
-</span><span id="__span-22-5"><a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="p">)</span>
-</span><span id="__span-22-6"><a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>
-</span><span id="__span-22-7"><a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="k">try</span><span class="p">:</span>
-</span><span id="__span-22-8"><a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>    <span class="n">feature</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;does-not-exist&quot;</span><span class="p">)</span>
-</span><span id="__span-22-9"><a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="k">except</span> <span class="n">NotFoundException</span><span class="p">:</span>
-</span><span id="__span-22-10"><a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No such feature (or you don&#39;t have access to it)&quot;</span><span class="p">)</span>
-</span><span id="__span-22-11"><a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>
-</span><span id="__span-22-12"><a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a><span class="k">try</span><span class="p">:</span>
-</span><span id="__span-22-13"><a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>    <span class="n">metadata</span> <span class="o">=</span> <span class="n">pending_feature</span><span class="o">.</span><span class="n">get_data_metadata</span><span class="p">()</span>
-</span><span id="__span-22-14"><a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a><span class="k">except</span> <span class="n">UnprocessableEntityException</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-</span><span id="__span-22-15"><a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">exc</span><span class="o">.</span><span class="n">detail</span><span class="p">)</span>
-</span><span id="__span-22-16"><a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a>    <span class="c1"># features/36573c0205d147a08011693b7894c0fb status is &#39;pending&#39;,</span>
-</span><span id="__span-22-17"><a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a>    <span class="c1"># expected &#39;completed&#39;.</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
+</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="__span-24-3"><a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>    <span class="n">NotFoundException</span><span class="p">,</span>
+</span><span id="__span-24-4"><a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>    <span class="n">UnprocessableEntityException</span><span class="p">,</span>
+</span><span id="__span-24-5"><a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="p">)</span>
+</span><span id="__span-24-6"><a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>
+</span><span id="__span-24-7"><a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="k">try</span><span class="p">:</span>
+</span><span id="__span-24-8"><a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>    <span class="n">feature</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;does-not-exist&quot;</span><span class="p">)</span>
+</span><span id="__span-24-9"><a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="k">except</span> <span class="n">NotFoundException</span><span class="p">:</span>
+</span><span id="__span-24-10"><a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No such feature (or you don&#39;t have access to it)&quot;</span><span class="p">)</span>
+</span><span id="__span-24-11"><a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>
+</span><span id="__span-24-12"><a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="k">try</span><span class="p">:</span>
+</span><span id="__span-24-13"><a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>    <span class="n">metadata</span> <span class="o">=</span> <span class="n">pending_feature</span><span class="o">.</span><span class="n">get_data_metadata</span><span class="p">()</span>
+</span><span id="__span-24-14"><a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a><span class="k">except</span> <span class="n">UnprocessableEntityException</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+</span><span id="__span-24-15"><a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">exc</span><span class="o">.</span><span class="n">detail</span><span class="p">)</span>
+</span><span id="__span-24-16"><a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a>    <span class="c1"># features/36573c0205d147a08011693b7894c0fb status is &#39;pending&#39;,</span>
+</span><span id="__span-24-17"><a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a>    <span class="c1"># expected &#39;completed&#39;.</span>
 </span></code></pre></div>
 
 
