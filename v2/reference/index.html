@@ -10511,12 +10511,21 @@ copied; call :meth:<code>wait</code> before using it).</p>
 
 
 <a href="#fastfuels_sdk.v2.grids.Grid.resample" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">resample</span><span class="p">(</span><span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">method_overrides</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">resample</span><span class="p">(</span><span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">method_overrides</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Create a new grid by resampling this grid onto a different lattice.</p>
+<p>Pass <code>output_resolution_m</code>, <code>align_to</code>, or both:</p>
+<ul>
+<li><code>output_resolution_m=N</code> — N-meter cells anchored to the domain
+  origin.</li>
+<li><code>align="native", output_resolution_m=N</code> — N-meter cells anchored
+  to this grid's pixel origin.</li>
+<li><code>align_to=&lt;grid&gt;</code> — the lattice of an existing grid exactly; with
+  <code>output_resolution_m=N</code>, that grid's CRS and origin at N meters.</li>
+</ul>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -10539,7 +10548,7 @@ copied; call :meth:<code>wait</code> before using it).</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Output cell size in meters, anchored to the domain origin.</p>
+                <p>Output cell size in meters. Required unless <code>align_to</code> is given.</p>
               </div>
             </td>
             <td>
@@ -10571,7 +10580,8 @@ copied; call :meth:<code>wait</code> before using it).</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Pass <code>"native"</code> to keep this grid's pixel anchor.</p>
+                <p>Pass <code>"native"</code> to keep this grid's pixel anchor. Requires
+<code>output_resolution_m</code>.</p>
               </div>
             </td>
             <td>
@@ -10599,11 +10609,13 @@ copied; call :meth:<code>wait</code> before using it).</p>
                 <code>method_overrides</code>
             </td>
             <td>
-                  <code><span title="CreateResampleRequestMethodOverrides">CreateResampleRequestMethodOverrides</span></code>
+                  <code><span title="collections.abc.Mapping">Mapping</span>[<span title="str">str</span>, <span title="str">str</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Per-band resampling method overrides.</p>
+                <p>Per-band resampling methods keyed by band key (e.g.
+<code>{"fbfm": "nearest"}</code>). Listed bands use their method instead of
+<code>resampling</code>.</p>
               </div>
             </td>
             <td>
@@ -10699,6 +10711,44 @@ copied; call :meth:<code>wait</code> before using it).</p>
           </tr>
       </tbody>
     </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the grid is not completed; if neither <code>output_resolution_m</code>
+nor <code>align_to</code> is given; if <code>align</code> is given with <code>align_to</code>
+or is not <code>"native"</code>; or if <code>resampling</code> or a
+<code>method_overrides</code> value is not a recognized method.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">coarser</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">resampling</span><span class="o">=</span><span class="s2">&quot;average&quot;</span><span class="p">)</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">native</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="s2">&quot;native&quot;</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">matched</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">align_to</span><span class="o">=</span><span class="n">topography</span><span class="p">,</span> <span class="n">resampling</span><span class="o">=</span><span class="s2">&quot;bilinear&quot;</span><span class="p">)</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">mixed</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">... </span>    <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">... </span>    <span class="n">resampling</span><span class="o">=</span><span class="s2">&quot;bilinear&quot;</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">... </span>    <span class="n">method_overrides</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fbfm&quot;</span><span class="p">:</span> <span class="s2">&quot;nearest&quot;</span><span class="p">},</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="gp">... </span><span class="p">)</span>
+</span></code></pre></div>
 
 
     </div>
@@ -15196,7 +15246,7 @@ resolution).</p>
 
 
 <a href="#fastfuels_sdk.v2.grids.create_grid_from_compose" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_grid_from_compose</span><span class="p">(</span><span class="n">inputs</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Grid</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">select</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">compute</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_grid_from_compose</span><span class="p">(</span><span class="n">inputs</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Grid</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">operations</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -15234,35 +15284,21 @@ Operations refer to their bands as <code>"alias.band_key"</code>.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>select</code>
+                <code>operations</code>
             </td>
             <td>
-                  <code>list of ComposeSelect</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Bands to copy, built with :func:<code>fastfuels_sdk.v2.compose.select</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>compute</code>
-            </td>
-            <td>
-                  <code>list of ComposeCompute</code>
+                  <code>list of ComposeSelect or ComposeCompute</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Bands to calculate, built with
-:func:<code>fastfuels_sdk.v2.compose.compute</code>.</p>
+                <p>One operation per output band, built with
+:func:<code>fastfuels_sdk.v2.compose.select</code> (copy an input band) or
+:func:<code>fastfuels_sdk.v2.compose.compute</code> (calculate a band). Output
+bands follow the order of this list.</p>
               </div>
             </td>
             <td>
-                  <code>None</code>
+                <em>required</em>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -15395,13 +15431,13 @@ outputs are empty or duplicated.</p>
     <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">composed</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_grid_from_compose</span><span class="p">(</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span>    <span class="p">{</span><span class="s2">&quot;fuels&quot;</span><span class="p">:</span> <span class="n">fuel_grid</span><span class="p">},</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">... </span>    <span class="n">select</span><span class="o">=</span><span class="p">[</span><span class="n">ff</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;fuel_depth&quot;</span><span class="p">,</span> <span class="s2">&quot;fuels.fuel_depth&quot;</span><span class="p">)],</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">... </span>    <span class="n">compute</span><span class="o">=</span><span class="p">[</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">... </span>    <span class="n">operations</span><span class="o">=</span><span class="p">[</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">... </span>        <span class="n">ff</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;fuel_depth&quot;</span><span class="p">,</span> <span class="s2">&quot;fuels.fuel_depth&quot;</span><span class="p">),</span>
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">... </span>        <span class="n">ff</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">... </span>            <span class="s2">&quot;fuel_load.1hr&quot;</span><span class="p">,</span>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="gp">... </span>            <span class="s2">&quot;multiply&quot;</span><span class="p">,</span>
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="gp">... </span>            <span class="p">[</span><span class="s2">&quot;fuels.fuel_load.1hr&quot;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="gp">... </span>        <span class="p">)</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="gp">... </span>        <span class="p">),</span>
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="gp">... </span>    <span class="p">],</span>
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="gp">... </span><span class="p">)</span>
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">composed</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
@@ -16284,7 +16320,7 @@ source lacks a required tree band.</p>
     <div class="doc doc-contents ">
 
         <p>Create a Fosberg 1-hour dead fuel moisture grid from two grids.</p>
-<p>Derives a grid with a single <code>fuel_moisture.dead.1hr</code> band (percent)
+<p>Derives a grid with a single <code>fuel_moisture.1hr</code> band (percent)
 using the Fosberg &amp; Deeming 1-hour dead fuel moisture model. The output
 inherits the topography grid's domain, CRS, transform, and georeference.</p>
 

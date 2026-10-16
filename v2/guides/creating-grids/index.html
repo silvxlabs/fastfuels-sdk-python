@@ -1833,7 +1833,7 @@ stabilizing.</p>
 <p>To estimate 1-hour dead fuel moisture with the Fosberg model, pass a
 topography grid and a surface-irradiance grid to
 <code>create_dead_fuel_moisture_grid_from_fosberg</code> along with the weather inputs.
-The result carries a single <code>fuel_moisture.dead.1hr</code> band (percent). For the
+The result carries a single <code>fuel_moisture.1hr</code> band (percent). For the
 Fosberg 1-hr dead fuel moisture model itself, see the
 <a href="https://docs.fastfuels.silvxlabs.com">FastFuels documentation</a>.</p>
 <p>The topography, leaf-area-density, and surface-irradiance grids all feed the
@@ -1874,7 +1874,7 @@ the irradiance surface draping:</p>
 </span><span id="__span-36-31"><a id="__codelineno-36-31" name="__codelineno-36-31" href="#__codelineno-36-31"></a><span class="n">moisture</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </span></code></pre></div>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-37-1"><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="p">[</span><span class="n">band</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">band</span> <span class="ow">in</span> <span class="n">moisture</span><span class="o">.</span><span class="n">bands</span><span class="p">]</span>
-</span><span id="__span-37-2"><a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a><span class="p">[</span><span class="s1">&#39;fuel_moisture.dead.1hr&#39;</span><span class="p">]</span>
+</span><span id="__span-37-2"><a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a><span class="p">[</span><span class="s1">&#39;fuel_moisture.1hr&#39;</span><span class="p">]</span>
 </span></code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Grids must share one lattice</p>
