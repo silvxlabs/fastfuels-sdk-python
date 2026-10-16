@@ -2245,7 +2245,10 @@ def create_grid_from_geotiff(
         Path to the local ``.tif``/``.tiff`` file (max 1 GB).
     bands : list
         Band definitions (``UploadBandDefinition``) mapping 1:1 to the GeoTIFF
-        raster bands in order.
+        raster bands in order. Each band key must use a known quantity, as
+        ``<quantity>`` or ``<quantity>.<label>``; labels may repeat (for example
+        ``fuel_moisture.live.shrub``). The band's type and unit are derived from
+        the quantity when omitted, and must match it when given.
     num_buffer_cells : int, optional
         Cells kept around the domain extent in the stored grid (default 0).
     name, description : str, optional

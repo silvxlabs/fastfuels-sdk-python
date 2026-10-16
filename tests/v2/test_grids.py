@@ -1891,13 +1891,15 @@ class TestUploadCreators:
         grid = create_grid_from_geotiff(
             test_domain,
             str(path),
-            bands=[UploadBandDefinition(key="elevation", type_=BandType.CONTINUOUS)],
+            bands=[UploadBandDefinition(key="elevation")],
             name="throwaway_geotiff",
         )
         assert grid.domain_id == test_domain.id
         grid.wait()
         assert grid.status == JobStatus.COMPLETED
         assert [b.key for b in grid.bands] == ["elevation"]
+        assert grid.bands[0].type_ == BandType.CONTINUOUS
+        assert grid.bands[0].unit == "m"
         grid.delete()
 
     @pytest.mark.skip(
