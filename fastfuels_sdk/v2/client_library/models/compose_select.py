@@ -1,7 +1,14 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Self, TypeVar, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    Self,
+    TypeVar,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -27,7 +34,17 @@ class ComposeSelect:
     band; only the human-readable `name`/`description` are optional overrides.
 
         Attributes:
-            output (str): Output band key, e.g. `fuel_load.1hr`.
+            type_ (Literal['select']): Discriminator selecting this operation. Must be `"select"`.
+            output (str): Band key `<quantity>` or `<quantity>.<label>`, e.g. `fbfm`, `fuel_load.1hr`,
+                `fuel_moisture.live.shrub`. The quantity sets the band's type and unit: `annual_disturbance` (categorical),
+                `aspect` (continuous, deg), `bulk_density` (continuous, kg/m**3), `cbd` (continuous, kg/m**3), `cbh`
+                (continuous, m), `cc` (continuous, %), `cfl` (continuous, kg/m**2), `chm` (continuous, m), `curing` (continuous,
+                %), `duff_depth` (continuous, m), `elevation` (continuous, m), `fbfm` (categorical), `fbfm13` (categorical),
+                `fccs` (categorical), `fuel_depth` (continuous, m), `fuel_load` (continuous, kg/m**2), `fuel_moisture`
+                (continuous, %), `heat_content` (continuous, kJ/kg), `irradiance` (continuous), `leaf_area_density` (continuous,
+                1/m), `plt_cn` (categorical), `savr` (continuous, 1/m), `slope` (continuous, deg), `spcd` (categorical), `tm_id`
+                (categorical), `tree_id` (categorical), `volume_fraction` (continuous). The label is lowercase letters, digits
+                and underscores.
             from_ (str): Alias-qualified source band ref.
             name (None | str | Unset): Optional display name for the output band.
             description (None | str | Unset): Optional description for the output band.
@@ -36,6 +53,7 @@ class ComposeSelect:
             else_ (ComposeLiteral | float | InlineCompute | int | None | str | Unset):
     """
 
+    type_: Literal["select"]
     output: str
     from_: str
     name: None | str | Unset = UNSET
@@ -59,6 +77,8 @@ class ComposeSelect:
             GridGeometrySpatialCondition,
         )
         from ..models.inline_compute import InlineCompute
+
+        type_ = self.type_
 
         output = self.output
 
@@ -111,6 +131,7 @@ class ComposeSelect:
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
+                "type": type_,
                 "output": output,
                 "from": from_,
             }
@@ -137,6 +158,10 @@ class ComposeSelect:
         from ..models.inline_compute import InlineCompute
 
         d = dict(src_dict)
+        type_ = cast(Literal["select"], d.pop("type"))
+        if type_ != "select":
+            raise ValueError(f"type must match const 'select', got '{type_}'")
+
         output = d.pop("output")
 
         from_ = d.pop("from")
@@ -268,6 +293,7 @@ class ComposeSelect:
         else_ = _parse_else_(d.pop("else", UNSET))
 
         compose_select = cls(
+            type_=type_,
             output=output,
             from_=from_,
             name=name,

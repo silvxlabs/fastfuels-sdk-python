@@ -94,6 +94,7 @@ def sync_detailed(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
+    - **disturbance**: (optional) Update for recent LANDFIRE disturbance.
     - **season**: (optional) LANDFIRE Seasonal Fuels release: \"ES\" (early
       spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall).
 
@@ -158,6 +159,7 @@ def sync(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
+    - **disturbance**: (optional) Update for recent LANDFIRE disturbance.
     - **season**: (optional) LANDFIRE Seasonal Fuels release: \"ES\" (early
       spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall).
 
@@ -217,6 +219,7 @@ async def asyncio_detailed(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
+    - **disturbance**: (optional) Update for recent LANDFIRE disturbance.
     - **season**: (optional) LANDFIRE Seasonal Fuels release: \"ES\" (early
       spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall).
 
@@ -279,6 +282,7 @@ async def asyncio(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
+    - **disturbance**: (optional) Update for recent LANDFIRE disturbance.
     - **season**: (optional) LANDFIRE Seasonal Fuels release: \"ES\" (early
       spring), \"SP\" (spring), \"SU\" (summer), or \"FA\" (fall).
 

@@ -5,15 +5,16 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.create_key_request import CreateKeyRequest
+from ...models.create_application_key_request import CreateApplicationKeyRequest
 from ...models.create_key_response import CreateKeyResponse
+from ...models.create_personal_key_request import CreatePersonalKeyRequest
 from ...models.http_validation_error import HTTPValidationError
 from ...types import Response
 
 
 def _get_kwargs(
     *,
-    body: CreateKeyRequest,
+    body: CreateApplicationKeyRequest | CreatePersonalKeyRequest,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -22,7 +23,10 @@ def _get_kwargs(
         "url": "/keys",
     }
 
-    _kwargs["json"] = body.to_dict()
+    if isinstance(body, CreatePersonalKeyRequest):
+        _kwargs["json"] = body.to_dict()
+    else:
+        _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -63,7 +67,7 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient,
-    body: CreateKeyRequest,
+    body: CreateApplicationKeyRequest | CreatePersonalKeyRequest,
 ) -> Response[CreateKeyResponse | HTTPValidationError]:
     """Create API key
 
@@ -73,7 +77,7 @@ def sync_detailed(
     only its SHA-256 hash (the key ID) is stored.
 
     Args:
-        body (CreateKeyRequest): Request body for creating an API key.
+        body (CreateApplicationKeyRequest | CreatePersonalKeyRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -97,7 +101,7 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient,
-    body: CreateKeyRequest,
+    body: CreateApplicationKeyRequest | CreatePersonalKeyRequest,
 ) -> CreateKeyResponse | HTTPValidationError | None:
     """Create API key
 
@@ -107,7 +111,7 @@ def sync(
     only its SHA-256 hash (the key ID) is stored.
 
     Args:
-        body (CreateKeyRequest): Request body for creating an API key.
+        body (CreateApplicationKeyRequest | CreatePersonalKeyRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -126,7 +130,7 @@ def sync(
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
-    body: CreateKeyRequest,
+    body: CreateApplicationKeyRequest | CreatePersonalKeyRequest,
 ) -> Response[CreateKeyResponse | HTTPValidationError]:
     """Create API key
 
@@ -136,7 +140,7 @@ async def asyncio_detailed(
     only its SHA-256 hash (the key ID) is stored.
 
     Args:
-        body (CreateKeyRequest): Request body for creating an API key.
+        body (CreateApplicationKeyRequest | CreatePersonalKeyRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -158,7 +162,7 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient,
-    body: CreateKeyRequest,
+    body: CreateApplicationKeyRequest | CreatePersonalKeyRequest,
 ) -> CreateKeyResponse | HTTPValidationError | None:
     """Create API key
 
@@ -168,7 +172,7 @@ async def asyncio(
     only its SHA-256 hash (the key ID) is stored.
 
     Args:
-        body (CreateKeyRequest): Request body for creating an API key.
+        body (CreateApplicationKeyRequest | CreatePersonalKeyRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

@@ -94,6 +94,7 @@ def sync_detailed(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
+    - **disturbance**: (optional) Update for recent LANDFIRE disturbance.
 
     ## Response
 
@@ -151,6 +152,7 @@ def sync(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
+    - **disturbance**: (optional) Update for recent LANDFIRE disturbance.
 
     ## Response
 
@@ -203,6 +205,7 @@ async def asyncio_detailed(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
+    - **disturbance**: (optional) Update for recent LANDFIRE disturbance.
 
     ## Response
 
@@ -258,6 +261,7 @@ async def asyncio(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2024\".
+    - **disturbance**: (optional) Update for recent LANDFIRE disturbance.
 
     ## Response
 

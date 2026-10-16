@@ -94,6 +94,7 @@ def sync_detailed(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2023\".
+    - **disturbance**: (optional) Update for recent LANDFIRE disturbance.
     - **remove_bare_ground**: (optional) Remove bare ground cells (fuelbed ID 0),
                               replaced by neighboring majority. Default: False.
 
@@ -153,6 +154,7 @@ def sync(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2023\".
+    - **disturbance**: (optional) Update for recent LANDFIRE disturbance.
     - **remove_bare_ground**: (optional) Remove bare ground cells (fuelbed ID 0),
                               replaced by neighboring majority. Default: False.
 
@@ -207,6 +209,7 @@ async def asyncio_detailed(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2023\".
+    - **disturbance**: (optional) Update for recent LANDFIRE disturbance.
     - **remove_bare_ground**: (optional) Remove bare ground cells (fuelbed ID 0),
                               replaced by neighboring majority. Default: False.
 
@@ -264,6 +267,7 @@ async def asyncio(
     - **description**: (optional) Description.
     - **tags**: (optional) Tags for organizing grids.
     - **version**: (optional) LANDFIRE version. Default: \"2023\".
+    - **disturbance**: (optional) Update for recent LANDFIRE disturbance.
     - **remove_bare_ground**: (optional) Remove bare ground cells (fuelbed ID 0),
                               replaced by neighboring majority. Default: False.
 

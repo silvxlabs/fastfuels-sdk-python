@@ -12,10 +12,10 @@ if TYPE_CHECKING:
     from ..models.create_resample_request_method_overrides import (
         CreateResampleRequestMethodOverrides,
     )
-    from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
     from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
-    from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
     from ..models.grid_modification import GridModification
+    from ..models.resample_domain_target import ResampleDomainTarget
+    from ..models.resample_native_target import ResampleNativeTarget
 
 
 T = TypeVar("T", bound="CreateResampleRequest")
@@ -36,8 +36,8 @@ class CreateResampleRequest:
 
         Attributes:
             source_grid_id (str): Grid to resample
-            alignment (GridAlignmentDomainTarget | GridAlignmentGridTarget | GridAlignmentNativeTarget | Unset): Output
-                alignment target. Default `target="domain"` anchors the resampled grid to the domain origin.
+            alignment (GridAlignmentGridTarget | ResampleDomainTarget | ResampleNativeTarget): Output alignment target.
+                `target="domain"` anchors the resampled grid to the domain origin.
             method_overrides (CreateResampleRequestMethodOverrides | Unset): Per-band resampling method overrides keyed by
                 band key. Wins over ``alignment.method`` for the listed bands. Useful for using nearest-neighbor on categorical
                 bands while using bilinear on continuous bands.
@@ -48,12 +48,7 @@ class CreateResampleRequest:
     """
 
     source_grid_id: str
-    alignment: (
-        GridAlignmentDomainTarget
-        | GridAlignmentGridTarget
-        | GridAlignmentNativeTarget
-        | Unset
-    ) = UNSET
+    alignment: GridAlignmentGridTarget | ResampleDomainTarget | ResampleNativeTarget
     method_overrides: CreateResampleRequestMethodOverrides | Unset = UNSET
     name: str | Unset = ""
     description: str | Unset = ""
@@ -62,16 +57,14 @@ class CreateResampleRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
-        from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
+        from ..models.resample_domain_target import ResampleDomainTarget
+        from ..models.resample_native_target import ResampleNativeTarget
 
         source_grid_id = self.source_grid_id
 
-        alignment: dict[str, Any] | Unset
-        if isinstance(self.alignment, Unset):
-            alignment = UNSET
-        elif isinstance(self.alignment, GridAlignmentDomainTarget) or isinstance(
-            self.alignment, GridAlignmentNativeTarget
+        alignment: dict[str, Any]
+        if isinstance(self.alignment, ResampleDomainTarget) or isinstance(
+            self.alignment, ResampleNativeTarget
         ):
             alignment = self.alignment.to_dict()
         else:
@@ -101,10 +94,9 @@ class CreateResampleRequest:
         field_dict.update(
             {
                 "source_grid_id": source_grid_id,
+                "alignment": alignment,
             }
         )
-        if alignment is not UNSET:
-            field_dict["alignment"] = alignment
         if method_overrides is not UNSET:
             field_dict["method_overrides"] = method_overrides
         if name is not UNSET:
@@ -123,28 +115,21 @@ class CreateResampleRequest:
         from ..models.create_resample_request_method_overrides import (
             CreateResampleRequestMethodOverrides,
         )
-        from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
         from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
-        from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
         from ..models.grid_modification import GridModification
+        from ..models.resample_domain_target import ResampleDomainTarget
+        from ..models.resample_native_target import ResampleNativeTarget
 
         d = dict(src_dict)
         source_grid_id = d.pop("source_grid_id")
 
         def _parse_alignment(
             data: object,
-        ) -> (
-            GridAlignmentDomainTarget
-            | GridAlignmentGridTarget
-            | GridAlignmentNativeTarget
-            | Unset
-        ):
-            if isinstance(data, Unset):
-                return data
+        ) -> GridAlignmentGridTarget | ResampleDomainTarget | ResampleNativeTarget:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                alignment_type_0 = GridAlignmentDomainTarget.from_dict(data)
+                alignment_type_0 = ResampleDomainTarget.from_dict(data)
 
                 return alignment_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -152,7 +137,7 @@ class CreateResampleRequest:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                alignment_type_1 = GridAlignmentNativeTarget.from_dict(data)
+                alignment_type_1 = ResampleNativeTarget.from_dict(data)
 
                 return alignment_type_1
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -163,7 +148,7 @@ class CreateResampleRequest:
 
             return alignment_type_2
 
-        alignment = _parse_alignment(d.pop("alignment", UNSET))
+        alignment = _parse_alignment(d.pop("alignment"))
 
         _method_overrides = d.pop("method_overrides", UNSET)
         method_overrides: CreateResampleRequestMethodOverrides | Unset

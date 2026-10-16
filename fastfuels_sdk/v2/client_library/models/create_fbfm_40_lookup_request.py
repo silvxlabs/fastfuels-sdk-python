@@ -26,7 +26,7 @@ class CreateFbfm40LookupRequest:
         Attributes:
             source_grid_id (str): Grid containing FBFM40 codes
             bands (list[Fbfm40LookupBand]):
-            source_band (str | Unset): Band in source grid containing FBFM codes Default: 'fbfm'.
+            source_band (str | Unset): A `fbfm` band of the source grid holding the FBFM codes. Default: 'fbfm'.
             herbaceous_curing (float | Unset): Fraction of herbaceous load that is cured (0 = green, 1 = fully cured). In
                 dynamic fuel models, this fraction of the live herbaceous load moves to dead herbaceous fuel. Defaults to 0.67,
                 the two-thirds-cured reference scenario of Scott and Burgan (2005). Default: 0.67.

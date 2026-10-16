@@ -82,7 +82,7 @@ def sync_detailed(
 
      # Create Fosberg 1-hour Dead Fuel Moisture Grid
 
-    Creates a grid with a single continuous band, `fuel_moisture.dead.1hr`
+    Creates a grid with a single continuous band, `fuel_moisture.1hr`
     (percent), computed with the Fosberg & Deeming (1971) 1-hour dead fuel
     moisture model.
 
@@ -145,7 +145,7 @@ def sync(
 
      # Create Fosberg 1-hour Dead Fuel Moisture Grid
 
-    Creates a grid with a single continuous band, `fuel_moisture.dead.1hr`
+    Creates a grid with a single continuous band, `fuel_moisture.1hr`
     (percent), computed with the Fosberg & Deeming (1971) 1-hour dead fuel
     moisture model.
 
@@ -203,7 +203,7 @@ async def asyncio_detailed(
 
      # Create Fosberg 1-hour Dead Fuel Moisture Grid
 
-    Creates a grid with a single continuous band, `fuel_moisture.dead.1hr`
+    Creates a grid with a single continuous band, `fuel_moisture.1hr`
     (percent), computed with the Fosberg & Deeming (1971) 1-hour dead fuel
     moisture model.
 
@@ -264,7 +264,7 @@ async def asyncio(
 
      # Create Fosberg 1-hour Dead Fuel Moisture Grid
 
-    Creates a grid with a single continuous band, `fuel_moisture.dead.1hr`
+    Creates a grid with a single continuous band, `fuel_moisture.1hr`
     (percent), computed with the Fosberg & Deeming (1971) 1-hour dead fuel
     moisture model.
 
