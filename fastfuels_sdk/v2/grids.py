@@ -278,23 +278,10 @@ def _build_resample_alignment(
 ):
     """Translate resample keywords into a resample alignment target.
 
-    Returns a ``ResampleDomainTarget``, ``ResampleNativeTarget``, or
-    ``GridAlignmentGridTarget``. Unlike :func:`_build_alignment`, the domain
-    and native targets always carry a resolution, so ``output_resolution_m``
-    is required unless ``align_to`` is given.
-
-    - ``output_resolution_m=N`` anchors output cells to the domain origin at N
-      meters.
-    - ``align="native", output_resolution_m=N`` keeps the source grid's pixel
-      anchor at N meters.
-    - ``align_to=<grid or id>`` matches an existing grid's lattice exactly, or
-      keeps its CRS and origin at N meters when ``output_resolution_m`` is
-      also given.
-    - ``resampling=<method>`` selects the resampling method for any of the above.
+    Like :func:`_build_alignment`, but the domain and native targets always
+    carry a resolution, so ``output_resolution_m`` is required unless
+    ``align_to`` is given.
     """
-    # The resample endpoint requires an alignment, and a resolution for the
-    # domain and native targets (API-v2 #710), so this cannot share
-    # _build_alignment, which allows both to be omitted.
     if align is not None and align != "native":
         raise ValueError(
             f'align must be "native" if given, got {align!r}. Use '
