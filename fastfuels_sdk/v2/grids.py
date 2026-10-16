@@ -2274,8 +2274,7 @@ def create_uniform_grid(
 def create_grid_from_compose(
     inputs: Mapping[str, "Grid"],
     *,
-    select: Optional[list] = None,
-    compute: Optional[list] = None,
+    operations: list,
     name: str = "",
     description: str = "",
     tags: Optional[List[str]] = None,
@@ -2288,11 +2287,11 @@ def create_grid_from_compose(
     inputs : mapping of str to Grid
         Alias-to-grid mapping for completed, aligned 2D grids in one domain.
         Operations refer to their bands as ``"alias.band_key"``.
-    select : list of ComposeSelect, optional
-        Bands to copy, built with :func:`fastfuels_sdk.v2.compose.select`.
-    compute : list of ComposeCompute, optional
-        Bands to calculate, built with
-        :func:`fastfuels_sdk.v2.compose.compute`.
+    operations : list of ComposeSelect or ComposeCompute
+        One operation per output band, built with
+        :func:`fastfuels_sdk.v2.compose.select` (copy an input band) or
+        :func:`fastfuels_sdk.v2.compose.compute` (calculate a band). Output
+        bands follow the order of this list.
     name, description : str, optional
         Metadata for the new grid.
     tags : List[str], optional
@@ -2319,13 +2318,13 @@ def create_grid_from_compose(
     >>> import fastfuels_sdk.v2 as ff
     >>> composed = ff.grids.create_grid_from_compose(
     ...     {"fuels": fuel_grid},
-    ...     select=[ff.compose.select("fuel_depth", "fuels.fuel_depth")],
-    ...     compute=[
+    ...     operations=[
+    ...         ff.compose.select("fuel_depth", "fuels.fuel_depth"),
     ...         ff.compose.compute(
     ...             "fuel_load.1hr",
     ...             "multiply",
     ...             ["fuels.fuel_load.1hr", 0.5],
-    ...         )
+    ...         ),
     ...     ],
     ... )
     >>> composed.wait()
@@ -2361,9 +2360,7 @@ def create_grid_from_compose(
         grids_by_alias[alias] = grid
         compose_inputs.append(ComposeInput(grid_id=grid.id, alias=alias))
 
-    select_operations = _compose_operations(select, ComposeSelect, "select")
-    compute_operations = _compose_operations(compute, ComposeCompute, "compute")
-    operations = [*select_operations, *compute_operations]
+    operations = _compose_operations(operations)
     if not operations:
         raise ValueError("At least one select or compute operation is required.")
     outputs = [operation.output for operation in operations]
@@ -2377,8 +2374,7 @@ def create_grid_from_compose(
 
     request_body = CreateComposeRequest(
         inputs=compose_inputs,
-        select=select_operations if select_operations else UNSET,
-        compute=compute_operations if compute_operations else UNSET,
+        operations=operations,
         name=name,
         description=description,
         tags=_opt(tags),
@@ -2392,20 +2388,23 @@ def create_grid_from_compose(
     return Grid._from_model(expect(response, HTTPStatus.CREATED))
 
 
-def _compose_operations(value, model_type, name: str) -> list:
-    """Normalize and type-check one compose operation collection."""
-    if value is None:
-        return []
-    if isinstance(value, model_type):
-        raise TypeError(f"{name} must be a list of {model_type.__name__} objects.")
+def _compose_operations(value) -> list:
+    """Normalize and type-check the ordered compose operation list."""
+    operation_types = (ComposeSelect, ComposeCompute)
+    if value is None or isinstance(value, operation_types):
+        raise TypeError(
+            "operations must be a list of ComposeSelect or ComposeCompute objects."
+        )
     try:
         operations = list(value)
     except TypeError:
         raise TypeError(
-            f"{name} must be a list of {model_type.__name__} objects."
+            "operations must be a list of ComposeSelect or ComposeCompute objects."
         ) from None
-    if not all(isinstance(operation, model_type) for operation in operations):
-        raise TypeError(f"{name} must contain only {model_type.__name__} objects.")
+    if not all(isinstance(operation, operation_types) for operation in operations):
+        raise TypeError(
+            "operations must contain only ComposeSelect or ComposeCompute objects."
+        )
     return operations
 
 

@@ -60,7 +60,9 @@ class TestComposeBuilders:
         operation = compose.select("fuel_depth", "fuels.fuel_depth")
 
         assert isinstance(operation, ComposeSelect)
+        assert operation.type_ == "select"
         assert operation.to_dict() == {
+            "type": "select",
             "output": "fuel_depth",
             "from": "fuels.fuel_depth",
         }
@@ -78,6 +80,7 @@ class TestComposeBuilders:
         assert operation.to_dict() == {
             "operator": "multiply",
             "operands": ["fuels.fuel_load.1hr", 0.5],
+            "type": "compute",
             "output": "fuel_load.1hr",
             "unit": "kg/m**2",
         }
@@ -180,13 +183,13 @@ class TestCreateGridFromCompose:
 
         result = create_grid_from_compose(
             {"fuels": source},
-            select=[compose.select("fuel_depth", "fuels.fuel_depth")],
-            compute=[
+            operations=[
                 compose.compute(
                     "fuel_load.1hr",
                     "multiply",
                     ["fuels.fuel_load.1hr", 0.5],
-                )
+                ),
+                compose.select("fuel_depth", "fuels.fuel_depth"),
             ],
             name="Composed fuels",
             tags=["test"],
@@ -198,8 +201,12 @@ class TestCreateGridFromCompose:
         assert [item.to_dict() for item in captured["body"].inputs] == [
             {"grid_id": "source-grid", "alias": "fuels"}
         ]
-        assert captured["body"].select[0].output == "fuel_depth"
-        assert captured["body"].compute[0].operator == ComposeOperator.MULTIPLY
+        operations = captured["body"].to_dict()["operations"]
+        assert [(op["type"], op["output"]) for op in operations] == [
+            ("compute", "fuel_load.1hr"),
+            ("select", "fuel_depth"),
+        ]
+        assert captured["body"].operations[0].operator == ComposeOperator.MULTIPLY
         assert captured["body"].name == "Composed fuels"
         assert captured["body"].tags == ["test"]
 
@@ -230,24 +237,36 @@ class TestCreateGridFromCompose:
         with pytest.raises(error, match=match):
             create_grid_from_compose(
                 inputs,
-                select=[compose.select("fuel_depth", "a.fuel_depth")],
+                operations=[compose.select("fuel_depth", "a.fuel_depth")],
             )
 
     def test_requires_an_operation(self):
         with pytest.raises(ValueError, match="At least one"):
-            create_grid_from_compose({"fuels": _grid()})
+            create_grid_from_compose({"fuels": _grid()}, operations=[])
+
+    @pytest.mark.parametrize(
+        "operations,match",
+        [
+            (None, "must be a list"),
+            (compose.select("fuel_depth", "fuels.fuel_depth"), "must be a list"),
+            (["fuels.fuel_depth"], "must contain only"),
+        ],
+    )
+    def test_rejects_invalid_operations(self, operations, match):
+        with pytest.raises(TypeError, match=match):
+            create_grid_from_compose({"fuels": _grid()}, operations=operations)
 
     def test_rejects_duplicate_outputs(self):
         with pytest.raises(ValueError, match="must be unique"):
             create_grid_from_compose(
                 {"fuels": _grid()},
-                select=[compose.select("fuel", "fuels.fuel_depth")],
-                compute=[
+                operations=[
+                    compose.select("fuel", "fuels.fuel_depth"),
                     compose.compute(
                         "fuel",
                         "multiply",
                         ["fuels.fuel_load.1hr", 0.5],
-                    )
+                    ),
                 ],
             )
 
@@ -255,7 +274,9 @@ class TestCreateGridFromCompose:
         with pytest.raises(ValueError, match="nonempty output"):
             create_grid_from_compose(
                 {"fuels": _grid()},
-                select=[ComposeSelect(output="", from_="fuels.fuel_depth")],
+                operations=[
+                    ComposeSelect(type_="select", output="", from_="fuels.fuel_depth")
+                ],
             )
 
     @pytest.mark.parametrize(
@@ -269,7 +290,7 @@ class TestCreateGridFromCompose:
         with pytest.raises(ValueError, match=match):
             create_grid_from_compose(
                 {"fuels": _grid()},
-                select=[compose.select("fuel_depth", reference)],
+                operations=[compose.select("fuel_depth", reference)],
             )
 
     def test_create_live(self, real_dispatch, completed_fbfm40_grid):
@@ -284,15 +305,15 @@ class TestCreateGridFromCompose:
             fuel_grid.wait()
             composed = create_grid_from_compose(
                 {"fuels": fuel_grid},
-                select=[compose.select("fuel_depth", "fuels.fuel_depth")],
-                compute=[
+                operations=[
                     compose.compute(
                         "fuel_load.1hr",
                         "multiply",
                         ["fuels.fuel_load.1hr", 0.5],
                         conditions=[compose.condition("fuels.fuel_load.1hr", "gt", 0)],
                         else_=compose.literal(0, unit="kg/m**2"),
-                    )
+                    ),
+                    compose.select("fuel_depth", "fuels.fuel_depth"),
                 ],
                 name="test_composed_fuels",
                 tags=["test"],
@@ -300,8 +321,8 @@ class TestCreateGridFromCompose:
             composed.wait()
             assert composed.status == JobStatus.COMPLETED
             assert [band.key for band in composed.bands] == [
-                "fuel_depth",
                 "fuel_load.1hr",
+                "fuel_depth",
             ]
             fuel_load = composed.to_numpy("fuel_load.1hr")
             assert fuel_load.ndim == 2

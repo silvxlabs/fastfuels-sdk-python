@@ -75,6 +75,7 @@ def select(
     condition_list = _condition_list(conditions)
     _validate_conditional_fallback(condition_list, else_)
     return ComposeSelect(
+        type_="select",
         output=output,
         from_=from_,
         conditions=condition_list,
@@ -128,6 +129,7 @@ def compute(
     condition_list = _condition_list(conditions)
     _validate_conditional_fallback(condition_list, else_)
     return ComposeCompute(
+        type_="compute",
         output=output,
         operator=operator,
         operands=operand_list,
