@@ -147,7 +147,18 @@ coarser = grid.resample(output_resolution_m=90, resampling="average")
 ```
 
 `resample` takes the same alignment arguments as the creators (see
-[Align grids to each other](creating-grids.md#align-grids-to-each-other)).
+[Align grids to each other](creating-grids.md#align-grids-to-each-other)),
+but always needs an output lattice: pass `output_resolution_m`, `align_to`,
+or both. `align="native"` keeps the source grid's pixel anchor and also needs
+`output_resolution_m`; with `align_to`, `output_resolution_m` keeps the
+target grid's CRS and origin at the new cell size. Omitting both raises
+`ValueError`.
+
+```python
+native = grid.resample(align="native", output_resolution_m=60)
+matched = grid.resample(align_to=topography, resampling="bilinear")
+```
+
 The source grid must be `completed`.
 
 ## Duplicate a grid

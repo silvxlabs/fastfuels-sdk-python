@@ -148,6 +148,8 @@ from fastfuels_sdk.v2.client_library.models import (
     MetaCHMVersion,
     NonBurnableFuelModel,
     RelativeElevation,
+    ResampleDomainTarget,
+    ResampleNativeTarget,
     ResamplingMethod,
     SortOrder,
     ThreeDepResolution,
@@ -266,6 +268,61 @@ def _build_alignment(
             resolution=_opt(output_resolution_m), method=method
         )
     return UNSET
+
+
+def _build_resample_alignment(
+    output_resolution_m: Optional[float] = None,
+    align_to=None,
+    align: Optional[str] = None,
+    resampling: Optional[str] = None,
+):
+    """Translate resample keywords into a resample alignment target.
+
+    Returns a ``ResampleDomainTarget``, ``ResampleNativeTarget``, or
+    ``GridAlignmentGridTarget``. Unlike :func:`_build_alignment`, the domain
+    and native targets always carry a resolution, so ``output_resolution_m``
+    is required unless ``align_to`` is given.
+
+    - ``output_resolution_m=N`` anchors output cells to the domain origin at N
+      meters.
+    - ``align="native", output_resolution_m=N`` keeps the source grid's pixel
+      anchor at N meters.
+    - ``align_to=<grid or id>`` matches an existing grid's lattice exactly, or
+      keeps its CRS and origin at N meters when ``output_resolution_m`` is
+      also given.
+    - ``resampling=<method>`` selects the resampling method for any of the above.
+    """
+    # The resample endpoint requires an alignment, and a resolution for the
+    # domain and native targets (API-v2 #710), so this cannot share
+    # _build_alignment, which allows both to be omitted.
+    if align is not None and align != "native":
+        raise ValueError(
+            f'align must be "native" if given, got {align!r}. Use '
+            "output_resolution_m to set a resolution or align_to to match a grid."
+        )
+    if align is not None and align_to is not None:
+        raise ValueError("Specify at most one of align_to or align.")
+
+    method = ResamplingMethod(resampling) if resampling is not None else UNSET
+
+    if align_to is not None:
+        return GridAlignmentGridTarget(
+            target="grid",
+            grid_id=_grid_id(align_to),
+            resolution=_opt(output_resolution_m),
+            method=method,
+        )
+    if output_resolution_m is None:
+        target = 'align="native"' if align is not None else "resample"
+        raise ValueError(
+            f"{target} requires output_resolution_m. Pass output_resolution_m "
+            "to set the output cell size, or align_to to match an existing grid."
+        )
+    if align is not None:  # align == "native"
+        return ResampleNativeTarget(
+            target="native", resolution=output_resolution_m, method=method
+        )
+    return ResampleDomainTarget(resolution=output_resolution_m, method=method)
 
 
 def _build_lattice(output_resolution_m: Optional[float] = None, align_to=None):
@@ -694,14 +751,24 @@ class Grid(GridModel):
     ) -> "Grid":
         """Create a new grid by resampling this grid onto a different lattice.
 
+        Pass ``output_resolution_m``, ``align_to``, or both:
+
+        - ``output_resolution_m=N`` — N-meter cells anchored to the domain
+          origin.
+        - ``align="native", output_resolution_m=N`` — N-meter cells anchored
+          to this grid's pixel origin.
+        - ``align_to=<grid>`` — the lattice of an existing grid exactly; with
+          ``output_resolution_m=N``, that grid's CRS and origin at N meters.
+
         Parameters
         ----------
         output_resolution_m : float, optional
-            Output cell size in meters, anchored to the domain origin.
+            Output cell size in meters. Required unless ``align_to`` is given.
         align_to : Grid or str, optional
             Match the lattice of an existing grid (or its id).
         align : str, optional
-            Pass ``"native"`` to keep this grid's pixel anchor.
+            Pass ``"native"`` to keep this grid's pixel anchor. Requires
+            ``output_resolution_m``.
         resampling : str, optional
             Resampling method (e.g. "bilinear", "nearest", "average").
         method_overrides : CreateResampleRequestMethodOverrides, optional
@@ -717,11 +784,25 @@ class Grid(GridModel):
         -------
         Grid
             The new (pending) resampled Grid.
+
+        Raises
+        ------
+        ValueError
+            If the grid is not completed; if neither ``output_resolution_m``
+            nor ``align_to`` is given; if ``align`` is given with ``align_to``
+            or is not ``"native"``; or if ``resampling`` is not a recognized
+            method.
+
+        Examples
+        --------
+        >>> coarser = grid.resample(output_resolution_m=90, resampling="average")
+        >>> native = grid.resample(align="native", output_resolution_m=60)
+        >>> matched = grid.resample(align_to=topography, resampling="bilinear")
         """
         self._require_completed("resample")
         request_body = CreateResampleRequest(
             source_grid_id=self.id,
-            alignment=_build_alignment(
+            alignment=_build_resample_alignment(
                 output_resolution_m, align_to, align, resampling
             ),
             method_overrides=_opt(method_overrides),

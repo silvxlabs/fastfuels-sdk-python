@@ -17,6 +17,7 @@ from fastfuels_sdk.v2.calibrations import duet_calibration
 from fastfuels_sdk.v2.grids import (
     Grid,
     _build_alignment,
+    _build_resample_alignment,
     _build_chm_aggregation,
     _build_chm_spike_filter,
     _decode_grid_chunk,
@@ -62,6 +63,7 @@ from fastfuels_sdk.v2.client_library.models import (
     ChmPercentileAggregation,
     ChmSpikeFilter,
     ContinuousBandSummary,
+    CreateResampleRequestMethodOverrides,
     DuetBand,
     InventoryCanopyBand,
     InventoryColumnCanopyBiomassSource,
@@ -84,6 +86,8 @@ from fastfuels_sdk.v2.client_library.models import (
     Operator,
     PointCloudType,
     RelativeElevation,
+    ResampleDomainTarget,
+    ResampleNativeTarget,
     ResamplingMethod,
     TopographyBand,
     UploadBandDefinition,
@@ -174,6 +178,61 @@ class TestBuildAlignment:
     def test_bad_align_value_raises(self):
         with pytest.raises(ValueError):
             _build_alignment(align="bogus")
+
+
+class TestBuildResampleAlignment:
+    """Pure unit tests for the resample alignment translator (no API)."""
+
+    def test_output_resolution_is_domain_target(self):
+        alignment = _build_resample_alignment(output_resolution_m=60)
+        assert isinstance(alignment, ResampleDomainTarget)
+        assert alignment.to_dict() == {"target": "domain", "resolution": 60}
+
+    def test_align_native_with_resolution(self):
+        alignment = _build_resample_alignment(align="native", output_resolution_m=60)
+        assert isinstance(alignment, ResampleNativeTarget)
+        assert alignment.to_dict() == {"target": "native", "resolution": 60}
+
+    def test_align_to_is_exact_grid_target(self):
+        alignment = _build_resample_alignment(align_to=SimpleNamespace(id="gid"))
+        assert isinstance(alignment, GridAlignmentGridTarget)
+        assert alignment.to_dict() == {"target": "grid", "grid_id": "gid"}
+
+    def test_align_to_with_resolution(self):
+        alignment = _build_resample_alignment(align_to="gid", output_resolution_m=60)
+        assert alignment.to_dict() == {
+            "target": "grid",
+            "grid_id": "gid",
+            "resolution": 60,
+        }
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"output_resolution_m": 60},
+            {"align": "native", "output_resolution_m": 60},
+            {"align_to": "gid"},
+        ],
+    )
+    def test_resampling_sets_method_in_every_mode(self, kwargs):
+        alignment = _build_resample_alignment(resampling="average", **kwargs)
+        assert alignment.method == ResamplingMethod.AVERAGE
+        assert alignment.to_dict()["method"] == "average"
+
+    @pytest.mark.parametrize(
+        "kwargs,match",
+        [
+            ({}, "requires output_resolution_m"),
+            ({"resampling": "bilinear"}, "requires output_resolution_m"),
+            ({"align": "native"}, 'align="native" requires output_resolution_m'),
+            ({"align": "native", "align_to": "gid"}, "at most one"),
+            ({"align": "domain", "output_resolution_m": 60}, "must be"),
+            ({"output_resolution_m": 60, "resampling": "bogus"}, "bogus"),
+        ],
+    )
+    def test_invalid_arguments_raise(self, kwargs, match):
+        with pytest.raises(ValueError, match=match):
+            _build_resample_alignment(**kwargs)
 
 
 class TestHelpers:
@@ -1936,7 +1995,105 @@ class TestUpdateGrid:
         assert update_grid.update() is update_grid
 
 
+def _completed_grid(id_="source-grid", domain_id="domain-id"):
+    """A completed in-memory Grid for offline tests (no API)."""
+    return Grid(
+        id=id_,
+        domain_id=domain_id,
+        status=JobStatus.COMPLETED,
+        source=GridSource(),
+        bands=[],
+    )
+
+
 class TestResample:
+    @pytest.fixture
+    def captured(self, monkeypatch):
+        """Capture the resample request instead of sending it."""
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=_completed_grid(id_="resampled-grid"),
+            )
+
+        monkeypatch.setattr(grids, "ensure_client", lambda: object())
+        monkeypatch.setattr(grids.create_resample, "sync_detailed", fake_create)
+        return captured
+
+    @pytest.mark.parametrize(
+        "kwargs,alignment",
+        [
+            (
+                {"output_resolution_m": 60},
+                {"target": "domain", "resolution": 60},
+            ),
+            (
+                {"output_resolution_m": 60, "resampling": "average"},
+                {"target": "domain", "resolution": 60, "method": "average"},
+            ),
+            (
+                {"align": "native", "output_resolution_m": 60},
+                {"target": "native", "resolution": 60},
+            ),
+            (
+                {"align": "native", "output_resolution_m": 60, "resampling": "mode"},
+                {"target": "native", "resolution": 60, "method": "mode"},
+            ),
+            (
+                {"align_to": "target-grid"},
+                {"target": "grid", "grid_id": "target-grid"},
+            ),
+            (
+                {
+                    "align_to": _completed_grid(id_="target-grid"),
+                    "output_resolution_m": 60,
+                    "resampling": "bilinear",
+                },
+                {
+                    "target": "grid",
+                    "grid_id": "target-grid",
+                    "resolution": 60,
+                    "method": "bilinear",
+                },
+            ),
+        ],
+    )
+    def test_builds_request(self, captured, kwargs, alignment):
+        result = _completed_grid().resample(
+            method_overrides=CreateResampleRequestMethodOverrides.from_dict(
+                {"fbfm": "nearest"}
+            ),
+            name="resampled",
+            **kwargs,
+        )
+        assert result.id == "resampled-grid"
+        assert captured["domain_id"] == "domain-id"
+        body = captured["body"].to_dict()
+        assert body["source_grid_id"] == "source-grid"
+        assert body["alignment"] == alignment
+        assert body["method_overrides"] == {"fbfm": "nearest"}
+        assert body["name"] == "resampled"
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {},
+            {"resampling": "bilinear"},
+            {"align": "native"},
+            {"align": "native", "align_to": "target-grid"},
+            {"align": "bogus", "output_resolution_m": 60},
+        ],
+    )
+    def test_invalid_arguments_raise_before_request(self, captured, kwargs):
+        with pytest.raises(ValueError):
+            _completed_grid().resample(**kwargs)
+        assert captured == {}
+
     def test_resample_returns_new_pending_grid(self, completed_topography_grid):
         resampled = completed_topography_grid.resample(
             output_resolution_m=60, name="resampled"
@@ -1954,6 +2111,40 @@ class TestResample:
         with pytest.raises(ValueError, match="resample"):
             grid.resample(output_resolution_m=30)
         grid.delete()
+
+    def test_resample_native_live(self, real_dispatch, completed_topography_grid):
+        resampled = completed_topography_grid.resample(
+            align="native",
+            output_resolution_m=60,
+            resampling="average",
+            name="resampled_native",
+            tags=["test"],
+        )
+        try:
+            alignment = resampled.source["alignment"]
+            assert alignment["target"] == "native"
+            assert alignment["resolution"] == 60
+            resampled.wait()
+            assert resampled.status == JobStatus.COMPLETED
+            transform = resampled.georeference.transform
+            assert abs(transform[0]) == 60
+            assert abs(transform[4]) == 60
+        finally:
+            resampled.delete()
+
+    def test_resample_align_to_live(self, completed_topography_grid):
+        resampled = completed_topography_grid.resample(
+            align_to=completed_topography_grid,
+            resampling="bilinear",
+            name="resampled_matched",
+            tags=["test"],
+        )
+        try:
+            alignment = resampled.source["alignment"]
+            assert alignment["target"] == "grid"
+            assert alignment["grid_id"] == completed_topography_grid.id
+        finally:
+            resampled.delete()
 
 
 class TestApplyModifications:
