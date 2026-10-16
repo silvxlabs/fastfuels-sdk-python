@@ -109,6 +109,7 @@ from fastfuels_sdk.v2.client_library.models import (
     CreateNetcdfUploadRequest,
     CreatePointCloudChmRequest,
     CreateResampleRequest,
+    CreateResampleRequestMethodOverrides,
     CreateThreeDepTopographyRequest,
     CreateTreeMapRequest,
     CreateUniformRequest,
@@ -406,6 +407,34 @@ def _build_boundary_scatter(scatter):
         "boundary_scatter must be True, a mapping of scatter fields, or a "
         f"BoundaryScatter, got {scatter!r}."
     )
+
+
+def _build_method_overrides(method_overrides):
+    """Translate a resample ``method_overrides`` kwarg into a model or UNSET.
+
+    - ``None`` -> ``UNSET`` (no overrides).
+    - a ``CreateResampleRequestMethodOverrides`` -> passed through unchanged.
+    - a mapping of band key -> method -> validated and converted.
+    """
+    if method_overrides is None:
+        return UNSET
+    if isinstance(method_overrides, CreateResampleRequestMethodOverrides):
+        return method_overrides
+    if not isinstance(method_overrides, Mapping):
+        raise ValueError(
+            "method_overrides must be a mapping of band key to resampling "
+            f"method, got {method_overrides!r}."
+        )
+    for band, method in method_overrides.items():
+        try:
+            ResamplingMethod(method)
+        except ValueError:
+            valid = ", ".join(m.value for m in ResamplingMethod)
+            raise ValueError(
+                f"Invalid resampling method {method!r} for band {band!r}. "
+                f"Use one of: {valid}."
+            ) from None
+    return CreateResampleRequestMethodOverrides.from_dict(method_overrides)
 
 
 def _fill_for(dtype, nodata=None):
@@ -730,7 +759,7 @@ class Grid(GridModel):
         align_to=None,
         align: Optional[str] = None,
         resampling: Optional[str] = None,
-        method_overrides=None,
+        method_overrides: Optional[Mapping[str, str]] = None,
         name: str = "",
         description: str = "",
         tags: Optional[List[str]] = None,
@@ -758,8 +787,10 @@ class Grid(GridModel):
             ``output_resolution_m``.
         resampling : str, optional
             Resampling method (e.g. "bilinear", "nearest", "average").
-        method_overrides : CreateResampleRequestMethodOverrides, optional
-            Per-band resampling method overrides.
+        method_overrides : Mapping[str, str], optional
+            Per-band resampling methods keyed by band key (e.g.
+            ``{"fbfm": "nearest"}``). Listed bands use their method instead of
+            ``resampling``.
         name, description : str, optional
             Metadata for the new grid.
         tags : List[str], optional
@@ -777,14 +808,19 @@ class Grid(GridModel):
         ValueError
             If the grid is not completed; if neither ``output_resolution_m``
             nor ``align_to`` is given; if ``align`` is given with ``align_to``
-            or is not ``"native"``; or if ``resampling`` is not a recognized
-            method.
+            or is not ``"native"``; or if ``resampling`` or a
+            ``method_overrides`` value is not a recognized method.
 
         Examples
         --------
         >>> coarser = grid.resample(output_resolution_m=90, resampling="average")
         >>> native = grid.resample(align="native", output_resolution_m=60)
         >>> matched = grid.resample(align_to=topography, resampling="bilinear")
+        >>> mixed = grid.resample(
+        ...     output_resolution_m=60,
+        ...     resampling="bilinear",
+        ...     method_overrides={"fbfm": "nearest"},
+        ... )
         """
         self._require_completed("resample")
         request_body = CreateResampleRequest(
@@ -792,7 +828,7 @@ class Grid(GridModel):
             alignment=_build_resample_alignment(
                 output_resolution_m, align_to, align, resampling
             ),
-            method_overrides=_opt(method_overrides),
+            method_overrides=_build_method_overrides(method_overrides),
             name=name,
             description=description,
             tags=_opt(tags),
