@@ -624,7 +624,10 @@ grid.wait()
 ```
 
 GeoTIFF uploads work the same way but additionally take a `bands` list of
-`UploadBandDefinition`s mapping 1:1 to the raster's bands in order:
+`UploadBandDefinition`s mapping 1:1 to the raster's bands in order. Each
+`key` is `<quantity>` or `<quantity>.<label>` (for example `elevation` or
+`fuel_moisture.live.shrub`); the API sets the band's type and unit from the
+quantity, so `type_` and `unit` can be omitted:
 
 ```python
 from fastfuels_sdk.v2.client_library.models import UploadBandDefinition
@@ -632,7 +635,7 @@ from fastfuels_sdk.v2.client_library.models import UploadBandDefinition
 grid = ff.grids.create_grid_from_geotiff(
     domain,
     "elevation.tif",
-    bands=[UploadBandDefinition(key="elevation", interpolation="bilinear")],
+    bands=[UploadBandDefinition(key="elevation")],
 )
 ```
 
