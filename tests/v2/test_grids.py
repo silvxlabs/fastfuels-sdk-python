@@ -2065,9 +2065,7 @@ class TestResample:
     )
     def test_builds_request(self, captured, kwargs, alignment):
         result = _completed_grid().resample(
-            method_overrides=CreateResampleRequestMethodOverrides.from_dict(
-                {"fbfm": "nearest"}
-            ),
+            method_overrides={"fbfm": "nearest"},
             name="resampled",
             **kwargs,
         )
@@ -2078,6 +2076,38 @@ class TestResample:
         assert body["alignment"] == alignment
         assert body["method_overrides"] == {"fbfm": "nearest"}
         assert body["name"] == "resampled"
+
+    def test_method_overrides_dict(self, captured):
+        _completed_grid().resample(
+            output_resolution_m=60,
+            resampling="bilinear",
+            method_overrides={"fbfm": "nearest", "fuel_load": "average"},
+        )
+        body = captured["body"].to_dict()
+        assert body["method_overrides"] == {"fbfm": "nearest", "fuel_load": "average"}
+
+    def test_method_overrides_model_passes_through(self, captured):
+        overrides = CreateResampleRequestMethodOverrides.from_dict({"fbfm": "mode"})
+        _completed_grid().resample(output_resolution_m=60, method_overrides=overrides)
+        assert captured["body"].method_overrides is overrides
+        assert captured["body"].to_dict()["method_overrides"] == {"fbfm": "mode"}
+
+    @pytest.mark.parametrize(
+        "method_overrides,match",
+        [
+            ({"fbfm": "bogus"}, "'bogus' for band 'fbfm'"),
+            ({"fbfm": "nearest", "elevation": None}, "for band 'elevation'"),
+            (["fbfm", "nearest"], "mapping"),
+        ],
+    )
+    def test_invalid_method_overrides_raise_before_request(
+        self, captured, method_overrides, match
+    ):
+        with pytest.raises(ValueError, match=match):
+            _completed_grid().resample(
+                output_resolution_m=60, method_overrides=method_overrides
+            )
+        assert captured == {}
 
     @pytest.mark.parametrize(
         "kwargs",
@@ -2129,6 +2159,19 @@ class TestResample:
             transform = resampled.georeference.transform
             assert abs(transform[0]) == 60
             assert abs(transform[4]) == 60
+        finally:
+            resampled.delete()
+
+    def test_resample_method_overrides_live(self, completed_topography_grid):
+        resampled = completed_topography_grid.resample(
+            output_resolution_m=60,
+            resampling="bilinear",
+            method_overrides={"aspect": "nearest"},
+            name="resampled_overrides",
+            tags=["test"],
+        )
+        try:
+            assert resampled.source["method_overrides"] == {"aspect": "nearest"}
         finally:
             resampled.delete()
 
