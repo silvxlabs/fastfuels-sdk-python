@@ -1,41 +1,50 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, Self, TypeVar, cast
+from typing import (
+    Any,
+    Literal,
+    Self,
+    TypeVar,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.access import Access
 from ..models.scope import Scope
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="CreateKeyRequest")
+T = TypeVar("T", bound="CreateApplicationKeyRequest")
 
 
 @_attrs_define
-class CreateKeyRequest:
-    """Request body for creating an API key.
+class CreateApplicationKeyRequest:
+    """Request body for a key that acts as one of your applications.
 
     Attributes:
         name (str): A name to semantically identify the key.
+        access (Literal['application']): Access type for the API key.
+        application_id (str): Application ID accessed by the API key.
         description (None | str | Unset): An optional description of the key's purpose.
         valid_days (int | Unset): Number of days for which this key will be valid. Default: 30.
         scopes (list[Scope] | Unset): A list of scopes available to the key.
-        access (Access | Unset): Access types for an API key.
-        application_id (None | str | Unset): Application ID accessed by the API key.
     """
 
     name: str
+    access: Literal["application"]
+    application_id: str
     description: None | str | Unset = UNSET
     valid_days: int | Unset = 30
     scopes: list[Scope] | Unset = UNSET
-    access: Access | Unset = UNSET
-    application_id: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         name = self.name
+
+        access = self.access
+
+        application_id = self.application_id
 
         description: None | str | Unset
         if isinstance(self.description, Unset):
@@ -52,21 +61,13 @@ class CreateKeyRequest:
                 scopes_item = scopes_item_data.value
                 scopes.append(scopes_item)
 
-        access: str | Unset = UNSET
-        if not isinstance(self.access, Unset):
-            access = self.access.value
-
-        application_id: None | str | Unset
-        if isinstance(self.application_id, Unset):
-            application_id = UNSET
-        else:
-            application_id = self.application_id
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
                 "name": name,
+                "access": access,
+                "application_id": application_id,
             }
         )
         if description is not UNSET:
@@ -75,10 +76,6 @@ class CreateKeyRequest:
             field_dict["valid_days"] = valid_days
         if scopes is not UNSET:
             field_dict["scopes"] = scopes
-        if access is not UNSET:
-            field_dict["access"] = access
-        if application_id is not UNSET:
-            field_dict["application_id"] = application_id
 
         return field_dict
 
@@ -86,6 +83,12 @@ class CreateKeyRequest:
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         d = dict(src_dict)
         name = d.pop("name")
+
+        access = cast(Literal["application"], d.pop("access"))
+        if access != "application":
+            raise ValueError(f"access must match const 'application', got '{access}'")
+
+        application_id = d.pop("application_id")
 
         def _parse_description(data: object) -> None | str | Unset:
             if data is None:
@@ -107,33 +110,17 @@ class CreateKeyRequest:
 
                 scopes.append(scopes_item)
 
-        _access = d.pop("access", UNSET)
-        access: Access | Unset
-        if isinstance(_access, Unset):
-            access = UNSET
-        else:
-            access = Access(_access)
-
-        def _parse_application_id(data: object) -> None | str | Unset:
-            if data is None:
-                return data
-            if isinstance(data, Unset):
-                return data
-            return cast(None | str | Unset, data)
-
-        application_id = _parse_application_id(d.pop("application_id", UNSET))
-
-        create_key_request = cls(
+        create_application_key_request = cls(
             name=name,
+            access=access,
+            application_id=application_id,
             description=description,
             valid_days=valid_days,
             scopes=scopes,
-            access=access,
-            application_id=application_id,
         )
 
-        create_key_request.additional_properties = d
-        return create_key_request
+        create_application_key_request.additional_properties = d
+        return create_application_key_request
 
     @property
     def additional_keys(self) -> list[str]:

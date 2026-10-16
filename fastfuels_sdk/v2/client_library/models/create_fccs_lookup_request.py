@@ -26,7 +26,7 @@ class CreateFccsLookupRequest:
         Attributes:
             source_grid_id (str): Grid containing FCCS codes
             bands (list[FccsLookupBand]):
-            source_band (str | Unset): Band in source grid containing FCCS codes Default: 'fccs'.
+            source_band (str | Unset): A `fccs` band of the source grid holding the FCCS codes. Default: 'fccs'.
             name (str | Unset):  Default: ''.
             description (str | Unset):  Default: ''.
             tags (list[str] | Unset):

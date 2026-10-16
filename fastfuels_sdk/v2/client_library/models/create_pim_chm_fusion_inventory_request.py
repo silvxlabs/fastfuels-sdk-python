@@ -26,7 +26,7 @@ class CreatePimChmFusionInventoryRequest:
 
     Attributes:
         source_pim_grid_id (str): ID of a completed PIM grid to use as the primary source.
-        source_chm_grid_id (str): ID of a completed CHM grid used to condition the PIM.
+        source_chm_grid_id (str): ID of a completed 2D grid with a `chm` band.
         type_ (InventoryType | Unset): Type of entities in the inventory.
         name (str | Unset):  Default: ''.
         description (str | Unset):  Default: ''.

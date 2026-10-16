@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
     from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
     from ..models.grid_modification import GridModification
+    from ..models.landfire_disturbance_request import LandfireDisturbanceRequest
 
 
 T = TypeVar("T", bound="CreateLandfireFccsRequest")
@@ -50,6 +51,8 @@ class CreateLandfireFccsRequest:
                 composition works by construction. `target="native"` preserves the source pixel anchor. `target="grid"` aligns
                 to an existing grid by id.
             version (LandfireFccsVersion | Unset):
+            disturbance (LandfireDisturbanceRequest | None | Unset): For domains the LANDFIRE 2025 release doesn't fully
+                cover yet, update the 2023 version for recent disturbance (`version` must be 2023).
             remove_bare_ground (bool | Unset):  Default: False.
             boundary_scatter (BoundaryScatter | None | Unset): Stochastic scattering of fuelbed boundaries. Creates ragged,
                 natural-looking transitions between fuelbed types instead of the staircase edges that nearest-neighbor
@@ -68,6 +71,7 @@ class CreateLandfireFccsRequest:
         | Unset
     ) = UNSET
     version: LandfireFccsVersion | Unset = UNSET
+    disturbance: LandfireDisturbanceRequest | None | Unset = UNSET
     remove_bare_ground: bool | Unset = False
     boundary_scatter: BoundaryScatter | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -76,6 +80,7 @@ class CreateLandfireFccsRequest:
         from ..models.boundary_scatter import BoundaryScatter
         from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
         from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
+        from ..models.landfire_disturbance_request import LandfireDisturbanceRequest
 
         name = self.name
 
@@ -108,6 +113,14 @@ class CreateLandfireFccsRequest:
         if not isinstance(self.version, Unset):
             version = self.version.value
 
+        disturbance: dict[str, Any] | None | Unset
+        if isinstance(self.disturbance, Unset):
+            disturbance = UNSET
+        elif isinstance(self.disturbance, LandfireDisturbanceRequest):
+            disturbance = self.disturbance.to_dict()
+        else:
+            disturbance = self.disturbance
+
         remove_bare_ground = self.remove_bare_ground
 
         boundary_scatter: dict[str, Any] | None | Unset
@@ -135,6 +148,8 @@ class CreateLandfireFccsRequest:
             field_dict["alignment"] = alignment
         if version is not UNSET:
             field_dict["version"] = version
+        if disturbance is not UNSET:
+            field_dict["disturbance"] = disturbance
         if remove_bare_ground is not UNSET:
             field_dict["remove_bare_ground"] = remove_bare_ground
         if boundary_scatter is not UNSET:
@@ -149,6 +164,7 @@ class CreateLandfireFccsRequest:
         from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
         from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
         from ..models.grid_modification import GridModification
+        from ..models.landfire_disturbance_request import LandfireDisturbanceRequest
 
         d = dict(src_dict)
         name = d.pop("name", UNSET)
@@ -209,6 +225,25 @@ class CreateLandfireFccsRequest:
         else:
             version = LandfireFccsVersion(_version)
 
+        def _parse_disturbance(
+            data: object,
+        ) -> LandfireDisturbanceRequest | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                disturbance_type_0 = LandfireDisturbanceRequest.from_dict(data)
+
+                return disturbance_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(LandfireDisturbanceRequest | None | Unset, data)
+
+        disturbance = _parse_disturbance(d.pop("disturbance", UNSET))
+
         remove_bare_ground = d.pop("remove_bare_ground", UNSET)
 
         def _parse_boundary_scatter(data: object) -> BoundaryScatter | None | Unset:
@@ -236,6 +271,7 @@ class CreateLandfireFccsRequest:
             extent_buffer_cells=extent_buffer_cells,
             alignment=alignment,
             version=version,
+            disturbance=disturbance,
             remove_bare_ground=remove_bare_ground,
             boundary_scatter=boundary_scatter,
         )

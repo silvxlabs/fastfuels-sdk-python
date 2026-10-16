@@ -314,7 +314,7 @@ operations have no SDK surface. Ordered by what unblocks a user workflow.
 - **FCCS lookup** — `create_fuel_grid_from_fccs_lookup` (12 bands incl. duff
   and live components). The FCCS *source* creator exists; the lookup that
   turns it into fuel parameters does not.
-- **Compose** — `create_grid_from_compose(inputs, select=, compute=)`: grid
+- **Compose** — `create_grid_from_compose(inputs, operations=)`: grid
   algebra over aliased input bands (`add`/`subtract`/`multiply`/`divide`/
   `min`/`max`/`average`, conditional `select` with `else_`). The largest
   design question in this batch — it is a small DSL, not a creator with

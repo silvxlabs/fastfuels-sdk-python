@@ -16,22 +16,36 @@ T = TypeVar("T", bound="UploadBandDefinition")
 class UploadBandDefinition:
     """
     Attributes:
-        key (str): Dot-notation variable name, e.g. 'bulk_density.foliage'
-        type_ (BandType): Type of band data.
-        unit (None | str | Unset): Physical unit of the band's pixel values, in UDUNITS-2-conformant ASCII form with
-            `**` for exponents (e.g. `kg/m**3`, `1/m`, `%`). Optional for categorical/identifier bands. Non-canonical forms
-            (`kg/m³`, `kg/m^3`, `kg/m3`) are rejected. See docs/units.md.
+        key (str): Band key `<quantity>` or `<quantity>.<label>`, e.g. `fbfm`, `fuel_load.1hr`,
+            `fuel_moisture.live.shrub`. The quantity sets the band's type and unit: `annual_disturbance` (categorical),
+            `aspect` (continuous, deg), `bulk_density` (continuous, kg/m**3), `cbd` (continuous, kg/m**3), `cbh`
+            (continuous, m), `cc` (continuous, %), `cfl` (continuous, kg/m**2), `chm` (continuous, m), `curing` (continuous,
+            %), `duff_depth` (continuous, m), `elevation` (continuous, m), `fbfm` (categorical), `fbfm13` (categorical),
+            `fccs` (categorical), `fuel_depth` (continuous, m), `fuel_load` (continuous, kg/m**2), `fuel_moisture`
+            (continuous, %), `heat_content` (continuous, kJ/kg), `irradiance` (continuous), `leaf_area_density` (continuous,
+            1/m), `plt_cn` (categorical), `savr` (continuous, 1/m), `slope` (continuous, deg), `spcd` (categorical), `tm_id`
+            (categorical), `tree_id` (categorical), `volume_fraction` (continuous). The label is lowercase letters, digits
+            and underscores.
+        type_ (BandType | None | Unset): Optional; set by the key's quantity. If given, it must match.
+        unit (None | str | Unset): Optional; set by the key's quantity. If given, it must match, in UDUNITS-2-conformant
+            ASCII form with `**` for exponents (e.g. `kg/m**3`, `1/m`, `%`). See docs/units.md.
     """
 
     key: str
-    type_: BandType
+    type_: BandType | None | Unset = UNSET
     unit: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         key = self.key
 
-        type_ = self.type_.value
+        type_: None | str | Unset
+        if isinstance(self.type_, Unset):
+            type_ = UNSET
+        elif isinstance(self.type_, BandType):
+            type_ = self.type_.value
+        else:
+            type_ = self.type_
 
         unit: None | str | Unset
         if isinstance(self.unit, Unset):
@@ -44,9 +58,10 @@ class UploadBandDefinition:
         field_dict.update(
             {
                 "key": key,
-                "type": type_,
             }
         )
+        if type_ is not UNSET:
+            field_dict["type"] = type_
         if unit is not UNSET:
             field_dict["unit"] = unit
 
@@ -57,7 +72,22 @@ class UploadBandDefinition:
         d = dict(src_dict)
         key = d.pop("key")
 
-        type_ = BandType(d.pop("type"))
+        def _parse_type_(data: object) -> BandType | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                type_type_0 = BandType(data)
+
+                return type_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(BandType | None | Unset, data)
+
+        type_ = _parse_type_(d.pop("type", UNSET))
 
         def _parse_unit(data: object) -> None | str | Unset:
             if data is None:

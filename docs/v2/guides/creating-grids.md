@@ -546,7 +546,7 @@ matches a lattice exactly.
 To estimate 1-hour dead fuel moisture with the Fosberg model, pass a
 topography grid and a surface-irradiance grid to
 `create_dead_fuel_moisture_grid_from_fosberg` along with the weather inputs.
-The result carries a single `fuel_moisture.dead.1hr` band (percent). For the
+The result carries a single `fuel_moisture.1hr` band (percent). For the
 Fosberg 1-hr dead fuel moisture model itself, see the
 [FastFuels documentation](https://docs.fastfuels.silvxlabs.com).
 
@@ -592,7 +592,7 @@ moisture.wait()
 
 ```python
 >>> [band.key for band in moisture.bands]
-['fuel_moisture.dead.1hr']
+['fuel_moisture.1hr']
 ```
 
 !!! warning "Grids must share one lattice"

@@ -26,7 +26,7 @@ class CreateChmInventoryRequest:
     """Request body for creating an inventory via CHM extraction.
 
     Attributes:
-        source_chm_grid_id (str): ID of a completed CHM grid to use as the source.
+        source_chm_grid_id (str): ID of a completed grid with a `chm` band to use as the source.
         type_ (InventoryType | Unset): Type of entities in the inventory.
         name (str | Unset):  Default: ''.
         description (str | Unset):  Default: ''.

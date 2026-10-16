@@ -21,7 +21,8 @@ same two-dimensional lattice. For creating the source grids, see
 ## Select and calculate output bands
 
 Give each input grid an alias. Use that alias when referring to its bands in
-select and compute operations:
+select and compute operations, and pass the operations as one `operations`
+list with one entry per output band:
 
 ```python
 import fastfuels_sdk.v2 as ff
@@ -34,10 +35,8 @@ fuel_grid.wait()
 
 composed = ff.grids.create_grid_from_compose(
     {"fuels": fuel_grid},
-    select=[
+    operations=[
         ff.compose.select("fuel_depth", "fuels.fuel_depth"),
-    ],
-    compute=[
         ff.compose.compute(
             "fuel_load.1hr",
             "multiply",
@@ -53,8 +52,8 @@ composed.wait()
 ```
 
 The alias mapping can contain more than one grid. Every band reference uses
-the form `alias.band_key`; output names must be unique across the `select` and
-`compute` lists.
+the form `alias.band_key`. Output names must be unique within `operations`,
+and the composed grid's bands follow the order of the list.
 
 The arithmetic operators are `add`, `subtract`, `multiply`, `divide`, `min`,
 `max`, and `average`. Conditions are ANDed together and require an `else_`

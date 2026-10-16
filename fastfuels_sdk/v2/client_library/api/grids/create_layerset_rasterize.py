@@ -76,7 +76,7 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: CreateLayersetRasterizeRequest,
 ) -> Response[Grid | HTTPValidationError | QuotaExceededDetail]:
-    """Create a grid by rasterizing a layerset
+    r"""Create a grid by rasterizing a layerset
 
      # Create Layerset-Rasterized Grid
 
@@ -98,6 +98,23 @@ def sync_detailed(
       the domain extent. Cells inside the buffered extent that fall outside
       polygon coverage are populated with the rasterizer's fill value.
     - **name**, **description**, **tags**, **modifications**: standard grid metadata.
+
+    ## Bands
+
+    The band list is empty until rasterization completes; it depends on the
+    layerset's `fuel_type` values. Each fuel type yields five continuous
+    bands keyed `<quantity>.<fuel type>`:
+
+    - `fuel_load.<fuel type>` (kg/m**2)
+    - `fuel_depth.<fuel type>` (m)
+    - `fuel_moisture.live.<fuel type>` (%)
+    - `fuel_moisture.dead.<fuel type>` (%)
+    - `heat_content.<fuel type>` (kJ/kg)
+
+    The fuel type in a key is lowercased, with each run of characters other
+    than `a-z`, `0-9` and `_` replaced by `_` (`\"Shrub Layer\"` →
+    `shrub_layer`). Two fuel types that reduce to the same key, or one with
+    no letters or digits, fail the job with `INVALID_FUEL_TYPE`.
 
     ## Response
 
@@ -141,7 +158,7 @@ def sync(
     client: AuthenticatedClient,
     body: CreateLayersetRasterizeRequest,
 ) -> Grid | HTTPValidationError | QuotaExceededDetail | None:
-    """Create a grid by rasterizing a layerset
+    r"""Create a grid by rasterizing a layerset
 
      # Create Layerset-Rasterized Grid
 
@@ -163,6 +180,23 @@ def sync(
       the domain extent. Cells inside the buffered extent that fall outside
       polygon coverage are populated with the rasterizer's fill value.
     - **name**, **description**, **tags**, **modifications**: standard grid metadata.
+
+    ## Bands
+
+    The band list is empty until rasterization completes; it depends on the
+    layerset's `fuel_type` values. Each fuel type yields five continuous
+    bands keyed `<quantity>.<fuel type>`:
+
+    - `fuel_load.<fuel type>` (kg/m**2)
+    - `fuel_depth.<fuel type>` (m)
+    - `fuel_moisture.live.<fuel type>` (%)
+    - `fuel_moisture.dead.<fuel type>` (%)
+    - `heat_content.<fuel type>` (kJ/kg)
+
+    The fuel type in a key is lowercased, with each run of characters other
+    than `a-z`, `0-9` and `_` replaced by `_` (`\"Shrub Layer\"` →
+    `shrub_layer`). Two fuel types that reduce to the same key, or one with
+    no letters or digits, fail the job with `INVALID_FUEL_TYPE`.
 
     ## Response
 
@@ -201,7 +235,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: CreateLayersetRasterizeRequest,
 ) -> Response[Grid | HTTPValidationError | QuotaExceededDetail]:
-    """Create a grid by rasterizing a layerset
+    r"""Create a grid by rasterizing a layerset
 
      # Create Layerset-Rasterized Grid
 
@@ -223,6 +257,23 @@ async def asyncio_detailed(
       the domain extent. Cells inside the buffered extent that fall outside
       polygon coverage are populated with the rasterizer's fill value.
     - **name**, **description**, **tags**, **modifications**: standard grid metadata.
+
+    ## Bands
+
+    The band list is empty until rasterization completes; it depends on the
+    layerset's `fuel_type` values. Each fuel type yields five continuous
+    bands keyed `<quantity>.<fuel type>`:
+
+    - `fuel_load.<fuel type>` (kg/m**2)
+    - `fuel_depth.<fuel type>` (m)
+    - `fuel_moisture.live.<fuel type>` (%)
+    - `fuel_moisture.dead.<fuel type>` (%)
+    - `heat_content.<fuel type>` (kJ/kg)
+
+    The fuel type in a key is lowercased, with each run of characters other
+    than `a-z`, `0-9` and `_` replaced by `_` (`\"Shrub Layer\"` →
+    `shrub_layer`). Two fuel types that reduce to the same key, or one with
+    no letters or digits, fail the job with `INVALID_FUEL_TYPE`.
 
     ## Response
 
@@ -264,7 +315,7 @@ async def asyncio(
     client: AuthenticatedClient,
     body: CreateLayersetRasterizeRequest,
 ) -> Grid | HTTPValidationError | QuotaExceededDetail | None:
-    """Create a grid by rasterizing a layerset
+    r"""Create a grid by rasterizing a layerset
 
      # Create Layerset-Rasterized Grid
 
@@ -286,6 +337,23 @@ async def asyncio(
       the domain extent. Cells inside the buffered extent that fall outside
       polygon coverage are populated with the rasterizer's fill value.
     - **name**, **description**, **tags**, **modifications**: standard grid metadata.
+
+    ## Bands
+
+    The band list is empty until rasterization completes; it depends on the
+    layerset's `fuel_type` values. Each fuel type yields five continuous
+    bands keyed `<quantity>.<fuel type>`:
+
+    - `fuel_load.<fuel type>` (kg/m**2)
+    - `fuel_depth.<fuel type>` (m)
+    - `fuel_moisture.live.<fuel type>` (%)
+    - `fuel_moisture.dead.<fuel type>` (%)
+    - `heat_content.<fuel type>` (kJ/kg)
+
+    The fuel type in a key is lowercased, with each run of characters other
+    than `a-z`, `0-9` and `_` replaced by `_` (`\"Shrub Layer\"` →
+    `shrub_layer`). Two fuel types that reduce to the same key, or one with
+    no letters or digits, fail the job with `INVALID_FUEL_TYPE`.
 
     ## Response
 

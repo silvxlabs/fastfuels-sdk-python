@@ -1,7 +1,14 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Self, TypeVar, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    Self,
+    TypeVar,
+    cast,
+)
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -32,7 +39,17 @@ class ComposeCompute:
         Attributes:
             operator (ComposeOperator): Operators available for compose computations.
             operands (list[ComposeLiteral | float | int | str]):
-            output (str): Output band key, e.g. `fuel_load.1hr`.
+            type_ (Literal['compute']): Discriminator selecting this operation. Must be `"compute"`.
+            output (str): Band key `<quantity>` or `<quantity>.<label>`, e.g. `fbfm`, `fuel_load.1hr`,
+                `fuel_moisture.live.shrub`. The quantity sets the band's type and unit: `annual_disturbance` (categorical),
+                `aspect` (continuous, deg), `bulk_density` (continuous, kg/m**3), `cbd` (continuous, kg/m**3), `cbh`
+                (continuous, m), `cc` (continuous, %), `cfl` (continuous, kg/m**2), `chm` (continuous, m), `curing` (continuous,
+                %), `duff_depth` (continuous, m), `elevation` (continuous, m), `fbfm` (categorical), `fbfm13` (categorical),
+                `fccs` (categorical), `fuel_depth` (continuous, m), `fuel_load` (continuous, kg/m**2), `fuel_moisture`
+                (continuous, %), `heat_content` (continuous, kJ/kg), `irradiance` (continuous), `leaf_area_density` (continuous,
+                1/m), `plt_cn` (categorical), `savr` (continuous, 1/m), `slope` (continuous, deg), `spcd` (categorical), `tm_id`
+                (categorical), `tree_id` (categorical), `volume_fraction` (continuous). The label is lowercase letters, digits
+                and underscores.
             name (None | str | Unset): Optional display name for the output band.
             description (None | str | Unset): Optional description for the output band.
             unit (None | str | Unset): Optional canonical output unit. Defaults to the unit derived from the operands; if
@@ -44,6 +61,7 @@ class ComposeCompute:
 
     operator: ComposeOperator
     operands: list[ComposeLiteral | float | int | str]
+    type_: Literal["compute"]
     output: str
     name: None | str | Unset = UNSET
     description: None | str | Unset = UNSET
@@ -78,6 +96,8 @@ class ComposeCompute:
             else:
                 operands_item = operands_item_data
             operands.append(operands_item)
+
+        type_ = self.type_
 
         output = self.output
 
@@ -136,6 +156,7 @@ class ComposeCompute:
             {
                 "operator": operator,
                 "operands": operands,
+                "type": type_,
                 "output": output,
             }
         )
@@ -185,6 +206,10 @@ class ComposeCompute:
             operands_item = _parse_operands_item(operands_item_data)
 
             operands.append(operands_item)
+
+        type_ = cast(Literal["compute"], d.pop("type"))
+        if type_ != "compute":
+            raise ValueError(f"type must match const 'compute', got '{type_}'")
 
         output = d.pop("output")
 
@@ -326,6 +351,7 @@ class ComposeCompute:
         compose_compute = cls(
             operator=operator,
             operands=operands,
+            type_=type_,
             output=output,
             name=name,
             description=description,

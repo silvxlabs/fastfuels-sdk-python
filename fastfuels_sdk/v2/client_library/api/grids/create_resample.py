@@ -90,7 +90,7 @@ def sync_detailed(
 
     - **source_grid_id**: (required) Grid to resample. Must have status
       \"completed\" and a georeference.
-    - **alignment**: Output alignment target. Default ``target=\"domain\"``.
+    - **alignment**: (required) Output alignment target.
       ``alignment.resolution`` is required for ``target=\"domain\"`` and
       ``target=\"native\"``; optional for ``target=\"grid\"`` (defaults to the
       target grid's exact transform/shape).
@@ -155,7 +155,7 @@ def sync(
 
     - **source_grid_id**: (required) Grid to resample. Must have status
       \"completed\" and a georeference.
-    - **alignment**: Output alignment target. Default ``target=\"domain\"``.
+    - **alignment**: (required) Output alignment target.
       ``alignment.resolution`` is required for ``target=\"domain\"`` and
       ``target=\"native\"``; optional for ``target=\"grid\"`` (defaults to the
       target grid's exact transform/shape).
@@ -215,7 +215,7 @@ async def asyncio_detailed(
 
     - **source_grid_id**: (required) Grid to resample. Must have status
       \"completed\" and a georeference.
-    - **alignment**: Output alignment target. Default ``target=\"domain\"``.
+    - **alignment**: (required) Output alignment target.
       ``alignment.resolution`` is required for ``target=\"domain\"`` and
       ``target=\"native\"``; optional for ``target=\"grid\"`` (defaults to the
       target grid's exact transform/shape).
@@ -278,7 +278,7 @@ async def asyncio(
 
     - **source_grid_id**: (required) Grid to resample. Must have status
       \"completed\" and a georeference.
-    - **alignment**: Output alignment target. Default ``target=\"domain\"``.
+    - **alignment**: (required) Output alignment target.
       ``alignment.resolution`` is required for ``target=\"domain\"`` and
       ``target=\"native\"``; optional for ``target=\"grid\"`` (defaults to the
       target grid's exact transform/shape).

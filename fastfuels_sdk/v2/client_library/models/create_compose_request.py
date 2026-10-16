@@ -24,8 +24,8 @@ class CreateComposeRequest:
 
     Attributes:
         inputs (list[ComposeInput]):
-        select (list[ComposeSelect] | Unset):
-        compute (list[ComposeCompute] | Unset):
+        operations (list[ComposeCompute | ComposeSelect]): Select and compute operations, one per output band. Output
+            bands follow this order.
         name (str | Unset):  Default: ''.
         description (str | Unset):  Default: ''.
         tags (list[str] | Unset):
@@ -33,8 +33,7 @@ class CreateComposeRequest:
     """
 
     inputs: list[ComposeInput]
-    select: list[ComposeSelect] | Unset = UNSET
-    compute: list[ComposeCompute] | Unset = UNSET
+    operations: list[ComposeCompute | ComposeSelect]
     name: str | Unset = ""
     description: str | Unset = ""
     tags: list[str] | Unset = UNSET
@@ -42,24 +41,22 @@ class CreateComposeRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.compose_select import ComposeSelect
+
         inputs = []
         for inputs_item_data in self.inputs:
             inputs_item = inputs_item_data.to_dict()
             inputs.append(inputs_item)
 
-        select: list[dict[str, Any]] | Unset = UNSET
-        if not isinstance(self.select, Unset):
-            select = []
-            for select_item_data in self.select:
-                select_item = select_item_data.to_dict()
-                select.append(select_item)
+        operations = []
+        for operations_item_data in self.operations:
+            operations_item: dict[str, Any]
+            if isinstance(operations_item_data, ComposeSelect):
+                operations_item = operations_item_data.to_dict()
+            else:
+                operations_item = operations_item_data.to_dict()
 
-        compute: list[dict[str, Any]] | Unset = UNSET
-        if not isinstance(self.compute, Unset):
-            compute = []
-            for compute_item_data in self.compute:
-                compute_item = compute_item_data.to_dict()
-                compute.append(compute_item)
+            operations.append(operations_item)
 
         name = self.name
 
@@ -81,12 +78,9 @@ class CreateComposeRequest:
         field_dict.update(
             {
                 "inputs": inputs,
+                "operations": operations,
             }
         )
-        if select is not UNSET:
-            field_dict["select"] = select
-        if compute is not UNSET:
-            field_dict["compute"] = compute
         if name is not UNSET:
             field_dict["name"] = name
         if description is not UNSET:
@@ -113,23 +107,28 @@ class CreateComposeRequest:
 
             inputs.append(inputs_item)
 
-        _select = d.pop("select", UNSET)
-        select: list[ComposeSelect] | Unset = UNSET
-        if _select is not UNSET:
-            select = []
-            for select_item_data in _select:
-                select_item = ComposeSelect.from_dict(select_item_data)
+        operations = []
+        _operations = d.pop("operations")
+        for operations_item_data in _operations:
 
-                select.append(select_item)
+            def _parse_operations_item(data: object) -> ComposeCompute | ComposeSelect:
+                try:
+                    if not isinstance(data, dict):
+                        raise TypeError()
+                    operations_item_type_0 = ComposeSelect.from_dict(data)
 
-        _compute = d.pop("compute", UNSET)
-        compute: list[ComposeCompute] | Unset = UNSET
-        if _compute is not UNSET:
-            compute = []
-            for compute_item_data in _compute:
-                compute_item = ComposeCompute.from_dict(compute_item_data)
+                    return operations_item_type_0
+                except (TypeError, ValueError, AttributeError, KeyError):
+                    pass
+                if not isinstance(data, dict):
+                    raise TypeError()
+                operations_item_type_1 = ComposeCompute.from_dict(data)
 
-                compute.append(compute_item)
+                return operations_item_type_1
+
+            operations_item = _parse_operations_item(operations_item_data)
+
+            operations.append(operations_item)
 
         name = d.pop("name", UNSET)
 
@@ -148,8 +147,7 @@ class CreateComposeRequest:
 
         create_compose_request = cls(
             inputs=inputs,
-            select=select,
-            compute=compute,
+            operations=operations,
             name=name,
             description=description,
             tags=tags,

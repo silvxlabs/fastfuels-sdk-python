@@ -26,7 +26,7 @@ class CreateFbfm13LookupRequest:
         Attributes:
             source_grid_id (str): Grid containing FBFM13 codes
             bands (list[Fbfm13LookupBand]):
-            source_band (str | Unset): Band in source grid containing FBFM13 codes Default: 'fbfm13'.
+            source_band (str | Unset): A `fbfm13` band of the source grid holding the FBFM13 codes. Default: 'fbfm13'.
             name (str | Unset):  Default: ''.
             description (str | Unset):  Default: ''.
             tags (list[str] | Unset):

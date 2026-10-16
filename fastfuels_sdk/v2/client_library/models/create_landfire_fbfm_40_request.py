@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
     from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
     from ..models.grid_modification import GridModification
+    from ..models.landfire_disturbance_request import LandfireDisturbanceRequest
 
 
 T = TypeVar("T", bound="CreateLandfireFbfm40Request")
@@ -52,6 +53,8 @@ class CreateLandfireFbfm40Request:
                 composition works by construction. `target="native"` preserves the source pixel anchor. `target="grid"` aligns
                 to an existing grid by id.
             version (LandfireFbfm40Version | Unset):
+            disturbance (LandfireDisturbanceRequest | None | Unset): For domains the LANDFIRE 2025 release doesn't fully
+                cover yet, update the 2024 version for recent disturbance (`version` must be 2024; can't be used with `season`).
             remove_non_burnable (list[NonBurnableFuelModel] | None | Unset):
             boundary_scatter (BoundaryScatter | None | Unset): Stochastic scattering of fuel model boundaries. Creates
                 ragged, natural-looking transitions between fuel model types instead of the staircase edges that nearest-
@@ -74,6 +77,7 @@ class CreateLandfireFbfm40Request:
         | Unset
     ) = UNSET
     version: LandfireFbfm40Version | Unset = UNSET
+    disturbance: LandfireDisturbanceRequest | None | Unset = UNSET
     remove_non_burnable: list[NonBurnableFuelModel] | None | Unset = UNSET
     boundary_scatter: BoundaryScatter | None | Unset = UNSET
     season: LandfireSeason | None | Unset = UNSET
@@ -83,6 +87,7 @@ class CreateLandfireFbfm40Request:
         from ..models.boundary_scatter import BoundaryScatter
         from ..models.grid_alignment_domain_target import GridAlignmentDomainTarget
         from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
+        from ..models.landfire_disturbance_request import LandfireDisturbanceRequest
 
         name = self.name
 
@@ -114,6 +119,14 @@ class CreateLandfireFbfm40Request:
         version: str | Unset = UNSET
         if not isinstance(self.version, Unset):
             version = self.version.value
+
+        disturbance: dict[str, Any] | None | Unset
+        if isinstance(self.disturbance, Unset):
+            disturbance = UNSET
+        elif isinstance(self.disturbance, LandfireDisturbanceRequest):
+            disturbance = self.disturbance.to_dict()
+        else:
+            disturbance = self.disturbance
 
         remove_non_burnable: list[str] | None | Unset
         if isinstance(self.remove_non_burnable, Unset):
@@ -162,6 +175,8 @@ class CreateLandfireFbfm40Request:
             field_dict["alignment"] = alignment
         if version is not UNSET:
             field_dict["version"] = version
+        if disturbance is not UNSET:
+            field_dict["disturbance"] = disturbance
         if remove_non_burnable is not UNSET:
             field_dict["remove_non_burnable"] = remove_non_burnable
         if boundary_scatter is not UNSET:
@@ -178,6 +193,7 @@ class CreateLandfireFbfm40Request:
         from ..models.grid_alignment_grid_target import GridAlignmentGridTarget
         from ..models.grid_alignment_native_target import GridAlignmentNativeTarget
         from ..models.grid_modification import GridModification
+        from ..models.landfire_disturbance_request import LandfireDisturbanceRequest
 
         d = dict(src_dict)
         name = d.pop("name", UNSET)
@@ -237,6 +253,25 @@ class CreateLandfireFbfm40Request:
             version = UNSET
         else:
             version = LandfireFbfm40Version(_version)
+
+        def _parse_disturbance(
+            data: object,
+        ) -> LandfireDisturbanceRequest | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                disturbance_type_0 = LandfireDisturbanceRequest.from_dict(data)
+
+                return disturbance_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(LandfireDisturbanceRequest | None | Unset, data)
+
+        disturbance = _parse_disturbance(d.pop("disturbance", UNSET))
 
         def _parse_remove_non_burnable(
             data: object,
@@ -308,6 +343,7 @@ class CreateLandfireFbfm40Request:
             extent_buffer_cells=extent_buffer_cells,
             alignment=alignment,
             version=version,
+            disturbance=disturbance,
             remove_non_burnable=remove_non_burnable,
             boundary_scatter=boundary_scatter,
             season=season,
