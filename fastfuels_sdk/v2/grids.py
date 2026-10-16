@@ -138,6 +138,7 @@ from fastfuels_sdk.v2.client_library.models import (
     LandfireCanopyFuelBand,
     LandfireCanopyVersion,
     LandfireCoverageResponse,
+    LandfireDisturbanceRequest,
     LandfireDisturbanceVersion,
     LandfireFbfm13Version,
     LandfireFbfm40Version,
@@ -406,6 +407,28 @@ def _build_boundary_scatter(scatter):
     raise ValueError(
         "boundary_scatter must be True, a mapping of scatter fields, or a "
         f"BoundaryScatter, got {scatter!r}."
+    )
+
+
+def _build_landfire_disturbance(disturbance):
+    """Translate a disturbance kwarg into a LandfireDisturbanceRequest or UNSET.
+
+    - ``None`` -> ``UNSET`` (no disturbance adjustment).
+    - ``"landfire"`` -> ``LandfireDisturbanceRequest(source="landfire")``.
+    - a mapping -> a ``LandfireDisturbanceRequest`` built from its fields.
+    - a ``LandfireDisturbanceRequest`` -> passed through unchanged.
+    """
+    if disturbance is None:
+        return UNSET
+    if isinstance(disturbance, LandfireDisturbanceRequest):
+        return disturbance
+    if disturbance == "landfire":
+        return LandfireDisturbanceRequest(source="landfire")
+    if isinstance(disturbance, Mapping):
+        return LandfireDisturbanceRequest(**disturbance)
+    raise ValueError(
+        'disturbance must be "landfire", a mapping like {"source": "landfire"}, '
+        f"or a LandfireDisturbanceRequest, got {disturbance!r}."
     )
 
 
@@ -1869,6 +1892,7 @@ def create_fuel_model_grid_from_landfire_fbfm13(
     description: str = "",
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
+    disturbance=None,
 ) -> Grid:
     """Create a fuel model grid from LANDFIRE Anderson 13 fuel models.
 
@@ -1905,15 +1929,31 @@ def create_fuel_model_grid_from_landfire_fbfm13(
         Tags for the grid.
     modifications : list, optional
         Modification rules applied after the grid is built.
+    disturbance : str, dict, or LandfireDisturbanceRequest, optional
+        Update the baseline release for recent disturbance where the newest
+        LANDFIRE release doesn't fully cover the domain. Pass ``"landfire"``,
+        ``{"source": "landfire"}``, or a ``LandfireDisturbanceRequest``. The
+        plan the API chose is recorded on the grid as ``source.disturbance``.
+        Omit ``version`` (or set it to the baseline release). ``None``
+        (default) applies no adjustment.
 
     Returns
     -------
     Grid
         The created Grid object (job status ``"pending"`` or ``"running"``).
+
+    Raises
+    ------
+    ValueError
+        If ``disturbance`` isn't a recognized form.
+    UnprocessableEntityException
+        If the API rejects the request, e.g. ``version`` isn't the baseline or
+        the newest release already fully covers the domain.
     """
     request_body = CreateLandfireFbfm13Request(
         version=LandfireFbfm13Version(version) if version is not None else UNSET,
         remove_non_burnable=_enum_list(remove_non_burnable, NonBurnableFuelModel),
+        disturbance=_build_landfire_disturbance(disturbance),
         boundary_scatter=_build_boundary_scatter(boundary_scatter),
         alignment=_build_alignment(output_resolution_m, align_to, align, resampling),
         extent_buffer_cells=extent_buffer_cells,
@@ -1943,6 +1983,7 @@ def create_fuel_model_grid_from_landfire_fbfm40(
     description: str = "",
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
+    disturbance=None,
 ) -> Grid:
     """Create a fuel model grid from LANDFIRE 40 Scott & Burgan fuel models.
 
@@ -1987,16 +2028,32 @@ def create_fuel_model_grid_from_landfire_fbfm40(
         Tags for the grid.
     modifications : list, optional
         Modification rules applied after the grid is built.
+    disturbance : str, dict, or LandfireDisturbanceRequest, optional
+        Update the baseline release for recent disturbance where the newest
+        LANDFIRE release doesn't fully cover the domain. Pass ``"landfire"``,
+        ``{"source": "landfire"}``, or a ``LandfireDisturbanceRequest``. The
+        plan the API chose is recorded on the grid as ``source.disturbance``.
+        Omit ``version`` (or set it to the baseline release), and don't
+        combine with ``season``. ``None`` (default) applies no adjustment.
 
     Returns
     -------
     Grid
         The created Grid object (job status "pending" or "running").
+
+    Raises
+    ------
+    ValueError
+        If ``disturbance`` isn't a recognized form.
+    UnprocessableEntityException
+        If the API rejects the request, e.g. ``version`` isn't the baseline or
+        the newest release already fully covers the domain.
     """
     request_body = CreateLandfireFbfm40Request(
         version=LandfireFbfm40Version(version) if version is not None else UNSET,
         season=LandfireSeason(season) if season is not None else UNSET,
         remove_non_burnable=_enum_list(remove_non_burnable, NonBurnableFuelModel),
+        disturbance=_build_landfire_disturbance(disturbance),
         boundary_scatter=_build_boundary_scatter(boundary_scatter),
         alignment=_build_alignment(output_resolution_m, align_to, align, resampling),
         extent_buffer_cells=extent_buffer_cells,
@@ -2025,6 +2082,7 @@ def create_fuel_model_grid_from_landfire_fccs(
     description: str = "",
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
+    disturbance=None,
 ) -> Grid:
     """Create a fuel model grid from LANDFIRE FCCS fuelbeds.
 
@@ -2060,15 +2118,31 @@ def create_fuel_model_grid_from_landfire_fccs(
         Tags for the grid.
     modifications : list, optional
         Modification rules applied after the grid is built.
+    disturbance : str, dict, or LandfireDisturbanceRequest, optional
+        Update the baseline release for recent disturbance where the newest
+        LANDFIRE release doesn't fully cover the domain. Pass ``"landfire"``,
+        ``{"source": "landfire"}``, or a ``LandfireDisturbanceRequest``. The
+        plan the API chose is recorded on the grid as ``source.disturbance``.
+        Omit ``version`` (or set it to the baseline release). ``None``
+        (default) applies no adjustment.
 
     Returns
     -------
     Grid
         The created Grid object (job status "pending" or "running").
+
+    Raises
+    ------
+    ValueError
+        If ``disturbance`` isn't a recognized form.
+    UnprocessableEntityException
+        If the API rejects the request, e.g. ``version`` isn't the baseline or
+        the newest release already fully covers the domain.
     """
     request_body = CreateLandfireFccsRequest(
         version=LandfireFccsVersion(version) if version is not None else UNSET,
         remove_bare_ground=remove_bare_ground,
+        disturbance=_build_landfire_disturbance(disturbance),
         boundary_scatter=_build_boundary_scatter(boundary_scatter),
         alignment=_build_alignment(output_resolution_m, align_to, align, resampling),
         extent_buffer_cells=extent_buffer_cells,
