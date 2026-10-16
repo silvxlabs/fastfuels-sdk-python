@@ -2798,7 +2798,7 @@ def create_dead_fuel_moisture_grid_from_fosberg(
 ) -> Grid:
     """Create a Fosberg 1-hour dead fuel moisture grid from two grids.
 
-    Derives a grid with a single ``fuel_moisture.dead.1hr`` band (percent)
+    Derives a grid with a single ``fuel_moisture.1hr`` band (percent)
     using the Fosberg & Deeming 1-hour dead fuel moisture model. The output
     inherits the topography grid's domain, CRS, transform, and georeference.
 

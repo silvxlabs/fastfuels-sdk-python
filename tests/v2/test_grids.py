@@ -897,8 +897,8 @@ class TestCreateDeadFuelMoistureGridFromFosberg:
         try:
             moisture.wait()
             assert moisture.status == JobStatus.COMPLETED
-            assert {band.key for band in moisture.bands} == {"fuel_moisture.dead.1hr"}
-            values = moisture.to_numpy("fuel_moisture.dead.1hr")
+            assert {band.key for band in moisture.bands} == {"fuel_moisture.1hr"}
+            values = moisture.to_numpy("fuel_moisture.1hr")
             assert values.ndim == 2
             assert np.isfinite(values).any()
         finally:
