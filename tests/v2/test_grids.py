@@ -56,6 +56,7 @@ from fastfuels_sdk.v2.client_library.models import (
     Band,
     BandType,
     BoundaryScatter,
+    LandfireDisturbanceRequest,
     CanopyCbhPercentile,
     ChmMaxAggregation,
     ChmMeanAggregation,
@@ -1530,6 +1531,120 @@ class TestCreateFuelModelGridFromLandfireFbfm40:
             # version 2025 + SP projects to spring 2026, read from the catalog.
             assert grid.represented_year == 2026
             grid.delete()
+        finally:
+            domain.delete(force=True)
+
+
+class TestLandfireDisturbance:
+    """The disturbance option on the LANDFIRE FBFM13 / FBFM40 / FCCS creators."""
+
+    CREATORS = [
+        ("create_landfire_fbfm13", create_fuel_model_grid_from_landfire_fbfm13, "2024"),
+        ("create_landfire_fbfm40", create_fuel_model_grid_from_landfire_fbfm40, "2024"),
+        ("create_landfire_fccs", create_fuel_model_grid_from_landfire_fccs, "2023"),
+    ]
+
+    def _capture(self, monkeypatch, endpoint):
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=Grid(
+                    id="grid-id",
+                    domain_id="domain-id",
+                    status=JobStatus.PENDING,
+                    source=GridSource(),
+                    bands=[],
+                ),
+            )
+
+        monkeypatch.setattr(grids, "ensure_client", lambda: object())
+        monkeypatch.setattr(getattr(grids, endpoint), "sync_detailed", fake_create)
+        return captured
+
+    @pytest.mark.parametrize("endpoint,creator,baseline", CREATORS)
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "landfire",
+            {"source": "landfire"},
+            LandfireDisturbanceRequest(source="landfire"),
+        ],
+    )
+    def test_request_body(self, monkeypatch, endpoint, creator, baseline, value):
+        captured = self._capture(monkeypatch, endpoint)
+        creator(SimpleNamespace(id="domain-id"), version=baseline, disturbance=value)
+        body = captured["body"]
+        assert isinstance(body.disturbance, LandfireDisturbanceRequest)
+        assert body.disturbance.source == "landfire"
+        assert body.to_dict()["disturbance"] == {"source": "landfire"}
+
+    @pytest.mark.parametrize("endpoint,creator,baseline", CREATORS)
+    def test_default_is_unset(self, monkeypatch, endpoint, creator, baseline):
+        captured = self._capture(monkeypatch, endpoint)
+        creator(SimpleNamespace(id="domain-id"))
+        assert captured["body"].disturbance is UNSET
+        assert "disturbance" not in captured["body"].to_dict()
+
+    @pytest.mark.parametrize("endpoint,creator,baseline", CREATORS)
+    @pytest.mark.parametrize("value", ["fire", True, 3])
+    def test_invalid_value_raises(
+        self, monkeypatch, endpoint, creator, baseline, value
+    ):
+        self._capture(monkeypatch, endpoint)
+        with pytest.raises(ValueError, match="disturbance"):
+            creator(SimpleNamespace(id="domain-id"), disturbance=value)
+
+    def test_live_fbfm40_disturbance(self, real_dispatch):
+        # A small domain on the Colorado Front Range, where LANDFIRE's newest
+        # release only partly covers the area. If that release catches up, the
+        # API rejects disturbance and the test skips.
+        x, y, d = -105.30, 40.00, 0.01
+        domain = Domain.from_geojson(
+            {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {},
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [x, y],
+                                    [x + d, y],
+                                    [x + d, y + d],
+                                    [x, y + d],
+                                    [x, y],
+                                ]
+                            ],
+                        },
+                    }
+                ],
+            },
+            name="throwaway_disturbance_domain",
+            tags=["sdk-test"],
+        )
+        try:
+            try:
+                grid = create_fuel_model_grid_from_landfire_fbfm40(
+                    domain,
+                    disturbance="landfire",
+                    output_resolution_m=30,
+                    name="throwaway_fbfm40_disturbance",
+                )
+            except UnprocessableEntityException as exc:
+                pytest.skip(f"Disturbance not applicable to this domain: {exc}")
+            try:
+                grid.wait()
+                assert grid.status == JobStatus.COMPLETED
+                assert grid.source["disturbance"]["source"] == "landfire"
+            finally:
+                grid.delete()
         finally:
             domain.delete(force=True)
 

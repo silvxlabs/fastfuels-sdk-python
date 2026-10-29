@@ -384,6 +384,27 @@ The single `annual_disturbance` band holds categorical LDist codes, fetched on
 demand from the LANDFIRE Product Service. Pass `version` to pin a vintage; it
 defaults to the API's current version.
 
+To update a LANDFIRE fuel model grid (FBFM13, FBFM40, or FCCS) for recent
+disturbance where the newest release doesn't fully cover the domain yet, pass
+`disturbance="landfire"`:
+
+```python
+grid = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
+    domain, disturbance="landfire", output_resolution_m=30
+)
+grid.wait()
+```
+
+```python
+>>> grid.source["disturbance"]
+{'ldist_version': '2025', 'fdist_version': '2024', 'source': 'landfire', 'mode': 'ldist_and_last_year_fdist'}
+```
+
+The API records the plan it applied on `source.disturbance`. Omit `version` (or
+set it to the baseline release); for FBFM40 `disturbance` can't be combined with
+`season`. The API returns a 422 if the newest release already fully covers the
+domain.
+
 ## 3D tree fuel grids (voxelization)
 
 The 3D canopy fuel grid — per-voxel bulk density, the input 3D fire models
