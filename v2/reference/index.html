@@ -2050,6 +2050,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_from_crown_base_height" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create_tree_inventory_from_crown_base_height
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#fastfuels_sdk.v2.inventories.list_inventories" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4103,6 +4114,17 @@
     <span class="md-ellipsis">
       
         create_tree_inventory_from_gdam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_from_crown_base_height" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create_tree_inventory_from_crown_base_height
       
     </span>
   </a>
@@ -12638,6 +12660,18 @@ unknown.</p>
               </div>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="UnprocessableEntityException">UnprocessableEntityException</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the inventory lacks a column the request needs, such as
+<code>crown_base_height</code> (see
+:func:<code>fastfuels_sdk.v2.inventories.create_tree_inventory_from_crown_base_height</code>).</p>
+              </div>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -13402,7 +13436,7 @@ aggregation and percentile arguments are inconsistent.</p>
 
 
 <a href="#fastfuels_sdk.v2.grids.create_fuel_model_grid_from_landfire_fbfm13" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_model_grid_from_landfire_fbfm13</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_non_burnable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">boundary_scatter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_model_grid_from_landfire_fbfm13</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_non_burnable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">boundary_scatter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">disturbance</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -13636,6 +13670,27 @@ nearest-neighbor resampling. <code>None</code> (default) disables scatter.
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>disturbance</code>
+            </td>
+            <td>
+                  <code>str, dict, or LandfireDisturbanceRequest</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Update the baseline release for recent disturbance where the newest
+LANDFIRE release doesn't fully cover the domain. Pass <code>"landfire"</code>,
+<code>{"source": "landfire"}</code>, or a <code>LandfireDisturbanceRequest</code>. The
+plan the API chose is recorded on the grid as <code>source.disturbance</code>.
+Omit <code>version</code> (or set it to the baseline release). <code>None</code>
+(default) applies no adjustment.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -13663,6 +13718,40 @@ nearest-neighbor resampling. <code>None</code> (default) disables scatter.
     </table>
 
 
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>disturbance</code> isn't a recognized form.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="UnprocessableEntityException">UnprocessableEntityException</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API rejects the request, e.g. <code>version</code> isn't the baseline or
+the newest release already fully covers the domain.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
     </div>
 
 </div>
@@ -13675,7 +13764,7 @@ nearest-neighbor resampling. <code>None</code> (default) disables scatter.
 
 
 <a href="#fastfuels_sdk.v2.grids.create_fuel_model_grid_from_landfire_fbfm40" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_model_grid_from_landfire_fbfm40</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">season</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_non_burnable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">boundary_scatter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_model_grid_from_landfire_fbfm40</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">season</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_non_burnable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">boundary_scatter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">disturbance</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -13931,6 +14020,27 @@ nearest-neighbor resampling. <code>None</code> (default) disables scatter.
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>disturbance</code>
+            </td>
+            <td>
+                  <code>str, dict, or LandfireDisturbanceRequest</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Update the baseline release for recent disturbance where the newest
+LANDFIRE release doesn't fully cover the domain. Pass <code>"landfire"</code>,
+<code>{"source": "landfire"}</code>, or a <code>LandfireDisturbanceRequest</code>. The
+plan the API chose is recorded on the grid as <code>source.disturbance</code>.
+Omit <code>version</code> (or set it to the baseline release), and don't
+combine with <code>season</code>. <code>None</code> (default) applies no adjustment.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -13958,6 +14068,40 @@ nearest-neighbor resampling. <code>None</code> (default) disables scatter.
     </table>
 
 
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>disturbance</code> isn't a recognized form.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="UnprocessableEntityException">UnprocessableEntityException</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API rejects the request, e.g. <code>version</code> isn't the baseline or
+the newest release already fully covers the domain.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
     </div>
 
 </div>
@@ -13970,7 +14114,7 @@ nearest-neighbor resampling. <code>None</code> (default) disables scatter.
 
 
 <a href="#fastfuels_sdk.v2.grids.create_fuel_model_grid_from_landfire_fccs" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_model_grid_from_landfire_fccs</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_bare_ground</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">boundary_scatter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_model_grid_from_landfire_fccs</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_bare_ground</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">boundary_scatter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">disturbance</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14203,6 +14347,27 @@ nearest-neighbor resampling. <code>None</code> (default) disables scatter.
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>disturbance</code>
+            </td>
+            <td>
+                  <code>str, dict, or LandfireDisturbanceRequest</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Update the baseline release for recent disturbance where the newest
+LANDFIRE release doesn't fully cover the domain. Pass <code>"landfire"</code>,
+<code>{"source": "landfire"}</code>, or a <code>LandfireDisturbanceRequest</code>. The
+plan the API chose is recorded on the grid as <code>source.disturbance</code>.
+Omit <code>version</code> (or set it to the baseline release). <code>None</code>
+(default) applies no adjustment.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -14223,6 +14388,40 @@ nearest-neighbor resampling. <code>None</code> (default) disables scatter.
             <td>
               <div class="doc-md-description">
                 <p>The created Grid object (job status "pending" or "running").</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>disturbance</code> isn't a recognized form.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="UnprocessableEntityException">UnprocessableEntityException</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API rejects the request, e.g. <code>version</code> isn't the baseline or
+the newest release already fully covers the domain.</p>
               </div>
             </td>
           </tr>
@@ -14803,7 +15002,10 @@ returns the (pending) Grid. The GeoTIFF's CRS must match the domain CRS.</p>
             <td>
               <div class="doc-md-description">
                 <p>Band definitions (<code>UploadBandDefinition</code>) mapping 1:1 to the GeoTIFF
-raster bands in order.</p>
+raster bands in order. Each band key must use a known quantity, as
+<code>&lt;quantity&gt;</code> or <code>&lt;quantity&gt;.&lt;label&gt;</code>; labels may repeat (for example
+<code>fuel_moisture.live.shrub</code>). The band's type and unit are derived from
+the quantity when omitted, and must match it when given.</p>
               </div>
             </td>
             <td>
@@ -19161,7 +19363,10 @@ a crown Feature.</p>
                 <p>If <code>max_bulk_density</code> is not greater than 0, the Feature is not
 a completed crown Feature, the CHM grid it was built from no
 longer exists, or the inventory has no <code>tree_id</code> column or
-lacks the columns voxelization needs.</p>
+lacks the columns voxelization needs (<code>x</code>, <code>y</code>, <code>height</code>,
+<code>dbh</code>, <code>crown_base_height</code> and <code>fia_species_code</code>, with no
+empty values; see :func:<code>create_tree_inventory_from_gdam</code> and
+:func:<code>create_tree_inventory_from_crown_base_height</code>).</p>
               </div>
             </td>
           </tr>
@@ -20794,10 +20999,13 @@ the file extension if omitted.</p>
                 <p>Mapping from the standard column roles to your file's column
 names, e.g. <code>{"x": "X_UTM", "y": "Y_UTM", "dbh": "DBH_CM"}</code>.
 Roles: "tree_id", "x", "y", "height", "dbh", "crown_ratio",
-"crown_radius", "fia_species_code", "fia_status_code",
-"fia_crown_class_code". Columns whose names already match need no
-mapping. <code>crown_radius</code> is a measured crown radius in meters
-(&gt; 0 and &lt;= 20; null for trees without a measurement).</p>
+"crown_base_height", "crown_radius", "fia_species_code",
+"fia_status_code", "fia_crown_class_code". Columns whose names
+already match need no mapping. <code>crown_ratio</code> is the FIA compacted
+live crown ratio (0-1). <code>crown_base_height</code> is the height of the
+lowest live foliage in meters (at least 0 and at most <code>height</code>).
+<code>crown_radius</code> is a measured crown radius in meters (&gt; 0 and
+&lt;= 20; null for trees without a measurement).</p>
               </div>
             </td>
             <td>
@@ -20926,17 +21134,18 @@ processed.</p>
 
 
 <a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_from_gdam" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_from_gdam</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">source_inventory</span><span class="p">,</span> <span class="n">impute_columns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_from_gdam</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">source_inventory</span><span class="p">,</span> <span class="n">impute_columns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">crown_base_height_model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Create a tree inventory by imputing morphology with GDAM allometry.</p>
-<p>GDAM fills in missing per-tree morphology — diameter at breast height,
-crown ratio, and FIA species code — for a completed source tree inventory
-(for example one uploaded with coordinates and heights only). Existing
-values are preserved; only missing cells are imputed. The result is a new
-inventory; the source is left unchanged.</p>
+<p>GDAM fills in per-tree morphology — diameter at breast height, FIA
+compacted crown ratio, FIA species code, and crown base height — for a
+completed source tree inventory with a position and height for every tree
+(for example one uploaded with coordinates and heights only). GDAM
+conditions its predictions on whichever of these columns the source
+already has. The result is a new inventory; the source is left unchanged.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -20975,8 +21184,8 @@ inventory; the source is left unchanged.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A completed tree inventory (or its id) whose missing morphology
-columns GDAM will fill in.</p>
+                <p>A completed tree inventory (or its id) with <code>x</code>, <code>y</code> and
+<code>height</code> for every tree, whose morphology columns GDAM will fill in.</p>
               </div>
             </td>
             <td>
@@ -20993,14 +21202,302 @@ columns GDAM will fill in.</p>
             <td>
               <div class="doc-md-description">
                 <p>Which morphology columns to impute
-(<code>CreateGdamInventoryRequestImputeColumnsItem</code> members or their
-string keys: "dbh", "crown_ratio", "fia_species_code"). Defaults to all
-three. Narrow it to impute fewer columns; columns left out keep the
-source's values.</p>
+(<code>CreateGdamAllometryRequestImputeColumnsItem</code> members or their
+string keys: "dbh", "crown_ratio", "fia_species_code",
+"crown_base_height"). Defaults to all four. Narrow it to impute fewer
+columns; columns left out keep the source's values.</p>
               </div>
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Metadata for the inventory.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>description</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Metadata for the inventory.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tags</code>
+            </td>
+            <td>
+                  <code><span title="typing.List">List</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Tags for the inventory.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>crown_base_height_model</code>
+            </td>
+            <td>
+                  <code>str, Mapping, or crown base height model</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The model that gives <code>crown_base_height</code>, by name: "gdam",
+"fia_national_logit_2026", "monleon_2004_eq1", "monleon_2004_eq2",
+"toney_reeves_2009", "randolph_2010", or "westfall_2019" (a mapping
+such as <code>{"name": "gdam"}</code> or a model object such as
+<code>GdamModel()</code> is also accepted). Omitted (the default) uses
+"gdam", which predicts it with the other columns. Any other model
+computes it from each tree's species, dbh, crown ratio and height
+after GDAM fills them, so each of those must be imputed or be a
+column of the source inventory.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>overwrite</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>False</code> (the default) keeps existing values and fills only empty
+cells of <code>impute_columns</code>. <code>True</code> replaces every tree's value in
+<code>impute_columns</code>; the old values are not given to GDAM.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Inventory&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v2.inventories.Inventory&lt;/code&gt;)" href="#fastfuels_sdk.v2.inventories.Inventory">Inventory</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The created Inventory object (job status "pending"). Call
+:meth:<code>Inventory.wait</code> to block until imputation finishes. Its
+<code>source</code> records <code>impute_columns</code>, <code>overwrite</code>,
+<code>crown_base_height_model</code>, and the source columns GDAM conditioned
+on (<code>conditioned_columns</code>).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>crown_base_height_model</code> is not a known model name, a mapping
+naming one, or a crown base height model object.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="UnprocessableEntityException">UnprocessableEntityException</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the source inventory is missing, or has empty values in, <code>x</code>,
+<code>y</code> or <code>height</code>, or <code>crown_base_height_model</code> is an equation
+whose inputs are neither imputed nor columns of the source.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">sparse</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_file</span><span class="p">(</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span>    <span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;stems.csv&quot;</span>  <span class="c1"># x, y, height only</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">... </span><span class="p">)</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">sparse</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">full</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_gdam</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">sparse</span><span class="p">)</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">full</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span></code></pre></div>
+    <p>Compute crown base heights with an equation instead of GDAM:</p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">full</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_gdam</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">... </span>    <span class="n">domain</span><span class="p">,</span> <span class="n">sparse</span><span class="p">,</span> <span class="n">crown_base_height_model</span><span class="o">=</span><span class="s2">&quot;fia_national_logit_2026&quot;</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span><span class="p">)</span>
+</span></code></pre></div>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="fastfuels_sdk.v2.inventories.create_tree_inventory_from_crown_base_height" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">create_tree_inventory_from_crown_base_height</span>
+
+
+<a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_from_crown_base_height" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_from_crown_base_height</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">source_inventory</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Create a tree inventory with each tree's crown base height computed.</p>
+<p>Computes <code>crown_base_height</code> (m) for a completed source tree inventory
+with a crown base height model and copies every other column unchanged.
+The equation models compute it from each tree's species, dbh, FIA
+compacted crown ratio and height; species a model does not cover get no
+crown base height. The "gdam" model predicts it with GDAM from position
+and height, conditioned on whichever of species, dbh, crown ratio and
+crown base height the tree has. Use it for a tree inventory without a
+crown base height, such as an uploaded inventory, before voxelizing it or
+building canopy grids from it. The result is a new inventory; the source
+is left unchanged.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>domain</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Domain&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v2.domains.Domain&lt;/code&gt;)" href="#fastfuels_sdk.v2.domains.Domain">Domain</a> or <span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The domain (or its id) to create the inventory in.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>source_inventory</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Inventory&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v2.inventories.Inventory&lt;/code&gt;)" href="#fastfuels_sdk.v2.inventories.Inventory">Inventory</a> or <span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A completed tree inventory (or its id) with <code>x</code>, <code>y</code> and
+<code>height</code> for every tree, and <code>fia_species_code</code>, <code>dbh</code> and
+<code>crown_ratio</code> for every tree unless <code>model</code> is "gdam". To fill
+those columns and the crown base height in one request, use
+:func:<code>create_tree_inventory_from_gdam</code> instead.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>model</code>
+            </td>
+            <td>
+                  <code>str, Mapping, or crown base height model</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The crown base height model, by name: "fia_national_logit_2026",
+"monleon_2004_eq1", "monleon_2004_eq2", "toney_reeves_2009",
+"randolph_2010", "westfall_2019", or "gdam" (a mapping such as
+<code>{"name": "gdam"}</code> or a model object such as <code>GdamModel()</code> is also
+accepted). Omitted (the default) uses "fia_national_logit_2026".</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>overwrite</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>False</code> (the default) keeps existing crown base heights and fills
+only empty cells. <code>True</code> recomputes every tree's crown base height
+with <code>model</code>; "gdam" is not given the old values.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -21071,7 +21568,44 @@ source's values.</p>
             <td>
               <div class="doc-md-description">
                 <p>The created Inventory object (job status "pending"). Call
-:meth:<code>Inventory.wait</code> to block until imputation finishes.</p>
+:meth:<code>Inventory.wait</code> to block until the crown base heights are
+computed. Its <code>source</code> records <code>model</code> and <code>overwrite</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>model</code> is not a known model name, a mapping naming one, or a
+crown base height model object.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="UnprocessableEntityException">UnprocessableEntityException</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the source inventory is missing, or has empty values in, a column
+<code>model</code> needs, or <code>overwrite</code> is <code>False</code> and every tree already
+has a crown base height.</p>
               </div>
             </td>
           </tr>
@@ -21081,12 +21615,19 @@ source's values.</p>
 
 <p><span class="doc-section-title">Examples:</span></p>
     <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">sparse</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_file</span><span class="p">(</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span>    <span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;stems.csv&quot;</span>  <span class="c1"># x, y, height only</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">trees</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_file</span><span class="p">(</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span>    <span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;plot_trees.csv&quot;</span>  <span class="c1"># x, y, height, dbh, crown_ratio, species</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">... </span><span class="p">)</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">sparse</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">full</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_gdam</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">sparse</span><span class="p">)</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">full</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">trees</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">inventory</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_crown_base_height</span><span class="p">(</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">... </span>    <span class="n">domain</span><span class="p">,</span> <span class="n">trees</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="gp">... </span><span class="p">)</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">inventory</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span></code></pre></div>
+    <p>Recompute every tree's crown base height with a regional equation:</p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">inventory</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_crown_base_height</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">... </span>    <span class="n">domain</span><span class="p">,</span> <span class="n">trees</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">&quot;toney_reeves_2009&quot;</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span><span class="p">)</span>
 </span></code></pre></div>
 
 
@@ -25469,8 +26010,9 @@ they cover whole cells:</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The tree attribute to test: "dbh", "height", "crown_ratio", or
-"fia_species_code" (an <code>InventoryAttribute</code> member is also accepted).</p>
+                <p>The tree attribute to test: "dbh" (cm), "height" (m),
+"crown_base_height" (m), or "fia_species_code" (an
+<code>InventoryAttribute</code> member is also accepted).</p>
               </div>
             </td>
             <td>
@@ -25783,8 +26325,9 @@ projected CRS, before testing.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The attribute to change ("dbh", "height", "crown_ratio",
-"fia_species_code"; an <code>InventoryAttribute</code> member is also accepted).</p>
+                <p>The attribute to change ("dbh" (cm), "height" (m),
+"crown_base_height" (m), "fia_species_code"; an <code>InventoryAttribute</code>
+member is also accepted).</p>
               </div>
             </td>
             <td>

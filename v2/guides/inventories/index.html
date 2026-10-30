@@ -779,6 +779,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#compute-crown-base-heights" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compute crown base heights
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#wait-for-an-inventory-to-finish" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1191,6 +1202,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#compute-crown-base-heights" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compute crown base heights
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#wait-for-an-inventory-to-finish" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1510,8 +1532,9 @@ PIM cell; the API rejects requests outside that range with a 422.</p>
 </span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">inventory</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </span></code></pre></div>
 <p>The standard column roles are <code>tree_id</code>, <code>x</code>, <code>y</code>, <code>height</code> (m), <code>dbh</code>
-(cm), <code>crown_ratio</code>, <code>crown_radius</code> (m), <code>fia_species_code</code>,
-<code>fia_status_code</code>, and <code>fia_crown_class_code</code>. Columns whose
+(cm), <code>crown_ratio</code> (FIA compacted crown ratio, 0-1), <code>crown_base_height</code>
+(m), <code>crown_radius</code> (m), <code>fia_species_code</code>, <code>fia_status_code</code>, and
+<code>fia_crown_class_code</code>. Columns whose
 names already match need no mapping; otherwise map your file's column names
 onto the roles:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">inventory</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_file</span><span class="p">(</span>
@@ -1531,8 +1554,9 @@ background job — <code>wait()</code> before reading data back:</p>
 <h2 id="impute-missing-morphology-with-gdam">Impute missing morphology with GDAM<a class="headerlink" href="#impute-missing-morphology-with-gdam" title="Permanent link">&para;</a></h2>
 <p>An uploaded inventory may carry only some columns — coordinates and heights,
 say, without diameters or species. <code>create_tree_inventory_from_gdam</code> fills in
-the missing morphology (<code>dbh</code>, <code>crown_ratio</code>, <code>fia_species_code</code>) for a
-completed inventory using GDAM allometry, producing a new inventory:</p>
+the missing morphology (<code>dbh</code>, <code>crown_ratio</code>, <code>fia_species_code</code>,
+<code>crown_base_height</code>) for a completed inventory using GDAM allometry, producing
+a new inventory:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">sparse</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_file</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;stems.csv&quot;</span><span class="p">)</span>
 </span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">sparse</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
@@ -1540,16 +1564,38 @@ completed inventory using GDAM allometry, producing a new inventory:</p>
 </span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="n">full</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </span></code></pre></div>
 <p>Existing values are preserved — only missing cells are imputed. Pass
-<code>impute_columns=["fia_species_code"]</code> to impute just a subset.</p>
+<code>impute_columns=["fia_species_code"]</code> to impute just a subset, or
+<code>overwrite=True</code> to replace every tree's value in the imputed columns. GDAM
+predicts the crown base height too; to compute it with an equation from the
+imputed species, dbh, crown ratio and height instead, pass
+<code>crown_base_height_model=</code> a model name such as <code>"fia_national_logit_2026"</code>.</p>
+<h2 id="compute-crown-base-heights">Compute crown base heights<a class="headerlink" href="#compute-crown-base-heights" title="Permanent link">&para;</a></h2>
+<p>Voxelization and canopy grids need a <code>crown_base_height</code> (m) for every tree.
+To compute it for an inventory that already has species, dbh, crown ratio
+and height, use <code>create_tree_inventory_from_crown_base_height</code>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">trees</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_file</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;plot_trees.csv&quot;</span><span class="p">)</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">trees</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="n">inventory</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_crown_base_height</span><span class="p">(</span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="n">domain</span><span class="p">,</span> <span class="n">trees</span>
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="p">)</span>
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="n">inventory</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span></code></pre></div>
+<p>The default model is <code>"fia_national_logit_2026"</code>; pass <code>model=</code> another
+name (<code>"monleon_2004_eq1"</code>, <code>"monleon_2004_eq2"</code>, <code>"toney_reeves_2009"</code>,
+<code>"randolph_2010"</code>, <code>"westfall_2019"</code>) for a regional equation, or <code>"gdam"</code>
+to predict it from position and height alone. Existing crown base heights are
+kept and only empty cells are filled; pass <code>overwrite=True</code> to recompute
+every tree's.</p>
 <h2 id="wait-for-an-inventory-to-finish">Wait for an inventory to finish<a class="headerlink" href="#wait-for-an-inventory-to-finish" title="Permanent link">&para;</a></h2>
 <p><code>wait</code> polls until the job reaches a terminal status and returns the
 inventory (so calls chain). By default it waits indefinitely; pass
 <code>timeout</code> (seconds) to bound the wait, which raises <code>TimeoutError</code> if
 exceeded. A failed job raises <code>JobFailedError</code>. To join several jobs at
 once, use <code>ff.wait_all</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">ff</span><span class="o">.</span><span class="n">wait_all</span><span class="p">([</span><span class="n">pim</span><span class="p">,</span> <span class="n">inventory</span><span class="p">],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">ff</span><span class="o">.</span><span class="n">wait_all</span><span class="p">([</span><span class="n">pim</span><span class="p">,</span> <span class="n">inventory</span><span class="p">],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>Inventory 7b02df6f583a418da3ec9929037d876d: completed (5s)
+<div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>Inventory 7b02df6f583a418da3ec9929037d876d: completed (5s)
 </span></code></pre></div>
 <h2 id="access-the-tree-records">Access the tree records<a class="headerlink" href="#access-the-tree-records" title="Permanent link">&para;</a></h2>
 <p>For most workflows, <code>to_dataframe()</code> (shown above) is all you need — it
@@ -1558,35 +1604,35 @@ assembles one DataFrame. Pass <code>columns=</code> to retrieve a subset.</p>
 <p>The records are served in fixed-size partitions; to control retrieval
 partition by partition (useful for large inventories), read the partition
 layout first:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">get_data_metadata</span><span class="p">()</span>
-</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">metadata</span><span class="o">.</span><span class="n">total_rows</span>
-</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="mi">71619</span>
-</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">metadata</span><span class="o">.</span><span class="n">num_partitions</span>
-</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="mi">4</span>
-</span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">partition</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">get_data_partition</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-</span><span id="__span-14-7"><a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">partition</span><span class="o">.</span><span class="n">num_rows</span>
-</span><span id="__span-14-8"><a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="mi">34831</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">get_data_metadata</span><span class="p">()</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">metadata</span><span class="o">.</span><span class="n">total_rows</span>
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="mi">71619</span>
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">metadata</span><span class="o">.</span><span class="n">num_partitions</span>
+</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="mi">4</span>
+</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">partition</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">get_data_partition</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">partition</span><span class="o">.</span><span class="n">num_rows</span>
+</span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="mi">34831</span>
 </span></code></pre></div>
 <p><code>get_data_partition</code> uses the compact <code>"split"</code> JSON layout by default, where
 each row in <code>partition.data</code> follows <code>partition.columns</code>. To receive
 self-describing row mappings instead, request the <code>"records"</code> layout:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">partition</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">get_data_partition</span><span class="p">(</span>
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>    <span class="mi">0</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;height&quot;</span><span class="p">],</span> <span class="n">json_orientation</span><span class="o">=</span><span class="s2">&quot;records&quot;</span>
-</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="p">)</span>
-</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="n">first_tree</span> <span class="o">=</span> <span class="n">partition</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">partition</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">get_data_partition</span><span class="p">(</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    <span class="mi">0</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;height&quot;</span><span class="p">],</span> <span class="n">json_orientation</span><span class="o">=</span><span class="s2">&quot;records&quot;</span>
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="p">)</span>
+</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="n">first_tree</span> <span class="o">=</span> <span class="n">partition</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </span></code></pre></div>
 <p>Data is only available once the inventory is <code>"completed"</code> — earlier calls
 raise <code>UnprocessableEntityException</code>.</p>
 <h2 id="summarize-a-column-without-downloading-records">Summarize a column without downloading records<a class="headerlink" href="#summarize-a-column-without-downloading-records" title="Permanent link">&para;</a></h2>
 <p>Once an inventory completes, inspect a column's server-computed summary by
 passing its key to <code>column_summary</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">dbh</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">column_summary</span><span class="p">(</span><span class="s2">&quot;dbh&quot;</span><span class="p">)</span>
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">mean_dbh</span> <span class="o">=</span> <span class="n">dbh</span><span class="o">.</span><span class="n">mean</span>
-</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="n">minimum_dbh</span> <span class="o">=</span> <span class="n">dbh</span><span class="o">.</span><span class="n">min_</span>
-</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="n">maximum_dbh</span> <span class="o">=</span> <span class="n">dbh</span><span class="o">.</span><span class="n">max_</span>
-</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>
-</span><span id="__span-16-6"><a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="n">species</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">column_summary</span><span class="p">(</span><span class="s2">&quot;fia_species_code&quot;</span><span class="p">)</span>
-</span><span id="__span-16-7"><a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="n">species_count</span> <span class="o">=</span> <span class="n">species</span><span class="o">.</span><span class="n">unique_count</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">dbh</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">column_summary</span><span class="p">(</span><span class="s2">&quot;dbh&quot;</span><span class="p">)</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="n">mean_dbh</span> <span class="o">=</span> <span class="n">dbh</span><span class="o">.</span><span class="n">mean</span>
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="n">minimum_dbh</span> <span class="o">=</span> <span class="n">dbh</span><span class="o">.</span><span class="n">min_</span>
+</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="n">maximum_dbh</span> <span class="o">=</span> <span class="n">dbh</span><span class="o">.</span><span class="n">max_</span>
+</span><span id="__span-17-5"><a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
+</span><span id="__span-17-6"><a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="n">species</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">column_summary</span><span class="p">(</span><span class="s2">&quot;fia_species_code&quot;</span><span class="p">)</span>
+</span><span id="__span-17-7"><a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="n">species_count</span> <span class="o">=</span> <span class="n">species</span><span class="o">.</span><span class="n">unique_count</span>
 </span></code></pre></div>
 <p>A continuous column reports <code>count</code>, <code>null_count</code>, <code>min_</code>, <code>max_</code>, <code>mean</code>, and
 <code>std</code>; a categorical column reports <code>count</code>, <code>null_count</code>, and <code>unique_count</code>.
@@ -1596,17 +1642,17 @@ key raises <code>ValueError</code>.</p>
 <h2 id="inspect-stand-level-forestry-metrics">Inspect stand-level forestry metrics<a class="headerlink" href="#inspect-stand-level-forestry-metrics" title="Permanent link">&para;</a></h2>
 <p>Once a tree inventory completes, read its server-computed forestry metrics
 without downloading the tree records:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">metrics</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">forestry_metrics</span>
-</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
-</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="n">tree_count</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">tree_count</span>
-</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="n">basal_area_per_acre</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">basal_area_per_area</span>
-</span><span id="__span-17-5"><a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="n">trees_per_acre</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">tree_density</span>
-</span><span id="__span-17-6"><a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="n">quadratic_mean_diameter_inches</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">quadratic_mean_diameter</span>
-</span><span id="__span-17-7"><a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>
-</span><span id="__span-17-8"><a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="n">dominant_groups</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="__span-17-9"><a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>    <span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">spgrpcd</span><span class="p">,</span> <span class="n">group</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">group</span><span class="o">.</span><span class="n">basal_area_share</span><span class="p">)</span>
-</span><span id="__span-17-10"><a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">metrics</span><span class="o">.</span><span class="n">dominant_species_groups</span>
-</span><span id="__span-17-11"><a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="p">]</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="n">metrics</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">forestry_metrics</span>
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="n">tree_count</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">tree_count</span>
+</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="n">basal_area_per_acre</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">basal_area_per_area</span>
+</span><span id="__span-18-5"><a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="n">trees_per_acre</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">tree_density</span>
+</span><span id="__span-18-6"><a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="n">quadratic_mean_diameter_inches</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">quadratic_mean_diameter</span>
+</span><span id="__span-18-7"><a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>
+</span><span id="__span-18-8"><a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="n">dominant_groups</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-18-9"><a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>    <span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">spgrpcd</span><span class="p">,</span> <span class="n">group</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">group</span><span class="o">.</span><span class="n">basal_area_share</span><span class="p">)</span>
+</span><span id="__span-18-10"><a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">metrics</span><span class="o">.</span><span class="n">dominant_species_groups</span>
+</span><span id="__span-18-11"><a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="p">]</span>
 </span></code></pre></div>
 <p><code>dominant_species_groups</code> is ordered by decreasing basal-area share and
 contains the leading FIA species groups. Only the leading groups are returned,
@@ -1622,10 +1668,10 @@ workflow.</p>
 <h2 id="duplicate-an-inventory">Duplicate an inventory<a class="headerlink" href="#duplicate-an-inventory" title="Permanent link">&para;</a></h2>
 <p><code>duplicate</code> makes an independent copy under a new ID, byte-copying the finished
 data rather than re-deriving it, so the copy starts identical to the source:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">copy</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">duplicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Scenario A&quot;</span><span class="p">)</span>
-</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">copy</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">copy</span><span class="o">.</span><span class="n">checksum</span> <span class="o">==</span> <span class="n">inventory</span><span class="o">.</span><span class="n">checksum</span>
-</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="kc">True</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">copy</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">duplicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Scenario A&quot;</span><span class="p">)</span>
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">copy</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">copy</span><span class="o">.</span><span class="n">checksum</span> <span class="o">==</span> <span class="n">inventory</span><span class="o">.</span><span class="n">checksum</span>
+</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="kc">True</span>
 </span></code></pre></div>
 <p>The <code>checksum</code> is a version marker for an inventory's content: it changes each
 time the data is rebuilt and is unaffected by metadata-only edits, so an
@@ -1636,17 +1682,17 @@ the original untouched (see
 <p>A completed PIM-expanded or uploaded inventory voxelizes into the
 <a href="../creating-grids/#3d-tree-fuel-grids-voxelization">3D tree fuel grid</a> —
 per-voxel canopy bulk density on a 3D lattice:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">voxels</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">voxelize</span><span class="p">(</span>
-</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    <span class="n">horizontal_resolution_m</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">vertical_resolution_m</span><span class="o">=</span><span class="mf">1.0</span>
-</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="p">)</span>
-</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="n">voxels</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="n">voxels</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">voxelize</span><span class="p">(</span>
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>    <span class="n">horizontal_resolution_m</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">vertical_resolution_m</span><span class="o">=</span><span class="mf">1.0</span>
+</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="p">)</span>
+</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="n">voxels</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </span></code></pre></div>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">voxels</span><span class="o">.</span><span class="n">bands</span><span class="p">]</span>
-</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="p">[</span><span class="s1">&#39;bulk_density.foliage.live&#39;</span><span class="p">]</span>
-</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">voxels</span><span class="o">.</span><span class="n">georeference</span><span class="o">.</span><span class="n">crs</span>
-</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="s1">&#39;EPSG:32611&#39;</span>
-</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">voxels</span><span class="o">.</span><span class="n">georeference</span><span class="o">.</span><span class="n">shape</span>   <span class="c1"># [layers, rows, cols]</span>
-</span><span id="__span-20-6"><a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="p">[</span><span class="mi">37</span><span class="p">,</span> <span class="mi">703</span><span class="p">,</span> <span class="mi">863</span><span class="p">]</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">voxels</span><span class="o">.</span><span class="n">bands</span><span class="p">]</span>
+</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="p">[</span><span class="s1">&#39;bulk_density.foliage.live&#39;</span><span class="p">]</span>
+</span><span id="__span-21-3"><a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">voxels</span><span class="o">.</span><span class="n">georeference</span><span class="o">.</span><span class="n">crs</span>
+</span><span id="__span-21-4"><a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="s1">&#39;EPSG:32611&#39;</span>
+</span><span id="__span-21-5"><a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">voxels</span><span class="o">.</span><span class="n">georeference</span><span class="o">.</span><span class="n">shape</span>   <span class="c1"># [layers, rows, cols]</span>
+</span><span id="__span-21-6"><a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="p">[</span><span class="mi">37</span><span class="p">,</span> <span class="mi">703</span><span class="p">,</span> <span class="mi">863</span><span class="p">]</span>
 </span></code></pre></div>
 <p>By default each tree's foliage biomass is distributed with the Purves
 crown profile model using NSVB allometry. Request more bands with
@@ -1663,33 +1709,33 @@ detect trees on a CHM, outline their crowns as a
 impute the morphology voxelization needs with GDAM, and pass the crown
 feature as <code>crown_geometry_source</code>. GDAM keeps each tree's <code>tree_id</code>, so
 its trees still match their crowns:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">chm</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_canopy_height_grid_from_meta</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="n">chm</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-</span><span id="__span-21-3"><a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
-</span><span id="__span-21-4"><a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="n">trees</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_chm_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">chm</span><span class="p">)</span>
-</span><span id="__span-21-5"><a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="n">trees</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-</span><span id="__span-21-6"><a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>
-</span><span id="__span-21-7"><a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="n">crowns</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_crown_feature_from_chm</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">trees</span><span class="p">,</span> <span class="n">chm</span><span class="p">)</span>
-</span><span id="__span-21-8"><a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="n">full</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_gdam</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">trees</span><span class="p">)</span>
-</span><span id="__span-21-9"><a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="n">ff</span><span class="o">.</span><span class="n">wait_all</span><span class="p">([</span><span class="n">crowns</span><span class="p">,</span> <span class="n">full</span><span class="p">])</span>
-</span><span id="__span-21-10"><a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>
-</span><span id="__span-21-11"><a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="n">voxels</span> <span class="o">=</span> <span class="n">full</span><span class="o">.</span><span class="n">voxelize</span><span class="p">(</span>
-</span><span id="__span-21-12"><a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>    <span class="n">horizontal_resolution_m</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
-</span><span id="__span-21-13"><a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>    <span class="n">vertical_resolution_m</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-</span><span id="__span-21-14"><a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a>    <span class="n">crown_geometry_source</span><span class="o">=</span><span class="n">crowns</span><span class="p">,</span>
-</span><span id="__span-21-15"><a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a><span class="p">)</span>
-</span><span id="__span-21-16"><a id="__codelineno-21-16" name="__codelineno-21-16" href="#__codelineno-21-16"></a><span class="n">voxels</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="n">chm</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_canopy_height_grid_from_meta</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="n">chm</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span><span id="__span-22-3"><a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
+</span><span id="__span-22-4"><a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="n">trees</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_chm_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">chm</span><span class="p">)</span>
+</span><span id="__span-22-5"><a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="n">trees</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span><span id="__span-22-6"><a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>
+</span><span id="__span-22-7"><a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="n">crowns</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_crown_feature_from_chm</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">trees</span><span class="p">,</span> <span class="n">chm</span><span class="p">)</span>
+</span><span id="__span-22-8"><a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="n">full</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_gdam</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">trees</span><span class="p">)</span>
+</span><span id="__span-22-9"><a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="n">ff</span><span class="o">.</span><span class="n">wait_all</span><span class="p">([</span><span class="n">crowns</span><span class="p">,</span> <span class="n">full</span><span class="p">])</span>
+</span><span id="__span-22-10"><a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>
+</span><span id="__span-22-11"><a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="n">voxels</span> <span class="o">=</span> <span class="n">full</span><span class="o">.</span><span class="n">voxelize</span><span class="p">(</span>
+</span><span id="__span-22-12"><a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>    <span class="n">horizontal_resolution_m</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
+</span><span id="__span-22-13"><a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>    <span class="n">vertical_resolution_m</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+</span><span id="__span-22-14"><a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>    <span class="n">crown_geometry_source</span><span class="o">=</span><span class="n">crowns</span><span class="p">,</span>
+</span><span id="__span-22-15"><a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a><span class="p">)</span>
+</span><span id="__span-22-16"><a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a><span class="n">voxels</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </span></code></pre></div>
 <p><code>crown_geometry_source</code> also accepts the crown feature's id. Trees with no
 crown in the feature are drawn with <code>crown_profile_model</code> as usual. Once the
 grid completes, <code>source["crown_geometry_counts"]</code> reports how many trees got
 a measured crown and why the others were drawn parametrically:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">voxels</span><span class="o">.</span><span class="n">source</span><span class="p">[</span><span class="s2">&quot;crown_geometry_counts&quot;</span><span class="p">]</span>
-</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="p">{</span><span class="s1">&#39;parametric_no_crown&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;parametric_stem_outside_crown&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;parametric_no_volume&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;measured&#39;</span><span class="p">:</span> <span class="mi">18218</span><span class="p">}</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">voxels</span><span class="o">.</span><span class="n">source</span><span class="p">[</span><span class="s2">&quot;crown_geometry_counts&quot;</span><span class="p">]</span>
+</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="p">{</span><span class="s1">&#39;parametric_no_crown&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;parametric_stem_outside_crown&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;parametric_no_volume&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;measured&#39;</span><span class="p">:</span> <span class="mi">18218</span><span class="p">}</span>
 </span></code></pre></div>
 <p>To cap per-voxel bulk density, pass <code>max_bulk_density=</code> in <code>kg/m**3</code>. It
 works with either crown source:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="n">voxels</span> <span class="o">=</span> <span class="n">full</span><span class="o">.</span><span class="n">voxelize</span><span class="p">(</span><span class="n">crown_geometry_source</span><span class="o">=</span><span class="n">crowns</span><span class="p">,</span> <span class="n">max_bulk_density</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="n">voxels</span> <span class="o">=</span> <span class="n">full</span><span class="o">.</span><span class="n">voxelize</span><span class="p">(</span><span class="n">crown_geometry_source</span><span class="o">=</span><span class="n">crowns</span><span class="p">,</span> <span class="n">max_bulk_density</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
 </span></code></pre></div>
 <p>A crown feature id that doesn't exist raises <code>NotFoundException</code>; a feature
 that isn't a completed crown feature, or one whose CHM grid has been deleted,
@@ -1700,66 +1746,66 @@ the <a href="https://docs.fastfuels.silvxlabs.com">FastFuels documentation</a>.<
 <code>export</code> with a format — <code>"parquet"</code> (zipped, default), <code>"csv"</code>,
 <code>"geojson"</code>, or <code>"geopackage"</code> — and chain the export job's <code>wait</code> into
 <code>to_file</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="n">export</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;csv&quot;</span><span class="p">)</span>
-</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="n">export</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="s2">&quot;trees.csv&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="n">export</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;csv&quot;</span><span class="p">)</span>
+</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="n">export</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="s2">&quot;trees.csv&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <p>Pass <code>columns=</code> to export a column subset. For managing exports, see the
 <a href="../exports/">Exports guide</a>.</p>
 <h2 id="retrieve-an-existing-inventory">Retrieve an existing inventory<a class="headerlink" href="#retrieve-an-existing-inventory" title="Permanent link">&para;</a></h2>
 <p>To fetch an inventory using its domain and inventory IDs:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="n">inventory</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">get_inventory</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;7b02df6f583a418da3ec9929037d876d&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="n">inventory</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">get_inventory</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;7b02df6f583a418da3ec9929037d876d&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="refresh-and-update">Refresh and update<a class="headerlink" href="#refresh-and-update" title="Permanent link">&para;</a></h2>
 <p>To reload an inventory's latest state from the API in place:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="n">inventory</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
-</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">inventory</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="n">inventory</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+</span><span id="__span-27-2"><a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">inventory</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
 </span></code></pre></div>
 <p>To modify an inventory's name, description, or tags:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="n">inventory</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;New Name&quot;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;thinned&quot;</span><span class="p">])</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="n">inventory</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;New Name&quot;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;thinned&quot;</span><span class="p">])</span>
 </span></code></pre></div>
 <p>Both update the inventory in place and return it. <code>update</code> sends only the
 fields you pass; passing none makes no API call.</p>
 <h2 id="list-inventories">List inventories<a class="headerlink" href="#list-inventories" title="Permanent link">&para;</a></h2>
 <p>To list inventories in a domain:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="n">inventories</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_inventories</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="n">inventories</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_inventories</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
 </span></code></pre></div>
 <p>To list inventories across all your domains, omit the domain:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="n">all_inventories</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_inventories</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="n">all_inventories</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_inventories</span><span class="p">()</span>
 </span></code></pre></div>
 <p>Narrow the results with filters:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="n">pim_inventories</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_inventories</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">&quot;pim&quot;</span><span class="p">)</span>
-</span><span id="__span-30-2"><a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="n">tagged</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_inventories</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;thinned&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="n">pim_inventories</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_inventories</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">&quot;pim&quot;</span><span class="p">)</span>
+</span><span id="__span-31-2"><a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="n">tagged</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_inventories</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;thinned&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="delete-an-inventory">Delete an inventory<a class="headerlink" href="#delete-an-inventory" title="Permanent link">&para;</a></h2>
 <p>To permanently delete an inventory and its tree records:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="n">inventory</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="n">inventory</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
 </span></code></pre></div>
 <p>Deleting a domain also deletes all of its inventories.</p>
 <h2 id="error-handling">Error handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
 <p>Wrapper functions and methods raise typed exceptions from
 <code>fastfuels_sdk.v2.exceptions</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
-</span><span id="__span-32-2"><a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-</span><span id="__span-32-3"><a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>    <span class="n">NotFoundException</span><span class="p">,</span>
-</span><span id="__span-32-4"><a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>    <span class="n">UnprocessableEntityException</span><span class="p">,</span>
-</span><span id="__span-32-5"><a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="p">)</span>
-</span><span id="__span-32-6"><a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>
-</span><span id="__span-32-7"><a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="k">try</span><span class="p">:</span>
-</span><span id="__span-32-8"><a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>    <span class="n">inventory</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">get_inventory</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;does-not-exist&quot;</span><span class="p">)</span>
-</span><span id="__span-32-9"><a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a><span class="k">except</span> <span class="n">NotFoundException</span><span class="p">:</span>
-</span><span id="__span-32-10"><a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No such inventory (or you don&#39;t have access to it)&quot;</span><span class="p">)</span>
-</span><span id="__span-32-11"><a id="__codelineno-32-11" name="__codelineno-32-11" href="#__codelineno-32-11"></a>
-</span><span id="__span-32-12"><a id="__codelineno-32-12" name="__codelineno-32-12" href="#__codelineno-32-12"></a><span class="k">try</span><span class="p">:</span>
-</span><span id="__span-32-13"><a id="__codelineno-32-13" name="__codelineno-32-13" href="#__codelineno-32-13"></a>    <span class="n">trees</span> <span class="o">=</span> <span class="n">running_inventory</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span>
-</span><span id="__span-32-14"><a id="__codelineno-32-14" name="__codelineno-32-14" href="#__codelineno-32-14"></a><span class="k">except</span> <span class="n">UnprocessableEntityException</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-</span><span id="__span-32-15"><a id="__codelineno-32-15" name="__codelineno-32-15" href="#__codelineno-32-15"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">exc</span><span class="o">.</span><span class="n">detail</span><span class="p">)</span>
-</span><span id="__span-32-16"><a id="__codelineno-32-16" name="__codelineno-32-16" href="#__codelineno-32-16"></a>    <span class="c1"># inventories/a6840e0c7cd64de896954d95afc6aea0 status is &#39;running&#39;,</span>
-</span><span id="__span-32-17"><a id="__codelineno-32-17" name="__codelineno-32-17" href="#__codelineno-32-17"></a>    <span class="c1"># expected &#39;completed&#39;.</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-33-1"><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
+</span><span id="__span-33-2"><a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="__span-33-3"><a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>    <span class="n">NotFoundException</span><span class="p">,</span>
+</span><span id="__span-33-4"><a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>    <span class="n">UnprocessableEntityException</span><span class="p">,</span>
+</span><span id="__span-33-5"><a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="p">)</span>
+</span><span id="__span-33-6"><a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>
+</span><span id="__span-33-7"><a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a><span class="k">try</span><span class="p">:</span>
+</span><span id="__span-33-8"><a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>    <span class="n">inventory</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">get_inventory</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;does-not-exist&quot;</span><span class="p">)</span>
+</span><span id="__span-33-9"><a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a><span class="k">except</span> <span class="n">NotFoundException</span><span class="p">:</span>
+</span><span id="__span-33-10"><a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No such inventory (or you don&#39;t have access to it)&quot;</span><span class="p">)</span>
+</span><span id="__span-33-11"><a id="__codelineno-33-11" name="__codelineno-33-11" href="#__codelineno-33-11"></a>
+</span><span id="__span-33-12"><a id="__codelineno-33-12" name="__codelineno-33-12" href="#__codelineno-33-12"></a><span class="k">try</span><span class="p">:</span>
+</span><span id="__span-33-13"><a id="__codelineno-33-13" name="__codelineno-33-13" href="#__codelineno-33-13"></a>    <span class="n">trees</span> <span class="o">=</span> <span class="n">running_inventory</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span>
+</span><span id="__span-33-14"><a id="__codelineno-33-14" name="__codelineno-33-14" href="#__codelineno-33-14"></a><span class="k">except</span> <span class="n">UnprocessableEntityException</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+</span><span id="__span-33-15"><a id="__codelineno-33-15" name="__codelineno-33-15" href="#__codelineno-33-15"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">exc</span><span class="o">.</span><span class="n">detail</span><span class="p">)</span>
+</span><span id="__span-33-16"><a id="__codelineno-33-16" name="__codelineno-33-16" href="#__codelineno-33-16"></a>    <span class="c1"># inventories/a6840e0c7cd64de896954d95afc6aea0 status is &#39;running&#39;,</span>
+</span><span id="__span-33-17"><a id="__codelineno-33-17" name="__codelineno-33-17" href="#__codelineno-33-17"></a>    <span class="c1"># expected &#39;completed&#39;.</span>
 </span></code></pre></div>
 <p>Deriving from an inventory that is not completed raises a <code>ValueError</code>
 before any API call:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-33-1"><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">pending_inventory</span><span class="o">.</span><span class="n">voxelize</span><span class="p">(</span><span class="n">horizontal_resolution_m</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">vertical_resolution_m</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
-</span><span id="__span-33-2"><a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="ne">ValueError</span><span class="p">:</span> <span class="n">Cannot</span> <span class="n">voxelize</span> <span class="n">an</span> <span class="n">inventory</span> <span class="k">with</span> <span class="n">status</span> <span class="s1">&#39;pending&#39;</span><span class="o">.</span> <span class="n">Call</span> <span class="o">.</span><span class="n">wait</span><span class="p">()</span> <span class="n">until</span> <span class="n">it</span> <span class="n">completes</span> <span class="n">first</span><span class="o">.</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-34-1"><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">pending_inventory</span><span class="o">.</span><span class="n">voxelize</span><span class="p">(</span><span class="n">horizontal_resolution_m</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">vertical_resolution_m</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+</span><span id="__span-34-2"><a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="ne">ValueError</span><span class="p">:</span> <span class="n">Cannot</span> <span class="n">voxelize</span> <span class="n">an</span> <span class="n">inventory</span> <span class="k">with</span> <span class="n">status</span> <span class="s1">&#39;pending&#39;</span><span class="o">.</span> <span class="n">Call</span> <span class="o">.</span><span class="n">wait</span><span class="p">()</span> <span class="n">until</span> <span class="n">it</span> <span class="n">completes</span> <span class="n">first</span><span class="o">.</span>
 </span></code></pre></div>
 <h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>

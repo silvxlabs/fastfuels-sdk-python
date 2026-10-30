@@ -1579,8 +1579,9 @@ not supported. Migrate one workflow at a time, pointing
   cover threshold v1 fixed internally.</li>
 <li><strong>Upload columns changed.</strong> v1 uploads required <code>TREE_ID</code>, <code>SPCD</code>,
   <code>STATUSCD</code>, <code>DIA</code>, <code>HT</code> columns. v2 uses the roles <code>x</code>, <code>y</code>, <code>height</code>,
-  <code>dbh</code>, <code>crown_ratio</code>, <code>fia_species_code</code>, <code>fia_status_code</code>, and a
-  <code>columns={role: your_name}</code> mapping replaces renaming your file.</li>
+  <code>dbh</code>, <code>crown_ratio</code>, <code>crown_base_height</code>, <code>fia_species_code</code>,
+  <code>fia_status_code</code>, and a <code>columns={role: your_name}</code> mapping replaces
+  renaming your file.</li>
 <li><strong>Modifications and treatments are typed models.</strong> v1's dict syntax
   (<code>{"attribute": "HT", ...}</code>) becomes the generated
   <code>InventoryModification</code> / treatment models, passed to <code>modifications=</code> /
