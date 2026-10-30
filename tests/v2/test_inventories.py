@@ -17,8 +17,10 @@ from fastfuels_sdk.v2.inventories import (
     Inventory,
     ParametricCrownGeometrySource,
     ReimputationMethod,
+    _build_crown_base_height_model,
     _build_fusion_method,
     create_tree_inventory_from_chm_grid,
+    create_tree_inventory_from_crown_base_height,
     create_tree_inventory_from_file,
     create_tree_inventory_from_gdam,
     create_tree_inventory_from_pim_chm_fusion,
@@ -34,6 +36,8 @@ from fastfuels_sdk.v2.client_library.models import (
     ColumnType,
     ContinuousColumnSummary,
     FIASpeciesGroupShare,
+    FiaNationalLogit2026Model,
+    GdamModel,
     Inventory as InventoryModel,
     InventoryAttribute,
     InventoryDataResponse,
@@ -45,9 +49,14 @@ from fastfuels_sdk.v2.client_library.models import (
     InventoryType,
     JobStatus,
     Modifier,
+    Monleon2004Eq1Model,
+    Monleon2004Eq2Model,
+    Randolph2010Model,
     StemIsolationVwf,
     Operator,
+    ToneyReeves2009Model,
     TreeForestryMetrics,
+    Westfall2019Model,
 )
 from fastfuels_sdk.v2.client_library.types import UNSET, Response
 from fastfuels_sdk.v2.exceptions import (
@@ -194,7 +203,9 @@ class TestCreateTreeInventoryFromPimChmFusion:
         assert inventory.status == JobStatus.COMPLETED
         trees = inventory.to_dataframe()
         assert len(trees) > 0
-        assert {"x", "y", "dbh", "height", "crown_ratio"} <= set(trees.columns)
+        assert {"x", "y", "dbh", "height", "crown_ratio", "crown_base_height"} <= set(
+            trees.columns
+        )
         inventory.delete()
 
 
@@ -463,6 +474,163 @@ class TestCreateTreeInventoryFromGdam:
         )
         assert imputed.domain_id == test_domain.id
         imputed.delete()
+
+
+class TestCreateTreeInventoryFromCrownBaseHeight:
+    def test_create_returns_new_pending_inventory(
+        self, test_domain, completed_tree_inventory
+    ):
+        # The PIM fixture already has a crown base height for every tree, so
+        # the API requires overwrite=True.
+        inventory = create_tree_inventory_from_crown_base_height(
+            test_domain,
+            completed_tree_inventory,
+            model="toney_reeves_2009",
+            overwrite=True,
+            name="throwaway_crown_base_height",
+        )
+        assert isinstance(inventory, Inventory)
+        assert inventory.id != completed_tree_inventory.id
+        assert inventory.domain_id == test_domain.id
+        assert inventory.status in (JobStatus.PENDING, JobStatus.RUNNING)
+        inventory.delete()
+
+
+class TestBuildCrownBaseHeightModel:
+    @pytest.mark.parametrize(
+        "name, model_cls",
+        [
+            ("fia_national_logit_2026", FiaNationalLogit2026Model),
+            ("monleon_2004_eq1", Monleon2004Eq1Model),
+            ("monleon_2004_eq2", Monleon2004Eq2Model),
+            ("toney_reeves_2009", ToneyReeves2009Model),
+            ("randolph_2010", Randolph2010Model),
+            ("westfall_2019", Westfall2019Model),
+            ("gdam", GdamModel),
+        ],
+    )
+    def test_name_builds_model(self, name, model_cls):
+        model = _build_crown_base_height_model(name, "model")
+        assert isinstance(model, model_cls)
+        assert model.to_dict() == {"name": name}
+
+    def test_none_is_unset(self):
+        assert _build_crown_base_height_model(None, "model") is UNSET
+
+    def test_model_passes_through(self):
+        model = GdamModel()
+        assert _build_crown_base_height_model(model, "model") is model
+
+    def test_mapping_builds_model(self):
+        model = _build_crown_base_height_model({"name": "westfall_2019"}, "model")
+        assert isinstance(model, Westfall2019Model)
+
+    @pytest.mark.parametrize(
+        "value", ["fia_national", {"method": "gdam"}, 3, ReimputationMethod()]
+    )
+    def test_rejects_unknown(self, value):
+        with pytest.raises(ValueError, match="crown_base_height_model must be"):
+            _build_crown_base_height_model(value, "crown_base_height_model")
+
+
+class TestCreateTreeInventoryFromCrownBaseHeightRequest:
+    @pytest.fixture
+    def captured(self, monkeypatch):
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, body=body.to_dict())
+            return _created_inventory_response(domain_id)
+
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.ensure_client", lambda: object()
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.create_crown_base_height_inventory.sync_detailed",
+            fake_create,
+        )
+        return captured
+
+    def test_defaults(self, captured):
+        inventory = create_tree_inventory_from_crown_base_height(
+            "domain-id", "inventory-id"
+        )
+        assert isinstance(inventory, Inventory)
+        assert captured["domain_id"] == "domain-id"
+        assert captured["body"] == {
+            "source_tree_inventory_id": "inventory-id",
+            "overwrite": False,
+            "name": "",
+            "description": "",
+        }
+
+    def test_all_fields(self, captured):
+        create_tree_inventory_from_crown_base_height(
+            SimpleNamespace(id="domain-id"),
+            SimpleNamespace(id="inventory-id"),
+            model="gdam",
+            overwrite=True,
+            name="cbh",
+            description="crown bases",
+            tags=["a"],
+        )
+        assert captured["domain_id"] == "domain-id"
+        assert captured["body"] == {
+            "source_tree_inventory_id": "inventory-id",
+            "model": {"name": "gdam"},
+            "overwrite": True,
+            "name": "cbh",
+            "description": "crown bases",
+            "tags": ["a"],
+        }
+
+    def test_rejects_unknown_model_before_request(self, captured):
+        with pytest.raises(ValueError, match="model must be"):
+            create_tree_inventory_from_crown_base_height(
+                "domain-id", "inventory-id", model="cruz_2003"
+            )
+        assert captured == {}
+
+
+class TestCreateTreeInventoryFromGdamRequest:
+    @pytest.fixture
+    def captured(self, monkeypatch):
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, body=body.to_dict())
+            return _created_inventory_response(domain_id)
+
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.ensure_client", lambda: object()
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.create_gdam_inventory.sync_detailed",
+            fake_create,
+        )
+        return captured
+
+    def test_defaults(self, captured):
+        create_tree_inventory_from_gdam("domain-id", "inventory-id")
+        assert captured["body"] == {
+            "source_tree_inventory_id": "inventory-id",
+            "overwrite": False,
+            "name": "",
+            "description": "",
+        }
+
+    def test_crown_base_height_model_and_overwrite(self, captured):
+        create_tree_inventory_from_gdam(
+            "domain-id",
+            "inventory-id",
+            impute_columns=["dbh", "crown_base_height"],
+            crown_base_height_model="fia_national_logit_2026",
+            overwrite=True,
+        )
+        body = captured["body"]
+        assert body["impute_columns"] == ["dbh", "crown_base_height"]
+        assert body["crown_base_height_model"] == {"name": "fia_national_logit_2026"}
+        assert body["overwrite"] is True
 
 
 class TestFromId:

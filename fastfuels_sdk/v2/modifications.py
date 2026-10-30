@@ -162,8 +162,9 @@ def tree_attribute(attribute, operator, value, *, unit: Optional[str] = None):
     Parameters
     ----------
     attribute : str
-        The tree attribute to test: "dbh", "height", "crown_ratio", or
-        "fia_species_code" (an ``InventoryAttribute`` member is also accepted).
+        The tree attribute to test: "dbh" (cm), "height" (m),
+        "crown_base_height" (m), or "fia_species_code" (an
+        ``InventoryAttribute`` member is also accepted).
     operator : str
         A comparison: ``"<"``, ``"<="``, ``">"``, ``">="``, ``"=="``, ``"!="``
         (or the names ``"lt"``, ``"le"``, ``"gt"``, ``"ge"``, ``"eq"``,
@@ -246,8 +247,9 @@ def modify_trees(
     Parameters
     ----------
     attribute : str
-        The attribute to change ("dbh", "height", "crown_ratio",
-        "fia_species_code"; an ``InventoryAttribute`` member is also accepted).
+        The attribute to change ("dbh" (cm), "height" (m),
+        "crown_base_height" (m), "fia_species_code"; an ``InventoryAttribute``
+        member is also accepted).
     modifier : str
         How to change it: "replace", "add", "subtract", "multiply", or
         "divide" (a ``Modifier`` member is also accepted). To drop trees, use

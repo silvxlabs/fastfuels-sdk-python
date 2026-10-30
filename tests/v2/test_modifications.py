@@ -53,6 +53,14 @@ class TestTreeAttribute:
         with pytest.raises(ValueError):
             tree_attribute("girth", "<", 1)
 
+    def test_crown_base_height_attribute(self):
+        condition = tree_attribute("crown_base_height", ">", 2)
+        assert condition.attribute == InventoryAttribute.CROWN_BASE_HEIGHT
+
+    def test_crown_ratio_is_not_an_attribute(self):
+        with pytest.raises(ValueError):
+            tree_attribute("crown_ratio", "<", 0.5)
+
 
 class TestTreeWithin:
     def test_builds_feature_condition(self):

@@ -234,8 +234,9 @@ Available now — see the [Inventories guide](inventories.md) and the
   cover threshold v1 fixed internally.
 - **Upload columns changed.** v1 uploads required `TREE_ID`, `SPCD`,
   `STATUSCD`, `DIA`, `HT` columns. v2 uses the roles `x`, `y`, `height`,
-  `dbh`, `crown_ratio`, `fia_species_code`, `fia_status_code`, and a
-  `columns={role: your_name}` mapping replaces renaming your file.
+  `dbh`, `crown_ratio`, `crown_base_height`, `fia_species_code`,
+  `fia_status_code`, and a `columns={role: your_name}` mapping replaces
+  renaming your file.
 - **Modifications and treatments are typed models.** v1's dict syntax
   (`{"attribute": "HT", ...}`) becomes the generated
   `InventoryModification` / treatment models, passed to `modifications=` /

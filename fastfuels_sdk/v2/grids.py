@@ -1596,6 +1596,10 @@ def create_canopy_fuel_grid_from_inventory(
         If ``inventory`` is passed as a bare id with no resolvable domain, if
         mutually exclusive kwargs are combined, or if a method name is
         unknown.
+    UnprocessableEntityException
+        If the inventory lacks a column the request needs, such as
+        ``crown_base_height`` (see
+        :func:`fastfuels_sdk.v2.inventories.create_tree_inventory_from_crown_base_height`).
 
     Examples
     --------
