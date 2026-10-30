@@ -6,7 +6,7 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.create_gdam_inventory_request import CreateGdamInventoryRequest
+from ...models.create_gdam_allometry_request import CreateGdamAllometryRequest
 from ...models.http_validation_error import HTTPValidationError
 from ...models.inventory import Inventory
 from ...models.quota_exceeded_detail import QuotaExceededDetail
@@ -16,7 +16,7 @@ from ...types import Response
 def _get_kwargs(
     domain_id: str,
     *,
-    body: CreateGdamInventoryRequest,
+    body: CreateGdamAllometryRequest,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -74,7 +74,7 @@ def sync_detailed(
     domain_id: str,
     *,
     client: AuthenticatedClient,
-    body: CreateGdamInventoryRequest,
+    body: CreateGdamAllometryRequest,
 ) -> Response[HTTPValidationError | Inventory | QuotaExceededDetail]:
     r"""Create an inventory by filling in another via GDAM
 
@@ -164,7 +164,7 @@ def sync_detailed(
 
     Args:
         domain_id (str):
-        body (CreateGdamInventoryRequest): Request body for creating an inventory via GDAM
+        body (CreateGdamAllometryRequest): Request body for creating an inventory via GDAM
             allometry imputation.
 
     Raises:
@@ -191,7 +191,7 @@ def sync(
     domain_id: str,
     *,
     client: AuthenticatedClient,
-    body: CreateGdamInventoryRequest,
+    body: CreateGdamAllometryRequest,
 ) -> HTTPValidationError | Inventory | QuotaExceededDetail | None:
     r"""Create an inventory by filling in another via GDAM
 
@@ -281,7 +281,7 @@ def sync(
 
     Args:
         domain_id (str):
-        body (CreateGdamInventoryRequest): Request body for creating an inventory via GDAM
+        body (CreateGdamAllometryRequest): Request body for creating an inventory via GDAM
             allometry imputation.
 
     Raises:
@@ -303,7 +303,7 @@ async def asyncio_detailed(
     domain_id: str,
     *,
     client: AuthenticatedClient,
-    body: CreateGdamInventoryRequest,
+    body: CreateGdamAllometryRequest,
 ) -> Response[HTTPValidationError | Inventory | QuotaExceededDetail]:
     r"""Create an inventory by filling in another via GDAM
 
@@ -393,7 +393,7 @@ async def asyncio_detailed(
 
     Args:
         domain_id (str):
-        body (CreateGdamInventoryRequest): Request body for creating an inventory via GDAM
+        body (CreateGdamAllometryRequest): Request body for creating an inventory via GDAM
             allometry imputation.
 
     Raises:
@@ -418,7 +418,7 @@ async def asyncio(
     domain_id: str,
     *,
     client: AuthenticatedClient,
-    body: CreateGdamInventoryRequest,
+    body: CreateGdamAllometryRequest,
 ) -> HTTPValidationError | Inventory | QuotaExceededDetail | None:
     r"""Create an inventory by filling in another via GDAM
 
@@ -508,7 +508,7 @@ async def asyncio(
 
     Args:
         domain_id (str):
-        body (CreateGdamInventoryRequest): Request body for creating an inventory via GDAM
+        body (CreateGdamAllometryRequest): Request body for creating an inventory via GDAM
             allometry imputation.
 
     Raises:

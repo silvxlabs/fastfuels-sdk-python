@@ -6,9 +6,6 @@ from typing import TYPE_CHECKING, Any, Self, TypeVar, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.create_gdam_inventory_request_impute_columns_item import (
-    CreateGdamInventoryRequestImputeColumnsItem,
-)
 from ..models.inventory_type import InventoryType
 from ..types import UNSET, Unset
 
@@ -22,34 +19,28 @@ if TYPE_CHECKING:
     from ..models.westfall_2019_model import Westfall2019Model
 
 
-T = TypeVar("T", bound="CreateGdamInventoryRequest")
+T = TypeVar("T", bound="CreateCrownBaseHeightAllometryRequest")
 
 
 @_attrs_define
-class CreateGdamInventoryRequest:
-    """Request body for creating an inventory via GDAM allometry imputation.
+class CreateCrownBaseHeightAllometryRequest:
+    """Request body for creating an inventory with model-computed crown base
+    heights.
 
-    Attributes:
-        source_tree_inventory_id (str): ID of a completed tree inventory whose morphology columns (dbh, crown ratio,
-            species, crown base height) will be filled in.
-        type_ (InventoryType | Unset): Type of entities in the inventory.
-        name (str | Unset):  Default: ''.
-        description (str | Unset):  Default: ''.
-        tags (list[str] | Unset):
-        impute_columns (list[CreateGdamInventoryRequestImputeColumnsItem] | Unset): Which morphology columns to impute.
-            Defaults to all of `dbh`, `crown_ratio`, `fia_species_code`, `crown_base_height`. Narrow it (e.g.
-            `['fia_species_code']`) to impute fewer columns and write less to disk; columns left out are not imputed (they
-            stay as the source had them). GDAM predicts `dbh`, `crown_ratio` and `fia_species_code`, and `crown_base_height`
-            with the `gdam` `crown_base_height_model`. Any other model computes `crown_base_height` from those and `height`,
-            so each of them must be imputed too or be a column of the source inventory, and with `overwrite`, replacing
-            `crown_ratio` without `crown_base_height` leaves crown bases that no longer match the new crown ratios. Must
-            contain at least one column, with no duplicates.
-        overwrite (bool | Unset): `false` keeps existing values and fills only empty cells of `impute_columns`. `true`
-            replaces every tree's value in `impute_columns`; the old values are not given to GDAM. Default: False.
-        crown_base_height_model (FiaNationalLogit2026Model | GdamModel | Monleon2004Eq1Model | Monleon2004Eq2Model |
-            Randolph2010Model | ToneyReeves2009Model | Unset | Westfall2019Model): The model that gives `crown_base_height`.
-            `gdam` (the default) predicts it with the other columns; any other model computes it from each tree's species,
-            dbh, crown ratio and height after GDAM fills them.
+        Attributes:
+            source_tree_inventory_id (str): ID of a completed tree inventory with position and height for every tree, and
+                species, dbh and crown ratio for every tree unless `model` is `gdam`.
+            type_ (InventoryType | Unset): Type of entities in the inventory.
+            name (str | Unset):  Default: ''.
+            description (str | Unset):  Default: ''.
+            tags (list[str] | Unset):
+            model (FiaNationalLogit2026Model | GdamModel | Monleon2004Eq1Model | Monleon2004Eq2Model | Randolph2010Model |
+                ToneyReeves2009Model | Unset | Westfall2019Model): The model that gives each tree's crown base height, selected
+                by `name`. `gdam` predicts it with GDAM, conditioned on whichever of species, dbh, crown ratio and crown base
+                height the tree has. The other models compute it from species, dbh, crown ratio and height; species a model does
+                not cover get no crown base height.
+            overwrite (bool | Unset): `false` keeps existing crown base heights and fills only empty cells. `true`
+                recomputes every tree's crown base height with `model`; `gdam` is not given the old values. Default: False.
     """
 
     source_tree_inventory_id: str
@@ -57,9 +48,7 @@ class CreateGdamInventoryRequest:
     name: str | Unset = ""
     description: str | Unset = ""
     tags: list[str] | Unset = UNSET
-    impute_columns: list[CreateGdamInventoryRequestImputeColumnsItem] | Unset = UNSET
-    overwrite: bool | Unset = False
-    crown_base_height_model: (
+    model: (
         FiaNationalLogit2026Model
         | GdamModel
         | Monleon2004Eq1Model
@@ -69,6 +58,7 @@ class CreateGdamInventoryRequest:
         | Unset
         | Westfall2019Model
     ) = UNSET
+    overwrite: bool | Unset = False
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -93,29 +83,22 @@ class CreateGdamInventoryRequest:
         if not isinstance(self.tags, Unset):
             tags = self.tags
 
-        impute_columns: list[str] | Unset = UNSET
-        if not isinstance(self.impute_columns, Unset):
-            impute_columns = []
-            for impute_columns_item_data in self.impute_columns:
-                impute_columns_item = impute_columns_item_data.value
-                impute_columns.append(impute_columns_item)
+        model: dict[str, Any] | Unset
+        if isinstance(self.model, Unset):
+            model = UNSET
+        elif (
+            isinstance(self.model, FiaNationalLogit2026Model)
+            or isinstance(self.model, Monleon2004Eq1Model)
+            or isinstance(self.model, Monleon2004Eq2Model)
+            or isinstance(self.model, ToneyReeves2009Model)
+            or isinstance(self.model, Randolph2010Model)
+            or isinstance(self.model, Westfall2019Model)
+        ):
+            model = self.model.to_dict()
+        else:
+            model = self.model.to_dict()
 
         overwrite = self.overwrite
-
-        crown_base_height_model: dict[str, Any] | Unset
-        if isinstance(self.crown_base_height_model, Unset):
-            crown_base_height_model = UNSET
-        elif (
-            isinstance(self.crown_base_height_model, FiaNationalLogit2026Model)
-            or isinstance(self.crown_base_height_model, Monleon2004Eq1Model)
-            or isinstance(self.crown_base_height_model, Monleon2004Eq2Model)
-            or isinstance(self.crown_base_height_model, ToneyReeves2009Model)
-            or isinstance(self.crown_base_height_model, Randolph2010Model)
-            or isinstance(self.crown_base_height_model, Westfall2019Model)
-        ):
-            crown_base_height_model = self.crown_base_height_model.to_dict()
-        else:
-            crown_base_height_model = self.crown_base_height_model.to_dict()
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -132,12 +115,10 @@ class CreateGdamInventoryRequest:
             field_dict["description"] = description
         if tags is not UNSET:
             field_dict["tags"] = tags
-        if impute_columns is not UNSET:
-            field_dict["impute_columns"] = impute_columns
+        if model is not UNSET:
+            field_dict["model"] = model
         if overwrite is not UNSET:
             field_dict["overwrite"] = overwrite
-        if crown_base_height_model is not UNSET:
-            field_dict["crown_base_height_model"] = crown_base_height_model
 
         return field_dict
 
@@ -167,22 +148,7 @@ class CreateGdamInventoryRequest:
 
         tags = cast(list[str], d.pop("tags", UNSET))
 
-        _impute_columns = d.pop("impute_columns", UNSET)
-        impute_columns: list[CreateGdamInventoryRequestImputeColumnsItem] | Unset = (
-            UNSET
-        )
-        if _impute_columns is not UNSET:
-            impute_columns = []
-            for impute_columns_item_data in _impute_columns:
-                impute_columns_item = CreateGdamInventoryRequestImputeColumnsItem(
-                    impute_columns_item_data
-                )
-
-                impute_columns.append(impute_columns_item)
-
-        overwrite = d.pop("overwrite", UNSET)
-
-        def _parse_crown_base_height_model(
+        def _parse_model(
             data: object,
         ) -> (
             FiaNationalLogit2026Model
@@ -199,76 +165,73 @@ class CreateGdamInventoryRequest:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                crown_base_height_model_type_0 = FiaNationalLogit2026Model.from_dict(
-                    data
-                )
+                model_type_0 = FiaNationalLogit2026Model.from_dict(data)
 
-                return crown_base_height_model_type_0
+                return model_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                crown_base_height_model_type_1 = Monleon2004Eq1Model.from_dict(data)
+                model_type_1 = Monleon2004Eq1Model.from_dict(data)
 
-                return crown_base_height_model_type_1
+                return model_type_1
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                crown_base_height_model_type_2 = Monleon2004Eq2Model.from_dict(data)
+                model_type_2 = Monleon2004Eq2Model.from_dict(data)
 
-                return crown_base_height_model_type_2
+                return model_type_2
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                crown_base_height_model_type_3 = ToneyReeves2009Model.from_dict(data)
+                model_type_3 = ToneyReeves2009Model.from_dict(data)
 
-                return crown_base_height_model_type_3
+                return model_type_3
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                crown_base_height_model_type_4 = Randolph2010Model.from_dict(data)
+                model_type_4 = Randolph2010Model.from_dict(data)
 
-                return crown_base_height_model_type_4
+                return model_type_4
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                crown_base_height_model_type_5 = Westfall2019Model.from_dict(data)
+                model_type_5 = Westfall2019Model.from_dict(data)
 
-                return crown_base_height_model_type_5
+                return model_type_5
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             if not isinstance(data, dict):
                 raise TypeError()
-            crown_base_height_model_type_6 = GdamModel.from_dict(data)
+            model_type_6 = GdamModel.from_dict(data)
 
-            return crown_base_height_model_type_6
+            return model_type_6
 
-        crown_base_height_model = _parse_crown_base_height_model(
-            d.pop("crown_base_height_model", UNSET)
-        )
+        model = _parse_model(d.pop("model", UNSET))
 
-        create_gdam_inventory_request = cls(
+        overwrite = d.pop("overwrite", UNSET)
+
+        create_crown_base_height_allometry_request = cls(
             source_tree_inventory_id=source_tree_inventory_id,
             type_=type_,
             name=name,
             description=description,
             tags=tags,
-            impute_columns=impute_columns,
+            model=model,
             overwrite=overwrite,
-            crown_base_height_model=crown_base_height_model,
         )
 
-        create_gdam_inventory_request.additional_properties = d
-        return create_gdam_inventory_request
+        create_crown_base_height_allometry_request.additional_properties = d
+        return create_crown_base_height_allometry_request
 
     @property
     def additional_keys(self) -> list[str]:

@@ -73,17 +73,17 @@ from .create_application_request import CreateApplicationRequest
 from .create_chm_crown_feature_request import CreateChmCrownFeatureRequest
 from .create_chm_inventory_request import CreateChmInventoryRequest
 from .create_compose_request import CreateComposeRequest
-from .create_crown_base_height_inventory_request import (
-    CreateCrownBaseHeightInventoryRequest,
+from .create_crown_base_height_allometry_request import (
+    CreateCrownBaseHeightAllometryRequest,
 )
 from .create_duet_request import CreateDuetRequest
 from .create_fbfm_13_lookup_request import CreateFbfm13LookupRequest
 from .create_fbfm_40_lookup_request import CreateFbfm40LookupRequest
 from .create_fccs_lookup_request import CreateFccsLookupRequest
 from .create_fosberg_fuel_moisture_request import CreateFosbergFuelMoistureRequest
-from .create_gdam_inventory_request import CreateGdamInventoryRequest
-from .create_gdam_inventory_request_impute_columns_item import (
-    CreateGdamInventoryRequestImputeColumnsItem,
+from .create_gdam_allometry_request import CreateGdamAllometryRequest
+from .create_gdam_allometry_request_impute_columns_item import (
+    CreateGdamAllometryRequestImputeColumnsItem,
 )
 from .create_geo_tiff_upload_request import CreateGeoTIFFUploadRequest
 from .create_inventory_canopy_request import CreateInventoryCanopyRequest
@@ -438,14 +438,14 @@ __all__ = (
     "CreateChmCrownFeatureRequest",
     "CreateChmInventoryRequest",
     "CreateComposeRequest",
-    "CreateCrownBaseHeightInventoryRequest",
+    "CreateCrownBaseHeightAllometryRequest",
     "CreateDuetRequest",
     "CreateFbfm13LookupRequest",
     "CreateFbfm40LookupRequest",
     "CreateFccsLookupRequest",
     "CreateFosbergFuelMoistureRequest",
-    "CreateGdamInventoryRequest",
-    "CreateGdamInventoryRequestImputeColumnsItem",
+    "CreateGdamAllometryRequest",
+    "CreateGdamAllometryRequestImputeColumnsItem",
     "CreateGeoTIFFUploadRequest",
     "CreateInventoryCanopyRequest",
     "CreateInventoryUploadRequest",

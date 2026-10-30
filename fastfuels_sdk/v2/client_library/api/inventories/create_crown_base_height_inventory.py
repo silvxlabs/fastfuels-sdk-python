@@ -6,8 +6,8 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.create_crown_base_height_inventory_request import (
-    CreateCrownBaseHeightInventoryRequest,
+from ...models.create_crown_base_height_allometry_request import (
+    CreateCrownBaseHeightAllometryRequest,
 )
 from ...models.http_validation_error import HTTPValidationError
 from ...models.inventory import Inventory
@@ -18,7 +18,7 @@ from ...types import Response
 def _get_kwargs(
     domain_id: str,
     *,
-    body: CreateCrownBaseHeightInventoryRequest,
+    body: CreateCrownBaseHeightAllometryRequest,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -76,7 +76,7 @@ def sync_detailed(
     domain_id: str,
     *,
     client: AuthenticatedClient,
-    body: CreateCrownBaseHeightInventoryRequest,
+    body: CreateCrownBaseHeightAllometryRequest,
 ) -> Response[HTTPValidationError | Inventory | QuotaExceededDetail]:
     r"""Create an inventory by computing crown base heights
 
@@ -144,7 +144,7 @@ def sync_detailed(
 
     Args:
         domain_id (str):
-        body (CreateCrownBaseHeightInventoryRequest): Request body for creating an inventory with
+        body (CreateCrownBaseHeightAllometryRequest): Request body for creating an inventory with
             model-computed crown base
             heights.
 
@@ -172,7 +172,7 @@ def sync(
     domain_id: str,
     *,
     client: AuthenticatedClient,
-    body: CreateCrownBaseHeightInventoryRequest,
+    body: CreateCrownBaseHeightAllometryRequest,
 ) -> HTTPValidationError | Inventory | QuotaExceededDetail | None:
     r"""Create an inventory by computing crown base heights
 
@@ -240,7 +240,7 @@ def sync(
 
     Args:
         domain_id (str):
-        body (CreateCrownBaseHeightInventoryRequest): Request body for creating an inventory with
+        body (CreateCrownBaseHeightAllometryRequest): Request body for creating an inventory with
             model-computed crown base
             heights.
 
@@ -263,7 +263,7 @@ async def asyncio_detailed(
     domain_id: str,
     *,
     client: AuthenticatedClient,
-    body: CreateCrownBaseHeightInventoryRequest,
+    body: CreateCrownBaseHeightAllometryRequest,
 ) -> Response[HTTPValidationError | Inventory | QuotaExceededDetail]:
     r"""Create an inventory by computing crown base heights
 
@@ -331,7 +331,7 @@ async def asyncio_detailed(
 
     Args:
         domain_id (str):
-        body (CreateCrownBaseHeightInventoryRequest): Request body for creating an inventory with
+        body (CreateCrownBaseHeightAllometryRequest): Request body for creating an inventory with
             model-computed crown base
             heights.
 
@@ -357,7 +357,7 @@ async def asyncio(
     domain_id: str,
     *,
     client: AuthenticatedClient,
-    body: CreateCrownBaseHeightInventoryRequest,
+    body: CreateCrownBaseHeightAllometryRequest,
 ) -> HTTPValidationError | Inventory | QuotaExceededDetail | None:
     r"""Create an inventory by computing crown base heights
 
@@ -425,7 +425,7 @@ async def asyncio(
 
     Args:
         domain_id (str):
-        body (CreateCrownBaseHeightInventoryRequest): Request body for creating an inventory with
+        body (CreateCrownBaseHeightAllometryRequest): Request body for creating an inventory with
             model-computed crown base
             heights.
 

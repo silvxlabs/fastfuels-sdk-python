@@ -41,9 +41,9 @@ from fastfuels_sdk.v2.client_library.models import (
     ApplyTreatmentsRequest,
     ChmInventoryCrownSegmentation,
     CreateChmInventoryRequest,
-    CreateCrownBaseHeightInventoryRequest,
-    CreateGdamInventoryRequest,
-    CreateGdamInventoryRequestImputeColumnsItem,
+    CreateCrownBaseHeightAllometryRequest,
+    CreateGdamAllometryRequest,
+    CreateGdamAllometryRequestImputeColumnsItem,
     CreateInventoryUploadRequest,
     CreatePimChmFusionInventoryRequest,
     CreatePimInventoryRequest,
@@ -1423,7 +1423,7 @@ def create_tree_inventory_from_gdam(
         ``height`` for every tree, whose morphology columns GDAM will fill in.
     impute_columns : list, optional
         Which morphology columns to impute
-        (``CreateGdamInventoryRequestImputeColumnsItem`` members or their
+        (``CreateGdamAllometryRequestImputeColumnsItem`` members or their
         string keys: "dbh", "crown_ratio", "fia_species_code",
         "crown_base_height"). Defaults to all four. Narrow it to impute fewer
         columns; columns left out keep the source's values.
@@ -1481,10 +1481,10 @@ def create_tree_inventory_from_gdam(
     ...     domain, sparse, crown_base_height_model="fia_national_logit_2026"
     ... )
     """
-    request_body = CreateGdamInventoryRequest(
+    request_body = CreateGdamAllometryRequest(
         source_tree_inventory_id=_domain_id(source_inventory),
         impute_columns=_enum_list(
-            impute_columns, CreateGdamInventoryRequestImputeColumnsItem
+            impute_columns, CreateGdamAllometryRequestImputeColumnsItem
         ),
         overwrite=overwrite,
         crown_base_height_model=_build_crown_base_height_model(
@@ -1582,7 +1582,7 @@ def create_tree_inventory_from_crown_base_height(
     ...     domain, trees, model="toney_reeves_2009", overwrite=True
     ... )
     """
-    request_body = CreateCrownBaseHeightInventoryRequest(
+    request_body = CreateCrownBaseHeightAllometryRequest(
         source_tree_inventory_id=_domain_id(source_inventory),
         model=_build_crown_base_height_model(model, "model"),
         overwrite=overwrite,
