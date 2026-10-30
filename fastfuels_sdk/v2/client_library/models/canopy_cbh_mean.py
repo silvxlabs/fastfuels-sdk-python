@@ -21,7 +21,7 @@ class CanopyCbhMean:
     """CBH as the mean of the per-tree crown base heights in each cell.
 
     Van Wagner's (1977) stand-mean definition — a plain summary of the
-    per-tree crown bases (`height * (1 - crown_ratio)`), one tree one vote
+    per-tree `crown_base_height` values, one tree one vote
     unless `weight_by_available_fuel` is set. A distinct convention from
     the `bulk_density_threshold` profile method; the two diverge where tree
     height varies within a cell.

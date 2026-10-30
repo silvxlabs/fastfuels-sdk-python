@@ -73,14 +73,17 @@ from .create_application_request import CreateApplicationRequest
 from .create_chm_crown_feature_request import CreateChmCrownFeatureRequest
 from .create_chm_inventory_request import CreateChmInventoryRequest
 from .create_compose_request import CreateComposeRequest
+from .create_crown_base_height_allometry_request import (
+    CreateCrownBaseHeightAllometryRequest,
+)
 from .create_duet_request import CreateDuetRequest
 from .create_fbfm_13_lookup_request import CreateFbfm13LookupRequest
 from .create_fbfm_40_lookup_request import CreateFbfm40LookupRequest
 from .create_fccs_lookup_request import CreateFccsLookupRequest
 from .create_fosberg_fuel_moisture_request import CreateFosbergFuelMoistureRequest
-from .create_gdam_inventory_request import CreateGdamInventoryRequest
-from .create_gdam_inventory_request_impute_columns_item import (
-    CreateGdamInventoryRequestImputeColumnsItem,
+from .create_gdam_allometry_request import CreateGdamAllometryRequest
+from .create_gdam_allometry_request_impute_columns_item import (
+    CreateGdamAllometryRequestImputeColumnsItem,
 )
 from .create_geo_tiff_upload_request import CreateGeoTIFFUploadRequest
 from .create_inventory_canopy_request import CreateInventoryCanopyRequest
@@ -148,10 +151,12 @@ from .feature_partition_info import FeaturePartitionInfo
 from .feature_sort_field import FeatureSortField
 from .feature_source import FeatureSource
 from .feature_type import FeatureType
+from .fia_national_logit_2026_model import FiaNationalLogit2026Model
 from .fia_species_group_share import FIASpeciesGroupShare
 from .field_source import FieldSource
 from .fine_biomass_config import FineBiomassConfig
 from .fuel_moisture_month import FuelMoistureMonth
+from .gdam_model import GdamModel
 from .geo_json_crs import GeoJsonCRS
 from .geo_json_crs_properties import GeoJsonCRSProperties
 from .geo_json_feature import GeoJsonFeature
@@ -284,6 +289,8 @@ from .max_crown_radius_unit import MaxCrownRadiusUnit
 from .meta_chm_version import MetaCHMVersion
 from .modifier import Modifier
 from .moisture_model import MoistureModel
+from .monleon_2004_eq_1_model import Monleon2004Eq1Model
+from .monleon_2004_eq_2_model import Monleon2004Eq2Model
 from .multi_line_string import MultiLineString
 from .multi_point import MultiPoint
 from .multi_polygon import MultiPolygon
@@ -318,6 +325,7 @@ from .quicfire_export_request import QuicfireExportRequest
 from .quicfire_export_request_moist_merge import QuicfireExportRequestMoistMerge
 from .quota_exceeded_detail import QuotaExceededDetail
 from .quotas import Quotas
+from .randolph_2010_model import Randolph2010Model
 from .reimputation_method import ReimputationMethod
 from .relative_elevation import RelativeElevation
 from .remove_action import RemoveAction
@@ -333,6 +341,7 @@ from .stem_isolation_lmf import StemIsolationLmf
 from .stem_isolation_vwf import StemIsolationVwf
 from .three_dep_dataset_coverage import ThreeDepDatasetCoverage
 from .three_dep_resolution import ThreeDepResolution
+from .toney_reeves_2009_model import ToneyReeves2009Model
 from .topography_band import TopographyBand
 from .topography_three_dep_coverage_response import TopographyThreeDepCoverageResponse
 from .tree_band import TreeBand
@@ -357,6 +366,7 @@ from .usage_storage import UsageStorage
 from .user_me_response import UserMeResponse
 from .user_me_response_kind import UserMeResponseKind
 from .validation_error import ValidationError
+from .westfall_2019_model import Westfall2019Model
 
 __all__ = (
     "Access",
@@ -428,13 +438,14 @@ __all__ = (
     "CreateChmCrownFeatureRequest",
     "CreateChmInventoryRequest",
     "CreateComposeRequest",
+    "CreateCrownBaseHeightAllometryRequest",
     "CreateDuetRequest",
     "CreateFbfm13LookupRequest",
     "CreateFbfm40LookupRequest",
     "CreateFccsLookupRequest",
     "CreateFosbergFuelMoistureRequest",
-    "CreateGdamInventoryRequest",
-    "CreateGdamInventoryRequestImputeColumnsItem",
+    "CreateGdamAllometryRequest",
+    "CreateGdamAllometryRequestImputeColumnsItem",
     "CreateGeoTIFFUploadRequest",
     "CreateInventoryCanopyRequest",
     "CreateInventoryUploadRequest",
@@ -500,9 +511,11 @@ __all__ = (
     "FeatureSortField",
     "FeatureSource",
     "FeatureType",
+    "FiaNationalLogit2026Model",
     "FieldSource",
     "FineBiomassConfig",
     "FuelMoistureMonth",
+    "GdamModel",
     "GeoJsonCRS",
     "GeoJsonCRSProperties",
     "GeoJsonFeature",
@@ -617,6 +630,8 @@ __all__ = (
     "MetaCHMVersion",
     "Modifier",
     "MoistureModel",
+    "Monleon2004Eq1Model",
+    "Monleon2004Eq2Model",
     "MultiLineString",
     "MultiPoint",
     "MultiPolygon",
@@ -649,6 +664,7 @@ __all__ = (
     "QuicfireExportRequestMoistMerge",
     "QuotaExceededDetail",
     "Quotas",
+    "Randolph2010Model",
     "ReimputationMethod",
     "RelativeElevation",
     "RemoveAction",
@@ -664,6 +680,7 @@ __all__ = (
     "StemIsolationVwf",
     "ThreeDepDatasetCoverage",
     "ThreeDepResolution",
+    "ToneyReeves2009Model",
     "TopographyBand",
     "TopographyThreeDepCoverageResponse",
     "TreeBand",
@@ -688,4 +705,5 @@ __all__ = (
     "UserMeResponse",
     "UserMeResponseKind",
     "ValidationError",
+    "Westfall2019Model",
 )

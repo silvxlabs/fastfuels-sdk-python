@@ -19,6 +19,7 @@ from fastfuels_sdk.v2.client_library.api.inventories import (
     apply_modifications as apply_modifications_endpoint,
     apply_treatments as apply_treatments_endpoint,
     create_chm_inventory,
+    create_crown_base_height_inventory,
     create_gdam_inventory,
     create_inventory_export,
     create_inventory_upload,
@@ -40,8 +41,9 @@ from fastfuels_sdk.v2.client_library.models import (
     ApplyTreatmentsRequest,
     ChmInventoryCrownSegmentation,
     CreateChmInventoryRequest,
-    CreateGdamInventoryRequest,
-    CreateGdamInventoryRequestImputeColumnsItem,
+    CreateCrownBaseHeightAllometryRequest,
+    CreateGdamAllometryRequest,
+    CreateGdamAllometryRequestImputeColumnsItem,
     CreateInventoryUploadRequest,
     CreatePimChmFusionInventoryRequest,
     CreatePimInventoryRequest,
@@ -50,6 +52,8 @@ from fastfuels_sdk.v2.client_library.models import (
     CrownProfileModel,
     DuplicateInventoryRequest,
     ExportInventoryRequest,
+    FiaNationalLogit2026Model,
+    GdamModel,
     InventoryColumnMapping,
     InventoryDataMetadata,
     InventoryDataResponse,
@@ -59,13 +63,18 @@ from fastfuels_sdk.v2.client_library.models import (
     InventoryUploadFormat,
     JobStatus,
     ListInventoriesResponse,
+    Monleon2004Eq1Model,
+    Monleon2004Eq2Model,
     ParametricCrownGeometrySource,
     PointProcess,
+    Randolph2010Model,
     ReimputationMethod,
     Resolution3D,
     SortOrder,
+    ToneyReeves2009Model,
     TreeBand,
     UpdateInventoryRequestBody,
+    Westfall2019Model,
 )
 from fastfuels_sdk.v2.client_library.types import UNSET
 
@@ -80,6 +89,7 @@ __all__ = [
     "create_tree_inventory_from_pim_chm_fusion",
     "create_tree_inventory_from_file",
     "create_tree_inventory_from_gdam",
+    "create_tree_inventory_from_crown_base_height",
     "list_inventories",
     "get_inventory",
     "ChmInventoryCrownSegmentation",
@@ -130,6 +140,47 @@ def _build_fusion_method(method):
         "method must be a ReimputationMethod or a mapping of its fields, "
         f"got {method!r}."
     )
+
+
+# Crown base height models by name. None takes parameters, so the name alone
+# selects one; a prebuilt model instance is also accepted.
+_CROWN_BASE_HEIGHT_MODELS = {
+    "fia_national_logit_2026": FiaNationalLogit2026Model,
+    "monleon_2004_eq1": Monleon2004Eq1Model,
+    "monleon_2004_eq2": Monleon2004Eq2Model,
+    "toney_reeves_2009": ToneyReeves2009Model,
+    "randolph_2010": Randolph2010Model,
+    "westfall_2019": Westfall2019Model,
+    "gdam": GdamModel,
+}
+
+
+def _build_crown_base_height_model(model, kwarg: str):
+    """Translate a crown base height model kwarg into a model or UNSET.
+
+    - ``None`` -> ``UNSET`` (the API applies its default).
+    - a model name, e.g. ``"gdam"`` -> that model.
+    - a mapping with a ``name`` key, e.g. ``{"name": "gdam"}`` -> that model.
+    - a model instance (e.g. ``GdamModel()``) -> passed through unchanged.
+    """
+    if model is None:
+        return UNSET
+    if isinstance(model, tuple(_CROWN_BASE_HEIGHT_MODELS.values())):
+        return model
+    if isinstance(model, Mapping):
+        model_name = model.get("name")
+    elif isinstance(model, str):
+        model_name = model
+    else:
+        model_name = None
+    factory = _CROWN_BASE_HEIGHT_MODELS.get(model_name)
+    if factory is None:
+        raise ValueError(
+            f"{kwarg} must be one of {sorted(_CROWN_BASE_HEIGHT_MODELS)}, a "
+            f"mapping with one of them as its name, or a crown base height "
+            f"model object, got {model!r}."
+        )
+    return factory()
 
 
 def _build_crown_segmentation(crown_segmentation):
@@ -665,7 +716,10 @@ class Inventory(InventoryModel):
             If ``max_bulk_density`` is not greater than 0, the Feature is not
             a completed crown Feature, the CHM grid it was built from no
             longer exists, or the inventory has no ``tree_id`` column or
-            lacks the columns voxelization needs.
+            lacks the columns voxelization needs (``x``, ``y``, ``height``,
+            ``dbh``, ``crown_base_height`` and ``fia_species_code``, with no
+            empty values; see :func:`create_tree_inventory_from_gdam` and
+            :func:`create_tree_inventory_from_crown_base_height`).
 
         Examples
         --------
@@ -1281,10 +1335,13 @@ def create_tree_inventory_from_file(
         Mapping from the standard column roles to your file's column
         names, e.g. ``{"x": "X_UTM", "y": "Y_UTM", "dbh": "DBH_CM"}``.
         Roles: "tree_id", "x", "y", "height", "dbh", "crown_ratio",
-        "crown_radius", "fia_species_code", "fia_status_code",
-        "fia_crown_class_code". Columns whose names already match need no
-        mapping. ``crown_radius`` is a measured crown radius in meters
-        (> 0 and <= 20; null for trees without a measurement).
+        "crown_base_height", "crown_radius", "fia_species_code",
+        "fia_status_code", "fia_crown_class_code". Columns whose names
+        already match need no mapping. ``crown_ratio`` is the FIA compacted
+        live crown ratio (0-1). ``crown_base_height`` is the height of the
+        lowest live foliage in meters (at least 0 and at most ``height``).
+        ``crown_radius`` is a measured crown radius in meters (> 0 and
+        <= 20; null for trees without a measurement).
     name, description : str, optional
         Metadata for the inventory.
     tags : List[str], optional
@@ -1345,38 +1402,68 @@ def create_tree_inventory_from_gdam(
     name: str = "",
     description: str = "",
     tags: Optional[List[str]] = None,
+    crown_base_height_model=None,
+    overwrite: bool = False,
 ) -> Inventory:
     """Create a tree inventory by imputing morphology with GDAM allometry.
 
-    GDAM fills in missing per-tree morphology — diameter at breast height,
-    crown ratio, and FIA species code — for a completed source tree inventory
-    (for example one uploaded with coordinates and heights only). Existing
-    values are preserved; only missing cells are imputed. The result is a new
-    inventory; the source is left unchanged.
+    GDAM fills in per-tree morphology — diameter at breast height, FIA
+    compacted crown ratio, FIA species code, and crown base height — for a
+    completed source tree inventory with a position and height for every tree
+    (for example one uploaded with coordinates and heights only). GDAM
+    conditions its predictions on whichever of these columns the source
+    already has. The result is a new inventory; the source is left unchanged.
 
     Parameters
     ----------
     domain : Domain or str
         The domain (or its id) to create the inventory in.
     source_inventory : Inventory or str
-        A completed tree inventory (or its id) whose missing morphology
-        columns GDAM will fill in.
+        A completed tree inventory (or its id) with ``x``, ``y`` and
+        ``height`` for every tree, whose morphology columns GDAM will fill in.
     impute_columns : list, optional
         Which morphology columns to impute
-        (``CreateGdamInventoryRequestImputeColumnsItem`` members or their
-        string keys: "dbh", "crown_ratio", "fia_species_code"). Defaults to all
-        three. Narrow it to impute fewer columns; columns left out keep the
-        source's values.
+        (``CreateGdamAllometryRequestImputeColumnsItem`` members or their
+        string keys: "dbh", "crown_ratio", "fia_species_code",
+        "crown_base_height"). Defaults to all four. Narrow it to impute fewer
+        columns; columns left out keep the source's values.
     name, description : str, optional
         Metadata for the inventory.
     tags : List[str], optional
         Tags for the inventory.
+    crown_base_height_model : str, Mapping, or crown base height model, optional
+        The model that gives ``crown_base_height``, by name: "gdam",
+        "fia_national_logit_2026", "monleon_2004_eq1", "monleon_2004_eq2",
+        "toney_reeves_2009", "randolph_2010", or "westfall_2019" (a mapping
+        such as ``{"name": "gdam"}`` or a model object such as
+        ``GdamModel()`` is also accepted). Omitted (the default) uses
+        "gdam", which predicts it with the other columns. Any other model
+        computes it from each tree's species, dbh, crown ratio and height
+        after GDAM fills them, so each of those must be imputed or be a
+        column of the source inventory.
+    overwrite : bool, optional
+        ``False`` (the default) keeps existing values and fills only empty
+        cells of ``impute_columns``. ``True`` replaces every tree's value in
+        ``impute_columns``; the old values are not given to GDAM.
 
     Returns
     -------
     Inventory
         The created Inventory object (job status "pending"). Call
-        :meth:`Inventory.wait` to block until imputation finishes.
+        :meth:`Inventory.wait` to block until imputation finishes. Its
+        ``source`` records ``impute_columns``, ``overwrite``,
+        ``crown_base_height_model``, and the source columns GDAM conditioned
+        on (``conditioned_columns``).
+
+    Raises
+    ------
+    ValueError
+        If ``crown_base_height_model`` is not a known model name, a mapping
+        naming one, or a crown base height model object.
+    UnprocessableEntityException
+        If the source inventory is missing, or has empty values in, ``x``,
+        ``y`` or ``height``, or ``crown_base_height_model`` is an equation
+        whose inputs are neither imputed nor columns of the source.
 
     Examples
     --------
@@ -1387,17 +1474,123 @@ def create_tree_inventory_from_gdam(
     >>> sparse.wait()
     >>> full = ff.inventories.create_tree_inventory_from_gdam(domain, sparse)
     >>> full.wait()
+
+    Compute crown base heights with an equation instead of GDAM:
+
+    >>> full = ff.inventories.create_tree_inventory_from_gdam(
+    ...     domain, sparse, crown_base_height_model="fia_national_logit_2026"
+    ... )
     """
-    request_body = CreateGdamInventoryRequest(
+    request_body = CreateGdamAllometryRequest(
         source_tree_inventory_id=_domain_id(source_inventory),
         impute_columns=_enum_list(
-            impute_columns, CreateGdamInventoryRequestImputeColumnsItem
+            impute_columns, CreateGdamAllometryRequestImputeColumnsItem
+        ),
+        overwrite=overwrite,
+        crown_base_height_model=_build_crown_base_height_model(
+            crown_base_height_model, "crown_base_height_model"
         ),
         name=name,
         description=description,
         tags=_opt(tags),
     )
     response = create_gdam_inventory.sync_detailed(
+        _domain_id(domain), client=ensure_client(), body=request_body
+    )
+    return Inventory._from_model(expect(response, HTTPStatus.CREATED))
+
+
+def create_tree_inventory_from_crown_base_height(
+    domain,
+    source_inventory,
+    model=None,
+    overwrite: bool = False,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+) -> Inventory:
+    """Create a tree inventory with each tree's crown base height computed.
+
+    Computes ``crown_base_height`` (m) for a completed source tree inventory
+    with a crown base height model and copies every other column unchanged.
+    The equation models compute it from each tree's species, dbh, FIA
+    compacted crown ratio and height; species a model does not cover get no
+    crown base height. The "gdam" model predicts it with GDAM from position
+    and height, conditioned on whichever of species, dbh, crown ratio and
+    crown base height the tree has. Use it for a tree inventory without a
+    crown base height, such as an uploaded inventory, before voxelizing it or
+    building canopy grids from it. The result is a new inventory; the source
+    is left unchanged.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the inventory in.
+    source_inventory : Inventory or str
+        A completed tree inventory (or its id) with ``x``, ``y`` and
+        ``height`` for every tree, and ``fia_species_code``, ``dbh`` and
+        ``crown_ratio`` for every tree unless ``model`` is "gdam". To fill
+        those columns and the crown base height in one request, use
+        :func:`create_tree_inventory_from_gdam` instead.
+    model : str, Mapping, or crown base height model, optional
+        The crown base height model, by name: "fia_national_logit_2026",
+        "monleon_2004_eq1", "monleon_2004_eq2", "toney_reeves_2009",
+        "randolph_2010", "westfall_2019", or "gdam" (a mapping such as
+        ``{"name": "gdam"}`` or a model object such as ``GdamModel()`` is also
+        accepted). Omitted (the default) uses "fia_national_logit_2026".
+    overwrite : bool, optional
+        ``False`` (the default) keeps existing crown base heights and fills
+        only empty cells. ``True`` recomputes every tree's crown base height
+        with ``model``; "gdam" is not given the old values.
+    name, description : str, optional
+        Metadata for the inventory.
+    tags : List[str], optional
+        Tags for the inventory.
+
+    Returns
+    -------
+    Inventory
+        The created Inventory object (job status "pending"). Call
+        :meth:`Inventory.wait` to block until the crown base heights are
+        computed. Its ``source`` records ``model`` and ``overwrite``.
+
+    Raises
+    ------
+    ValueError
+        If ``model`` is not a known model name, a mapping naming one, or a
+        crown base height model object.
+    UnprocessableEntityException
+        If the source inventory is missing, or has empty values in, a column
+        ``model`` needs, or ``overwrite`` is ``False`` and every tree already
+        has a crown base height.
+
+    Examples
+    --------
+    >>> import fastfuels_sdk as ff
+    >>> trees = ff.inventories.create_tree_inventory_from_file(
+    ...     domain, "plot_trees.csv"  # x, y, height, dbh, crown_ratio, species
+    ... )
+    >>> trees.wait()
+    >>> inventory = ff.inventories.create_tree_inventory_from_crown_base_height(
+    ...     domain, trees
+    ... )
+    >>> inventory.wait()
+
+    Recompute every tree's crown base height with a regional equation:
+
+    >>> inventory = ff.inventories.create_tree_inventory_from_crown_base_height(
+    ...     domain, trees, model="toney_reeves_2009", overwrite=True
+    ... )
+    """
+    request_body = CreateCrownBaseHeightAllometryRequest(
+        source_tree_inventory_id=_domain_id(source_inventory),
+        model=_build_crown_base_height_model(model, "model"),
+        overwrite=overwrite,
+        name=name,
+        description=description,
+        tags=_opt(tags),
+    )
+    response = create_crown_base_height_inventory.sync_detailed(
         _domain_id(domain), client=ensure_client(), body=request_body
     )
     return Inventory._from_model(expect(response, HTTPStatus.CREATED))

@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class InventoryAttribute(str, Enum):
-    CROWN_RATIO = "crown_ratio"
+    CROWN_BASE_HEIGHT = "crown_base_height"
     DBH = "dbh"
     FIA_SPECIES_CODE = "fia_species_code"
     HEIGHT = "height"

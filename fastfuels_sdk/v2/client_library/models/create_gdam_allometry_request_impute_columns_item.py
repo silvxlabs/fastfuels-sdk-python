@@ -1,7 +1,8 @@
 from enum import Enum
 
 
-class CreateGdamInventoryRequestImputeColumnsItem(str, Enum):
+class CreateGdamAllometryRequestImputeColumnsItem(str, Enum):
+    CROWN_BASE_HEIGHT = "crown_base_height"
     CROWN_RATIO = "crown_ratio"
     DBH = "dbh"
     FIA_SPECIES_CODE = "fia_species_code"

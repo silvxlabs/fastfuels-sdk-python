@@ -91,7 +91,7 @@ def sync_detailed(
     ## Request Body
 
     - **source_inventory_id**: (required) ID of a completed tree inventory.
-      Its `x`, `y`, `height`, `dbh`, `crown_ratio` and `fia_species_code`
+      Its `x`, `y`, `height`, `dbh`, `crown_base_height` and `fia_species_code`
       (and any biomass column read) must have no null values; a null
       `fia_status_code` counts as live.
     - **resolution**: (optional) Voxel resolution in meters. Defaults to
@@ -101,8 +101,8 @@ def sync_detailed(
       duplicates. Branchwood and fine bands are accepted by the API, but
       Treevox currently fails those jobs with a not-implemented processing
       error.
-    - **crown_profile_model**: (optional) Crown shape. Every crown runs from
-      the crown base, height × (1 − crown_ratio), to the tree height.
+    - **crown_profile_model**: (optional) Crown shape. Each tree's crown runs
+      from its `crown_base_height` to its height.
       - `purves` (default): Purves et al. (2007), species-specific; widest at
         the crown base.
       - `beta`: species-group beta distribution; widest within the crown, per
@@ -231,7 +231,7 @@ def sync(
     ## Request Body
 
     - **source_inventory_id**: (required) ID of a completed tree inventory.
-      Its `x`, `y`, `height`, `dbh`, `crown_ratio` and `fia_species_code`
+      Its `x`, `y`, `height`, `dbh`, `crown_base_height` and `fia_species_code`
       (and any biomass column read) must have no null values; a null
       `fia_status_code` counts as live.
     - **resolution**: (optional) Voxel resolution in meters. Defaults to
@@ -241,8 +241,8 @@ def sync(
       duplicates. Branchwood and fine bands are accepted by the API, but
       Treevox currently fails those jobs with a not-implemented processing
       error.
-    - **crown_profile_model**: (optional) Crown shape. Every crown runs from
-      the crown base, height × (1 − crown_ratio), to the tree height.
+    - **crown_profile_model**: (optional) Crown shape. Each tree's crown runs
+      from its `crown_base_height` to its height.
       - `purves` (default): Purves et al. (2007), species-specific; widest at
         the crown base.
       - `beta`: species-group beta distribution; widest within the crown, per
@@ -366,7 +366,7 @@ async def asyncio_detailed(
     ## Request Body
 
     - **source_inventory_id**: (required) ID of a completed tree inventory.
-      Its `x`, `y`, `height`, `dbh`, `crown_ratio` and `fia_species_code`
+      Its `x`, `y`, `height`, `dbh`, `crown_base_height` and `fia_species_code`
       (and any biomass column read) must have no null values; a null
       `fia_status_code` counts as live.
     - **resolution**: (optional) Voxel resolution in meters. Defaults to
@@ -376,8 +376,8 @@ async def asyncio_detailed(
       duplicates. Branchwood and fine bands are accepted by the API, but
       Treevox currently fails those jobs with a not-implemented processing
       error.
-    - **crown_profile_model**: (optional) Crown shape. Every crown runs from
-      the crown base, height × (1 − crown_ratio), to the tree height.
+    - **crown_profile_model**: (optional) Crown shape. Each tree's crown runs
+      from its `crown_base_height` to its height.
       - `purves` (default): Purves et al. (2007), species-specific; widest at
         the crown base.
       - `beta`: species-group beta distribution; widest within the crown, per
@@ -504,7 +504,7 @@ async def asyncio(
     ## Request Body
 
     - **source_inventory_id**: (required) ID of a completed tree inventory.
-      Its `x`, `y`, `height`, `dbh`, `crown_ratio` and `fia_species_code`
+      Its `x`, `y`, `height`, `dbh`, `crown_base_height` and `fia_species_code`
       (and any biomass column read) must have no null values; a null
       `fia_status_code` counts as live.
     - **resolution**: (optional) Voxel resolution in meters. Defaults to
@@ -514,8 +514,8 @@ async def asyncio(
       duplicates. Branchwood and fine bands are accepted by the API, but
       Treevox currently fails those jobs with a not-implemented processing
       error.
-    - **crown_profile_model**: (optional) Crown shape. Every crown runs from
-      the crown base, height × (1 − crown_ratio), to the tree height.
+    - **crown_profile_model**: (optional) Crown shape. Each tree's crown runs
+      from its `crown_base_height` to its height.
       - `purves` (default): Purves et al. (2007), species-specific; widest at
         the crown base.
       - `beta`: species-group beta distribution; widest within the crown, per

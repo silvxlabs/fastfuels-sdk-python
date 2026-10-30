@@ -13,13 +13,13 @@ T = TypeVar("T", bound="InventoryExpressionCondition")
 class InventoryExpressionCondition:
     """Boolean expression condition evaluated against tree attributes.
 
-    Expressions use native units (cm, m, 0-1 fraction). No unit field
+    Expressions use native units (cm, m). No unit field
     is provided — convert values in the expression yourself.
 
     Example: "dbh < 5 and height < 2"
 
         Attributes:
-            expression (str): Boolean expression using dbh, height, crown_ratio
+            expression (str): Boolean expression using dbh, height, crown_base_height
     """
 
     expression: str

@@ -34,7 +34,8 @@ class CanopyCbdLoadOverDepth:
                 the requested `cbh`/`chm` threshold settings — those bands must be
                 requested with the `bulk_density_threshold` method so the depth's
                 definition is recorded on the grid. `mean_crown_length` is the mean of
-                per-tree crown lengths (the depth Cruz et al. 2003 used).
+                per-tree crown lengths, height − crown_base_height (the depth Cruz et
+                al. 2003 used).
                 `biomass_percentile` is the height span holding the central 80% of
                 canopy biomass (10th to 90th percentile; Albini 1996).
                 `height_percentile` is the 90th-percentile tree height minus the

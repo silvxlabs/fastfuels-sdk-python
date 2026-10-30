@@ -39,16 +39,16 @@ import fastfuels_sdk.v2 as ff
 # Remove every tree under 10 cm DBH
 ff.remove_trees(ff.tree_attribute("dbh", "<", 10))
 
-# Shrink crowns on the largest trees inside a stand boundary
+# Raise crown bases by 2 m on the largest trees inside a stand boundary
 ff.modify_trees(
-    "crown_ratio", "multiply", 0.8,
+    "crown_base_height", "add", 2.0,
     ff.tree_attribute("dbh", ">", 40),
     ff.tree_within(stand),
 )
 ```
 
-`tree_attribute` takes an attribute (`"dbh"`, `"height"`, `"crown_ratio"`,
-`"fia_species_code"`) and a comparison (`"<"`, `"<="`, `">"`, `">="`, `"=="`,
+`tree_attribute` takes an attribute (`"dbh"`, `"height"`,
+`"crown_base_height"`, `"fia_species_code"`) and a comparison (`"<"`, `"<="`, `">"`, `">="`, `"=="`,
 `"!="`); pass several conditions to AND them. `modify_trees`'s modifier is
 `"replace"`, `"add"`, `"subtract"`, `"multiply"`, or `"divide"`.
 

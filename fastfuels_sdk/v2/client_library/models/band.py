@@ -29,7 +29,7 @@ class Band:
         description (None | str | Unset): Longer-form description of what the band represents and how to interpret its
             values.
         unit (None | str | Unset): Physical unit of the band's pixel values, in UDUNITS-2-conformant ASCII form with
-            `**` for exponents (e.g. `kg/m**3`, `1/m`, `%`). `None` for categorical/identifier bands. See docs/units.md.
+            `**` for exponents (e.g. `kg/m**3`, `1/m`, `%`). `None` for categorical/identifier bands.
         nodata (float | int | None | Unset): Value marking missing pixels in this band; pixels equal to it carry no data
             and should be excluded from analysis. `null` when the band has no missing pixels, or when they are represented
             as floating-point NaN.

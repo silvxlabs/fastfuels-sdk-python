@@ -167,8 +167,9 @@ inventory.wait()
 ```
 
 The standard column roles are `tree_id`, `x`, `y`, `height` (m), `dbh`
-(cm), `crown_ratio`, `crown_radius` (m), `fia_species_code`,
-`fia_status_code`, and `fia_crown_class_code`. Columns whose
+(cm), `crown_ratio` (FIA compacted crown ratio, 0-1), `crown_base_height`
+(m), `crown_radius` (m), `fia_species_code`, `fia_status_code`, and
+`fia_crown_class_code`. Columns whose
 names already match need no mapping; otherwise map your file's column names
 onto the roles:
 
@@ -195,8 +196,9 @@ background job — `wait()` before reading data back:
 
 An uploaded inventory may carry only some columns — coordinates and heights,
 say, without diameters or species. `create_tree_inventory_from_gdam` fills in
-the missing morphology (`dbh`, `crown_ratio`, `fia_species_code`) for a
-completed inventory using GDAM allometry, producing a new inventory:
+the missing morphology (`dbh`, `crown_ratio`, `fia_species_code`,
+`crown_base_height`) for a completed inventory using GDAM allometry, producing
+a new inventory:
 
 ```python
 sparse = ff.inventories.create_tree_inventory_from_file(domain, "stems.csv")
@@ -207,7 +209,34 @@ full.wait()
 ```
 
 Existing values are preserved — only missing cells are imputed. Pass
-`impute_columns=["fia_species_code"]` to impute just a subset.
+`impute_columns=["fia_species_code"]` to impute just a subset, or
+`overwrite=True` to replace every tree's value in the imputed columns. GDAM
+predicts the crown base height too; to compute it with an equation from the
+imputed species, dbh, crown ratio and height instead, pass
+`crown_base_height_model=` a model name such as `"fia_national_logit_2026"`.
+
+## Compute crown base heights
+
+Voxelization and canopy grids need a `crown_base_height` (m) for every tree.
+To compute it for an inventory that already has species, dbh, crown ratio
+and height, use `create_tree_inventory_from_crown_base_height`:
+
+```python
+trees = ff.inventories.create_tree_inventory_from_file(domain, "plot_trees.csv")
+trees.wait()
+
+inventory = ff.inventories.create_tree_inventory_from_crown_base_height(
+    domain, trees
+)
+inventory.wait()
+```
+
+The default model is `"fia_national_logit_2026"`; pass `model=` another
+name (`"monleon_2004_eq1"`, `"monleon_2004_eq2"`, `"toney_reeves_2009"`,
+`"randolph_2010"`, `"westfall_2019"`) for a regional equation, or `"gdam"`
+to predict it from position and height alone. Existing crown base heights are
+kept and only empty cells are filled; pass `overwrite=True` to recompute
+every tree's.
 
 ## Wait for an inventory to finish
 

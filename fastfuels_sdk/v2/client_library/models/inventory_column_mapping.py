@@ -31,7 +31,9 @@ class InventoryColumnMapping:
             fia_crown_class_code (None | str | Unset): FIA crown class code (CCLCD): 1 open-grown, 2 dominant, 3 codominant,
                 4 intermediate, 5 overtopped.
             dbh (None | str | Unset): Diameter at breast height (cm).
-            crown_ratio (None | str | Unset): Live crown ratio: fraction of total height with live crown (0-1).
+            crown_ratio (None | str | Unset): FIA compacted live crown ratio (0-1), as recorded by FIA field crews.
+            crown_base_height (None | str | Unset): Crown base height (m): height of the lowest live foliage, the base of a
+                continuous, gap-free crown. At least 0 and at most `height`; equal to `height` for a tree with no live crown.
             crown_radius (None | str | Unset): Measured crown radius (m), > 0 and <= 20. Null for trees without a
                 measurement.
     """
@@ -45,6 +47,7 @@ class InventoryColumnMapping:
     fia_crown_class_code: None | str | Unset = UNSET
     dbh: None | str | Unset = UNSET
     crown_ratio: None | str | Unset = UNSET
+    crown_base_height: None | str | Unset = UNSET
     crown_radius: None | str | Unset = UNSET
 
     def to_dict(self) -> dict[str, Any]:
@@ -102,6 +105,12 @@ class InventoryColumnMapping:
         else:
             crown_ratio = self.crown_ratio
 
+        crown_base_height: None | str | Unset
+        if isinstance(self.crown_base_height, Unset):
+            crown_base_height = UNSET
+        else:
+            crown_base_height = self.crown_base_height
+
         crown_radius: None | str | Unset
         if isinstance(self.crown_radius, Unset):
             crown_radius = UNSET
@@ -129,6 +138,8 @@ class InventoryColumnMapping:
             field_dict["dbh"] = dbh
         if crown_ratio is not UNSET:
             field_dict["crown_ratio"] = crown_ratio
+        if crown_base_height is not UNSET:
+            field_dict["crown_base_height"] = crown_base_height
         if crown_radius is not UNSET:
             field_dict["crown_radius"] = crown_radius
 
@@ -221,6 +232,15 @@ class InventoryColumnMapping:
 
         crown_ratio = _parse_crown_ratio(d.pop("crown_ratio", UNSET))
 
+        def _parse_crown_base_height(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        crown_base_height = _parse_crown_base_height(d.pop("crown_base_height", UNSET))
+
         def _parse_crown_radius(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -240,6 +260,7 @@ class InventoryColumnMapping:
             fia_crown_class_code=fia_crown_class_code,
             dbh=dbh,
             crown_ratio=crown_ratio,
+            crown_base_height=crown_base_height,
             crown_radius=crown_radius,
         )
 
