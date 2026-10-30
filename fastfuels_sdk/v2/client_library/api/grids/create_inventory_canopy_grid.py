@@ -100,7 +100,7 @@ def sync_detailed(
 
     - **source_inventory_id**: (required) ID of a completed tree inventory in
       this domain. Required columns depend on the selected methods; the
-      defaults need `x`, `y`, `height`, `crown_ratio`, `dbh`, and
+      defaults need `x`, `y`, `height`, `crown_base_height`, `dbh`, and
       `fia_species_code`. Required columns must have no null values; a null
       `fia_status_code` counts as live.
     - **alignment**: (optional) Output lattice. Against the domain (the
@@ -206,7 +206,7 @@ def sync(
 
     - **source_inventory_id**: (required) ID of a completed tree inventory in
       this domain. Required columns depend on the selected methods; the
-      defaults need `x`, `y`, `height`, `crown_ratio`, `dbh`, and
+      defaults need `x`, `y`, `height`, `crown_base_height`, `dbh`, and
       `fia_species_code`. Required columns must have no null values; a null
       `fia_status_code` counts as live.
     - **alignment**: (optional) Output lattice. Against the domain (the
@@ -307,7 +307,7 @@ async def asyncio_detailed(
 
     - **source_inventory_id**: (required) ID of a completed tree inventory in
       this domain. Required columns depend on the selected methods; the
-      defaults need `x`, `y`, `height`, `crown_ratio`, `dbh`, and
+      defaults need `x`, `y`, `height`, `crown_base_height`, `dbh`, and
       `fia_species_code`. Required columns must have no null values; a null
       `fia_status_code` counts as live.
     - **alignment**: (optional) Output lattice. Against the domain (the
@@ -411,7 +411,7 @@ async def asyncio(
 
     - **source_inventory_id**: (required) ID of a completed tree inventory in
       this domain. Required columns depend on the selected methods; the
-      defaults need `x`, `y`, `height`, `crown_ratio`, `dbh`, and
+      defaults need `x`, `y`, `height`, `crown_base_height`, `dbh`, and
       `fia_species_code`. Required columns must have no null values; a null
       `fia_status_code` counts as live.
     - **alignment**: (optional) Output lattice. Against the domain (the

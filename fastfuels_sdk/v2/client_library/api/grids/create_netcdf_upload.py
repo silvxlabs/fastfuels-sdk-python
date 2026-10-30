@@ -123,7 +123,7 @@ def sync_detailed(
     If a data variable has a `units` attribute it must be in canonical
     UDUNITS-2 ASCII form with `**` exponents (e.g. `kg/m**3`, `1/m`, `%`).
     Non-canonical forms (`kg/m³`, `kg/m^3`, `kg/m3`) fail with
-    `INVALID_UNITS`. See docs/units.md.
+    `INVALID_UNITS`.
 
     ## Z axis (3D only)
 
@@ -220,7 +220,7 @@ def sync(
     If a data variable has a `units` attribute it must be in canonical
     UDUNITS-2 ASCII form with `**` exponents (e.g. `kg/m**3`, `1/m`, `%`).
     Non-canonical forms (`kg/m³`, `kg/m^3`, `kg/m3`) fail with
-    `INVALID_UNITS`. See docs/units.md.
+    `INVALID_UNITS`.
 
     ## Z axis (3D only)
 
@@ -312,7 +312,7 @@ async def asyncio_detailed(
     If a data variable has a `units` attribute it must be in canonical
     UDUNITS-2 ASCII form with `**` exponents (e.g. `kg/m**3`, `1/m`, `%`).
     Non-canonical forms (`kg/m³`, `kg/m^3`, `kg/m3`) fail with
-    `INVALID_UNITS`. See docs/units.md.
+    `INVALID_UNITS`.
 
     ## Z axis (3D only)
 
@@ -407,7 +407,7 @@ async def asyncio(
     If a data variable has a `units` attribute it must be in canonical
     UDUNITS-2 ASCII form with `**` exponents (e.g. `kg/m**3`, `1/m`, `%`).
     Non-canonical forms (`kg/m³`, `kg/m^3`, `kg/m3`) fail with
-    `INVALID_UNITS`. See docs/units.md.
+    `INVALID_UNITS`.
 
     ## Z axis (3D only)
 

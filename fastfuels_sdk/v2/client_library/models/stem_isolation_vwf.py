@@ -32,7 +32,8 @@ class StemIsolationVwf:
             spatial_resolution (float | None | Unset): Spatial resolution of the CHM. If omitted, it will be automatically
                 inferred from the source grid metadata.
             crown_ratio (float | Unset): Window diameter added per meter of height. The search window diameter (in meters)
-                is crown_offset + crown_ratio × height, converted to a whole, odd number of pixels of at least 3. Default: 0.05.
+                is crown_offset + crown_ratio × height, converted to a whole, odd number of pixels of at least 3. This is a
+                slope of the search-window size, not a measurement of any tree's crown ratio. Default: 0.05.
             crown_offset (float | Unset): Window diameter (in meters) at zero height. Default: 3.0.
     """
 

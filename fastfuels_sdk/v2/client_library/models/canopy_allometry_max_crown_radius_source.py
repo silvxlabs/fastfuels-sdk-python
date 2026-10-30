@@ -33,7 +33,7 @@ class CanopyAllometryMaxCrownRadiusSource:
 
                 ``purves`` (Purves et al. 2007) is the national default and the one
                 the tree voxelization endpoint uses; it varies with height and
-                crown ratio as well as diameter. ``crookston_stage`` (Crookston &
+                crown base height as well as diameter. ``crookston_stage`` (Crookston &
                 Stage 1999, RMRS-GTR-24, reached through FVS) is the crown width
                 behind FuelCalc's canopy cover — diameter alone above breast
                 height, with regionally fitted coefficients — and is offered for

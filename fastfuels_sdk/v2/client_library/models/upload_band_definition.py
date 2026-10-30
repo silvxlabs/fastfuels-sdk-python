@@ -28,7 +28,7 @@ class UploadBandDefinition:
             and underscores.
         type_ (BandType | None | Unset): Optional; set by the key's quantity. If given, it must match.
         unit (None | str | Unset): Optional; set by the key's quantity. If given, it must match, in UDUNITS-2-conformant
-            ASCII form with `**` for exponents (e.g. `kg/m**3`, `1/m`, `%`). See docs/units.md.
+            ASCII form with `**` for exponents (e.g. `kg/m**3`, `1/m`, `%`).
     """
 
     key: str
