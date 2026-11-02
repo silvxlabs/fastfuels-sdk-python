@@ -12,10 +12,17 @@ set -euo pipefail
 
 OPC_VERSION="0.29.0"
 
-URL="https://api-v2-prod-782971006568.us-west1.run.app"
+# API host. OpenAPI paths carry the /v2 prefix, so the base URL is the host only.
+URL="https://api.fastfuels.silvxlabs.com"
 SPEC=$(mktemp /tmp/v2_openapi.XXXXXX.json)
 
-curl -fsS "$URL/openapi.json" > "$SPEC"
+# OPENAPI_SPEC points at a local spec file instead, e.g. one exported from an
+# unmerged API branch. The recorded base URL stays $URL.
+if [ -n "${OPENAPI_SPEC:-}" ]; then
+  cp "$OPENAPI_SPEC" "$SPEC"
+else
+  curl -fsS "$URL/v2/openapi.json" > "$SPEC"
+fi
 
 uvx "openapi-python-client@${OPC_VERSION}" generate \
   --path "$SPEC" \

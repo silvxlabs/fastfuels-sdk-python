@@ -48,7 +48,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/domains/{domain_id}/pointclouds/{point_cloud_id}/data/{tile_x}/{tile_y}/binary".format(
+        "url": "/v2/domains/{domain_id}/pointclouds/{point_cloud_id}/data/{tile_x}/{tile_y}/binary".format(
             domain_id=quote(str(domain_id), safe=""),
             point_cloud_id=quote(str(point_cloud_id), safe=""),
             tile_x=quote(str(tile_x), safe=""),

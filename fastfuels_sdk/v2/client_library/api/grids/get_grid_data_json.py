@@ -41,7 +41,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/domains/{domain_id}/grids/{grid_id}/data/{band}/{chunk_index}".format(
+        "url": "/v2/domains/{domain_id}/grids/{grid_id}/data/{band}/{chunk_index}".format(
             domain_id=quote(str(domain_id), safe=""),
             grid_id=quote(str(grid_id), safe=""),
             band=quote(str(band), safe=""),

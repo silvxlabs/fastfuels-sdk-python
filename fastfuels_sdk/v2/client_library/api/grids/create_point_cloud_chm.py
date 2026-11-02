@@ -22,7 +22,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": "/domains/{domain_id}/grids/canopy/point_cloud".format(
+        "url": "/v2/domains/{domain_id}/grids/canopy/point_cloud".format(
             domain_id=quote(str(domain_id), safe=""),
         ),
     }

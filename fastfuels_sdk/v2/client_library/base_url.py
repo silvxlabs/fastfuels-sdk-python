@@ -5,4 +5,4 @@ entry and openapi-python-client takes base_url at construction time, so
 the regen script records the URL alongside the client it generates).
 """
 
-DEFAULT_BASE_URL = "https://api-v2-prod-782971006568.us-west1.run.app"
+DEFAULT_BASE_URL = "https://api.fastfuels.silvxlabs.com"

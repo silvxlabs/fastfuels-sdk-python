@@ -72,7 +72,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/domains/-/grids",
+        "url": "/v2/domains/-/grids",
         "params": params,
     }
 
