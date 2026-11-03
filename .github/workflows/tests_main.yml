@@ -95,6 +95,7 @@ jobs:
         python-version: ["3.12"]
     env:
       FASTFUELS_API_KEY: ${{ secrets.FASTFUELS_API_KEY_V2 }}
+      FASTFUELS_CI_BYPASS: ${{ secrets.FASTFUELS_CI_BYPASS }}
     steps:
     - uses: actions/checkout@v4
     - name: Install uv

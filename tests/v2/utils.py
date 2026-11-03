@@ -3,6 +3,7 @@ tests/v2/utils.py
 """
 
 import json
+import os
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
@@ -17,6 +18,10 @@ SWEEP_TAG = "sdk-test"
 # The API stores a resource created with this header but queues no worker
 # job, so it stays pending (silvxlabs/FastFuels-API-v2#680)
 SKIP_DISPATCH_HEADER = {"X-FastFuels-Skip-Dispatch": "1"}
+
+# Cloud Armor exempts requests carrying this shared secret from its per-IP throttle
+_ci_bypass = os.getenv("FASTFUELS_CI_BYPASS")
+CI_HEADER = {"X-FastFuels-CI": _ci_bypass} if _ci_bypass else {}
 
 # Client without SKIP_DISPATCH_HEADER, set by install_skip_dispatch_client
 _real_client = None
@@ -82,13 +87,14 @@ def install_skip_dispatch_client() -> None:
     """Make the SDK send SKIP_DISPATCH_HEADER on every request by default.
 
     Swaps the SDK's cached client for one carrying the header and keeps a
-    header-free client for ``real_dispatch_client``. Does nothing when no
-    API key is configured.
+    header-free client for ``real_dispatch_client``. Both carry CI_HEADER.
+    Does nothing when no API key is configured.
     """
     global _real_client
     api._client = None
     _real_client = api.get_client()
     if _real_client is not None:
+        _real_client = _real_client.with_headers(CI_HEADER)
         api._client = _real_client.with_headers(SKIP_DISPATCH_HEADER)
 
 
