@@ -8,10 +8,6 @@ shared HTTP client used by the wrapper modules.
 import os
 from typing import Optional
 
-# DEFAULT_BASE_URL is recorded by generate_client.sh alongside the generated
-# client (openapi-python-client embeds no server URL). It is the Cloud Run
-# deployment for now — a stable domain should front it before GA (tracked in
-# #176); until then FASTFUELS_API_V2_URL overrides it without an SDK upgrade.
 from fastfuels_sdk.v2.client_library.base_url import DEFAULT_BASE_URL
 from fastfuels_sdk.v2.client_library.api.users import get_me, get_me_usage
 from fastfuels_sdk.v2.client_library.client import AuthenticatedClient

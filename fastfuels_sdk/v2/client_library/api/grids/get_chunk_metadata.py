@@ -19,7 +19,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/domains/{domain_id}/grids/{grid_id}/chunks/{chunk_index}".format(
+        "url": "/v2/domains/{domain_id}/grids/{grid_id}/chunks/{chunk_index}".format(
             domain_id=quote(str(domain_id), safe=""),
             grid_id=quote(str(grid_id), safe=""),
             chunk_index=quote(str(chunk_index), safe=""),

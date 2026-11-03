@@ -17,7 +17,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/domains/{domain_id}/grids/fccs/landfire/coverage".format(
+        "url": "/v2/domains/{domain_id}/grids/fccs/landfire/coverage".format(
             domain_id=quote(str(domain_id), safe=""),
         ),
     }
@@ -74,8 +74,8 @@ def sync_detailed(
     `latest` is the release representing the most recent point in time that
     fully covers the domain. `releases` lists every release, newest first.
     Each release that covers the domain carries a `links.create` request:
-    send its `body` to its `href`, a path relative to this API's base URL,
-    to create the grid.
+    send its `body` to its `href`, the endpoint's path on the API host, to
+    create the grid.
 
     Args:
         domain_id (str):
@@ -118,8 +118,8 @@ def sync(
     `latest` is the release representing the most recent point in time that
     fully covers the domain. `releases` lists every release, newest first.
     Each release that covers the domain carries a `links.create` request:
-    send its `body` to its `href`, a path relative to this API's base URL,
-    to create the grid.
+    send its `body` to its `href`, the endpoint's path on the API host, to
+    create the grid.
 
     Args:
         domain_id (str):
@@ -157,8 +157,8 @@ async def asyncio_detailed(
     `latest` is the release representing the most recent point in time that
     fully covers the domain. `releases` lists every release, newest first.
     Each release that covers the domain carries a `links.create` request:
-    send its `body` to its `href`, a path relative to this API's base URL,
-    to create the grid.
+    send its `body` to its `href`, the endpoint's path on the API host, to
+    create the grid.
 
     Args:
         domain_id (str):
@@ -199,8 +199,8 @@ async def asyncio(
     `latest` is the release representing the most recent point in time that
     fully covers the domain. `releases` lists every release, newest first.
     Each release that covers the domain carries a `links.create` request:
-    send its `body` to its `href`, a path relative to this API's base URL,
-    to create the grid.
+    send its `body` to its `href`, the endpoint's path on the API host, to
+    create the grid.
 
     Args:
         domain_id (str):

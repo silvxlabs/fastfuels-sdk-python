@@ -12,10 +12,15 @@ set -euo pipefail
 
 OPC_VERSION="0.29.0"
 
-URL="https://api-v2-prod-782971006568.us-west1.run.app"
+URL="https://api.fastfuels.silvxlabs.com"
 SPEC=$(mktemp /tmp/v2_openapi.XXXXXX.json)
 
-curl -fsS "$URL/openapi.json" > "$SPEC"
+# OPENAPI_SPEC: read a local spec file instead of the live one.
+if [ -n "${OPENAPI_SPEC:-}" ]; then
+  cp "$OPENAPI_SPEC" "$SPEC"
+else
+  curl -fsS "$URL/v2/openapi.json" > "$SPEC"
+fi
 
 uvx "openapi-python-client@${OPC_VERSION}" generate \
   --path "$SPEC" \

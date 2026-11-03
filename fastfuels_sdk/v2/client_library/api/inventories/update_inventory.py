@@ -22,7 +22,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "patch",
-        "url": "/domains/{domain_id}/inventories/{inventory_id}".format(
+        "url": "/v2/domains/{domain_id}/inventories/{inventory_id}".format(
             domain_id=quote(str(domain_id), safe=""),
             inventory_id=quote(str(inventory_id), safe=""),
         ),

@@ -22,7 +22,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": "/domains/{domain_id}/grids/voxelize/inventory/tree".format(
+        "url": "/v2/domains/{domain_id}/grids/voxelize/inventory/tree".format(
             domain_id=quote(str(domain_id), safe=""),
         ),
     }

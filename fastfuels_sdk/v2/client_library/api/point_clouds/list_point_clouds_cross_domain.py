@@ -75,7 +75,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/domains/-/pointclouds",
+        "url": "/v2/domains/-/pointclouds",
         "params": params,
     }
 

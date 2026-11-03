@@ -27,7 +27,7 @@ class LandfireCreateLink:
     """The create request that fetches a release for this domain.
 
     Attributes:
-        href (str): Path of the create endpoint, relative to the API base URL.
+        href (str): Path of the create endpoint on the API host, including `/v2`.
         body (LandfireCreateLinkBody): Request body selecting this release.
         method (Literal['POST'] | Unset):  Default: 'POST'.
     """
