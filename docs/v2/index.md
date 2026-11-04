@@ -1,10 +1,10 @@
 # Welcome to the FastFuels Python SDK Documentation!
 
-!!! warning "Beta"
+!!! note "v2 SDK"
     You are reading the documentation for the **v2 SDK**, which targets
-    the FastFuels v2 API and is under active development. The v1 SDK
-    remains the default — switch versions with the selector in the
-    header. Import v2 explicitly from `fastfuels_sdk.v2`.
+    the FastFuels v2 API. The v1 SDK remains the default — switch
+    versions with the selector in the header. Import v2 explicitly from
+    `fastfuels_sdk.v2`.
 
 ## What is FastFuels?
 
@@ -41,7 +41,7 @@ versioned subpackages, so you can use them side by side during migration:
 
 ```python
 from fastfuels_sdk.v1 import Domain   # v1 (current default)
-from fastfuels_sdk.v2 import Domain   # v2 (Beta)
+from fastfuels_sdk.v2 import Domain   # v2
 ```
 
 Coming from v1? Start with [Migrating from v1](guides/migration.md).

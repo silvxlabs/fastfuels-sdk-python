@@ -1,10 +1,5 @@
 # How to Work with Tree Inventories in FastFuels SDK
 
-!!! warning "Beta"
-    The v2 SDK targets the FastFuels v2 API and is under active
-    development. The v1 SDK remains the default — import v2 explicitly
-    from `fastfuels_sdk.v2`.
-
 An inventory is a table of individual trees within a domain — one row per
 tree, with its coordinates, species, diameter, height, and crown ratio.
 Inventories sit between grids: they are generated *from* a grid (a PIM grid

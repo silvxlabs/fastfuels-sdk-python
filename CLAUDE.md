@@ -84,7 +84,7 @@ rationale and issue references belong in `#` code comments.
 ### Conventions
 
 - Version labels mirror the platform docs: **"v1"** (alias `latest`) and
-  **"v2 (Beta)"** — set as mike titles in `docs/deploy.sh`, the single
+  **"v2"** — set as mike titles in `docs/deploy.sh`, the single
   entry point for both the local preview (`./docs/deploy.sh`) and the
   gh-pages deploy (`./docs/deploy.sh deploy`, run by the docs workflow).
 - One `mkdocs.yml` builds both versions: `DOCS_DIR` selects `docs/v1`
@@ -98,7 +98,6 @@ rationale and issue references belong in `#` code comments.
   never hand-written response shapes.
 - Use admonitions (`!!! tip` / `warning` / `danger`) instead of bold
   "Note:" prose; use content tabs (`=== "v1"` / `=== "v2"`) for
-  side-by-side variants; v2 pages open with the `!!! warning "Beta"`
-  admonition.
+  side-by-side variants.
 - `docs/v1/` is frozen alongside the v1 SDK (bugfix-level edits only);
   new documentation lands in `docs/v2/`.

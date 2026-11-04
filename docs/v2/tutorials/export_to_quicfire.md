@@ -1,10 +1,5 @@
 # Tutorial: Export QUIC-Fire Inputs with the v2 SDK
 
-!!! warning "Beta"
-    The v2 SDK targets the FastFuels v2 API and is under active
-    development. The v1 SDK remains the default — import v2 explicitly
-    from `fastfuels_sdk.v2`.
-
 In this tutorial we'll build a complete set of QUIC-Fire fuel inputs for a
 small region in the Blue Mountain Recreation Area and package them into a
 QUIC-Fire-loadable archive. Along the way we'll touch

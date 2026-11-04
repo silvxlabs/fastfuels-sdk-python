@@ -1,10 +1,5 @@
 # How to Compose Grids
 
-!!! warning "Beta"
-    The v2 SDK targets the FastFuels v2 API and is under active
-    development. The v1 SDK remains the default — import v2 explicitly
-    from `fastfuels_sdk.v2`.
-
 Use grid composition to copy and calculate bands from completed grids on the
 same two-dimensional lattice. For creating the source grids, see
 [Creating grids](creating-grids.md); for alignment options, see

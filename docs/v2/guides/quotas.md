@@ -1,10 +1,5 @@
 # How to Check Usage and Handle Quota Rejections
 
-!!! warning "Beta"
-    The v2 SDK targets the FastFuels v2 API and is under active
-    development. The v1 SDK remains the default — import v2 explicitly
-    from `fastfuels_sdk.v2`.
-
 ## Prerequisites
 
 - The FastFuels SDK installed: `pip install fastfuels-sdk`

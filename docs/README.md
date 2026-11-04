@@ -4,7 +4,7 @@ This site is built with [mkdocs-material](https://squidfunk.github.io/mkdocs-mat
 and versioned with [mike](https://github.com/jimporter/mike). The header
 has a version dropdown with two entries, mirroring the FastFuels
 platform docs: **v1** (the current default SDK, alias `latest`) and
-**v2 (Beta)** (the `fastfuels_sdk.v2` subpackage).
+**v2** (the `fastfuels_sdk.v2` subpackage).
 
 ## Layout
 

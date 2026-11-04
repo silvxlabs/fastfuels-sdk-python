@@ -1,10 +1,5 @@
 # How to Create Grids in FastFuels SDK
 
-!!! warning "Beta"
-    The v2 SDK targets the FastFuels v2 API and is under active
-    development. The v1 SDK remains the default — import v2 explicitly
-    from `fastfuels_sdk.v2`.
-
 A grid is a raster data product within a domain — topography, surface fuel
 models, canopy fuels, and more — generated from a data source. This guide
 shows how to create grids and assemble them into an aligned dataset for fire
@@ -208,7 +203,7 @@ fuels.wait()
 ```
 
 For the FBFM40 lookup and its bands, see
-[Surface fuel from LANDFIRE](https://docs.fastfuels.silvxlabs.com/v2-beta/api/how-to-guides/grids/surface_fuel_from_landfire/)
+[Surface fuel from LANDFIRE](https://docs.fastfuels.silvxlabs.com/v2/api/how-to-guides/grids/surface_fuel_from_landfire/)
 in the FastFuels documentation.
 
 ### Use Anderson 13 fuel models
@@ -510,9 +505,6 @@ Omit `calibration` only when you want the raw DUET values.
 
 ## Solar irradiance grids
 
-!!! warning "Beta"
-    LeafLux irradiance grids are a new v2 grid family and still stabilizing.
-
 To compute solar irradiance through the canopy at a single instant, pass a
 completed 3D grid carrying a `leaf_area_density` band — a voxel grid from
 [voxelization](#3d-tree-fuel-grids-voxelization) — to
@@ -559,10 +551,6 @@ See [Align grids to each other](#align-grids-to-each-other) for how `align_to`
 matches a lattice exactly.
 
 ## Fuel moisture grids
-
-!!! warning "Beta"
-    Fosberg dead fuel moisture grids are a new v2 grid family and still
-    stabilizing.
 
 To estimate 1-hour dead fuel moisture with the Fosberg model, pass a
 topography grid and a surface-irradiance grid to
