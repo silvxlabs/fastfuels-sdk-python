@@ -1,10 +1,5 @@
 # How to Work with Grids in FastFuels SDK
 
-!!! warning "Beta"
-    The v2 SDK targets the FastFuels v2 API and is under active
-    development. The v1 SDK remains the default — import v2 explicitly
-    from `fastfuels_sdk.v2`.
-
 This guide covers what you do with a grid you already hold: wait on its job,
 inspect its bands and georeference, resample it, export it, and list or
 delete grids. To create grids in the first place, see

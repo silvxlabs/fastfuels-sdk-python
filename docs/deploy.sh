@@ -28,7 +28,7 @@ case "${1:-serve}" in
 esac
 
 uv run --group docs mike deploy $push --update-aliases v1 latest --title "v1"
-DOCS_DIR=docs/v2 uv run --group docs mike deploy $push v2 --title "v2 (Beta)"
+DOCS_DIR=docs/v2 uv run --group docs mike deploy $push v2 --title "v2"
 uv run --group docs mike set-default $push latest
 
 if [[ -z "$push" ]]; then

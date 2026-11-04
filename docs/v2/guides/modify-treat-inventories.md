@@ -1,10 +1,5 @@
 # How to Modify and Treat Tree Inventories
 
-!!! warning "Beta"
-    The v2 SDK targets the FastFuels v2 API and is under active
-    development. The v1 SDK remains the default — import v2 explicitly
-    from `fastfuels_sdk.v2`.
-
 Two tools reshape a tree inventory's stems:
 
 - **Modifications** — general rules that filter trees by *conditions* and

@@ -1,10 +1,5 @@
 # How to Work with Features in FastFuels SDK
 
-!!! warning "Beta"
-    The v2 SDK targets the FastFuels v2 API and is under active
-    development. The v1 SDK remains the default — import v2 explicitly
-    from `fastfuels_sdk.v2`.
-
 Features are geographic data within a domain: roads and water bodies
 extracted from OpenStreetMap, tree crowns outlined on a canopy height model,
 or custom layersets of fuelbed polygons you upload yourself. This guide

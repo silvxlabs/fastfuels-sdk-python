@@ -1,10 +1,5 @@
 # How to Work with Point Clouds in FastFuels SDK
 
-!!! warning "Beta"
-    The v2 SDK targets the FastFuels v2 API and is under active
-    development. The v1 SDK remains the default — import v2 explicitly
-    from `fastfuels_sdk.v2`.
-
 A point cloud is a 3D LiDAR dataset within a domain, fetched from USGS 3DEP or
 uploaded from your own airborne (ALS) or terrestrial (TLS) scan. For what
 point clouds *are* and how they fit the platform, see the
