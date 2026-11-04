@@ -1414,12 +1414,6 @@
 
 
 <h1 id="how-to-create-grids-in-fastfuels-sdk">How to Create Grids in FastFuels SDK<a class="headerlink" href="#how-to-create-grids-in-fastfuels-sdk" title="Permanent link">&para;</a></h1>
-<div class="admonition warning">
-<p class="admonition-title">Beta</p>
-<p>The v2 SDK targets the FastFuels v2 API and is under active
-development. The v1 SDK remains the default — import v2 explicitly
-from <code>fastfuels_sdk.v2</code>.</p>
-</div>
 <p>A grid is a raster data product within a domain — topography, surface fuel
 models, canopy fuels, and more — generated from a data source. This guide
 shows how to create grids and assemble them into an aligned dataset for fire
@@ -1573,7 +1567,7 @@ combined with <code>fuel_load.fine_dead</code> and <code>savr.fine_dead</code>:<
 </span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="p">[(</span><span class="s1">&#39;fuel_load.fine_dead&#39;</span><span class="p">,</span> <span class="s1">&#39;kg/m**2&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;savr.fine_dead&#39;</span><span class="p">,</span> <span class="s1">&#39;1/m&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;fuel_depth&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">)]</span>
 </span></code></pre></div>
 <p>For the FBFM40 lookup and its bands, see
-<a href="https://docs.fastfuels.silvxlabs.com/v2-beta/api/how-to-guides/grids/surface_fuel_from_landfire/">Surface fuel from LANDFIRE</a>
+<a href="https://docs.fastfuels.silvxlabs.com/v2/api/how-to-guides/grids/surface_fuel_from_landfire/">Surface fuel from LANDFIRE</a>
 in the FastFuels documentation.</p>
 <h3 id="use-anderson-13-fuel-models">Use Anderson 13 fuel models<a class="headerlink" href="#use-anderson-13-fuel-models" title="Permanent link">&para;</a></h3>
 <p>To create the Anderson 13 model set instead, select a LANDFIRE version and
@@ -1798,10 +1792,6 @@ output bands and time since fire:</p>
 optional <code>min</code> to scale by extrema, or <code>mean</code> and <code>sd</code> to scale by moments.
 Omit <code>calibration</code> only when you want the raw DUET values.</p>
 <h2 id="solar-irradiance-grids">Solar irradiance grids<a class="headerlink" href="#solar-irradiance-grids" title="Permanent link">&para;</a></h2>
-<div class="admonition warning">
-<p class="admonition-title">Beta</p>
-<p>LeafLux irradiance grids are a new v2 grid family and still stabilizing.</p>
-</div>
 <p>To compute solar irradiance through the canopy at a single instant, pass a
 completed 3D grid carrying a <code>leaf_area_density</code> band — a voxel grid from
 <a href="#3d-tree-fuel-grids-voxelization">voxelization</a> — to
@@ -1840,11 +1830,6 @@ lattice-matched terrain grid the API returns a 422:</p>
 <p>See <a href="#align-grids-to-each-other">Align grids to each other</a> for how <code>align_to</code>
 matches a lattice exactly.</p>
 <h2 id="fuel-moisture-grids">Fuel moisture grids<a class="headerlink" href="#fuel-moisture-grids" title="Permanent link">&para;</a></h2>
-<div class="admonition warning">
-<p class="admonition-title">Beta</p>
-<p>Fosberg dead fuel moisture grids are a new v2 grid family and still
-stabilizing.</p>
-</div>
 <p>To estimate 1-hour dead fuel moisture with the Fosberg model, pass a
 topography grid and a surface-irradiance grid to
 <code>create_dead_fuel_moisture_grid_from_fosberg</code> along with the weather inputs.

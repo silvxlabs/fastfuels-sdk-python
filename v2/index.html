@@ -998,12 +998,12 @@
 
 
 <h1 id="welcome-to-the-fastfuels-python-sdk-documentation">Welcome to the FastFuels Python SDK Documentation!<a class="headerlink" href="#welcome-to-the-fastfuels-python-sdk-documentation" title="Permanent link">&para;</a></h1>
-<div class="admonition warning">
-<p class="admonition-title">Beta</p>
+<div class="admonition note">
+<p class="admonition-title">v2 SDK</p>
 <p>You are reading the documentation for the <strong>v2 SDK</strong>, which targets
-the FastFuels v2 API and is under active development. The v1 SDK
-remains the default — switch versions with the selector in the
-header. Import v2 explicitly from <code>fastfuels_sdk.v2</code>.</p>
+the FastFuels v2 API. The v1 SDK remains the default — switch
+versions with the selector in the header. Import v2 explicitly from
+<code>fastfuels_sdk.v2</code>.</p>
 </div>
 <h2 id="what-is-fastfuels">What is FastFuels?<a class="headerlink" href="#what-is-fastfuels" title="Permanent link">&para;</a></h2>
 <p>FastFuels is a cloud-based platform for generating forest inventory data. It
@@ -1028,7 +1028,7 @@ generated data products.</p>
 <p>The v1 and v2 APIs are separate live services, and the SDK ships both as
 versioned subpackages, so you can use them side by side during migration:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v1</span><span class="w"> </span><span class="kn">import</span> <span class="n">Domain</span>   <span class="c1"># v1 (current default)</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="kn">import</span> <span class="n">Domain</span>   <span class="c1"># v2 (Beta)</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="kn">import</span> <span class="n">Domain</span>   <span class="c1"># v2</span>
 </span></code></pre></div>
 <p>Coming from v1? Start with <a href="guides/migration/">Migrating from v1</a>.</p>
 <p>The SDK authenticates with an existing API key. Creating applications and
