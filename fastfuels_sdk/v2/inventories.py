@@ -88,8 +88,8 @@ __all__ = [
     "create_tree_inventory_from_chm_grid",
     "create_tree_inventory_from_pim_chm_fusion",
     "create_tree_inventory_from_file",
-    "create_tree_inventory_from_gdam",
-    "create_tree_inventory_from_crown_base_height",
+    "create_tree_inventory_with_gdam_allometry",
+    "create_tree_inventory_with_crown_base_height_allometry",
     "list_inventories",
     "get_inventory",
     "ChmInventoryCrownSegmentation",
@@ -718,8 +718,9 @@ class Inventory(InventoryModel):
             longer exists, or the inventory has no ``tree_id`` column or
             lacks the columns voxelization needs (``x``, ``y``, ``height``,
             ``dbh``, ``crown_base_height`` and ``fia_species_code``, with no
-            empty values; see :func:`create_tree_inventory_from_gdam` and
-            :func:`create_tree_inventory_from_crown_base_height`).
+            empty values; see
+            :func:`create_tree_inventory_with_gdam_allometry` and
+            :func:`create_tree_inventory_with_crown_base_height_allometry`).
 
         Examples
         --------
@@ -1395,7 +1396,7 @@ def create_tree_inventory_from_file(
     return Inventory._from_model(created.inventory)
 
 
-def create_tree_inventory_from_gdam(
+def create_tree_inventory_with_gdam_allometry(
     domain,
     source_inventory,
     impute_columns: Optional[list] = None,
@@ -1472,12 +1473,12 @@ def create_tree_inventory_from_gdam(
     ...     domain, "stems.csv"  # x, y, height only
     ... )
     >>> sparse.wait()
-    >>> full = ff.inventories.create_tree_inventory_from_gdam(domain, sparse)
+    >>> full = ff.inventories.create_tree_inventory_with_gdam_allometry(domain, sparse)
     >>> full.wait()
 
     Compute crown base heights with an equation instead of GDAM:
 
-    >>> full = ff.inventories.create_tree_inventory_from_gdam(
+    >>> full = ff.inventories.create_tree_inventory_with_gdam_allometry(
     ...     domain, sparse, crown_base_height_model="fia_national_logit_2026"
     ... )
     """
@@ -1500,7 +1501,7 @@ def create_tree_inventory_from_gdam(
     return Inventory._from_model(expect(response, HTTPStatus.CREATED))
 
 
-def create_tree_inventory_from_crown_base_height(
+def create_tree_inventory_with_crown_base_height_allometry(
     domain,
     source_inventory,
     model=None,
@@ -1531,7 +1532,7 @@ def create_tree_inventory_from_crown_base_height(
         ``height`` for every tree, and ``fia_species_code``, ``dbh`` and
         ``crown_ratio`` for every tree unless ``model`` is "gdam". To fill
         those columns and the crown base height in one request, use
-        :func:`create_tree_inventory_from_gdam` instead.
+        :func:`create_tree_inventory_with_gdam_allometry` instead.
     model : str, Mapping, or crown base height model, optional
         The crown base height model, by name: "fia_national_logit_2026",
         "monleon_2004_eq1", "monleon_2004_eq2", "toney_reeves_2009",
@@ -1571,14 +1572,14 @@ def create_tree_inventory_from_crown_base_height(
     ...     domain, "plot_trees.csv"  # x, y, height, dbh, crown_ratio, species
     ... )
     >>> trees.wait()
-    >>> inventory = ff.inventories.create_tree_inventory_from_crown_base_height(
+    >>> inventory = ff.inventories.create_tree_inventory_with_crown_base_height_allometry(
     ...     domain, trees
     ... )
     >>> inventory.wait()
 
     Recompute every tree's crown base height with a regional equation:
 
-    >>> inventory = ff.inventories.create_tree_inventory_from_crown_base_height(
+    >>> inventory = ff.inventories.create_tree_inventory_with_crown_base_height_allometry(
     ...     domain, trees, model="toney_reeves_2009", overwrite=True
     ... )
     """

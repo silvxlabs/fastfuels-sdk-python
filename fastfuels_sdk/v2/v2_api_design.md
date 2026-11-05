@@ -243,9 +243,9 @@ later merges). Each new resource/endpoint kept to the settled rules above.
   re-derive) + the `ff.basal_area_treatment`/`ff.diameter_treatment` builders
   (`treatments.py`). The former #333 fork-safety blocker for both in-place
   processing paths is fixed.
-- **GDAM** — `create_tree_inventory_from_gdam(domain, source_inventory,
-  impute_columns=)`. A *create* (new inventory) → a function in the
-  `create_tree_inventory_from_*` family, **not** a method — same call as the
+- **GDAM** — `create_tree_inventory_with_gdam_allometry(domain,
+  source_inventory, impute_columns=)`. A *create* (new inventory) → a function
+  in the `create_tree_inventory_*` family, **not** a method — same call as the
   fbfm40-lookup precedent (derive-a-new-resource = function).
 - **Grid** gained `duplicate` (byte-copy clone, mirrors `Inventory.duplicate`),
   `apply_modifications` (in-place re-derive; grid `modifications` list is *not*

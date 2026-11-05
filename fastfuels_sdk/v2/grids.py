@@ -1599,7 +1599,7 @@ def create_canopy_fuel_grid_from_inventory(
     UnprocessableEntityException
         If the inventory lacks a column the request needs, such as
         ``crown_base_height`` (see
-        :func:`fastfuels_sdk.v2.inventories.create_tree_inventory_from_crown_base_height`).
+        :func:`fastfuels_sdk.v2.inventories.create_tree_inventory_with_crown_base_height_allometry`).
 
     Examples
     --------

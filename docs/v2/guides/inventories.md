@@ -190,8 +190,8 @@ background job — `wait()` before reading data back:
 ## Impute missing morphology with GDAM
 
 An uploaded inventory may carry only some columns — coordinates and heights,
-say, without diameters or species. `create_tree_inventory_from_gdam` fills in
-the missing morphology (`dbh`, `crown_ratio`, `fia_species_code`,
+say, without diameters or species. `create_tree_inventory_with_gdam_allometry`
+fills in the missing morphology (`dbh`, `crown_ratio`, `fia_species_code`,
 `crown_base_height`) for a completed inventory using GDAM allometry, producing
 a new inventory:
 
@@ -199,7 +199,7 @@ a new inventory:
 sparse = ff.inventories.create_tree_inventory_from_file(domain, "stems.csv")
 sparse.wait()
 
-full = ff.inventories.create_tree_inventory_from_gdam(domain, sparse)
+full = ff.inventories.create_tree_inventory_with_gdam_allometry(domain, sparse)
 full.wait()
 ```
 
@@ -214,13 +214,13 @@ imputed species, dbh, crown ratio and height instead, pass
 
 Voxelization and canopy grids need a `crown_base_height` (m) for every tree.
 To compute it for an inventory that already has species, dbh, crown ratio
-and height, use `create_tree_inventory_from_crown_base_height`:
+and height, use `create_tree_inventory_with_crown_base_height_allometry`:
 
 ```python
 trees = ff.inventories.create_tree_inventory_from_file(domain, "plot_trees.csv")
 trees.wait()
 
-inventory = ff.inventories.create_tree_inventory_from_crown_base_height(
+inventory = ff.inventories.create_tree_inventory_with_crown_base_height_allometry(
     domain, trees
 )
 inventory.wait()
@@ -404,7 +404,7 @@ trees = ff.inventories.create_tree_inventory_from_chm_grid(domain, chm)
 trees.wait()
 
 crowns = ff.features.create_crown_feature_from_chm(domain, trees, chm)
-full = ff.inventories.create_tree_inventory_from_gdam(domain, trees)
+full = ff.inventories.create_tree_inventory_with_gdam_allometry(domain, trees)
 ff.wait_all([crowns, full])
 
 voxels = full.voxelize(
