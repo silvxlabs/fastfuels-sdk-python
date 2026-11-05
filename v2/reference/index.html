@@ -2039,10 +2039,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_from_gdam" class="md-nav__link">
+  <a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_with_gdam_allometry" class="md-nav__link">
     <span class="md-ellipsis">
       
-        create_tree_inventory_from_gdam
+        create_tree_inventory_with_gdam_allometry
       
     </span>
   </a>
@@ -2050,10 +2050,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_from_crown_base_height" class="md-nav__link">
+  <a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_with_crown_base_height_allometry" class="md-nav__link">
     <span class="md-ellipsis">
       
-        create_tree_inventory_from_crown_base_height
+        create_tree_inventory_with_crown_base_height_allometry
       
     </span>
   </a>
@@ -4110,10 +4110,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_from_gdam" class="md-nav__link">
+  <a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_with_gdam_allometry" class="md-nav__link">
     <span class="md-ellipsis">
       
-        create_tree_inventory_from_gdam
+        create_tree_inventory_with_gdam_allometry
       
     </span>
   </a>
@@ -4121,10 +4121,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_from_crown_base_height" class="md-nav__link">
+  <a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_with_crown_base_height_allometry" class="md-nav__link">
     <span class="md-ellipsis">
       
-        create_tree_inventory_from_crown_base_height
+        create_tree_inventory_with_crown_base_height_allometry
       
     </span>
   </a>
@@ -12668,7 +12668,7 @@ unknown.</p>
               <div class="doc-md-description">
                 <p>If the inventory lacks a column the request needs, such as
 <code>crown_base_height</code> (see
-:func:<code>fastfuels_sdk.v2.inventories.create_tree_inventory_from_crown_base_height</code>).</p>
+:func:<code>fastfuels_sdk.v2.inventories.create_tree_inventory_with_crown_base_height_allometry</code>).</p>
               </div>
             </td>
           </tr>
@@ -19365,8 +19365,9 @@ a completed crown Feature, the CHM grid it was built from no
 longer exists, or the inventory has no <code>tree_id</code> column or
 lacks the columns voxelization needs (<code>x</code>, <code>y</code>, <code>height</code>,
 <code>dbh</code>, <code>crown_base_height</code> and <code>fia_species_code</code>, with no
-empty values; see :func:<code>create_tree_inventory_from_gdam</code> and
-:func:<code>create_tree_inventory_from_crown_base_height</code>).</p>
+empty values; see
+:func:<code>create_tree_inventory_with_gdam_allometry</code> and
+:func:<code>create_tree_inventory_with_crown_base_height_allometry</code>).</p>
               </div>
             </td>
           </tr>
@@ -21129,12 +21130,12 @@ processed.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="fastfuels_sdk.v2.inventories.create_tree_inventory_from_gdam" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">create_tree_inventory_from_gdam</span>
+<h3 id="fastfuels_sdk.v2.inventories.create_tree_inventory_with_gdam_allometry" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">create_tree_inventory_with_gdam_allometry</span>
 
 
-<a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_from_gdam" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_from_gdam</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">source_inventory</span><span class="p">,</span> <span class="n">impute_columns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">crown_base_height_model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span>
+<a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_with_gdam_allometry" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_with_gdam_allometry</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">source_inventory</span><span class="p">,</span> <span class="n">impute_columns</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">crown_base_height_model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -21375,11 +21376,11 @@ whose inputs are neither imputed nor columns of the source.</p>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span>    <span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;stems.csv&quot;</span>  <span class="c1"># x, y, height only</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">... </span><span class="p">)</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">sparse</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">full</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_gdam</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">sparse</span><span class="p">)</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">full</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_with_gdam_allometry</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">sparse</span><span class="p">)</span>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">full</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </span></code></pre></div>
     <p>Compute crown base heights with an equation instead of GDAM:</p>
-    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">full</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_gdam</span><span class="p">(</span>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">full</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_with_gdam_allometry</span><span class="p">(</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">... </span>    <span class="n">domain</span><span class="p">,</span> <span class="n">sparse</span><span class="p">,</span> <span class="n">crown_base_height_model</span><span class="o">=</span><span class="s2">&quot;fia_national_logit_2026&quot;</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span><span class="p">)</span>
 </span></code></pre></div>
@@ -21392,12 +21393,12 @@ whose inputs are neither imputed nor columns of the source.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="fastfuels_sdk.v2.inventories.create_tree_inventory_from_crown_base_height" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">create_tree_inventory_from_crown_base_height</span>
+<h3 id="fastfuels_sdk.v2.inventories.create_tree_inventory_with_crown_base_height_allometry" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">create_tree_inventory_with_crown_base_height_allometry</span>
 
 
-<a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_from_crown_base_height" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_from_crown_base_height</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">source_inventory</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span>
+<a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_with_crown_base_height_allometry" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_with_crown_base_height_allometry</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">source_inventory</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -21455,7 +21456,7 @@ is left unchanged.</p>
 <code>height</code> for every tree, and <code>fia_species_code</code>, <code>dbh</code> and
 <code>crown_ratio</code> for every tree unless <code>model</code> is "gdam". To fill
 those columns and the crown base height in one request, use
-:func:<code>create_tree_inventory_from_gdam</code> instead.</p>
+:func:<code>create_tree_inventory_with_gdam_allometry</code> instead.</p>
               </div>
             </td>
             <td>
@@ -21619,13 +21620,13 @@ has a crown base height.</p>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span>    <span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;plot_trees.csv&quot;</span>  <span class="c1"># x, y, height, dbh, crown_ratio, species</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">... </span><span class="p">)</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">trees</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">inventory</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_crown_base_height</span><span class="p">(</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">inventory</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_with_crown_base_height_allometry</span><span class="p">(</span>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">... </span>    <span class="n">domain</span><span class="p">,</span> <span class="n">trees</span>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="gp">... </span><span class="p">)</span>
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">inventory</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </span></code></pre></div>
     <p>Recompute every tree's crown base height with a regional equation:</p>
-    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">inventory</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_crown_base_height</span><span class="p">(</span>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">inventory</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_with_crown_base_height_allometry</span><span class="p">(</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">... </span>    <span class="n">domain</span><span class="p">,</span> <span class="n">trees</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">&quot;toney_reeves_2009&quot;</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">... </span><span class="p">)</span>
 </span></code></pre></div>
