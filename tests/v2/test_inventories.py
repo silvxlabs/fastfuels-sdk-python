@@ -20,9 +20,9 @@ from fastfuels_sdk.v2.inventories import (
     _build_crown_base_height_model,
     _build_fusion_method,
     create_tree_inventory_from_chm_grid,
-    create_tree_inventory_from_crown_base_height,
+    create_tree_inventory_with_crown_base_height_allometry,
     create_tree_inventory_from_file,
-    create_tree_inventory_from_gdam,
+    create_tree_inventory_with_gdam_allometry,
     create_tree_inventory_from_pim_chm_fusion,
     create_tree_inventory_from_pim_grid,
     get_inventory,
@@ -452,11 +452,11 @@ class TestCreateTreeInventoryFromFile:
         inventory.delete()
 
 
-class TestCreateTreeInventoryFromGdam:
+class TestCreateTreeInventoryWithGdamAllometry:
     def test_create_returns_new_pending_inventory(
         self, test_domain, completed_tree_inventory
     ):
-        imputed = create_tree_inventory_from_gdam(
+        imputed = create_tree_inventory_with_gdam_allometry(
             test_domain,
             completed_tree_inventory,
             impute_columns=["dbh", "crown_ratio"],
@@ -469,20 +469,20 @@ class TestCreateTreeInventoryFromGdam:
         imputed.delete()
 
     def test_accepts_inventory_id_string(self, test_domain, completed_tree_inventory):
-        imputed = create_tree_inventory_from_gdam(
+        imputed = create_tree_inventory_with_gdam_allometry(
             test_domain, completed_tree_inventory.id
         )
         assert imputed.domain_id == test_domain.id
         imputed.delete()
 
 
-class TestCreateTreeInventoryFromCrownBaseHeight:
+class TestCreateTreeInventoryWithCrownBaseHeightAllometry:
     def test_create_returns_new_pending_inventory(
         self, test_domain, completed_tree_inventory
     ):
         # The PIM fixture already has a crown base height for every tree, so
         # the API requires overwrite=True.
-        inventory = create_tree_inventory_from_crown_base_height(
+        inventory = create_tree_inventory_with_crown_base_height_allometry(
             test_domain,
             completed_tree_inventory,
             model="toney_reeves_2009",
@@ -533,7 +533,7 @@ class TestBuildCrownBaseHeightModel:
             _build_crown_base_height_model(value, "crown_base_height_model")
 
 
-class TestCreateTreeInventoryFromCrownBaseHeightRequest:
+class TestCreateTreeInventoryWithCrownBaseHeightAllometryRequest:
     @pytest.fixture
     def captured(self, monkeypatch):
         captured = {}
@@ -552,7 +552,7 @@ class TestCreateTreeInventoryFromCrownBaseHeightRequest:
         return captured
 
     def test_defaults(self, captured):
-        inventory = create_tree_inventory_from_crown_base_height(
+        inventory = create_tree_inventory_with_crown_base_height_allometry(
             "domain-id", "inventory-id"
         )
         assert isinstance(inventory, Inventory)
@@ -565,7 +565,7 @@ class TestCreateTreeInventoryFromCrownBaseHeightRequest:
         }
 
     def test_all_fields(self, captured):
-        create_tree_inventory_from_crown_base_height(
+        create_tree_inventory_with_crown_base_height_allometry(
             SimpleNamespace(id="domain-id"),
             SimpleNamespace(id="inventory-id"),
             model="gdam",
@@ -586,13 +586,13 @@ class TestCreateTreeInventoryFromCrownBaseHeightRequest:
 
     def test_rejects_unknown_model_before_request(self, captured):
         with pytest.raises(ValueError, match="model must be"):
-            create_tree_inventory_from_crown_base_height(
+            create_tree_inventory_with_crown_base_height_allometry(
                 "domain-id", "inventory-id", model="cruz_2003"
             )
         assert captured == {}
 
 
-class TestCreateTreeInventoryFromGdamRequest:
+class TestCreateTreeInventoryWithGdamAllometryRequest:
     @pytest.fixture
     def captured(self, monkeypatch):
         captured = {}
@@ -611,7 +611,7 @@ class TestCreateTreeInventoryFromGdamRequest:
         return captured
 
     def test_defaults(self, captured):
-        create_tree_inventory_from_gdam("domain-id", "inventory-id")
+        create_tree_inventory_with_gdam_allometry("domain-id", "inventory-id")
         assert captured["body"] == {
             "source_tree_inventory_id": "inventory-id",
             "overwrite": False,
@@ -620,7 +620,7 @@ class TestCreateTreeInventoryFromGdamRequest:
         }
 
     def test_crown_base_height_model_and_overwrite(self, captured):
-        create_tree_inventory_from_gdam(
+        create_tree_inventory_with_gdam_allometry(
             "domain-id",
             "inventory-id",
             impute_columns=["dbh", "crown_base_height"],
@@ -1058,7 +1058,7 @@ class TestMeasuredCrowns:
     ):
         # A CHM inventory has only x, y, height; GDAM imputes the rest and
         # keeps tree_id, so its trees still match the crowns.
-        inventory = create_tree_inventory_from_gdam(
+        inventory = create_tree_inventory_with_gdam_allometry(
             test_domain, completed_chm_inventory, name="throwaway_gdam"
         )
         inventory.wait()
