@@ -1799,6 +1799,22 @@ class TestMask:
         assert grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
         grid.delete()
 
+    def test_mask_building_feature(self, building_domain, completed_building_feature):
+        # Live: building footprints are accepted as a mask feature
+        mod = mask(completed_building_feature, "fbfm", 91)
+        grid = create_fuel_model_grid_from_landfire_fbfm40(
+            building_domain,
+            output_resolution_m=2,
+            modifications=[mod],
+            name="throwaway_building_masked_fbfm40",
+        )
+        assert len(grid.id) > 0
+        assert grid.status in (JobStatus.PENDING, JobStatus.RUNNING)
+        assert grid.modifications[0].conditions[0].feature_id == (
+            completed_building_feature.id
+        )
+        grid.delete()
+
 
 class TestCreateFuelModelGridFromLandfireFccs:
     def test_create(self, test_domain):

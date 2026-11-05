@@ -12,6 +12,7 @@ from ..models.job_status import JobStatus
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
+    from ..models.attribution import Attribution
     from ..models.feature_georeference import FeatureGeoreference
     from ..models.feature_source import FeatureSource
     from ..models.job_error import JobError
@@ -43,6 +44,8 @@ class Feature:
             georeference (FeatureGeoreference | None | Unset): Spatial reference. Null until backend completes processing.
             error (JobError | None | Unset): Error details if status is 'failed'.
             tags (list[str] | Unset):
+            attributions (list[Attribution] | Unset): Licenses and citations for the third-party data this feature was built
+                from. Reproduce each `citation` wherever you use or share the data. Empty if none are recorded.
     """
 
     id: str
@@ -58,6 +61,7 @@ class Feature:
     georeference: FeatureGeoreference | None | Unset = UNSET
     error: JobError | None | Unset = UNSET
     tags: list[str] | Unset = UNSET
+    attributions: list[Attribution] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -123,6 +127,13 @@ class Feature:
         if not isinstance(self.tags, Unset):
             tags = self.tags
 
+        attributions: list[dict[str, Any]] | Unset = UNSET
+        if not isinstance(self.attributions, Unset):
+            attributions = []
+            for attributions_item_data in self.attributions:
+                attributions_item = attributions_item_data.to_dict()
+                attributions.append(attributions_item)
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -150,11 +161,14 @@ class Feature:
             field_dict["error"] = error
         if tags is not UNSET:
             field_dict["tags"] = tags
+        if attributions is not UNSET:
+            field_dict["attributions"] = attributions
 
         return field_dict
 
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
+        from ..models.attribution import Attribution
         from ..models.feature_georeference import FeatureGeoreference
         from ..models.feature_source import FeatureSource
         from ..models.job_error import JobError
@@ -262,6 +276,15 @@ class Feature:
 
         tags = cast(list[str], d.pop("tags", UNSET))
 
+        _attributions = d.pop("attributions", UNSET)
+        attributions: list[Attribution] | Unset = UNSET
+        if _attributions is not UNSET:
+            attributions = []
+            for attributions_item_data in _attributions:
+                attributions_item = Attribution.from_dict(attributions_item_data)
+
+                attributions.append(attributions_item)
+
         feature = cls(
             id=id,
             domain_id=domain_id,
@@ -276,6 +299,7 @@ class Feature:
             georeference=georeference,
             error=error,
             tags=tags,
+            attributions=attributions,
         )
 
         feature.additional_properties = d

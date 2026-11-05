@@ -49,6 +49,22 @@ def create_default_domain() -> Domain:
     return domain
 
 
+def create_building_domain() -> Domain:
+    """Creates a v2 Domain over a residential area of Missoula, MT, for
+    tests that need building footprints (the default domain has none).
+    """
+    with open(TEST_DATA_DIR / "miller_creek.geojson") as f:
+        geojson = json.load(f)
+
+    return Domain.from_geojson(
+        geojson,
+        name="test_building_domain",
+        description="Domain with buildings for testing v2 building features",
+        tags=[SWEEP_TAG],
+        pad_to_resolution=2.0,
+    )
+
+
 def sweep_leftover_domains(max_age: timedelta = timedelta(hours=2)) -> None:
     """Delete test domains leaked by crashed or interrupted runs.
 

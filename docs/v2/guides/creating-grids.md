@@ -695,7 +695,25 @@ grid = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
 
 The feature must be `completed` and in the same domain as the grid. Roads
 and other linestrings usually need a `buffer_m` (or `target="cell"`) so the
-thin geometry covers whole cells. See `ff.mask` in the
+thin geometry covers whole cells.
+
+Polygon features such as building footprints need no buffer. For example, to
+make the surface fuel under buildings non-burnable at a resolution fine
+enough to resolve individual footprints:
+
+```python
+buildings = ff.features.create_building_feature_from_overture(domain)
+buildings.wait()
+
+grid = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
+    domain,
+    output_resolution_m=2,
+    modifications=[ff.mask(buildings, "fbfm", 91)],
+)
+```
+
+Mask several features at once by passing one `ff.mask` per feature in the
+`modifications` list. See `ff.mask` in the
 [Reference](../reference.md) for masking multiple bands and the `operator`
 and `target` options.
 

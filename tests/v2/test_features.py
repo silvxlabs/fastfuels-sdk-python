@@ -4,6 +4,7 @@ tests/v2/test_features.py
 
 # Core imports
 import json
+from types import SimpleNamespace
 from http import HTTPStatus
 from uuid import uuid4
 
@@ -12,6 +13,7 @@ from tests import TEST_DATA_DIR
 from tests.v2.utils import create_default_layerset_geojson
 from fastfuels_sdk.v2.features import (
     Feature,
+    create_building_feature_from_overture,
     create_crown_feature_from_chm,
     create_layerset_feature_from_geodataframe,
     create_layerset_feature_from_geojson,
@@ -74,6 +76,162 @@ class TestCreateOsmWaterFeature:
         assert feature.type_ == FeatureType.WATER
         assert feature.status in (JobStatus.PENDING, JobStatus.RUNNING)
         feature.delete()
+
+
+def _building_feature_payload(domain_id="domain-id", status="completed"):
+    return {
+        "id": "feature-id",
+        "domain_id": domain_id,
+        "type": "building",
+        "status": status,
+        "source": {
+            "description": "Overture Maps building footprints",
+            "product": "overture",
+            "extent_buffer_m": 0.0,
+            "release": "2026-10-21.0",
+        },
+        "name": "",
+        "description": "",
+        "attributions": [
+            {
+                "dataset": "Overture Maps Foundation",
+                "license_name": "ODbL-1.0",
+                "license_url": "https://opendatacommons.org/licenses/odbl/1-0/",
+                "citation": "\u00a9 OpenStreetMap contributors, Overture Maps Foundation",
+                "access_url": "https://docs.overturemaps.org/attribution/",
+                "accessed_on": "2026-11-05",
+            }
+        ],
+    }
+
+
+class TestBuildingFeatureParsing:
+    def test_building_type_parses(self):
+        feature = Feature.from_dict(_building_feature_payload())
+        assert isinstance(feature, Feature)
+        assert feature.type_ == FeatureType.BUILDING
+        assert feature.source["product"] == "overture"
+        assert feature.source["release"] == "2026-10-21.0"
+
+    def test_attributions_parse(self):
+        feature = Feature.from_dict(_building_feature_payload())
+        (attribution,) = feature.attributions
+        assert attribution.dataset == "Overture Maps Foundation"
+        assert attribution.license_name == "ODbL-1.0"
+        assert "OpenStreetMap contributors" in attribution.citation
+
+
+class TestCreateBuildingFeatureFromOvertureRequest:
+    @pytest.fixture
+    def captured(self, monkeypatch):
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, body=body.to_dict())
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=Feature.from_dict(
+                    _building_feature_payload(domain_id, status="pending")
+                ),
+            )
+
+        monkeypatch.setattr("fastfuels_sdk.v2.features.ensure_client", lambda: object())
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.features.create_overture_building_feature.sync_detailed",
+            fake_create,
+        )
+        return captured
+
+    def test_default_request_body(self, captured):
+        feature = create_building_feature_from_overture("domain-id")
+
+        assert isinstance(feature, Feature)
+        assert feature.type_ == FeatureType.BUILDING
+        assert captured["domain_id"] == "domain-id"
+        assert captured["body"] == {
+            "type": "building",
+            "name": "",
+            "description": "",
+            "extent_buffer_m": 0.0,
+        }
+
+    def test_full_request_body(self, captured):
+        create_building_feature_from_overture(
+            SimpleNamespace(id="domain-obj"),
+            name="buildings",
+            description="footprints",
+            tags=["wui"],
+            extent_buffer_m=25,
+        )
+
+        assert captured["domain_id"] == "domain-obj"
+        assert captured["body"] == {
+            "type": "building",
+            "name": "buildings",
+            "description": "footprints",
+            "tags": ["wui"],
+            "extent_buffer_m": 25,
+        }
+
+
+class TestCreateOvertureBuildingFeature:
+    def test_create(self, building_domain):
+        feature = create_building_feature_from_overture(
+            building_domain, name="throwaway_buildings"
+        )
+
+        assert len(feature.id) > 0
+        assert feature.domain_id == building_domain.id
+        assert feature.type_ == FeatureType.BUILDING
+        assert feature.status in (JobStatus.PENDING, JobStatus.RUNNING)
+        assert feature.source["product"] == "overture"
+        feature.delete()
+
+    def test_invalid_extent_buffer(self, building_domain):
+        with pytest.raises(UnprocessableEntityException):
+            create_building_feature_from_overture(building_domain, extent_buffer_m=500)
+
+    def test_completed_fixture(self, completed_building_feature):
+        feature = completed_building_feature
+        assert feature.status == JobStatus.COMPLETED
+        assert feature.name == "test_buildings"
+        assert feature.tags == ["test"]
+        # The Overture release that was read is recorded once processed
+        assert feature.source["release"]
+        assert feature.georeference.crs.startswith("EPSG:")
+        assert any(
+            "Overture" in attribution.dataset for attribution in feature.attributions
+        )
+
+    def test_data_columns(self, completed_building_feature):
+        gdf = completed_building_feature.to_geodataframe()
+
+        assert len(gdf) > 0
+        assert {"geometry", "height", "height_source", "source_dataset"} <= set(
+            gdf.columns
+        )
+        assert gdf.geometry.geom_type.isin(["Polygon", "MultiPolygon"]).all()
+        # Every footprint names its source dataset; height (and so its
+        # source) may be unknown for some buildings
+        assert gdf["source_dataset"].notna().all()
+        heights = gdf["height"].dropna()
+        assert len(heights) > 0
+        assert (heights > 0).all()
+        assert gdf.loc[gdf["height"].notna(), "height_source"].notna().all()
+
+    def test_get_and_list(self, building_domain, completed_building_feature):
+        # A building feature in a response deserializes (FeatureType.BUILDING)
+        feature = get_feature(building_domain, completed_building_feature.id)
+        assert feature.type_ == FeatureType.BUILDING
+
+        features = list_features(building_domain)
+        assert completed_building_feature.id in [f.id for f in features]
+
+        buildings = list_features(building_domain, feature_type="building")
+        assert all(f.type_ == FeatureType.BUILDING for f in buildings)
+        assert completed_building_feature.id in [f.id for f in buildings]
 
 
 def _crown_feature_payload(domain_id="domain-id", status="pending"):

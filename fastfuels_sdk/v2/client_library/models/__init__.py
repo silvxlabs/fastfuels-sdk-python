@@ -12,6 +12,7 @@ from .application_quota_overrides_type_0 import ApplicationQuotaOverridesType0
 from .apply_grid_modifications_request import ApplyGridModificationsRequest
 from .apply_modifications_request import ApplyModificationsRequest
 from .apply_treatments_request import ApplyTreatmentsRequest
+from .attribution import Attribution
 from .band import Band
 from .band_type import BandType
 from .base_model import BaseModel
@@ -103,6 +104,9 @@ from .create_naip_chm_request import CreateNaipChmRequest
 from .create_netcdf_upload_request import CreateNetcdfUploadRequest
 from .create_osm_road_feature_request import CreateOsmRoadFeatureRequest
 from .create_osm_water_feature_request import CreateOsmWaterFeatureRequest
+from .create_overture_building_feature_request import (
+    CreateOvertureBuildingFeatureRequest,
+)
 from .create_personal_key_request import CreatePersonalKeyRequest
 from .create_pim_chm_fusion_inventory_request import CreatePimChmFusionInventoryRequest
 from .create_pim_inventory_request import CreatePimInventoryRequest
@@ -379,6 +383,7 @@ __all__ = (
     "ApplyGridModificationsRequest",
     "ApplyModificationsRequest",
     "ApplyTreatmentsRequest",
+    "Attribution",
     "Band",
     "BandType",
     "BaseModel",
@@ -464,6 +469,7 @@ __all__ = (
     "CreateNetcdfUploadRequest",
     "CreateOsmRoadFeatureRequest",
     "CreateOsmWaterFeatureRequest",
+    "CreateOvertureBuildingFeatureRequest",
     "CreatePersonalKeyRequest",
     "CreatePimChmFusionInventoryRequest",
     "CreatePimInventoryRequest",

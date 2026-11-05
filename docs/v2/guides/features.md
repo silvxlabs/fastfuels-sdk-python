@@ -1,10 +1,10 @@
 # How to Work with Features in FastFuels SDK
 
 Features are geographic data within a domain: roads and water bodies
-extracted from OpenStreetMap, tree crowns outlined on a canopy height model,
-or custom layersets of fuelbed polygons you upload yourself. This guide
-covers working with features from Python; for
-what features *are* and how the platform treats them, see the
+extracted from OpenStreetMap, building footprints from Overture Maps, tree
+crowns outlined on a canopy height model, or custom layersets of fuelbed
+polygons you upload yourself. This guide covers working with features from
+Python; for what features *are* and how the platform treats them, see the
 [FastFuels documentation](https://docs.fastfuels.silvxlabs.com). Coming
 from the v1 SDK? Start with the [migration guide](migration.md#features).
 
@@ -58,6 +58,50 @@ To extract water bodies, use the same calling convention:
 ```python
 feature = ff.features.create_water_feature_from_osm(domain, name="My Water")
 ```
+
+## Create a Building Feature from Overture Maps
+
+To extract building footprints within a domain's extent:
+
+```python
+buildings = ff.features.create_building_feature_from_overture(
+    domain, name="My Buildings"
+)
+buildings.wait()
+```
+
+Footprints are clipped at the domain boundary. To let buildings that cross
+the boundary extend past it, expand the clip extent by up to 100 meters
+with `extent_buffer_m`.
+
+The completed feature has type `"building"` and one row per footprint. The
+`height` column is in meters and is null where no height is known;
+`height_source` names the dataset that supplied the height, and
+`source_dataset` the dataset that supplied the footprint:
+
+```python
+>>> buildings.to_geodataframe().head()
+  id    height           height_source source_dataset                                           geometry
+0  0  4.625676  Microsoft ML Buildings  OpenStreetMap  MULTIPOLYGON (((724128.009 5188464.371, 724128...
+1  1  4.458892  Microsoft ML Buildings  OpenStreetMap  POLYGON ((724145.564 5188472.928, 724154.291 5...
+2  2  4.970162  Microsoft ML Buildings  OpenStreetMap  POLYGON ((724180.066 5188479.783, 724203.65 51...
+3  3  4.890904  Microsoft ML Buildings  OpenStreetMap  POLYGON ((724219.791 5188471.589, 724219.769 5...
+4  4  5.570943  Microsoft ML Buildings  OpenStreetMap  POLYGON ((724106.096 5188519.186, 724107.93 51...
+```
+
+The Overture release that was read is recorded on the feature's source,
+and the data's license and required citation on its `attributions`:
+
+```python
+>>> buildings.source["release"]
+'2026-10-21.0'
+>>> buildings.attributions[0].citation
+'© OpenStreetMap contributors, Overture Maps Foundation'
+```
+
+To burn footprints into a fuel grid or remove the trees inside them, see
+[Mask out features](creating-grids.md#mask-out-features) and
+[Remove trees inside buildings](modify-treat-inventories.md#remove-trees-inside-buildings).
 
 ## Outline Tree Crowns on a Canopy Height Model
 
@@ -271,6 +315,7 @@ Narrow the results with filters:
 
 ```python
 roads = ff.list_features(domain, feature_type="road")
+buildings = ff.list_features(domain, feature_type="building")
 crowns = ff.list_features(domain, feature_type="crown")
 osm_features = ff.list_features(domain, product="osm")
 tagged = ff.list_features(domain, tag="roads")

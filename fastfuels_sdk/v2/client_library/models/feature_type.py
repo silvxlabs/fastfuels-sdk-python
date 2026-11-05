@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class FeatureType(str, Enum):
+    BUILDING = "building"
     CROWN = "crown"
     LAYERSET = "layerset"
     ROAD = "road"
