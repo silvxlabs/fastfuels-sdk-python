@@ -194,7 +194,7 @@ Water and building polygons use the same calling convention:
 
 ## Combine Features of the Same Type
 
-To merge several completed features of one type into a single new feature
+To combine several completed features of one type into a single new feature
 — for example, OSM roads plus roads you uploaded — pass them to
 `concatenate_road_features`, `concatenate_water_features`, or
 `concatenate_building_features`. Features and feature ids can be mixed:

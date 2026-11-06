@@ -214,7 +214,11 @@ class Feature(FeatureModel):
     create_building_feature_from_overture : Create a building feature from Overture Maps.
     create_crown_feature_from_chm : Outline tree crowns on a canopy height model.
     create_road_feature_from_geojson : Upload road polygons from GeoJSON.
+    create_water_feature_from_geojson : Upload water-body polygons from GeoJSON.
+    create_building_feature_from_geojson : Upload building footprints from GeoJSON.
     concatenate_road_features : Combine road features into one.
+    concatenate_water_features : Combine water features into one.
+    concatenate_building_features : Combine building features into one.
     create_layerset_feature_from_geojson : Upload a custom layerset of fuelbed polygons.
     Feature.to_geodataframe : Retrieve the feature data as a GeoDataFrame.
     Feature.rasterize : Rasterize a layerset feature into a grid.
@@ -1154,6 +1158,8 @@ def create_road_feature_from_geodataframe(
     ValueError
         If the GeoDataFrame CRS has no authority code (e.g. a custom CRS),
         or a geometry is not a Polygon or MultiPolygon.
+    NotFoundException
+        If the domain does not exist.
     UnprocessableEntityException
         Same validation errors as :func:`create_road_feature_from_geojson`.
 
@@ -1290,6 +1296,8 @@ def create_water_feature_from_geodataframe(
     ValueError
         If the GeoDataFrame CRS has no authority code (e.g. a custom CRS),
         or a geometry is not a Polygon or MultiPolygon.
+    NotFoundException
+        If the domain does not exist.
     UnprocessableEntityException
         Same validation errors as :func:`create_water_feature_from_geojson`.
 
@@ -1426,6 +1434,8 @@ def create_building_feature_from_geodataframe(
     ValueError
         If the GeoDataFrame CRS has no authority code (e.g. a custom CRS),
         or a geometry is not a Polygon or MultiPolygon.
+    NotFoundException
+        If the domain does not exist.
     UnprocessableEntityException
         Same validation errors as :func:`create_building_feature_from_geojson`.
 
