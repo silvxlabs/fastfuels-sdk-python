@@ -1949,7 +1949,21 @@ non-burnable fuel model code (FBFM 91):</p>
 </span></code></pre></div>
 <p>The feature must be <code>completed</code> and in the same domain as the grid. Roads
 and other linestrings usually need a <code>buffer_m</code> (or <code>target="cell"</code>) so the
-thin geometry covers whole cells. See <code>ff.mask</code> in the
+thin geometry covers whole cells.</p>
+<p>Polygon features such as building footprints need no buffer. For example, to
+make the surface fuel under buildings non-burnable at a resolution fine
+enough to resolve individual footprints:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-45-1"><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a><span class="n">buildings</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_building_feature_from_overture</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
+</span><span id="__span-45-2"><a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a><span class="n">buildings</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span><span id="__span-45-3"><a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a>
+</span><span id="__span-45-4"><a id="__codelineno-45-4" name="__codelineno-45-4" href="#__codelineno-45-4"></a><span class="n">grid</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_fuel_model_grid_from_landfire_fbfm40</span><span class="p">(</span>
+</span><span id="__span-45-5"><a id="__codelineno-45-5" name="__codelineno-45-5" href="#__codelineno-45-5"></a>    <span class="n">domain</span><span class="p">,</span>
+</span><span id="__span-45-6"><a id="__codelineno-45-6" name="__codelineno-45-6" href="#__codelineno-45-6"></a>    <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+</span><span id="__span-45-7"><a id="__codelineno-45-7" name="__codelineno-45-7" href="#__codelineno-45-7"></a>    <span class="n">modifications</span><span class="o">=</span><span class="p">[</span><span class="n">ff</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">buildings</span><span class="p">,</span> <span class="s2">&quot;fbfm&quot;</span><span class="p">,</span> <span class="mi">91</span><span class="p">)],</span>
+</span><span id="__span-45-8"><a id="__codelineno-45-8" name="__codelineno-45-8" href="#__codelineno-45-8"></a><span class="p">)</span>
+</span></code></pre></div>
+<p>Mask several features at once by passing one <code>ff.mask</code> per feature in the
+<code>modifications</code> list. See <code>ff.mask</code> in the
 <a href="../../reference/">Reference</a> for masking multiple bands and the <code>operator</code>
 and <code>target</code> options.</p>
 <p>The same masks apply to a grid you already hold via
@@ -1958,12 +1972,12 @@ which re-derives the grid in place.</p>
 <h2 id="error-handling">Error handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
 <p>Creators raise typed exceptions from <code>fastfuels_sdk.v2.exceptions</code> on invalid
 input:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-45-1"><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnprocessableEntityException</span>
-</span><span id="__span-45-2"><a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>
-</span><span id="__span-45-3"><a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a><span class="k">try</span><span class="p">:</span>
-</span><span id="__span-45-4"><a id="__codelineno-45-4" name="__codelineno-45-4" href="#__codelineno-45-4"></a>    <span class="n">grid</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_uniform_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">resolution_m</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">bands</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;bad&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
-</span><span id="__span-45-5"><a id="__codelineno-45-5" name="__codelineno-45-5" href="#__codelineno-45-5"></a><span class="k">except</span> <span class="n">UnprocessableEntityException</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-</span><span id="__span-45-6"><a id="__codelineno-45-6" name="__codelineno-45-6" href="#__codelineno-45-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">exc</span><span class="o">.</span><span class="n">detail</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-46-1"><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnprocessableEntityException</span>
+</span><span id="__span-46-2"><a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>
+</span><span id="__span-46-3"><a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a><span class="k">try</span><span class="p">:</span>
+</span><span id="__span-46-4"><a id="__codelineno-46-4" name="__codelineno-46-4" href="#__codelineno-46-4"></a>    <span class="n">grid</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_uniform_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">resolution_m</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">bands</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;bad&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+</span><span id="__span-46-5"><a id="__codelineno-46-5" name="__codelineno-46-5" href="#__codelineno-46-5"></a><span class="k">except</span> <span class="n">UnprocessableEntityException</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+</span><span id="__span-46-6"><a id="__codelineno-46-6" name="__codelineno-46-6" href="#__codelineno-46-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">exc</span><span class="o">.</span><span class="n">detail</span><span class="p">)</span>
 </span></code></pre></div>
 <p>See <a href="../working-with-grids/#error-handling">Working with grids</a> for the full
 exception model.</p>
