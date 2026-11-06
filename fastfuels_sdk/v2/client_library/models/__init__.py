@@ -66,6 +66,7 @@ from .compose_input import ComposeInput
 from .compose_literal import ComposeLiteral
 from .compose_operator import ComposeOperator
 from .compose_select import ComposeSelect
+from .concatenate_features_request import ConcatenateFeaturesRequest
 from .continuous_band_summary import ContinuousBandSummary
 from .continuous_column_summary import ContinuousColumnSummary
 from .count_usage import CountUsage
@@ -87,6 +88,7 @@ from .create_gdam_allometry_request_impute_columns_item import (
     CreateGdamAllometryRequestImputeColumnsItem,
 )
 from .create_geo_tiff_upload_request import CreateGeoTIFFUploadRequest
+from .create_geojson_feature_request import CreateGeojsonFeatureRequest
 from .create_inventory_canopy_request import CreateInventoryCanopyRequest
 from .create_inventory_upload_request import CreateInventoryUploadRequest
 from .create_key_response import CreateKeyResponse
@@ -166,6 +168,12 @@ from .geo_json_crs_properties import GeoJsonCRSProperties
 from .geo_json_feature import GeoJsonFeature
 from .geo_json_feature_collection import GeoJsonFeatureCollection
 from .geo_json_feature_properties_type_0 import GeoJsonFeaturePropertiesType0
+from .geojson_crs import GeojsonCrs
+from .geojson_crs_properties import GeojsonCrsProperties
+from .geojson_polygon_feature import GeojsonPolygonFeature
+from .geojson_polygon_feature_properties_type_0 import (
+    GeojsonPolygonFeaturePropertiesType0,
+)
 from .geometry_collection import GeometryCollection
 from .georeference import Georeference
 from .georeference_3d import Georeference3D
@@ -435,6 +443,7 @@ __all__ = (
     "ComposeLiteral",
     "ComposeOperator",
     "ComposeSelect",
+    "ConcatenateFeaturesRequest",
     "ContinuousBandSummary",
     "ContinuousColumnSummary",
     "CountUsage",
@@ -452,6 +461,7 @@ __all__ = (
     "CreateGdamAllometryRequest",
     "CreateGdamAllometryRequestImputeColumnsItem",
     "CreateGeoTIFFUploadRequest",
+    "CreateGeojsonFeatureRequest",
     "CreateInventoryCanopyRequest",
     "CreateInventoryUploadRequest",
     "CreateKeyResponse",
@@ -527,6 +537,10 @@ __all__ = (
     "GeoJsonFeature",
     "GeoJsonFeatureCollection",
     "GeoJsonFeaturePropertiesType0",
+    "GeojsonCrs",
+    "GeojsonCrsProperties",
+    "GeojsonPolygonFeature",
+    "GeojsonPolygonFeaturePropertiesType0",
     "GeometryCollection",
     "Georeference",
     "Georeference3D",
