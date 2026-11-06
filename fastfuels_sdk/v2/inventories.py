@@ -303,7 +303,7 @@ class Inventory(InventoryModel):
     Examples
     --------
     Create a tree inventory from a PIM grid and load it as a DataFrame:
-    >>> import fastfuels_sdk as ff
+    >>> import fastfuels_sdk.v2 as ff
     >>> pim = ff.grids.create_pim_grid_from_treemap(domain)
     >>> inventory = ff.inventories.create_tree_inventory_from_pim_grid(
     ...     domain, pim.wait()
@@ -1082,7 +1082,7 @@ def create_tree_inventory_from_pim_grid(
 
     Examples
     --------
-    >>> import fastfuels_sdk as ff
+    >>> import fastfuels_sdk.v2 as ff
     >>> pim = ff.grids.create_pim_grid_from_treemap(domain)
     >>> inventory = ff.inventories.create_tree_inventory_from_pim_grid(
     ...     domain, pim.wait(), seed=42
@@ -1390,7 +1390,7 @@ def create_tree_inventory_from_file(
 
     Examples
     --------
-    >>> import fastfuels_sdk as ff
+    >>> import fastfuels_sdk.v2 as ff
     >>> inventory = ff.inventories.create_tree_inventory_from_file(
     ...     domain, "plot_trees.csv", columns={"x": "X_UTM", "y": "Y_UTM"}
     ... )
@@ -1495,7 +1495,7 @@ def create_tree_inventory_with_gdam_allometry(
 
     Examples
     --------
-    >>> import fastfuels_sdk as ff
+    >>> import fastfuels_sdk.v2 as ff
     >>> sparse = ff.inventories.create_tree_inventory_from_file(
     ...     domain, "stems.csv"  # x, y, height only
     ... )
@@ -1594,7 +1594,7 @@ def create_tree_inventory_with_crown_base_height_allometry(
 
     Examples
     --------
-    >>> import fastfuels_sdk as ff
+    >>> import fastfuels_sdk.v2 as ff
     >>> trees = ff.inventories.create_tree_inventory_from_file(
     ...     domain, "plot_trees.csv"  # x, y, height, dbh, crown_ratio, species
     ... )
