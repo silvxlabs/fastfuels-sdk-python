@@ -14,6 +14,9 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.column import Column
     from ..models.inventory_basal_area_treatment import InventoryBasalAreaTreatment
+    from ..models.inventory_crown_spacing_treatment import (
+        InventoryCrownSpacingTreatment,
+    )
     from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
     from ..models.inventory_georeference import InventoryGeoreference
     from ..models.inventory_modification import InventoryModification
@@ -50,7 +53,8 @@ class Inventory:
                 inventory stores the checksum it was built from; comparing that stored value against this field reveals whether
                 this inventory has changed since. May be null for inventories created before checksums were introduced.
             modifications (list[InventoryModification] | Unset):
-            treatments (list[InventoryBasalAreaTreatment | InventoryDiameterTreatment] | Unset):
+            treatments (list[InventoryBasalAreaTreatment | InventoryCrownSpacingTreatment | InventoryDiameterTreatment] |
+                Unset):
             columns (list[Column] | Unset): Columns of the inventory's tree data, with per-column summaries. `tree_id` is a
                 stable per-tree integer (1 … 2,147,483,647), unique within the inventory. It is assigned when the inventory is
                 created and never renumbered: removing trees leaves gaps, and inventories derived from this one (duplicates,
@@ -74,7 +78,12 @@ class Inventory:
     checksum: None | str | Unset = UNSET
     modifications: list[InventoryModification] | Unset = UNSET
     treatments: (
-        list[InventoryBasalAreaTreatment | InventoryDiameterTreatment] | Unset
+        list[
+            InventoryBasalAreaTreatment
+            | InventoryCrownSpacingTreatment
+            | InventoryDiameterTreatment
+        ]
+        | Unset
     ) = UNSET
     columns: list[Column] | Unset = UNSET
     forestry_metrics: None | TreeForestryMetrics | Unset = UNSET
@@ -84,6 +93,7 @@ class Inventory:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.inventory_basal_area_treatment import InventoryBasalAreaTreatment
         from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
         from ..models.inventory_georeference import InventoryGeoreference
         from ..models.job_error import JobError
@@ -146,7 +156,9 @@ class Inventory:
             treatments = []
             for treatments_item_data in self.treatments:
                 treatments_item: dict[str, Any]
-                if isinstance(treatments_item_data, InventoryDiameterTreatment):
+                if isinstance(
+                    treatments_item_data, InventoryDiameterTreatment
+                ) or isinstance(treatments_item_data, InventoryBasalAreaTreatment):
                     treatments_item = treatments_item_data.to_dict()
                 else:
                     treatments_item = treatments_item_data.to_dict()
@@ -232,6 +244,9 @@ class Inventory:
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.column import Column
         from ..models.inventory_basal_area_treatment import InventoryBasalAreaTreatment
+        from ..models.inventory_crown_spacing_treatment import (
+            InventoryCrownSpacingTreatment,
+        )
         from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
         from ..models.inventory_georeference import InventoryGeoreference
         from ..models.inventory_modification import InventoryModification
@@ -328,7 +343,12 @@ class Inventory:
 
         _treatments = d.pop("treatments", UNSET)
         treatments: (
-            list[InventoryBasalAreaTreatment | InventoryDiameterTreatment] | Unset
+            list[
+                InventoryBasalAreaTreatment
+                | InventoryCrownSpacingTreatment
+                | InventoryDiameterTreatment
+            ]
+            | Unset
         ) = UNSET
         if _treatments is not UNSET:
             treatments = []
@@ -336,7 +356,11 @@ class Inventory:
 
                 def _parse_treatments_item(
                     data: object,
-                ) -> InventoryBasalAreaTreatment | InventoryDiameterTreatment:
+                ) -> (
+                    InventoryBasalAreaTreatment
+                    | InventoryCrownSpacingTreatment
+                    | InventoryDiameterTreatment
+                ):
                     try:
                         if not isinstance(data, dict):
                             raise TypeError()
@@ -347,11 +371,23 @@ class Inventory:
                         return treatments_item_type_0
                     except (TypeError, ValueError, AttributeError, KeyError):
                         pass
+                    try:
+                        if not isinstance(data, dict):
+                            raise TypeError()
+                        treatments_item_type_1 = InventoryBasalAreaTreatment.from_dict(
+                            data
+                        )
+
+                        return treatments_item_type_1
+                    except (TypeError, ValueError, AttributeError, KeyError):
+                        pass
                     if not isinstance(data, dict):
                         raise TypeError()
-                    treatments_item_type_1 = InventoryBasalAreaTreatment.from_dict(data)
+                    treatments_item_type_2 = InventoryCrownSpacingTreatment.from_dict(
+                        data
+                    )
 
-                    return treatments_item_type_1
+                    return treatments_item_type_2
 
                 treatments_item = _parse_treatments_item(treatments_item_data)
 

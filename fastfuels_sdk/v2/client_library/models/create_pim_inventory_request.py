@@ -12,6 +12,9 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.inventory_basal_area_treatment import InventoryBasalAreaTreatment
+    from ..models.inventory_crown_spacing_treatment import (
+        InventoryCrownSpacingTreatment,
+    )
     from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
     from ..models.inventory_modification import InventoryModification
 
@@ -32,8 +35,8 @@ class CreatePimInventoryRequest:
         seed (int | Unset): Random seed for reproducibility. Generated randomly if omitted.
         point_process (PointProcess | Unset): Spatial point process for tree coordinate assignment.
         modifications (list[InventoryModification] | Unset): Modifications to apply after point process expansion.
-        treatments (list[InventoryBasalAreaTreatment | InventoryDiameterTreatment] | Unset): Silvicultural treatments to
-            apply after modifications.
+        treatments (list[InventoryBasalAreaTreatment | InventoryCrownSpacingTreatment | InventoryDiameterTreatment] |
+            Unset): Silvicultural treatments to apply after modifications.
     """
 
     source_pim_grid_id: str
@@ -45,11 +48,17 @@ class CreatePimInventoryRequest:
     point_process: PointProcess | Unset = UNSET
     modifications: list[InventoryModification] | Unset = UNSET
     treatments: (
-        list[InventoryBasalAreaTreatment | InventoryDiameterTreatment] | Unset
+        list[
+            InventoryBasalAreaTreatment
+            | InventoryCrownSpacingTreatment
+            | InventoryDiameterTreatment
+        ]
+        | Unset
     ) = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.inventory_basal_area_treatment import InventoryBasalAreaTreatment
         from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
 
         source_pim_grid_id = self.source_pim_grid_id
@@ -84,7 +93,9 @@ class CreatePimInventoryRequest:
             treatments = []
             for treatments_item_data in self.treatments:
                 treatments_item: dict[str, Any]
-                if isinstance(treatments_item_data, InventoryDiameterTreatment):
+                if isinstance(
+                    treatments_item_data, InventoryDiameterTreatment
+                ) or isinstance(treatments_item_data, InventoryBasalAreaTreatment):
                     treatments_item = treatments_item_data.to_dict()
                 else:
                     treatments_item = treatments_item_data.to_dict()
@@ -120,6 +131,9 @@ class CreatePimInventoryRequest:
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.inventory_basal_area_treatment import InventoryBasalAreaTreatment
+        from ..models.inventory_crown_spacing_treatment import (
+            InventoryCrownSpacingTreatment,
+        )
         from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
         from ..models.inventory_modification import InventoryModification
 
@@ -161,7 +175,12 @@ class CreatePimInventoryRequest:
 
         _treatments = d.pop("treatments", UNSET)
         treatments: (
-            list[InventoryBasalAreaTreatment | InventoryDiameterTreatment] | Unset
+            list[
+                InventoryBasalAreaTreatment
+                | InventoryCrownSpacingTreatment
+                | InventoryDiameterTreatment
+            ]
+            | Unset
         ) = UNSET
         if _treatments is not UNSET:
             treatments = []
@@ -169,7 +188,11 @@ class CreatePimInventoryRequest:
 
                 def _parse_treatments_item(
                     data: object,
-                ) -> InventoryBasalAreaTreatment | InventoryDiameterTreatment:
+                ) -> (
+                    InventoryBasalAreaTreatment
+                    | InventoryCrownSpacingTreatment
+                    | InventoryDiameterTreatment
+                ):
                     try:
                         if not isinstance(data, dict):
                             raise TypeError()
@@ -180,11 +203,23 @@ class CreatePimInventoryRequest:
                         return treatments_item_type_0
                     except (TypeError, ValueError, AttributeError, KeyError):
                         pass
+                    try:
+                        if not isinstance(data, dict):
+                            raise TypeError()
+                        treatments_item_type_1 = InventoryBasalAreaTreatment.from_dict(
+                            data
+                        )
+
+                        return treatments_item_type_1
+                    except (TypeError, ValueError, AttributeError, KeyError):
+                        pass
                     if not isinstance(data, dict):
                         raise TypeError()
-                    treatments_item_type_1 = InventoryBasalAreaTreatment.from_dict(data)
+                    treatments_item_type_2 = InventoryCrownSpacingTreatment.from_dict(
+                        data
+                    )
 
-                    return treatments_item_type_1
+                    return treatments_item_type_2
 
                 treatments_item = _parse_treatments_item(treatments_item_data)
 

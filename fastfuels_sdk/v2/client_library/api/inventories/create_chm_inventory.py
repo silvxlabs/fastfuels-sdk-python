@@ -97,6 +97,13 @@ def sync_detailed(
       (`dalponte2016` region growing) and add a `crown_radius` column (m).
       Requires a CHM cell size of 2 m or finer. Default parameters are
       provisional.
+    - **modifications**: (optional) Modifications to apply after stem extraction.
+    - **treatments**: (optional) Treatments to apply after modifications. CHM
+      extraction produces no diameter or species, so only a `crown_spacing`
+      treatment with `rank_by: height` and
+      `{\"type\": \"inventory_column\", \"column\": \"crown_radius\"}` as its
+      `max_crown_radius_source` applies, and it needs `crown_segmentation`.
+      Any other treatment is rejected with 422.
     - **type**: (optional) Entity type. Default: ``\"tree\"``.
     - **name**: (optional) Name for the inventory.
     - **description**: (optional) Description.
@@ -160,6 +167,13 @@ def sync(
       (`dalponte2016` region growing) and add a `crown_radius` column (m).
       Requires a CHM cell size of 2 m or finer. Default parameters are
       provisional.
+    - **modifications**: (optional) Modifications to apply after stem extraction.
+    - **treatments**: (optional) Treatments to apply after modifications. CHM
+      extraction produces no diameter or species, so only a `crown_spacing`
+      treatment with `rank_by: height` and
+      `{\"type\": \"inventory_column\", \"column\": \"crown_radius\"}` as its
+      `max_crown_radius_source` applies, and it needs `crown_segmentation`.
+      Any other treatment is rejected with 422.
     - **type**: (optional) Entity type. Default: ``\"tree\"``.
     - **name**: (optional) Name for the inventory.
     - **description**: (optional) Description.
@@ -218,6 +232,13 @@ async def asyncio_detailed(
       (`dalponte2016` region growing) and add a `crown_radius` column (m).
       Requires a CHM cell size of 2 m or finer. Default parameters are
       provisional.
+    - **modifications**: (optional) Modifications to apply after stem extraction.
+    - **treatments**: (optional) Treatments to apply after modifications. CHM
+      extraction produces no diameter or species, so only a `crown_spacing`
+      treatment with `rank_by: height` and
+      `{\"type\": \"inventory_column\", \"column\": \"crown_radius\"}` as its
+      `max_crown_radius_source` applies, and it needs `crown_segmentation`.
+      Any other treatment is rejected with 422.
     - **type**: (optional) Entity type. Default: ``\"tree\"``.
     - **name**: (optional) Name for the inventory.
     - **description**: (optional) Description.
@@ -279,6 +300,13 @@ async def asyncio(
       (`dalponte2016` region growing) and add a `crown_radius` column (m).
       Requires a CHM cell size of 2 m or finer. Default parameters are
       provisional.
+    - **modifications**: (optional) Modifications to apply after stem extraction.
+    - **treatments**: (optional) Treatments to apply after modifications. CHM
+      extraction produces no diameter or species, so only a `crown_spacing`
+      treatment with `rank_by: height` and
+      `{\"type\": \"inventory_column\", \"column\": \"crown_radius\"}` as its
+      `max_crown_radius_source` applies, and it needs `crown_segmentation`.
+      Any other treatment is rejected with 422.
     - **type**: (optional) Entity type. Default: ``\"tree\"``.
     - **name**: (optional) Name for the inventory.
     - **description**: (optional) Description.

@@ -12,6 +12,9 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.chm_inventory_crown_segmentation import ChmInventoryCrownSegmentation
     from ..models.inventory_basal_area_treatment import InventoryBasalAreaTreatment
+    from ..models.inventory_crown_spacing_treatment import (
+        InventoryCrownSpacingTreatment,
+    )
     from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
     from ..models.inventory_modification import InventoryModification
     from ..models.stem_isolation_lmf import StemIsolationLmf
@@ -38,9 +41,10 @@ class CreateChmInventoryRequest:
             least one cell's area-equivalent radius, capped at `max_crown_radius`. Requires a CHM cell size of 2 m or finer.
             Omit to skip segmentation.
         modifications (list[InventoryModification] | Unset): Modifications to apply after stem extraction.
-        treatments (list[InventoryBasalAreaTreatment | InventoryDiameterTreatment] | Unset): Silvicultural treatments
-            thin against tree diameter, so they require a diameter (`dbh`) column. CHM stem isolation produces only height
-            and position (`x`, `y`, `height`), so treatments are not supported here and this must be empty.
+        treatments (list[InventoryBasalAreaTreatment | InventoryCrownSpacingTreatment | InventoryDiameterTreatment] |
+            Unset): Treatments to apply after modifications. CHM stem isolation produces only position and height, so the
+            only treatment that applies is a `crown_spacing` treatment with `rank_by: height` that reads the `crown_radius`
+            column, which requires `crown_segmentation`.
     """
 
     source_chm_grid_id: str
@@ -52,7 +56,12 @@ class CreateChmInventoryRequest:
     crown_segmentation: ChmInventoryCrownSegmentation | None | Unset = UNSET
     modifications: list[InventoryModification] | Unset = UNSET
     treatments: (
-        list[InventoryBasalAreaTreatment | InventoryDiameterTreatment] | Unset
+        list[
+            InventoryBasalAreaTreatment
+            | InventoryCrownSpacingTreatment
+            | InventoryDiameterTreatment
+        ]
+        | Unset
     ) = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -60,6 +69,7 @@ class CreateChmInventoryRequest:
         from ..models.chm_inventory_crown_segmentation import (
             ChmInventoryCrownSegmentation,
         )
+        from ..models.inventory_basal_area_treatment import InventoryBasalAreaTreatment
         from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
         from ..models.stem_isolation_lmf import StemIsolationLmf
 
@@ -105,7 +115,9 @@ class CreateChmInventoryRequest:
             treatments = []
             for treatments_item_data in self.treatments:
                 treatments_item: dict[str, Any]
-                if isinstance(treatments_item_data, InventoryDiameterTreatment):
+                if isinstance(
+                    treatments_item_data, InventoryDiameterTreatment
+                ) or isinstance(treatments_item_data, InventoryBasalAreaTreatment):
                     treatments_item = treatments_item_data.to_dict()
                 else:
                     treatments_item = treatments_item_data.to_dict()
@@ -144,6 +156,9 @@ class CreateChmInventoryRequest:
             ChmInventoryCrownSegmentation,
         )
         from ..models.inventory_basal_area_treatment import InventoryBasalAreaTreatment
+        from ..models.inventory_crown_spacing_treatment import (
+            InventoryCrownSpacingTreatment,
+        )
         from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
         from ..models.inventory_modification import InventoryModification
         from ..models.stem_isolation_lmf import StemIsolationLmf
@@ -222,7 +237,12 @@ class CreateChmInventoryRequest:
 
         _treatments = d.pop("treatments", UNSET)
         treatments: (
-            list[InventoryBasalAreaTreatment | InventoryDiameterTreatment] | Unset
+            list[
+                InventoryBasalAreaTreatment
+                | InventoryCrownSpacingTreatment
+                | InventoryDiameterTreatment
+            ]
+            | Unset
         ) = UNSET
         if _treatments is not UNSET:
             treatments = []
@@ -230,7 +250,11 @@ class CreateChmInventoryRequest:
 
                 def _parse_treatments_item(
                     data: object,
-                ) -> InventoryBasalAreaTreatment | InventoryDiameterTreatment:
+                ) -> (
+                    InventoryBasalAreaTreatment
+                    | InventoryCrownSpacingTreatment
+                    | InventoryDiameterTreatment
+                ):
                     try:
                         if not isinstance(data, dict):
                             raise TypeError()
@@ -241,11 +265,23 @@ class CreateChmInventoryRequest:
                         return treatments_item_type_0
                     except (TypeError, ValueError, AttributeError, KeyError):
                         pass
+                    try:
+                        if not isinstance(data, dict):
+                            raise TypeError()
+                        treatments_item_type_1 = InventoryBasalAreaTreatment.from_dict(
+                            data
+                        )
+
+                        return treatments_item_type_1
+                    except (TypeError, ValueError, AttributeError, KeyError):
+                        pass
                     if not isinstance(data, dict):
                         raise TypeError()
-                    treatments_item_type_1 = InventoryBasalAreaTreatment.from_dict(data)
+                    treatments_item_type_2 = InventoryCrownSpacingTreatment.from_dict(
+                        data
+                    )
 
-                    return treatments_item_type_1
+                    return treatments_item_type_2
 
                 treatments_item = _parse_treatments_item(treatments_item_data)
 

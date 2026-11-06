@@ -8,6 +8,9 @@ from attrs import field as _attrs_field
 
 if TYPE_CHECKING:
     from ..models.inventory_basal_area_treatment import InventoryBasalAreaTreatment
+    from ..models.inventory_crown_spacing_treatment import (
+        InventoryCrownSpacingTreatment,
+    )
     from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
 
 
@@ -22,20 +25,27 @@ class ApplyTreatmentsRequest:
     keeps its identity; use PATCH to edit metadata.
 
         Attributes:
-            treatments (list[InventoryBasalAreaTreatment | InventoryDiameterTreatment]): Treatments to append to this
-                inventory and apply to its data.
+            treatments (list[InventoryBasalAreaTreatment | InventoryCrownSpacingTreatment | InventoryDiameterTreatment]):
+                Treatments to append to this inventory and apply to its data.
     """
 
-    treatments: list[InventoryBasalAreaTreatment | InventoryDiameterTreatment]
+    treatments: list[
+        InventoryBasalAreaTreatment
+        | InventoryCrownSpacingTreatment
+        | InventoryDiameterTreatment
+    ]
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.inventory_basal_area_treatment import InventoryBasalAreaTreatment
         from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
 
         treatments = []
         for treatments_item_data in self.treatments:
             treatments_item: dict[str, Any]
-            if isinstance(treatments_item_data, InventoryDiameterTreatment):
+            if isinstance(
+                treatments_item_data, InventoryDiameterTreatment
+            ) or isinstance(treatments_item_data, InventoryBasalAreaTreatment):
                 treatments_item = treatments_item_data.to_dict()
             else:
                 treatments_item = treatments_item_data.to_dict()
@@ -55,6 +65,9 @@ class ApplyTreatmentsRequest:
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.inventory_basal_area_treatment import InventoryBasalAreaTreatment
+        from ..models.inventory_crown_spacing_treatment import (
+            InventoryCrownSpacingTreatment,
+        )
         from ..models.inventory_diameter_treatment import InventoryDiameterTreatment
 
         d = dict(src_dict)
@@ -64,7 +77,11 @@ class ApplyTreatmentsRequest:
 
             def _parse_treatments_item(
                 data: object,
-            ) -> InventoryBasalAreaTreatment | InventoryDiameterTreatment:
+            ) -> (
+                InventoryBasalAreaTreatment
+                | InventoryCrownSpacingTreatment
+                | InventoryDiameterTreatment
+            ):
                 try:
                     if not isinstance(data, dict):
                         raise TypeError()
@@ -73,11 +90,19 @@ class ApplyTreatmentsRequest:
                     return treatments_item_type_0
                 except (TypeError, ValueError, AttributeError, KeyError):
                     pass
+                try:
+                    if not isinstance(data, dict):
+                        raise TypeError()
+                    treatments_item_type_1 = InventoryBasalAreaTreatment.from_dict(data)
+
+                    return treatments_item_type_1
+                except (TypeError, ValueError, AttributeError, KeyError):
+                    pass
                 if not isinstance(data, dict):
                     raise TypeError()
-                treatments_item_type_1 = InventoryBasalAreaTreatment.from_dict(data)
+                treatments_item_type_2 = InventoryCrownSpacingTreatment.from_dict(data)
 
-                return treatments_item_type_1
+                return treatments_item_type_2
 
             treatments_item = _parse_treatments_item(treatments_item_data)
 

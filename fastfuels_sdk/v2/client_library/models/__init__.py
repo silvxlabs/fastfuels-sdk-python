@@ -225,6 +225,8 @@ from .inventory_columns_biomass_source_columns import (
 from .inventory_columns_biomass_source_component_states import (
     InventoryColumnsBiomassSourceComponentStates,
 )
+from .inventory_crown_spacing_rank import InventoryCrownSpacingRank
+from .inventory_crown_spacing_treatment import InventoryCrownSpacingTreatment
 from .inventory_data_metadata import InventoryDataMetadata
 from .inventory_data_response import InventoryDataResponse
 from .inventory_data_response_data_type_1_item import InventoryDataResponseDataType1Item
@@ -582,6 +584,8 @@ __all__ = (
     "InventoryColumnsBiomassSource",
     "InventoryColumnsBiomassSourceColumns",
     "InventoryColumnsBiomassSourceComponentStates",
+    "InventoryCrownSpacingRank",
+    "InventoryCrownSpacingTreatment",
     "InventoryDataMetadata",
     "InventoryDataResponse",
     "InventoryDataResponseDataType1Item",
