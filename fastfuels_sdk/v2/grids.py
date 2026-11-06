@@ -548,7 +548,7 @@ class Grid(GridModel):
     Examples
     --------
     Create a topography grid and wait for it to complete:
-    >>> import fastfuels_sdk as ff
+    >>> import fastfuels_sdk.v2 as ff
     >>> grid = ff.grids.create_topography_grid_from_3dep(domain, output_resolution_m=10)
     >>> grid.wait()
 

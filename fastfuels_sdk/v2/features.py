@@ -199,7 +199,7 @@ class Feature(FeatureModel):
     Examples
     --------
     Create a road feature and wait for it to complete:
-    >>> import fastfuels_sdk as ff
+    >>> import fastfuels_sdk.v2 as ff
     >>> feature = ff.features.create_road_feature_from_osm(domain)
     >>> feature.wait()
     >>> roads = feature.to_geodataframe()

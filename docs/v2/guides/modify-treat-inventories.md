@@ -5,7 +5,7 @@ Two tools reshape a tree inventory's stems:
 - **Modifications** — general rules that filter trees by *conditions* and
   apply *actions* (remove, multiply, replace, …) to the matching rows.
 - **Treatments** — silvicultural thinning prescriptions that remove stems
-  until the stand reaches a target basal area or diameter.
+  until the stand reaches a target basal area, diameter, or crown spacing.
 
 Both can be applied two ways: at **creation**, via a creator's
 `modifications=` / `treatments=` argument, or to an inventory you already
@@ -50,7 +50,8 @@ ff.modify_trees(
 ## Treatments
 
 A treatment thins to a target. Build one with `ff.basal_area_treatment`
-(residual basal area) or `ff.diameter_treatment` (diameter limit) rather than
+(residual basal area), `ff.diameter_treatment` (diameter limit), or
+`ff.crown_spacing_treatment` (minimum crown spacing) rather than
 hand-building the model:
 
 ```python
@@ -61,10 +62,71 @@ treatment = ff.basal_area_treatment("from_below", 25.0)
 
 # Or remove every stem under 10 cm dbh
 treatment = ff.diameter_treatment("from_below", 10.0)
+
+# Or leave at least 3 m between crowns
+treatment = ff.crown_spacing_treatment(3.0)
 ```
 
 `method` is `"from_below"` (smallest first), `"from_above"` (largest first),
 or — for basal area only — `"proportional"` (across all size classes).
+
+The inventory must have every column a treatment reads. Basal-area and
+diameter treatments read `dbh`. For what each treatment does to a stand, see
+[Inventories](https://docs.fastfuels.silvxlabs.com/v2/api/explanation/inventories/#editing-the-stand-modifications-and-treatments)
+in the FastFuels documentation.
+
+## Thin to a crown spacing
+
+To thin a stand until every retained crown is at least a given distance from
+its neighbors, crown edge to crown edge, pass the gap in meters to
+`ff.crown_spacing_treatment`. By default the larger-diameter tree is kept
+when two crowns are too close, and crown radii come from the Purves
+allometry:
+
+```python
+treatment = ff.crown_spacing_treatment(3.0)
+```
+
+To give the gap in another unit, pass `unit=`. To keep the taller tree
+instead, pass `rank_by="height"`. To size crowns with the Crookston & Stage
+equations, pass `max_crown_radius_equations="crookston_stage"`; to read a
+measured radius in meters from an inventory column, pass
+`max_crown_radius_column=` instead:
+
+```python
+treatment = ff.crown_spacing_treatment(
+    10.0,
+    unit="ft",
+    rank_by="height",
+    max_crown_radius_equations="crookston_stage",
+)
+```
+
+The default treatment reads `dbh`, `height`, `crown_base_height`, and
+`fia_species_code`, which a
+[TreeMap inventory](inventories.md#from-treemap-to-trees) has.
+
+### Thin a CHM inventory
+
+A [CHM-derived inventory](inventories.md#create-an-inventory-from-a-canopy-height-model)
+has no `dbh`, so the only crown spacing treatment that applies to it ranks
+trees by height and reads the `crown_radius` column that
+`crown_segmentation=` adds:
+
+```python
+treatment = ff.crown_spacing_treatment(
+    3.0, rank_by="height", max_crown_radius_column="crown_radius"
+)
+
+inventory = ff.inventories.create_tree_inventory_from_chm_grid(
+    domain, chm, crown_segmentation={}, treatments=[treatment]
+)
+inventory.wait()
+```
+
+To thin a segmented CHM inventory you already hold, pass the same treatment
+to [`apply_treatments`](#apply-to-an-inventory-you-hold). Any other treatment
+on a CHM inventory raises `UnprocessableEntityException`.
 
 ## Apply at creation
 

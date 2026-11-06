@@ -303,7 +303,7 @@ class Inventory(InventoryModel):
     Examples
     --------
     Create a tree inventory from a PIM grid and load it as a DataFrame:
-    >>> import fastfuels_sdk as ff
+    >>> import fastfuels_sdk.v2 as ff
     >>> pim = ff.grids.create_pim_grid_from_treemap(domain)
     >>> inventory = ff.inventories.create_tree_inventory_from_pim_grid(
     ...     domain, pim.wait()
@@ -581,10 +581,16 @@ class Inventory(InventoryModel):
         treatments : list
             Treatments thinning the stand to a target. Build them with
             :func:`fastfuels_sdk.v2.treatments.basal_area_treatment` (residual
-            basal area) or
+            basal area),
             :func:`fastfuels_sdk.v2.treatments.diameter_treatment` (diameter
-            limit), available as ``ff.basal_area_treatment`` /
-            ``ff.diameter_treatment``.
+            limit), or
+            :func:`fastfuels_sdk.v2.treatments.crown_spacing_treatment`
+            (minimum crown spacing), available as ``ff.basal_area_treatment``
+            / ``ff.diameter_treatment`` / ``ff.crown_spacing_treatment``. The
+            inventory must have every column a treatment reads: basal-area and
+            diameter treatments read ``dbh``; a crown-spacing treatment reads
+            its ``rank_by`` column and its radius column or the columns of its
+            radius allometry.
 
         Returns
         -------
@@ -595,6 +601,8 @@ class Inventory(InventoryModel):
         ------
         NotFoundException
             If the inventory no longer exists.
+        UnprocessableEntityException
+            If the inventory lacks a column a treatment reads.
 
         Examples
         --------
@@ -1063,8 +1071,9 @@ def create_tree_inventory_from_pim_grid(
         Modification rules (``InventoryModification``) applied after
         expansion.
     treatments : list, optional
-        Silvicultural treatments (``InventoryBasalAreaTreatment`` or
-        ``InventoryDiameterTreatment``) applied after modifications.
+        Silvicultural treatments applied after modifications. Build them with
+        ``ff.basal_area_treatment``, ``ff.diameter_treatment``, or
+        ``ff.crown_spacing_treatment``.
 
     Returns
     -------
@@ -1073,7 +1082,7 @@ def create_tree_inventory_from_pim_grid(
 
     Examples
     --------
-    >>> import fastfuels_sdk as ff
+    >>> import fastfuels_sdk.v2 as ff
     >>> pim = ff.grids.create_pim_grid_from_treemap(domain)
     >>> inventory = ff.inventories.create_tree_inventory_from_pim_grid(
     ...     domain, pim.wait(), seed=42
@@ -1142,8 +1151,12 @@ def create_tree_inventory_from_chm_grid(
         Modification rules (``InventoryModification``) applied after stem
         isolation.
     treatments : list, optional
-        Silvicultural treatments (``InventoryBasalAreaTreatment`` or
-        ``InventoryDiameterTreatment``) applied after modifications.
+        Silvicultural treatments applied after modifications. Stem isolation
+        produces no diameter or species, so the only treatment that applies
+        is a crown-spacing treatment ranked by height that reads the
+        ``crown_radius`` column, which requires ``crown_segmentation``:
+        ``ff.crown_spacing_treatment(value, rank_by="height",
+        max_crown_radius_column="crown_radius")``.
     crown_segmentation : ChmInventoryCrownSegmentation or Mapping, optional
         Segment each detected tree's crown on the CHM and add a
         ``crown_radius`` column (m). Pass a ``ChmInventoryCrownSegmentation``
@@ -1165,11 +1178,11 @@ def create_tree_inventory_from_chm_grid(
         ``ChmInventoryCrownSegmentation`` nor a mapping.
     UnprocessableEntityException
         If ``crown_segmentation`` is given and the CHM cell size is coarser
-        than 2 m.
+        than 2 m, or a treatment reads a column the inventory does not have.
 
     Examples
     --------
-    >>> import fastfuels_sdk as ff
+    >>> import fastfuels_sdk.v2 as ff
     >>> chm = ff.grids.create_canopy_height_grid_from_meta(domain)
     >>> inventory = ff.inventories.create_tree_inventory_from_chm_grid(
     ...     domain, chm.wait()
@@ -1180,6 +1193,19 @@ def create_tree_inventory_from_chm_grid(
 
     >>> inventory = ff.inventories.create_tree_inventory_from_chm_grid(
     ...     domain, chm, crown_segmentation={}
+    ... )
+
+    Thin to at least 3 m between crowns, keeping the taller trees:
+
+    >>> inventory = ff.inventories.create_tree_inventory_from_chm_grid(
+    ...     domain,
+    ...     chm,
+    ...     crown_segmentation={},
+    ...     treatments=[
+    ...         ff.crown_spacing_treatment(
+    ...             3.0, rank_by="height", max_crown_radius_column="crown_radius"
+    ...         )
+    ...     ],
     ... )
     """
     request_body = CreateChmInventoryRequest(
@@ -1257,8 +1283,9 @@ def create_tree_inventory_from_pim_chm_fusion(
         Modification rules (``InventoryModification``) applied after
         expansion.
     treatments : list, optional
-        Silvicultural treatments (``InventoryBasalAreaTreatment`` or
-        ``InventoryDiameterTreatment``) applied after modifications.
+        Silvicultural treatments applied after modifications. Build them with
+        ``ff.basal_area_treatment``, ``ff.diameter_treatment``, or
+        ``ff.crown_spacing_treatment``.
 
     Returns
     -------
@@ -1363,7 +1390,7 @@ def create_tree_inventory_from_file(
 
     Examples
     --------
-    >>> import fastfuels_sdk as ff
+    >>> import fastfuels_sdk.v2 as ff
     >>> inventory = ff.inventories.create_tree_inventory_from_file(
     ...     domain, "plot_trees.csv", columns={"x": "X_UTM", "y": "Y_UTM"}
     ... )
@@ -1468,7 +1495,7 @@ def create_tree_inventory_with_gdam_allometry(
 
     Examples
     --------
-    >>> import fastfuels_sdk as ff
+    >>> import fastfuels_sdk.v2 as ff
     >>> sparse = ff.inventories.create_tree_inventory_from_file(
     ...     domain, "stems.csv"  # x, y, height only
     ... )
@@ -1567,7 +1594,7 @@ def create_tree_inventory_with_crown_base_height_allometry(
 
     Examples
     --------
-    >>> import fastfuels_sdk as ff
+    >>> import fastfuels_sdk.v2 as ff
     >>> trees = ff.inventories.create_tree_inventory_from_file(
     ...     domain, "plot_trees.csv"  # x, y, height, dbh, crown_ratio, species
     ... )
