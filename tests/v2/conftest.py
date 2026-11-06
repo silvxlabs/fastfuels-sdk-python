@@ -18,10 +18,17 @@ that only check what a create returns need nothing more. Tests that wait
 on a job or read its results request the ``real_dispatch`` fixture, and
 fixtures that build completed resources create them inside
 ``real_dispatch_client()``.
+
+Jobs that take minutes carry a ``dispatched_`` prefix: the fixture
+creates the resource without waiting, and ``start_long_jobs`` requests it
+at session start so the job runs server-side while the rest of the suite
+does. The test that uses it calls ``wait()`` itself.
 """
 
 import pytest
 
+from fastfuels_sdk.v2 import _jobs
+from fastfuels_sdk.v2.calibrations import duet_calibration
 from fastfuels_sdk.v2.features import (
     create_building_feature_from_overture,
     create_crown_feature_from_chm,
@@ -34,6 +41,7 @@ from fastfuels_sdk.v2.grids import (
     create_fuel_model_grid_from_landfire_fbfm40,
     create_fuel_model_grid_from_landfire_fccs,
     create_pim_grid_from_treemap,
+    create_surface_fuel_grid_from_duet,
     create_topography_grid_from_3dep,
 )
 from fastfuels_sdk.v2.inventories import (
@@ -62,6 +70,53 @@ def skip_dispatch_by_default():
     fixture opts into real dispatch.
     """
     install_skip_dispatch_client()
+
+
+# Most test jobs finish in a second or two, so the SDK's 5 s poll interval
+# would dominate every wait
+TEST_POLL_SECONDS = 1
+
+
+@pytest.fixture(scope="session", autouse=True)
+def fast_polling():
+    """Poll job status every ``TEST_POLL_SECONDS`` instead of the SDK default."""
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(_jobs, "_POLL_SECONDS", TEST_POLL_SECONDS)
+        yield
+
+
+# Fixtures for jobs that take minutes, started at session start when a
+# collected test requests them
+LONG_JOB_FIXTURES = ("dispatched_duet_surface_grid",)
+
+
+def _uses_long_job(item):
+    return any(name in item.fixturenames for name in LONG_JOB_FIXTURES)
+
+
+def pytest_collection_modifyitems(items):
+    """Run the tests that use ``LONG_JOB_FIXTURES`` last, so their jobs
+    (dispatched at session start) get the whole suite to finish.
+    """
+    items[:] = [i for i in items if not _uses_long_job(i)] + [
+        i for i in items if _uses_long_job(i)
+    ]
+
+
+@pytest.fixture(scope="session", autouse=True)
+def start_long_jobs(request, skip_dispatch_by_default):
+    """Dispatch the ``LONG_JOB_FIXTURES`` that this session's tests use
+    before any test runs, so their jobs overlap the rest of the suite.
+    """
+    for name in LONG_JOB_FIXTURES:
+        if not any(name in item.fixturenames for item in request.session.items):
+            continue
+        try:
+            request.getfixturevalue(name)
+        except Exception:
+            # pytest caches the failure and re-raises it in the tests that
+            # request the fixture; don't error the whole session here
+            pass
 
 
 @pytest.fixture
@@ -315,6 +370,44 @@ def completed_voxel_grid(completed_tree_inventory):
         )
         voxels.wait()
     return voxels
+
+
+@pytest.fixture(scope="session")
+def dispatched_duet_surface_grid(completed_voxel_grid):
+    """A DUET surface fuel grid over ``completed_voxel_grid``, dispatched
+    but not waited on (the job takes minutes; see ``start_long_jobs``).
+    READ-ONLY.
+    """
+    with real_dispatch_client():
+        surface = create_surface_fuel_grid_from_duet(
+            completed_voxel_grid,
+            # DUET runtime grows with the simulated years (~40 s at 1,
+            # ~4-8 min at 25); one year is enough to exercise the path
+            years_since_burn=1,
+            bands=[
+                "fuel_load.grass",
+                "fuel_load.litter",
+                "fuel_depth.grass",
+                "fuel_depth.litter",
+            ],
+            calibration=duet_calibration(
+                fuel_load={
+                    "grass": {"mean": 0.5, "sd": 0.25},
+                    "litter": {"max": 5, "min": 0},
+                },
+                fuel_depth={
+                    "grass": {"value": 0.3},
+                    "litter": {"value": 0.06},
+                },
+            ),
+            name="test_duet_surface_fuels",
+            tags=["test"],
+        )
+    yield surface
+    try:
+        surface.delete()
+    except NotFoundException:
+        pass
 
 
 @pytest.fixture(scope="session")

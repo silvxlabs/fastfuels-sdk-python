@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 # Internal imports
-from fastfuels_sdk.v2.grids import Grid, create_canopy_height_grid_from_meta
+from fastfuels_sdk.v2.grids import Grid
 from fastfuels_sdk.v2.features import Feature
 from fastfuels_sdk.v2.inventories import (
     ChmInventoryCrownSegmentation,
@@ -129,25 +129,14 @@ class TestCreateTreeInventoryFromPimGrid:
 
 
 class TestCreateTreeInventoryFromPimChmFusion:
-    @pytest.fixture(scope="class")
-    def completed_chm_grid(self, test_domain):
-        """A completed Meta CHM at 5 m: finer than the default 7.5 m
-        reimputation resolution, which must lie between the CHM and PIM
-        cell sizes.
-        """
-        with real_dispatch_client():
-            grid = create_canopy_height_grid_from_meta(
-                test_domain, output_resolution_m=5, name="throwaway_fusion_chm"
-            )
-            grid.wait()
-        yield grid
-        grid.delete()
+    # The shared 1 m CHM is finer than the default 7.5 m reimputation
+    # resolution, which must lie between the CHM and PIM cell sizes
 
-    def test_create(self, test_domain, completed_pim_grid, completed_chm_grid):
+    def test_create(self, test_domain, completed_pim_grid, completed_fine_chm_grid):
         inventory = create_tree_inventory_from_pim_chm_fusion(
             test_domain,
             completed_pim_grid,
-            completed_chm_grid,
+            completed_fine_chm_grid,
             seed=42,
             name="throwaway_fusion_inventory",
         )
@@ -155,27 +144,27 @@ class TestCreateTreeInventoryFromPimChmFusion:
         assert inventory.domain_id == test_domain.id
         assert inventory.status in (JobStatus.PENDING, JobStatus.RUNNING)
         assert inventory.source["source_pim_grid_id"] == completed_pim_grid.id
-        assert inventory.source["source_chm_grid_id"] == completed_chm_grid.id
+        assert inventory.source["source_chm_grid_id"] == completed_fine_chm_grid.id
         assert inventory.source["fusion"] == ["chm"]
         assert inventory.source["method"]["name"] == "reimputation"
         inventory.delete()
 
     def test_accepts_grid_id_strings(
-        self, test_domain, completed_pim_grid, completed_chm_grid
+        self, test_domain, completed_pim_grid, completed_fine_chm_grid
     ):
         inventory = create_tree_inventory_from_pim_chm_fusion(
-            test_domain, completed_pim_grid.id, completed_chm_grid.id, seed=42
+            test_domain, completed_pim_grid.id, completed_fine_chm_grid.id, seed=42
         )
         assert inventory.domain_id == test_domain.id
         inventory.delete()
 
     def test_method_is_recorded_on_source(
-        self, test_domain, completed_pim_grid, completed_chm_grid
+        self, test_domain, completed_pim_grid, completed_fine_chm_grid
     ):
         inventory = create_tree_inventory_from_pim_chm_fusion(
             test_domain,
             completed_pim_grid,
-            completed_chm_grid,
+            completed_fine_chm_grid,
             method={"resolution": 15, "min_height": 3.0, "cover_threshold": 0.3},
             seed=42,
         )
@@ -188,21 +177,21 @@ class TestCreateTreeInventoryFromPimChmFusion:
         inventory.delete()
 
     def test_resolution_finer_than_chm_is_rejected(
-        self, test_domain, completed_pim_grid, completed_chm_grid
+        self, test_domain, completed_pim_grid, completed_fine_chm_grid
     ):
         with pytest.raises(UnprocessableEntityException, match="finer"):
             create_tree_inventory_from_pim_chm_fusion(
                 test_domain,
                 completed_pim_grid,
-                completed_chm_grid,
-                method=ReimputationMethod(resolution=1),
+                completed_fine_chm_grid,
+                method=ReimputationMethod(resolution=0.5),
             )
 
     def test_completes_with_pim_columns(
-        self, real_dispatch, test_domain, completed_pim_grid, completed_chm_grid
+        self, real_dispatch, test_domain, completed_pim_grid, completed_fine_chm_grid
     ):
         inventory = create_tree_inventory_from_pim_chm_fusion(
-            test_domain, completed_pim_grid, completed_chm_grid, seed=42
+            test_domain, completed_pim_grid, completed_fine_chm_grid, seed=42
         )
         inventory.wait()
         assert inventory.status == JobStatus.COMPLETED

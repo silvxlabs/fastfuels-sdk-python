@@ -688,45 +688,21 @@ class TestCreateSurfaceFuelGridFromDuet:
         with pytest.raises(error):
             create_surface_fuel_grid_from_duet(self._source_grid(), **kwargs)
 
-    def test_create_live(self, real_dispatch, completed_voxel_grid):
-        surface = None
-        try:
-            surface = create_surface_fuel_grid_from_duet(
-                completed_voxel_grid,
-                years_since_burn=25,
-                bands=[
-                    "fuel_load.grass",
-                    "fuel_load.litter",
-                    "fuel_depth.grass",
-                    "fuel_depth.litter",
-                ],
-                calibration=duet_calibration(
-                    fuel_load={
-                        "grass": {"mean": 0.5, "sd": 0.25},
-                        "litter": {"max": 5, "min": 0},
-                    },
-                    fuel_depth={
-                        "grass": {"value": 0.3},
-                        "litter": {"value": 0.06},
-                    },
-                ),
-                name="test_duet_surface_fuels",
-                tags=["test"],
-            )
-            surface.wait()
-            assert surface.status == JobStatus.COMPLETED
-            assert {band.key for band in surface.bands} == {
-                "fuel_load.grass",
-                "fuel_load.litter",
-                "fuel_depth.grass",
-                "fuel_depth.litter",
-            }
-            grass_load = surface.to_numpy("fuel_load.grass")
-            assert grass_load.ndim == 2
-            assert np.isfinite(grass_load).any()
-        finally:
-            if surface is not None:
-                surface.delete()
+    def test_create_live(self, real_dispatch, dispatched_duet_surface_grid):
+        # The fixture dispatches DUET at session start (it takes minutes);
+        # by now the job has been running alongside the rest of the suite
+        surface = dispatched_duet_surface_grid
+        surface.wait()
+        assert surface.status == JobStatus.COMPLETED
+        assert {band.key for band in surface.bands} == {
+            "fuel_load.grass",
+            "fuel_load.litter",
+            "fuel_depth.grass",
+            "fuel_depth.litter",
+        }
+        grass_load = surface.to_numpy("fuel_load.grass")
+        assert grass_load.ndim == 2
+        assert np.isfinite(grass_load).any()
 
 
 class TestCreateDeadFuelMoistureGridFromFosberg:
