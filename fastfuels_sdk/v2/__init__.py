@@ -46,7 +46,11 @@ from fastfuels_sdk.v2.point_clouds import (
     get_point_cloud,
     list_point_clouds,
 )
-from fastfuels_sdk.v2.treatments import basal_area_treatment, diameter_treatment
+from fastfuels_sdk.v2.treatments import (
+    basal_area_treatment,
+    crown_spacing_treatment,
+    diameter_treatment,
+)
 
 __all__ = [
     # Submodules (resource creators live here: ff.grids.create_*, ff.features.create_*)
@@ -92,6 +96,7 @@ __all__ = [
     # Treatments
     "basal_area_treatment",
     "diameter_treatment",
+    "crown_spacing_treatment",
     # Jobs
     "wait_all",
     "JobFailedError",

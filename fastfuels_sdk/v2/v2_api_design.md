@@ -132,7 +132,7 @@ fastfuels_sdk/
   point_clouds.py create_point_cloud_from_file (fn); PointCloud record + methods (upload-only)
   exports.py      create_quicfire_export (fn); Export record + methods
   modifications.py mask() -> GridModification
-  treatments.py   basal_area_treatment()/diameter_treatment() -> Inventory*Treatment
+  treatments.py   basal_area_treatment()/diameter_treatment()/crown_spacing_treatment() -> Inventory*Treatment
   _uploads.py     put_upload(spec, path) — shared signed-upload helper (grids/inventories/point_clouds)
   _jobs.py        wait()/wait_all()/JobFailedError
 ```
@@ -224,7 +224,7 @@ lookup is the only such case today: it needs a grid carrying `fbfm` codes.
   (one held resource → method; assembled-from-many → function), but worth a look.
 - Modifications/treatments vocab (`mask`/`modify`/`within`/`thin_to_*`) — now
   settled: builders ship for all three — `mask` (grids), `basal_area_treatment`/
-  `diameter_treatment` (inventory treatments), and `tree_attribute`/`tree_within`/
+  `diameter_treatment`/`crown_spacing_treatment` (inventory treatments), and `tree_attribute`/`tree_within`/
   `remove_trees`/`modify_trees` (inventory modifications). `tree_within` builds an
   `InventoryFeatureSpatialCondition`, which treatments' `conditions=` also accept;
   geometry/expression conditions remain a raw pass-through.

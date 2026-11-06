@@ -28,7 +28,11 @@ from fastfuels_sdk.v2.inventories import (
     get_inventory,
     list_inventories,
 )
-from fastfuels_sdk.v2.treatments import basal_area_treatment, diameter_treatment
+from fastfuels_sdk.v2.treatments import (
+    basal_area_treatment,
+    crown_spacing_treatment,
+    diameter_treatment,
+)
 from fastfuels_sdk.v2.modifications import remove_trees, tree_attribute
 from fastfuels_sdk.v2.client_library.models import (
     CategoricalColumnSummary,
@@ -40,6 +44,7 @@ from fastfuels_sdk.v2.client_library.models import (
     GdamModel,
     Inventory as InventoryModel,
     InventoryAttribute,
+    InventoryCrownSpacingTreatment,
     InventoryDataResponse,
     InventoryJsonOrientation,
     InventoryModification,
@@ -766,6 +771,119 @@ class TestApplyTreatments:
         inventory.delete()
 
 
+class TestCrownSpacingTreatment:
+    @pytest.fixture(scope="class")
+    def completed_segmented_chm_inventory(self, test_domain, completed_fine_chm_grid):
+        """A completed, untreated CHM inventory with a ``crown_radius`` column."""
+        with real_dispatch_client():
+            inventory = create_tree_inventory_from_chm_grid(
+                test_domain,
+                completed_fine_chm_grid,
+                crown_segmentation={},
+                name="throwaway_segmented_chm_inventory",
+            )
+            inventory.wait()
+        yield inventory
+        inventory.delete()
+
+    def test_apply_default_crown_spacing_to_pim_inventory(
+        self, real_dispatch, completed_tree_inventory
+    ):
+        copy = completed_tree_inventory.duplicate(name="throwaway_crown_spacing")
+        copy.wait()
+        try:
+            copy.apply_treatments([crown_spacing_treatment(3.0)])
+            copy.wait()
+            assert copy.status == JobStatus.COMPLETED
+            assert len(copy.treatments) == 1
+            treatment = copy.treatments[0]
+            assert isinstance(treatment, InventoryCrownSpacingTreatment)
+            assert treatment.value == 3.0
+            assert (
+                0
+                < len(copy.to_dataframe())
+                < len(completed_tree_inventory.to_dataframe())
+            )
+        finally:
+            copy.delete()
+
+    def test_chm_create_with_height_ranked_crown_radius_spacing(
+        self,
+        real_dispatch,
+        test_domain,
+        completed_fine_chm_grid,
+        completed_segmented_chm_inventory,
+    ):
+        treated = create_tree_inventory_from_chm_grid(
+            test_domain,
+            completed_fine_chm_grid,
+            crown_segmentation={},
+            treatments=[
+                crown_spacing_treatment(
+                    3.0, rank_by="height", max_crown_radius_column="crown_radius"
+                )
+            ],
+            name="throwaway_crown_spaced_chm_inventory",
+        )
+        try:
+            treated.wait()
+            assert treated.status == JobStatus.COMPLETED
+            assert isinstance(treated.treatments[0], InventoryCrownSpacingTreatment)
+            assert (
+                0
+                < len(treated.to_dataframe())
+                < len(completed_segmented_chm_inventory.to_dataframe())
+            )
+        finally:
+            treated.delete()
+
+    def test_apply_to_segmented_chm_inventory(
+        self, real_dispatch, completed_segmented_chm_inventory
+    ):
+        copy = completed_segmented_chm_inventory.duplicate(
+            name="throwaway_crown_spacing_chm"
+        )
+        copy.wait()
+        try:
+            copy.apply_treatments(
+                [
+                    crown_spacing_treatment(
+                        3.0, rank_by="height", max_crown_radius_column="crown_radius"
+                    )
+                ]
+            )
+            copy.wait()
+            assert copy.status == JobStatus.COMPLETED
+            assert (
+                0
+                < len(copy.to_dataframe())
+                < len(completed_segmented_chm_inventory.to_dataframe())
+            )
+        finally:
+            copy.delete()
+
+    def test_dbh_ranked_spacing_rejected_at_chm_create(
+        self, test_domain, completed_fine_chm_grid
+    ):
+        # CHM stem isolation produces no dbh, so the default dbh rank and
+        # purves radius have nothing to read.
+        with pytest.raises(UnprocessableEntityException):
+            create_tree_inventory_from_chm_grid(
+                test_domain,
+                completed_fine_chm_grid,
+                crown_segmentation={},
+                treatments=[crown_spacing_treatment(3.0)],
+            )
+
+    def test_dbh_treatment_rejected_on_chm_apply(
+        self, completed_segmented_chm_inventory
+    ):
+        with pytest.raises(UnprocessableEntityException):
+            completed_segmented_chm_inventory.apply_treatments(
+                [diameter_treatment("from_below", 10.0)]
+            )
+
+
 class TestModificationBuilders:
     def test_remove_trees_at_creation(
         self, real_dispatch, test_domain, completed_pim_grid, completed_tree_inventory
@@ -847,6 +965,29 @@ class TestCreateTreeInventoryFromChmGridRequest:
                 "domain-id", "chm-id", crown_segmentation=True
             )
         assert captured == {}
+
+    def test_crown_spacing_treatment_sent(self, captured):
+        create_tree_inventory_from_chm_grid(
+            "domain-id",
+            "chm-id",
+            crown_segmentation={},
+            treatments=[
+                crown_spacing_treatment(
+                    3.0, rank_by="height", max_crown_radius_column="crown_radius"
+                )
+            ],
+        )
+        assert captured["body"]["treatments"] == [
+            {
+                "metric": "crown_spacing",
+                "value": 3.0,
+                "rank_by": "height",
+                "max_crown_radius_source": {
+                    "type": "inventory_column",
+                    "column": "crown_radius",
+                },
+            }
+        ]
 
     def test_vwf_defaults(self, captured):
         create_tree_inventory_from_chm_grid(
