@@ -39,7 +39,7 @@ class InventoryFeatureSpatialCondition:
                 - within: Select items whose target (centroid or cell) is inside the geometry
                 - outside: Select items whose target is outside the geometry (inverse of within)
                 - intersects: Select items whose target overlaps with the geometry
-            feature_id (str): ID of a Feature resource (road, water, or layerset) hosted in the same domain as the
+            feature_id (str): ID of a Feature resource (road, water, building, or layerset) hosted in the same domain as the
                 inventory. Cross-domain references are rejected; the feature must be in `completed` status.
             buffer_m (float | None | Unset): Optional buffer distance in meters applied to the feature geometry (in the
                 domain's projected CRS) before testing. Effectively required for linestring features such as roads since a tree

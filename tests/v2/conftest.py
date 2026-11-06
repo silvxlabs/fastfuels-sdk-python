@@ -23,6 +23,7 @@ fixtures that build completed resources create them inside
 import pytest
 
 from fastfuels_sdk.v2.features import (
+    create_building_feature_from_overture,
     create_crown_feature_from_chm,
     create_layerset_feature_from_geojson,
     create_road_feature_from_osm,
@@ -46,6 +47,7 @@ from fastfuels_sdk.v2.point_clouds import (
     create_point_cloud_from_3dep,
 )
 from tests.v2.utils import (
+    create_building_domain,
     create_default_domain,
     create_default_layerset_geojson,
     install_skip_dispatch_client,
@@ -90,6 +92,32 @@ def completed_road_feature(test_domain):
             test_domain,
             name="test_road",
             description="Road feature for testing v2 feature operations",
+            tags=["test"],
+        )
+        feature.wait()
+    return feature
+
+
+@pytest.fixture(scope="session")
+def building_domain():
+    """A session-wide domain over a residential area, for building
+    features (the default test domain has no buildings). READ-ONLY.
+    """
+    domain = create_building_domain()
+    yield domain
+    domain.delete(force=True)
+
+
+@pytest.fixture(scope="session")
+def completed_building_feature(building_domain):
+    """A completed Overture building feature in ``building_domain``.
+    READ-ONLY: shared by every module.
+    """
+    with real_dispatch_client():
+        feature = create_building_feature_from_overture(
+            building_domain,
+            name="test_buildings",
+            description="Building feature for testing v2 feature operations",
             tags=["test"],
         )
         feature.wait()

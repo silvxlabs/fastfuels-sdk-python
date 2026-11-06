@@ -104,6 +104,36 @@ Both must be called on a `completed` inventory. Re-deriving overwrites the
 inventory's data, so to keep the original, [duplicate](#branch-a-scenario) it
 first and reshape the copy.
 
+## Remove trees inside buildings
+
+To drop the trees that fall inside building footprints, create a
+[building feature](features.md#create-a-building-feature-from-overture-maps)
+in the inventory's domain and select the trees with `ff.tree_within`. A small
+`buffer_m` also catches stems at the footprint edges:
+
+```python
+buildings = ff.features.create_building_feature_from_overture(domain)
+chm = ff.grids.create_canopy_height_grid_from_meta(domain, output_resolution_m=1)
+ff.wait_all([buildings, chm])
+
+trees = ff.inventories.create_tree_inventory_from_chm_grid(
+    domain,
+    chm,
+    modifications=[ff.remove_trees(ff.tree_within(buildings, buffer_m=2))],
+)
+trees.wait()
+```
+
+To remove them from an inventory you already hold, pass the same rule to
+`apply_modifications`:
+
+```python
+inventory.apply_modifications(
+    [ff.remove_trees(ff.tree_within(buildings, buffer_m=2))]
+)
+inventory.wait()
+```
+
 ## Branch a scenario
 
 To compare scenarios — a thinned stand against the original — keep the

@@ -143,6 +143,7 @@ fastfuels_sdk/
 |---|---|---|
 | `create_osm_road_feature` | `ff.features.create_road_feature_from_osm(domain)` | fn |
 | `create_osm_water_feature` | `ff.features.create_water_feature_from_osm(domain)` | fn |
+| `create_overture_building_feature` | `ff.features.create_building_feature_from_overture(domain)` | fn |
 | `create_layerset` | `ff.features.create_layerset_feature_from_geojson(domain, geojson)` · `…_from_geodataframe(domain, gdf)` | fn |
 | `get_feature` | `ff.get_feature(domain, feature_id)` · `feature.refresh()` | fn / method |
 | `update_feature` | `feature.update(…)` | method |

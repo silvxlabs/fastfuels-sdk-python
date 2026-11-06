@@ -17,6 +17,7 @@ from fastfuels_sdk.v2.client_library.api.features import (
     create_layerset,
     create_osm_road_feature,
     create_osm_water_feature,
+    create_overture_building_feature,
     delete_feature,
     get_feature as get_feature_endpoint,
     get_feature_data_metadata,
@@ -32,6 +33,7 @@ from fastfuels_sdk.v2.client_library.models import (
     CreateLayersetRequestBody,
     CreateOsmRoadFeatureRequest,
     CreateOsmWaterFeatureRequest,
+    CreateOvertureBuildingFeatureRequest,
     FeatureDataMetadata,
     FeatureSortField,
     FeatureType,
@@ -82,11 +84,12 @@ class Feature(FeatureModel):
     """Feature resource for the FastFuels v2 API.
 
     Represents geographic features within a domain: roads and water
-    bodies sourced from OpenStreetMap, tree crowns segmented on a canopy
-    height model, or user-uploaded layersets of fuelbed polygons.
-    Features are asynchronous job resources — OSM and crown features are
-    generated in the background and expose a ``status``/``progress``
-    lifecycle, while layerset uploads complete synchronously.
+    bodies sourced from OpenStreetMap, building footprints sourced from
+    Overture Maps, tree crowns segmented on a canopy height model, or
+    user-uploaded layersets of fuelbed polygons. Features are asynchronous
+    job resources — OSM, Overture, and crown features are generated in the
+    background and expose a ``status``/``progress`` lifecycle, while
+    layerset uploads complete synchronously.
 
     The Feature resource itself is geometry-free; the generated geodata
     is retrieved through the data methods (:meth:`get_data_metadata`,
@@ -100,12 +103,12 @@ class Feature(FeatureModel):
     domain_id : str
         Identifier of the domain the feature belongs to.
     type_ : FeatureType
-        Type of geographic feature: "road", "water", "crown", or
-        "layerset".
+        Type of geographic feature: "road", "water", "building",
+        "crown", or "layerset".
     status : JobStatus
         Job status: "pending", "running", "completed", or "failed".
     source : FeatureSource
-        Where the feature data comes from (e.g. "osm").
+        Where the feature data comes from (e.g. "osm" or "overture").
     name : str
         Human-readable name for the feature.
     description : str
@@ -119,6 +122,10 @@ class Feature(FeatureModel):
         Error details if the job failed.
     tags : List[str], optional
         User-defined tags for organization.
+    attributions : List[Attribution], optional
+        Licenses and citations for the third-party data the feature was
+        built from. Reproduce each ``citation`` wherever the data is used
+        or shared.
     created_on : datetime
         When the feature was created.
     modified_on : datetime
@@ -139,6 +146,7 @@ class Feature(FeatureModel):
     --------
     create_road_feature_from_osm : Create a road feature from OpenStreetMap.
     create_water_feature_from_osm : Create a water feature from OpenStreetMap.
+    create_building_feature_from_overture : Create a building feature from Overture Maps.
     create_crown_feature_from_chm : Outline tree crowns on a canopy height model.
     create_layerset_feature_from_geojson : Upload a custom layerset of fuelbed polygons.
     Feature.to_geodataframe : Retrieve the feature data as a GeoDataFrame.
@@ -658,6 +666,71 @@ def create_water_feature_from_osm(
     return Feature._from_model(expect(response, HTTPStatus.CREATED))
 
 
+def create_building_feature_from_overture(
+    domain,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    extent_buffer_m: float = 0.0,
+) -> Feature:
+    """Create a building feature from Overture Maps data.
+
+    Starts a background job that extracts building footprints from
+    Overture Maps within the domain extent. Use :meth:`Feature.wait` to
+    block until the data is ready.
+
+    Each row of the completed feature's data is one footprint, with the
+    columns ``geometry`` (footprint polygon), ``height`` (meters, null
+    when unknown), ``height_source`` (dataset that supplied the height),
+    and ``source_dataset`` (dataset that supplied the footprint). The
+    Overture release that was read is reported in ``source["release"]``
+    once the job completes.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the feature in.
+    name : str, optional
+        Name for the feature.
+    description : str, optional
+        Description of the feature.
+    tags : List[str], optional
+        Tags for organizing the feature.
+    extent_buffer_m : float, optional
+        Distance in meters (0-100, default 0) to expand the domain extent
+        outward before clipping, so buildings that cross the domain
+        boundary extend past the edge instead of being cut at it.
+
+    Returns
+    -------
+    Feature
+        The created Feature object (job status "pending" or "running").
+
+    Raises
+    ------
+    NotFoundException
+        If the domain does not exist.
+    UnprocessableEntityException
+        If ``extent_buffer_m`` is outside the 0-100 meter range.
+
+    Examples
+    --------
+    >>> feature = create_building_feature_from_overture(domain, name="buildings")
+    >>> feature.type_
+    <FeatureType.BUILDING: 'building'>
+    """
+    request_body = CreateOvertureBuildingFeatureRequest(
+        name=name,
+        description=description,
+        tags=_opt(tags),
+        extent_buffer_m=extent_buffer_m,
+    )
+    response = create_overture_building_feature.sync_detailed(
+        _domain_id(domain), client=ensure_client(), body=request_body
+    )
+    return Feature._from_model(expect(response, HTTPStatus.CREATED))
+
+
 def create_crown_feature_from_chm(
     domain,
     source_inventory,
@@ -960,10 +1033,11 @@ def list_features(
     sort_order : str, optional
         Sort direction: "ascending" or "descending".
     feature_type : str, optional
-        Only return features of this type: "road", "water", "crown", or
-        "layerset".
+        Only return features of this type: "road", "water", "building",
+        "crown", or "layerset".
     product : str, optional
-        Only return features from this data product (e.g. "osm").
+        Only return features from this data product (e.g. "osm" or
+        "overture").
     tag : str, optional
         Only return features carrying this tag.
 

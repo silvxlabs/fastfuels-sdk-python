@@ -84,10 +84,11 @@ def mask(
 ) -> GridModification:
     """Build a modification that overwrites a band where cells fall within a feature.
 
-    Pass a completed feature (road, water, or layerset) in the same domain as
-    the grid, and every grid cell selected by the spatial ``operator`` has
-    ``band`` replaced with ``value``. The returned modification is suitable for
-    the ``modifications=`` argument of any grid creator.
+    Pass a completed feature (road, water, building, or layerset) in the same
+    domain as the grid, and every grid cell selected by the spatial
+    ``operator`` has ``band`` replaced with ``value``. The returned
+    modification is suitable for the ``modifications=`` argument of any grid
+    creator.
 
     Parameters
     ----------
