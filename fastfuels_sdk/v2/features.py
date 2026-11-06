@@ -13,7 +13,13 @@ from fastfuels_sdk.v2._jobs import wait as _wait
 from fastfuels_sdk.v2.api import ensure_client
 from fastfuels_sdk.v2.exceptions import expect
 from fastfuels_sdk.v2.client_library.api.features import (
+    concatenate_building_features as concatenate_building_features_endpoint,
+    concatenate_road_features as concatenate_road_features_endpoint,
+    concatenate_water_features as concatenate_water_features_endpoint,
     create_chm_crown_feature,
+    create_geojson_building_feature,
+    create_geojson_road_feature,
+    create_geojson_water_feature,
     create_layerset,
     create_osm_road_feature,
     create_osm_water_feature,
@@ -29,7 +35,9 @@ from fastfuels_sdk.v2.client_library.api.features import (
 from fastfuels_sdk.v2.client_library.models import (
     Feature as FeatureModel,
     ChmCrownSegmentation,
+    ConcatenateFeaturesRequest,
     CreateChmCrownFeatureRequest,
+    CreateGeojsonFeatureRequest,
     CreateLayersetRequestBody,
     CreateOsmRoadFeatureRequest,
     CreateOsmWaterFeatureRequest,
@@ -80,16 +88,73 @@ def _as_feature_collection(geojson: dict) -> dict:
     return geojson
 
 
+def _geodataframe_to_geojson(geodataframe: gpd.GeoDataFrame) -> dict:
+    """Serialize a GeoDataFrame to a FeatureCollection dict, carrying its
+    CRS as the ``crs`` member (omitted when the GeoDataFrame has no CRS).
+    """
+    geojson = json.loads(geodataframe.to_json())
+    if geodataframe.crs is not None:
+        authority = geodataframe.crs.to_authority()
+        if authority is None:
+            raise ValueError(
+                "GeoDataFrame CRS has no authority code (e.g. a custom "
+                "CRS). Reproject to a CRS with an EPSG code with "
+                "geodataframe.to_crs(...) first."
+            )
+        geojson["crs"] = {
+            "type": "name",
+            "properties": {"name": ":".join(authority)},
+        }
+    return geojson
+
+
+def _create_feature_from_geojson(
+    endpoint, domain, geojson, name, description, tags, extent_buffer_m
+) -> "Feature":
+    """Shared body of the road/water/building GeoJSON upload functions."""
+    feature_collection = _as_feature_collection(geojson)
+    body = {
+        **feature_collection,
+        "name": name,
+        "description": description,
+        "extent_buffer_m": extent_buffer_m,
+    }
+    if tags is not None:
+        body["tags"] = tags
+    request_body = CreateGeojsonFeatureRequest.from_dict(body)
+    response = endpoint.sync_detailed(
+        _domain_id(domain), client=ensure_client(), body=request_body
+    )
+    return Feature._from_model(expect(response, HTTPStatus.CREATED))
+
+
+def _concatenate_features(
+    endpoint, domain, features, name, description, tags
+) -> "Feature":
+    """Shared body of the road/water/building concatenate functions."""
+    request_body = ConcatenateFeaturesRequest(
+        source_feature_ids=[_domain_id(feature) for feature in features],
+        name=name,
+        description=description,
+        tags=_opt(tags),
+    )
+    response = endpoint.sync_detailed(
+        _domain_id(domain), client=ensure_client(), body=request_body
+    )
+    return Feature._from_model(expect(response, HTTPStatus.CREATED))
+
+
 class Feature(FeatureModel):
     """Feature resource for the FastFuels v2 API.
 
     Represents geographic features within a domain: roads and water
     bodies sourced from OpenStreetMap, building footprints sourced from
-    Overture Maps, tree crowns segmented on a canopy height model, or
-    user-uploaded layersets of fuelbed polygons. Features are asynchronous
-    job resources — OSM, Overture, and crown features are generated in the
-    background and expose a ``status``/``progress`` lifecycle, while
-    layerset uploads complete synchronously.
+    Overture Maps, tree crowns segmented on a canopy height model,
+    user-uploaded road, water, or building polygons, or user-uploaded
+    layersets of fuelbed polygons. Features are asynchronous job resources
+    — OSM, Overture, and crown features are generated in the background
+    and expose a ``status``/``progress`` lifecycle, while uploads and
+    concatenations complete synchronously.
 
     The Feature resource itself is geometry-free; the generated geodata
     is retrieved through the data methods (:meth:`get_data_metadata`,
@@ -148,6 +213,8 @@ class Feature(FeatureModel):
     create_water_feature_from_osm : Create a water feature from OpenStreetMap.
     create_building_feature_from_overture : Create a building feature from Overture Maps.
     create_crown_feature_from_chm : Outline tree crowns on a canopy height model.
+    create_road_feature_from_geojson : Upload road polygons from GeoJSON.
+    concatenate_road_features : Combine road features into one.
     create_layerset_feature_from_geojson : Upload a custom layerset of fuelbed polygons.
     Feature.to_geodataframe : Retrieve the feature data as a GeoDataFrame.
     Feature.rasterize : Rasterize a layerset feature into a grid.
@@ -961,25 +1028,600 @@ def create_layerset_feature_from_geodataframe(
     >>> gdf = gpd.read_file("fuelbeds.shp").to_crs(epsg=5070)
     >>> feature = create_layerset_feature_from_geodataframe(domain, gdf)
     """
-    geojson = json.loads(geodataframe.to_json())
-    if geodataframe.crs is not None:
-        authority = geodataframe.crs.to_authority()
-        if authority is None:
-            raise ValueError(
-                "GeoDataFrame CRS has no authority code (e.g. a custom "
-                "CRS). Reproject to a known projected CRS with "
-                "geodataframe.to_crs(...) before creating a layerset."
-            )
-        geojson["crs"] = {
-            "type": "name",
-            "properties": {"name": ":".join(authority)},
-        }
     return create_layerset_feature_from_geojson(
         domain,
-        geojson,
+        _geodataframe_to_geojson(geodataframe),
         name=name,
         description=description,
         tags=tags,
+    )
+
+
+def create_road_feature_from_geojson(
+    domain,
+    geojson: dict,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    extent_buffer_m: float = 0.0,
+) -> Feature:
+    """Upload road polygons from GeoJSON.
+
+    Uploads a GeoJSON FeatureCollection where each feature is one polygon.
+    The polygons are reprojected to the domain CRS and clipped to the
+    domain extent. The upload is stored synchronously: the returned Feature
+    has status "completed" and its data is immediately available through
+    the data methods.
+
+    Each feature's ``properties`` are stored as columns of the feature
+    data. Properties are optional; a property may not be named
+    ``geometry``, and each property must hold one value type across all
+    features.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the feature in.
+    geojson : dict
+        A GeoJSON FeatureCollection or Feature (a single Feature is wrapped
+        automatically) with Polygon or MultiPolygon geometries. The CRS is
+        read from the ``crs`` member, e.g. ``{"type": "name", "properties":
+        {"name": "EPSG:5070"}}``; without one, coordinates are read as
+        EPSG:4326.
+    name : str, optional
+        Name for the feature.
+    description : str, optional
+        Description of the feature.
+    tags : List[str], optional
+        Tags for organizing the feature.
+    extent_buffer_m : float, optional
+        Distance in meters (0-100, default 0) to expand the domain extent
+        outward before clipping, so polygons that cross the domain boundary
+        extend past the edge instead of being cut at it.
+
+    Returns
+    -------
+    Feature
+        The created Feature object (type "road", status "completed").
+
+    Raises
+    ------
+    ValueError
+        If the GeoJSON is not a Feature or FeatureCollection, or a geometry
+        is not a Polygon or MultiPolygon.
+    NotFoundException
+        If the domain does not exist.
+    UnprocessableEntityException
+        If a geometry is invalid, a property is named ``geometry`` or holds
+        mixed value types, no polygon intersects the domain, or
+        ``extent_buffer_m`` is outside the 0-100 meter range.
+
+    Examples
+    --------
+    >>> feature = create_road_feature_from_geojson(domain, geojson, name="roads")
+    >>> feature.status
+    <JobStatus.COMPLETED: 'completed'>
+    """
+    return _create_feature_from_geojson(
+        create_geojson_road_feature,
+        domain,
+        geojson,
+        name,
+        description,
+        tags,
+        extent_buffer_m,
+    )
+
+
+def create_road_feature_from_geodataframe(
+    domain,
+    geodataframe: gpd.GeoDataFrame,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    extent_buffer_m: float = 0.0,
+) -> Feature:
+    """Upload road polygons from a GeoPandas GeoDataFrame.
+
+    The GeoDataFrame's CRS is forwarded to the API as the
+    FeatureCollection's ``crs`` member; a GeoDataFrame with no CRS is read
+    as EPSG:4326. Non-geometry columns are stored as columns of the feature
+    data. Otherwise behaves as :func:`create_road_feature_from_geojson`.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the feature in.
+    geodataframe : gpd.GeoDataFrame
+        GeoDataFrame with one Polygon or MultiPolygon per row.
+    name : str, optional
+        Name for the feature.
+    description : str, optional
+        Description of the feature.
+    tags : List[str], optional
+        Tags for organizing the feature.
+    extent_buffer_m : float, optional
+        Distance in meters (0-100, default 0) to expand the domain extent
+        outward before clipping.
+
+    Returns
+    -------
+    Feature
+        The created Feature object (type "road", status "completed").
+
+    Raises
+    ------
+    ValueError
+        If the GeoDataFrame CRS has no authority code (e.g. a custom CRS),
+        or a geometry is not a Polygon or MultiPolygon.
+    UnprocessableEntityException
+        Same validation errors as :func:`create_road_feature_from_geojson`.
+
+    Examples
+    --------
+    >>> gdf = gpd.read_file("roads.gpkg")
+    >>> feature = create_road_feature_from_geodataframe(domain, gdf)
+    """
+    return _create_feature_from_geojson(
+        create_geojson_road_feature,
+        domain,
+        _geodataframe_to_geojson(geodataframe),
+        name,
+        description,
+        tags,
+        extent_buffer_m,
+    )
+
+
+def create_water_feature_from_geojson(
+    domain,
+    geojson: dict,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    extent_buffer_m: float = 0.0,
+) -> Feature:
+    """Upload water-body polygons from GeoJSON.
+
+    Uploads a GeoJSON FeatureCollection where each feature is one polygon.
+    The polygons are reprojected to the domain CRS and clipped to the
+    domain extent. The upload is stored synchronously: the returned Feature
+    has status "completed" and its data is immediately available through
+    the data methods.
+
+    Each feature's ``properties`` are stored as columns of the feature
+    data. Properties are optional; a property may not be named
+    ``geometry``, and each property must hold one value type across all
+    features.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the feature in.
+    geojson : dict
+        A GeoJSON FeatureCollection or Feature (a single Feature is wrapped
+        automatically) with Polygon or MultiPolygon geometries. The CRS is
+        read from the ``crs`` member, e.g. ``{"type": "name", "properties":
+        {"name": "EPSG:5070"}}``; without one, coordinates are read as
+        EPSG:4326.
+    name : str, optional
+        Name for the feature.
+    description : str, optional
+        Description of the feature.
+    tags : List[str], optional
+        Tags for organizing the feature.
+    extent_buffer_m : float, optional
+        Distance in meters (0-100, default 0) to expand the domain extent
+        outward before clipping, so polygons that cross the domain boundary
+        extend past the edge instead of being cut at it.
+
+    Returns
+    -------
+    Feature
+        The created Feature object (type "water", status "completed").
+
+    Raises
+    ------
+    ValueError
+        If the GeoJSON is not a Feature or FeatureCollection, or a geometry
+        is not a Polygon or MultiPolygon.
+    NotFoundException
+        If the domain does not exist.
+    UnprocessableEntityException
+        If a geometry is invalid, a property is named ``geometry`` or holds
+        mixed value types, no polygon intersects the domain, or
+        ``extent_buffer_m`` is outside the 0-100 meter range.
+
+    Examples
+    --------
+    >>> feature = create_water_feature_from_geojson(domain, geojson, name="water")
+    >>> feature.status
+    <JobStatus.COMPLETED: 'completed'>
+    """
+    return _create_feature_from_geojson(
+        create_geojson_water_feature,
+        domain,
+        geojson,
+        name,
+        description,
+        tags,
+        extent_buffer_m,
+    )
+
+
+def create_water_feature_from_geodataframe(
+    domain,
+    geodataframe: gpd.GeoDataFrame,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    extent_buffer_m: float = 0.0,
+) -> Feature:
+    """Upload water-body polygons from a GeoPandas GeoDataFrame.
+
+    The GeoDataFrame's CRS is forwarded to the API as the
+    FeatureCollection's ``crs`` member; a GeoDataFrame with no CRS is read
+    as EPSG:4326. Non-geometry columns are stored as columns of the feature
+    data. Otherwise behaves as :func:`create_water_feature_from_geojson`.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the feature in.
+    geodataframe : gpd.GeoDataFrame
+        GeoDataFrame with one Polygon or MultiPolygon per row.
+    name : str, optional
+        Name for the feature.
+    description : str, optional
+        Description of the feature.
+    tags : List[str], optional
+        Tags for organizing the feature.
+    extent_buffer_m : float, optional
+        Distance in meters (0-100, default 0) to expand the domain extent
+        outward before clipping.
+
+    Returns
+    -------
+    Feature
+        The created Feature object (type "water", status "completed").
+
+    Raises
+    ------
+    ValueError
+        If the GeoDataFrame CRS has no authority code (e.g. a custom CRS),
+        or a geometry is not a Polygon or MultiPolygon.
+    UnprocessableEntityException
+        Same validation errors as :func:`create_water_feature_from_geojson`.
+
+    Examples
+    --------
+    >>> gdf = gpd.read_file("water.gpkg")
+    >>> feature = create_water_feature_from_geodataframe(domain, gdf)
+    """
+    return _create_feature_from_geojson(
+        create_geojson_water_feature,
+        domain,
+        _geodataframe_to_geojson(geodataframe),
+        name,
+        description,
+        tags,
+        extent_buffer_m,
+    )
+
+
+def create_building_feature_from_geojson(
+    domain,
+    geojson: dict,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    extent_buffer_m: float = 0.0,
+) -> Feature:
+    """Upload building footprints from GeoJSON.
+
+    Uploads a GeoJSON FeatureCollection where each feature is one polygon.
+    The polygons are reprojected to the domain CRS and clipped to the
+    domain extent. The upload is stored synchronously: the returned Feature
+    has status "completed" and its data is immediately available through
+    the data methods.
+
+    Each feature's ``properties`` are stored as columns of the feature
+    data. Properties are optional; a property may not be named
+    ``geometry``, and each property must hold one value type across all
+    features.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the feature in.
+    geojson : dict
+        A GeoJSON FeatureCollection or Feature (a single Feature is wrapped
+        automatically) with Polygon or MultiPolygon geometries. The CRS is
+        read from the ``crs`` member, e.g. ``{"type": "name", "properties":
+        {"name": "EPSG:5070"}}``; without one, coordinates are read as
+        EPSG:4326.
+    name : str, optional
+        Name for the feature.
+    description : str, optional
+        Description of the feature.
+    tags : List[str], optional
+        Tags for organizing the feature.
+    extent_buffer_m : float, optional
+        Distance in meters (0-100, default 0) to expand the domain extent
+        outward before clipping, so polygons that cross the domain boundary
+        extend past the edge instead of being cut at it.
+
+    Returns
+    -------
+    Feature
+        The created Feature object (type "building", status "completed").
+
+    Raises
+    ------
+    ValueError
+        If the GeoJSON is not a Feature or FeatureCollection, or a geometry
+        is not a Polygon or MultiPolygon.
+    NotFoundException
+        If the domain does not exist.
+    UnprocessableEntityException
+        If a geometry is invalid, a property is named ``geometry`` or holds
+        mixed value types, no polygon intersects the domain, or
+        ``extent_buffer_m`` is outside the 0-100 meter range.
+
+    Examples
+    --------
+    >>> feature = create_building_feature_from_geojson(domain, geojson, name="buildings")
+    >>> feature.status
+    <JobStatus.COMPLETED: 'completed'>
+    """
+    return _create_feature_from_geojson(
+        create_geojson_building_feature,
+        domain,
+        geojson,
+        name,
+        description,
+        tags,
+        extent_buffer_m,
+    )
+
+
+def create_building_feature_from_geodataframe(
+    domain,
+    geodataframe: gpd.GeoDataFrame,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+    extent_buffer_m: float = 0.0,
+) -> Feature:
+    """Upload building footprints from a GeoPandas GeoDataFrame.
+
+    The GeoDataFrame's CRS is forwarded to the API as the
+    FeatureCollection's ``crs`` member; a GeoDataFrame with no CRS is read
+    as EPSG:4326. Non-geometry columns are stored as columns of the feature
+    data. Otherwise behaves as :func:`create_building_feature_from_geojson`.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) to create the feature in.
+    geodataframe : gpd.GeoDataFrame
+        GeoDataFrame with one Polygon or MultiPolygon per row.
+    name : str, optional
+        Name for the feature.
+    description : str, optional
+        Description of the feature.
+    tags : List[str], optional
+        Tags for organizing the feature.
+    extent_buffer_m : float, optional
+        Distance in meters (0-100, default 0) to expand the domain extent
+        outward before clipping.
+
+    Returns
+    -------
+    Feature
+        The created Feature object (type "building", status "completed").
+
+    Raises
+    ------
+    ValueError
+        If the GeoDataFrame CRS has no authority code (e.g. a custom CRS),
+        or a geometry is not a Polygon or MultiPolygon.
+    UnprocessableEntityException
+        Same validation errors as :func:`create_building_feature_from_geojson`.
+
+    Examples
+    --------
+    >>> gdf = gpd.read_file("buildings.gpkg")
+    >>> feature = create_building_feature_from_geodataframe(domain, gdf)
+    """
+    return _create_feature_from_geojson(
+        create_geojson_building_feature,
+        domain,
+        _geodataframe_to_geojson(geodataframe),
+        name,
+        description,
+        tags,
+        extent_buffer_m,
+    )
+
+
+def concatenate_road_features(
+    domain,
+    features: List,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+) -> Feature:
+    """Combine road features into one new road feature.
+
+    Appends the data rows of each input feature, in the order given, to a
+    new feature, and adds a ``source_feature_id`` column naming the input
+    each row came from. The new feature carries the attributions of every
+    input; the inputs are left unchanged. The result is stored
+    synchronously: the returned Feature has status "completed" and its
+    data is immediately available through the data methods.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) the features belong to.
+    features : List[Feature or str]
+        2 to 100 completed road features (or their ids, mixed freely) in
+        ``domain``, each listed once.
+    name : str, optional
+        Name for the new feature.
+    description : str, optional
+        Description of the new feature.
+    tags : List[str], optional
+        Tags for organizing the new feature.
+
+    Returns
+    -------
+    Feature
+        The created Feature object (type "road", status "completed").
+
+    Raises
+    ------
+    NotFoundException
+        If the domain does not exist.
+    UnprocessableEntityException
+        If fewer than 2 or more than 100 features are given, a feature is
+        listed more than once, or a feature is not a completed road feature
+        in ``domain``.
+
+    Examples
+    --------
+    >>> combined = concatenate_road_features(domain, [first, second.id])
+    >>> combined.source["product"]
+    'concatenate'
+    """
+    return _concatenate_features(
+        concatenate_road_features_endpoint,
+        domain,
+        features,
+        name,
+        description,
+        tags,
+    )
+
+
+def concatenate_water_features(
+    domain,
+    features: List,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+) -> Feature:
+    """Combine water features into one new water feature.
+
+    Appends the data rows of each input feature, in the order given, to a
+    new feature, and adds a ``source_feature_id`` column naming the input
+    each row came from. The new feature carries the attributions of every
+    input; the inputs are left unchanged. The result is stored
+    synchronously: the returned Feature has status "completed" and its
+    data is immediately available through the data methods.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) the features belong to.
+    features : List[Feature or str]
+        2 to 100 completed water features (or their ids, mixed freely) in
+        ``domain``, each listed once.
+    name : str, optional
+        Name for the new feature.
+    description : str, optional
+        Description of the new feature.
+    tags : List[str], optional
+        Tags for organizing the new feature.
+
+    Returns
+    -------
+    Feature
+        The created Feature object (type "water", status "completed").
+
+    Raises
+    ------
+    NotFoundException
+        If the domain does not exist.
+    UnprocessableEntityException
+        If fewer than 2 or more than 100 features are given, a feature is
+        listed more than once, or a feature is not a completed water feature
+        in ``domain``.
+
+    Examples
+    --------
+    >>> combined = concatenate_water_features(domain, [first, second.id])
+    >>> combined.source["product"]
+    'concatenate'
+    """
+    return _concatenate_features(
+        concatenate_water_features_endpoint,
+        domain,
+        features,
+        name,
+        description,
+        tags,
+    )
+
+
+def concatenate_building_features(
+    domain,
+    features: List,
+    name: str = "",
+    description: str = "",
+    tags: Optional[List[str]] = None,
+) -> Feature:
+    """Combine building features into one new building feature.
+
+    Appends the data rows of each input feature, in the order given, to a
+    new feature, and adds a ``source_feature_id`` column naming the input
+    each row came from. The new feature carries the attributions of every
+    input; the inputs are left unchanged. The result is stored
+    synchronously: the returned Feature has status "completed" and its
+    data is immediately available through the data methods.
+
+    Parameters
+    ----------
+    domain : Domain or str
+        The domain (or its id) the features belong to.
+    features : List[Feature or str]
+        2 to 100 completed building features (or their ids, mixed freely) in
+        ``domain``, each listed once.
+    name : str, optional
+        Name for the new feature.
+    description : str, optional
+        Description of the new feature.
+    tags : List[str], optional
+        Tags for organizing the new feature.
+
+    Returns
+    -------
+    Feature
+        The created Feature object (type "building", status "completed").
+
+    Raises
+    ------
+    NotFoundException
+        If the domain does not exist.
+    UnprocessableEntityException
+        If fewer than 2 or more than 100 features are given, a feature is
+        listed more than once, or a feature is not a completed building feature
+        in ``domain``.
+
+    Examples
+    --------
+    >>> combined = concatenate_building_features(domain, [first, second.id])
+    >>> combined.source["product"]
+    'concatenate'
+    """
+    return _concatenate_features(
+        concatenate_building_features_endpoint,
+        domain,
+        features,
+        name,
+        description,
+        tags,
     )
 
 

@@ -2,8 +2,8 @@
 
 Features are geographic data within a domain: roads and water bodies
 extracted from OpenStreetMap, building footprints from Overture Maps, tree
-crowns outlined on a canopy height model, or custom layersets of fuelbed
-polygons you upload yourself. This guide covers working with features from
+crowns outlined on a canopy height model, road, water, or building polygons
+you upload yourself, or custom layersets of fuelbed polygons. This guide covers working with features from
 Python; for what features *are* and how the platform treats them, see the
 [FastFuels documentation](https://docs.fastfuels.silvxlabs.com). Coming
 from the v1 SDK? Start with the [migration guide](migration.md#features).
@@ -138,6 +138,91 @@ To tune segmentation, pass `crown_segmentation=` as a mapping of the
 `ChmCrownSegmentation` fields (e.g. `{"max_crown_radius": 6.0}`); the API
 default is used for any field left out. To voxelize these crowns, see
 [Voxelize measured crowns](inventories.md#voxelize-measured-crowns).
+
+## Upload Road, Water, or Building Polygons
+
+To create a road, water, or building feature from your own polygons, upload
+a GeoJSON FeatureCollection of Polygon or MultiPolygon geometries. The
+upload is synchronous — the returned feature is already `"completed"`:
+
+```python
+import json
+import fastfuels_sdk.v2 as ff
+
+with open("fire_roads.geojson") as f:
+    geojson = json.load(f)
+
+my_roads = ff.features.create_road_feature_from_geojson(
+    domain, geojson, name="Fire Roads"
+)
+
+print(my_roads.status)  # completed
+```
+
+The CRS is read from the FeatureCollection's `crs` member; without one,
+coordinates are read as EPSG:4326. The polygons are reprojected to the
+domain CRS and clipped to the domain, and each feature's `properties`
+become columns of the feature data:
+
+```python
+>>> my_roads.to_geodataframe()
+  id surface                                           geometry
+0  0  gravel  POLYGON ((720292 5189546, 720292 5190752, 7202...
+```
+
+To let polygons that cross the boundary extend past it, expand the clip
+extent by up to 100 meters with `extent_buffer_m`.
+
+To upload from a GeoPandas GeoDataFrame instead, use the
+`..._from_geodataframe` variant — the GeoDataFrame's CRS is forwarded
+as-is:
+
+```python
+import geopandas as gpd
+
+gdf = gpd.read_file("fire_roads.gpkg")
+my_roads = ff.features.create_road_feature_from_geodataframe(domain, gdf)
+```
+
+Water and building polygons use the same calling convention:
+
+| Type | From GeoJSON | From a GeoDataFrame |
+|---|---|---|
+| Road | `create_road_feature_from_geojson` | `create_road_feature_from_geodataframe` |
+| Water | `create_water_feature_from_geojson` | `create_water_feature_from_geodataframe` |
+| Building | `create_building_feature_from_geojson` | `create_building_feature_from_geodataframe` |
+
+## Combine Features of the Same Type
+
+To merge several completed features of one type into a single new feature
+— for example, OSM roads plus roads you uploaded — pass them to
+`concatenate_road_features`, `concatenate_water_features`, or
+`concatenate_building_features`. Features and feature ids can be mixed:
+
+```python
+osm_roads = ff.features.create_road_feature_from_osm(domain).wait()
+
+all_roads = ff.features.concatenate_road_features(
+    domain, [osm_roads, my_roads.id], name="All Roads"
+)
+print(all_roads.status)  # completed
+```
+
+The new feature holds the inputs' rows in the order given, with a
+`source_feature_id` column naming the input each row came from. The inputs
+are left unchanged:
+
+```python
+>>> all_roads.to_geodataframe().groupby("source_feature_id", sort=False).size()
+source_feature_id
+be7c6658c0a5403097c5562f0268a172    43
+8cca15f60fd441d2b4e6497918f84169     1
+dtype: int64
+```
+
+Pass between 2 and 100 features, each once. Features of another type, in
+another domain, or not yet completed are rejected with an
+`UnprocessableEntityException`.
 
 ## Wait for a Feature to Complete
 
