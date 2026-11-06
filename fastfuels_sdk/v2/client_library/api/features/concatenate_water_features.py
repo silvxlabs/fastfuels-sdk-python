@@ -1,0 +1,284 @@
+from http import HTTPStatus
+from typing import Any
+from urllib.parse import quote
+
+import httpx
+
+from ... import errors
+from ...client import AuthenticatedClient, Client
+from ...models.concatenate_features_request import ConcatenateFeaturesRequest
+from ...models.feature import Feature
+from ...models.http_validation_error import HTTPValidationError
+from ...models.quota_exceeded_detail import QuotaExceededDetail
+from ...types import Response
+
+
+def _get_kwargs(
+    domain_id: str,
+    *,
+    body: ConcatenateFeaturesRequest,
+) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
+
+    _kwargs: dict[str, Any] = {
+        "method": "post",
+        "url": "/v2/domains/{domain_id}/features/water/concatenate".format(
+            domain_id=quote(str(domain_id), safe=""),
+        ),
+    }
+
+    _kwargs["json"] = body.to_dict()
+
+    headers["Content-Type"] = "application/json"
+
+    _kwargs["headers"] = headers
+    return _kwargs
+
+
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Feature | HTTPValidationError | QuotaExceededDetail | None:
+    if response.status_code == 201:
+        response_201 = Feature.from_dict(response.json())
+
+        return response_201
+
+    if response.status_code == 422:
+        response_422 = HTTPValidationError.from_dict(response.json())
+
+        return response_422
+
+    if response.status_code == 429:
+        response_429 = QuotaExceededDetail.from_dict(response.json())
+
+        return response_429
+
+    if client.raise_on_unexpected_status:
+        raise errors.UnexpectedStatus(response.status_code, response.content)
+    else:
+        return None
+
+
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[Feature | HTTPValidationError | QuotaExceededDetail]:
+    return Response(
+        status_code=HTTPStatus(response.status_code),
+        content=response.content,
+        headers=response.headers,
+        parsed=_parse_response(client=client, response=response),
+    )
+
+
+def sync_detailed(
+    domain_id: str,
+    *,
+    client: AuthenticatedClient,
+    body: ConcatenateFeaturesRequest,
+) -> Response[Feature | HTTPValidationError | QuotaExceededDetail]:
+    r"""Concatenate water features
+
+     # Concatenate Water Features
+
+    Creates a new water feature whose rows are the rows of other water features
+    in this domain, appended in order. Use it to combine OpenStreetMap water with
+    your own uploads.
+
+    Geometries are not merged: overlapping polygons stay separate rows. The
+    columns are the union of the inputs' columns, empty where an input lacks
+    one, plus `source_feature_id`, the input each row came from.
+
+    ## Request Body
+
+    - **source_feature_ids**: (array of strings) 2–100 feature IDs, each
+      listed once. Every feature must be a completed water feature in this
+      domain.
+    - **name**: (string, optional) Name of the feature.
+    - **description**: (string, optional) Description.
+    - **tags**: (array of strings, optional) Searchable tags.
+
+    ## Response
+
+    Returns the created Feature with status `\"completed\"`. Its
+    `attributions` combine those of the input features.
+
+    Args:
+        domain_id (str):
+        body (ConcatenateFeaturesRequest): Request body for concatenating features of one type.
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Response[Feature | HTTPValidationError | QuotaExceededDetail]
+    """
+
+    kwargs = _get_kwargs(
+        domain_id=domain_id,
+        body=body,
+    )
+
+    response = client.get_httpx_client().request(
+        **kwargs,
+    )
+
+    return _build_response(client=client, response=response)
+
+
+def sync(
+    domain_id: str,
+    *,
+    client: AuthenticatedClient,
+    body: ConcatenateFeaturesRequest,
+) -> Feature | HTTPValidationError | QuotaExceededDetail | None:
+    r"""Concatenate water features
+
+     # Concatenate Water Features
+
+    Creates a new water feature whose rows are the rows of other water features
+    in this domain, appended in order. Use it to combine OpenStreetMap water with
+    your own uploads.
+
+    Geometries are not merged: overlapping polygons stay separate rows. The
+    columns are the union of the inputs' columns, empty where an input lacks
+    one, plus `source_feature_id`, the input each row came from.
+
+    ## Request Body
+
+    - **source_feature_ids**: (array of strings) 2–100 feature IDs, each
+      listed once. Every feature must be a completed water feature in this
+      domain.
+    - **name**: (string, optional) Name of the feature.
+    - **description**: (string, optional) Description.
+    - **tags**: (array of strings, optional) Searchable tags.
+
+    ## Response
+
+    Returns the created Feature with status `\"completed\"`. Its
+    `attributions` combine those of the input features.
+
+    Args:
+        domain_id (str):
+        body (ConcatenateFeaturesRequest): Request body for concatenating features of one type.
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Feature | HTTPValidationError | QuotaExceededDetail
+    """
+
+    return sync_detailed(
+        domain_id=domain_id,
+        client=client,
+        body=body,
+    ).parsed
+
+
+async def asyncio_detailed(
+    domain_id: str,
+    *,
+    client: AuthenticatedClient,
+    body: ConcatenateFeaturesRequest,
+) -> Response[Feature | HTTPValidationError | QuotaExceededDetail]:
+    r"""Concatenate water features
+
+     # Concatenate Water Features
+
+    Creates a new water feature whose rows are the rows of other water features
+    in this domain, appended in order. Use it to combine OpenStreetMap water with
+    your own uploads.
+
+    Geometries are not merged: overlapping polygons stay separate rows. The
+    columns are the union of the inputs' columns, empty where an input lacks
+    one, plus `source_feature_id`, the input each row came from.
+
+    ## Request Body
+
+    - **source_feature_ids**: (array of strings) 2–100 feature IDs, each
+      listed once. Every feature must be a completed water feature in this
+      domain.
+    - **name**: (string, optional) Name of the feature.
+    - **description**: (string, optional) Description.
+    - **tags**: (array of strings, optional) Searchable tags.
+
+    ## Response
+
+    Returns the created Feature with status `\"completed\"`. Its
+    `attributions` combine those of the input features.
+
+    Args:
+        domain_id (str):
+        body (ConcatenateFeaturesRequest): Request body for concatenating features of one type.
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Response[Feature | HTTPValidationError | QuotaExceededDetail]
+    """
+
+    kwargs = _get_kwargs(
+        domain_id=domain_id,
+        body=body,
+    )
+
+    response = await client.get_async_httpx_client().request(**kwargs)
+
+    return _build_response(client=client, response=response)
+
+
+async def asyncio(
+    domain_id: str,
+    *,
+    client: AuthenticatedClient,
+    body: ConcatenateFeaturesRequest,
+) -> Feature | HTTPValidationError | QuotaExceededDetail | None:
+    r"""Concatenate water features
+
+     # Concatenate Water Features
+
+    Creates a new water feature whose rows are the rows of other water features
+    in this domain, appended in order. Use it to combine OpenStreetMap water with
+    your own uploads.
+
+    Geometries are not merged: overlapping polygons stay separate rows. The
+    columns are the union of the inputs' columns, empty where an input lacks
+    one, plus `source_feature_id`, the input each row came from.
+
+    ## Request Body
+
+    - **source_feature_ids**: (array of strings) 2–100 feature IDs, each
+      listed once. Every feature must be a completed water feature in this
+      domain.
+    - **name**: (string, optional) Name of the feature.
+    - **description**: (string, optional) Description.
+    - **tags**: (array of strings, optional) Searchable tags.
+
+    ## Response
+
+    Returns the created Feature with status `\"completed\"`. Its
+    `attributions` combine those of the input features.
+
+    Args:
+        domain_id (str):
+        body (ConcatenateFeaturesRequest): Request body for concatenating features of one type.
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Feature | HTTPValidationError | QuotaExceededDetail
+    """
+
+    return (
+        await asyncio_detailed(
+            domain_id=domain_id,
+            client=client,
+            body=body,
+        )
+    ).parsed

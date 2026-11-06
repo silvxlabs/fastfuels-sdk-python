@@ -13,11 +13,20 @@ from tests import TEST_DATA_DIR
 from tests.v2.utils import create_default_layerset_geojson
 from fastfuels_sdk.v2.features import (
     Feature,
+    concatenate_building_features,
+    concatenate_road_features,
+    concatenate_water_features,
+    create_building_feature_from_geodataframe,
+    create_building_feature_from_geojson,
     create_building_feature_from_overture,
     create_crown_feature_from_chm,
     create_layerset_feature_from_geodataframe,
     create_layerset_feature_from_geojson,
+    create_road_feature_from_geodataframe,
+    create_road_feature_from_geojson,
     create_road_feature_from_osm,
+    create_water_feature_from_geodataframe,
+    create_water_feature_from_geojson,
     create_water_feature_from_osm,
     get_feature,
     list_features,
@@ -36,6 +45,7 @@ from fastfuels_sdk.v2.exceptions import (
 # External imports
 import pytest
 import geopandas as gpd
+from shapely.geometry import box
 
 # The test_domain, completed_road_feature, and layerset_feature fixtures are
 # session-scoped and shared across modules (tests/v2/conftest.py).
@@ -424,6 +434,288 @@ class TestCreateLayersetFromGeodataframe:
         assert feature.status == JobStatus.COMPLETED
         assert feature.get_data_metadata().total_features == len(gdf)
         feature.delete()
+
+
+# (feature type, upload from GeoJSON, upload from GeoDataFrame, concatenate)
+UPLOADABLE_TYPES = [
+    pytest.param(
+        FeatureType.ROAD,
+        create_road_feature_from_geojson,
+        create_road_feature_from_geodataframe,
+        concatenate_road_features,
+        id="road",
+    ),
+    pytest.param(
+        FeatureType.WATER,
+        create_water_feature_from_geojson,
+        create_water_feature_from_geodataframe,
+        concatenate_water_features,
+        id="water",
+    ),
+    pytest.param(
+        FeatureType.BUILDING,
+        create_building_feature_from_geojson,
+        create_building_feature_from_geodataframe,
+        concatenate_building_features,
+        id="building",
+    ),
+]
+
+
+@pytest.fixture(scope="module")
+def domain_polygons(test_domain):
+    """Two polygons inside the test domain, in the domain's CRS, with a
+    ``label`` property column.
+    """
+    domain_gdf = test_domain.to_geodataframe()
+    minx, miny, maxx, maxy = domain_gdf.total_bounds
+    midx, midy = (minx + maxx) / 2, (miny + maxy) / 2
+    return gpd.GeoDataFrame(
+        {"label": ["southwest", "northeast"]},
+        geometry=[
+            box(minx + 10, miny + 10, midx - 10, midy - 10),
+            box(midx + 10, midy + 10, maxx - 10, maxy - 10),
+        ],
+        crs=domain_gdf.crs,
+    )
+
+
+def _uploaded_feature_payload(feature_type, product, domain_id="domain-id"):
+    return {
+        "id": "feature-id",
+        "domain_id": domain_id,
+        "type": feature_type,
+        "status": "completed",
+        "source": {"product": product},
+        "name": "",
+        "description": "",
+    }
+
+
+class TestUploadAndConcatenateRequests:
+    @pytest.fixture
+    def captured(self, monkeypatch):
+        captured = {}
+
+        def fake_endpoint(feature_type, product):
+            def fake(domain_id, *, client, body):
+                captured.update(domain_id=domain_id, body=body.to_dict())
+                return Response(
+                    status_code=HTTPStatus.CREATED,
+                    content=b"",
+                    headers={},
+                    parsed=Feature.from_dict(
+                        _uploaded_feature_payload(feature_type, product, domain_id)
+                    ),
+                )
+
+            return fake
+
+        monkeypatch.setattr("fastfuels_sdk.v2.features.ensure_client", lambda: object())
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.features.create_geojson_water_feature.sync_detailed",
+            fake_endpoint("water", "geojson"),
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.features.concatenate_road_features_endpoint.sync_detailed",
+            fake_endpoint("road", "concatenate"),
+        )
+        return captured
+
+    def test_geodataframe_crs_sent_as_crs_member(self, captured):
+        gdf = gpd.GeoDataFrame(
+            {"depth": [1.5]}, geometry=[box(0, 0, 10, 10)], crs="EPSG:32611"
+        )
+        create_water_feature_from_geodataframe(
+            "domain-id", gdf, name="lakes", tags=["t"], extent_buffer_m=5
+        )
+
+        body = captured["body"]
+        assert body["crs"] == {"type": "name", "properties": {"name": "EPSG:32611"}}
+        assert body["name"] == "lakes"
+        assert body["tags"] == ["t"]
+        assert body["extent_buffer_m"] == 5
+        assert body["features"][0]["properties"] == {"depth": 1.5}
+
+    def test_concatenate_accepts_features_and_ids(self, captured):
+        first = Feature.from_dict(_uploaded_feature_payload("road", "geojson"))
+        first.id = "first-id"
+
+        feature = concatenate_road_features(
+            SimpleNamespace(id="domain-obj"), [first, "second-id"]
+        )
+
+        assert feature.type_ == FeatureType.ROAD
+        assert captured["domain_id"] == "domain-obj"
+        assert captured["body"] == {
+            "source_feature_ids": ["first-id", "second-id"],
+            "name": "",
+            "description": "",
+        }
+
+    def test_non_polygon_geometry_rejected(self, captured):
+        geojson = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {"type": "Point", "coordinates": [0, 0]},
+                    "properties": None,
+                }
+            ],
+        }
+        with pytest.raises(ValueError):
+            create_water_feature_from_geojson("domain-id", geojson)
+        assert captured == {}
+
+
+class TestCreateFeatureFromGeojson:
+    @pytest.mark.parametrize(
+        "feature_type, from_geojson, from_geodataframe, concatenate", UPLOADABLE_TYPES
+    )
+    def test_create(
+        self,
+        test_domain,
+        domain_polygons,
+        feature_type,
+        from_geojson,
+        from_geodataframe,
+        concatenate,
+    ):
+        # WGS84 coordinates with no crs member: the API reads them as
+        # EPSG:4326 and reprojects them to the domain CRS
+        geojson = json.loads(domain_polygons.to_crs(4326).to_json())
+        geojson.pop("crs", None)
+
+        feature = from_geojson(
+            test_domain, geojson, name="uploaded", tags=["upload-test"]
+        )
+
+        # Uploads are synchronous: the feature is already complete
+        assert feature.domain_id == test_domain.id
+        assert feature.type_ == feature_type
+        assert feature.status == JobStatus.COMPLETED
+        assert feature.name == "uploaded"
+        assert feature.tags == ["upload-test"]
+        assert feature.source["product"] == "geojson"
+
+        gdf = feature.to_geodataframe()
+        assert len(gdf) == 2
+        assert sorted(gdf["label"]) == ["northeast", "southwest"]
+        assert gdf.crs == domain_polygons.crs
+        feature.delete()
+
+    def test_clipped_to_buffered_domain(self, test_domain, domain_polygons):
+        minx, miny, maxx, maxy = test_domain.to_geodataframe().total_bounds
+        crossing = gpd.GeoDataFrame(
+            geometry=[box(minx - 500, miny - 500, maxx + 500, maxy + 500)],
+            crs=domain_polygons.crs,
+        )
+        # An explicit crs member in the domain's projected CRS
+        geojson = json.loads(crossing.to_json())
+        geojson["crs"] = {
+            "type": "name",
+            "properties": {"name": ":".join(crossing.crs.to_authority())},
+        }
+
+        feature = create_road_feature_from_geojson(
+            test_domain, geojson, extent_buffer_m=20
+        )
+
+        assert feature.source["extent_buffer_m"] == 20
+        bounds = feature.to_geodataframe().total_bounds
+        assert bounds.tolist() == pytest.approx(
+            [minx - 20, miny - 20, maxx + 20, maxy + 20]
+        )
+        feature.delete()
+
+    def test_no_intersection_rejected(self, test_domain):
+        far_away = gpd.GeoDataFrame(geometry=[box(0, 0, 1, 1)], crs="EPSG:4326")
+        with pytest.raises(UnprocessableEntityException, match="intersect"):
+            create_water_feature_from_geodataframe(test_domain, far_away)
+
+    def test_invalid_extent_buffer(self, test_domain, domain_polygons):
+        with pytest.raises(UnprocessableEntityException):
+            create_building_feature_from_geodataframe(
+                test_domain, domain_polygons, extent_buffer_m=500
+            )
+
+
+class TestCreateFeatureFromGeodataframe:
+    @pytest.mark.parametrize(
+        "feature_type, from_geojson, from_geodataframe, concatenate", UPLOADABLE_TYPES
+    )
+    def test_create(
+        self,
+        test_domain,
+        domain_polygons,
+        feature_type,
+        from_geojson,
+        from_geodataframe,
+        concatenate,
+    ):
+        # The GeoDataFrame's (projected) CRS is forwarded to the API
+        feature = from_geodataframe(test_domain, domain_polygons, name="gdf_upload")
+
+        assert feature.type_ == feature_type
+        assert feature.status == JobStatus.COMPLETED
+        assert feature.get_data_metadata().total_features == len(domain_polygons)
+        feature.delete()
+
+
+class TestConcatenateFeatures:
+    @pytest.mark.parametrize(
+        "feature_type, from_geojson, from_geodataframe, concatenate", UPLOADABLE_TYPES
+    )
+    def test_concatenate(
+        self,
+        test_domain,
+        domain_polygons,
+        feature_type,
+        from_geojson,
+        from_geodataframe,
+        concatenate,
+    ):
+        first = from_geodataframe(test_domain, domain_polygons)
+        second = from_geodataframe(test_domain, domain_polygons.iloc[:1])
+
+        # Feature objects and id strings can be mixed
+        combined = concatenate(
+            test_domain, [first, second.id], name="combined", tags=["concat-test"]
+        )
+
+        assert combined.type_ == feature_type
+        assert combined.status == JobStatus.COMPLETED
+        assert combined.name == "combined"
+        assert combined.source["product"] == "concatenate"
+        assert combined.source["source_feature_ids"] == [first.id, second.id]
+
+        # Rows are the inputs' rows appended in order, tagged with their input
+        gdf = combined.to_geodataframe()
+        assert len(gdf) == 3
+        assert gdf["source_feature_id"].tolist() == [first.id, first.id, second.id]
+        assert gdf["label"].tolist() == ["southwest", "northeast", "southwest"]
+
+        for feature in (combined, first, second):
+            feature.delete()
+
+    def test_type_mismatch_rejected(self, test_domain, domain_polygons):
+        road = create_road_feature_from_geodataframe(test_domain, domain_polygons)
+        building = create_building_feature_from_geodataframe(
+            test_domain, domain_polygons
+        )
+
+        with pytest.raises(UnprocessableEntityException, match="not a building"):
+            concatenate_building_features(test_domain, [road.id, building])
+
+        road.delete()
+        building.delete()
+
+    def test_single_feature_rejected(self, test_domain, domain_polygons):
+        road = create_road_feature_from_geodataframe(test_domain, domain_polygons)
+        with pytest.raises(UnprocessableEntityException):
+            concatenate_road_features(test_domain, [road])
+        road.delete()
 
 
 class TestFromId:
