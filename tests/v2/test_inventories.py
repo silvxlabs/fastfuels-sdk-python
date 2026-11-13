@@ -9,6 +9,7 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 # Internal imports
+from fastfuels_sdk.v2 import inventories
 from fastfuels_sdk.v2.grids import Grid
 from fastfuels_sdk.v2.features import Feature
 from fastfuels_sdk.v2.inventories import (
@@ -895,6 +896,33 @@ class TestModificationBuilders:
             < len(completed_tree_inventory.to_dataframe())
         )
         modified.delete()
+
+    def test_feature_masks_at_creation(
+        self, monkeypatch, test_domain, completed_pim_grid, completed_road_feature
+    ):
+        # The road mask is submitted as a remove-trees rule after the
+        # caller's own modifications
+        captured = {}
+        original = inventories.create_pim_inventory.sync_detailed
+
+        def spy(domain_id, *, client, body):
+            captured["body"] = body
+            return original(domain_id, client=client, body=body)
+
+        monkeypatch.setattr(inventories.create_pim_inventory, "sync_detailed", spy)
+        inventory = create_tree_inventory_from_pim_grid(
+            test_domain,
+            completed_pim_grid,
+            seed=42,
+            modifications=[remove_trees(tree_attribute("dbh", "<", 10))],
+            feature_masks=[completed_road_feature],
+            name="throwaway_feature_masked",
+        )
+        inventory.delete()
+        sent = [m.to_dict() for m in captured["body"].modifications]
+        assert len(sent) == 2
+        assert sent[1]["conditions"][0]["feature_id"] == completed_road_feature.id
+        assert sent[1]["actions"] == [{"modifier": "remove"}]
 
 
 def _created_inventory_response(domain_id):

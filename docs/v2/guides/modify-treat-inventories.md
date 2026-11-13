@@ -166,12 +166,39 @@ Both must be called on a `completed` inventory. Re-deriving overwrites the
 inventory's data, so to keep the original, [duplicate](#branch-a-scenario) it
 first and reshape the copy.
 
-## Remove trees inside buildings
+## Remove trees inside features
 
-To drop the trees that fall inside building footprints, create a
-[building feature](features.md#create-a-building-feature-from-overture-maps)
-in the inventory's domain and select the trees with `ff.tree_within`. A small
-`buffer_m` also catches stems at the footprint edges:
+To drop the trees that fall inside roads, water, or building footprints, pass
+the completed [features](features.md) in a tree inventory creator's
+`feature_masks` argument:
+
+```python
+roads = ff.features.create_road_feature_from_osm(domain)
+water = ff.features.create_water_feature_from_osm(domain)
+pim = ff.grids.create_pim_grid_from_treemap(domain, output_resolution_m=30)
+ff.wait_all([roads, water, pim])
+
+trees = ff.inventories.create_tree_inventory_from_pim_grid(
+    domain, pim, seed=42, feature_masks=[roads, water]
+)
+trees.wait()
+```
+
+The masks are applied after any `modifications` and before any `treatments`.
+Features with no geometry — e.g. OpenStreetMap water in a domain without
+any — are skipped.
+
+To remove them from an inventory you already hold, call
+`apply_feature_masks`:
+
+```python
+inventory.apply_feature_masks([roads, water])
+inventory.wait()
+```
+
+To widen a feature — e.g. a small buffer around building footprints to catch
+stems at their edges — build the rule with `ff.tree_within` and
+`ff.remove_trees` instead:
 
 ```python
 buildings = ff.features.create_building_feature_from_overture(domain)
@@ -184,16 +211,6 @@ trees = ff.inventories.create_tree_inventory_from_chm_grid(
     modifications=[ff.remove_trees(ff.tree_within(buildings, buffer_m=2))],
 )
 trees.wait()
-```
-
-To remove them from an inventory you already hold, pass the same rule to
-`apply_modifications`:
-
-```python
-inventory.apply_modifications(
-    [ff.remove_trees(ff.tree_within(buildings, buffer_m=2))]
-)
-inventory.wait()
 ```
 
 ## Branch a scenario

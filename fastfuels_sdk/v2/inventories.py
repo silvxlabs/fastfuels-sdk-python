@@ -15,6 +15,7 @@ from fastfuels_sdk.v2._jobs import wait as _wait
 from fastfuels_sdk.v2._uploads import put_upload
 from fastfuels_sdk.v2.api import ensure_client
 from fastfuels_sdk.v2.exceptions import expect
+from fastfuels_sdk.v2.modifications import _inventory_feature_masks
 from fastfuels_sdk.v2.client_library.api.inventories import (
     apply_modifications as apply_modifications_endpoint,
     apply_treatments as apply_treatments_endpoint,
@@ -121,6 +122,15 @@ def _enum_list(values, enum_cls):
 def _opt(value):
     """Map ``None`` to the generated UNSET sentinel, else pass through."""
     return value if value is not None else UNSET
+
+
+def _with_feature_masks(modifications, feature_masks, domain_id: str):
+    """Append the remove-trees rules ``feature_masks`` expands to."""
+    if feature_masks is None:
+        return _opt(modifications)
+    return list(modifications or []) + _inventory_feature_masks(
+        feature_masks, domain_id
+    )
 
 
 def _build_fusion_method(method):
@@ -565,6 +575,38 @@ class Inventory(InventoryModel):
             self.domain_id, self.id, client=ensure_client(), body=request_body
         )
         return self._copy_fields_from(expect(response))
+
+    def apply_feature_masks(self, feature_masks) -> "Inventory":
+        """Remove the trees located within features, in place.
+
+        Each feature becomes a remove-trees rule applied as in
+        :meth:`apply_modifications`. The inventory returns to "pending"
+        status, so call :meth:`wait` before using its data.
+
+        Parameters
+        ----------
+        feature_masks : Feature, str, or list
+            Completed features (or their ids) in the inventory's domain.
+            Features with no geometry are skipped.
+
+        Returns
+        -------
+        Inventory
+            ``self``, updated (so calls chain).
+
+        Raises
+        ------
+        ValueError
+            If the inventory is not completed.
+
+        Examples
+        --------
+        >>> inventory.apply_feature_masks([roads, water]).wait()
+        """
+        self._require_completed("apply feature masks to")
+        return self.apply_modifications(
+            _inventory_feature_masks(feature_masks, self.domain_id)
+        )
 
     def apply_treatments(self, treatments: list) -> "Inventory":
         """Apply silvicultural treatments to this inventory in place.
@@ -1043,6 +1085,7 @@ def create_tree_inventory_from_pim_grid(
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
     treatments: Optional[list] = None,
+    feature_masks=None,
 ) -> Inventory:
     """Create a tree inventory by expanding a PIM (TreeMap) grid.
 
@@ -1070,6 +1113,10 @@ def create_tree_inventory_from_pim_grid(
     modifications : list, optional
         Modification rules (``InventoryModification``) applied after
         expansion.
+    feature_masks : Feature, str, or list, optional
+        Completed features (or their ids) in the inventory's domain; trees
+        located within any of them are removed. Features with no geometry are
+        skipped. Applied after ``modifications`` and before ``treatments``.
     treatments : list, optional
         Silvicultural treatments applied after modifications. Build them with
         ``ff.basal_area_treatment``, ``ff.diameter_treatment``, or
@@ -1098,7 +1145,9 @@ def create_tree_inventory_from_pim_grid(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_opt(modifications),
+        modifications=_with_feature_masks(
+            modifications, feature_masks, _domain_id(domain)
+        ),
         treatments=_opt(treatments),
     )
     response = create_pim_inventory.sync_detailed(
@@ -1117,6 +1166,7 @@ def create_tree_inventory_from_chm_grid(
     modifications: Optional[list] = None,
     treatments: Optional[list] = None,
     crown_segmentation=None,
+    feature_masks=None,
 ) -> Inventory:
     """Create a tree inventory by isolating stems in a canopy height model.
 
@@ -1150,6 +1200,10 @@ def create_tree_inventory_from_chm_grid(
     modifications : list, optional
         Modification rules (``InventoryModification``) applied after stem
         isolation.
+    feature_masks : Feature, str, or list, optional
+        Completed features (or their ids) in the inventory's domain; trees
+        located within any of them are removed. Features with no geometry are
+        skipped. Applied after ``modifications`` and before ``treatments``.
     treatments : list, optional
         Silvicultural treatments applied after modifications. Stem isolation
         produces no diameter or species, so the only treatment that applies
@@ -1215,7 +1269,9 @@ def create_tree_inventory_from_chm_grid(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_opt(modifications),
+        modifications=_with_feature_masks(
+            modifications, feature_masks, _domain_id(domain)
+        ),
         treatments=_opt(treatments),
     )
     response = create_chm_inventory.sync_detailed(
@@ -1236,6 +1292,7 @@ def create_tree_inventory_from_pim_chm_fusion(
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
     treatments: Optional[list] = None,
+    feature_masks=None,
 ) -> Inventory:
     """Create a tree inventory by fusing a PIM grid with a canopy height model.
 
@@ -1282,6 +1339,10 @@ def create_tree_inventory_from_pim_chm_fusion(
     modifications : list, optional
         Modification rules (``InventoryModification``) applied after
         expansion.
+    feature_masks : Feature, str, or list, optional
+        Completed features (or their ids) in the inventory's domain; trees
+        located within any of them are removed. Features with no geometry are
+        skipped. Applied after ``modifications`` and before ``treatments``.
     treatments : list, optional
         Silvicultural treatments applied after modifications. Build them with
         ``ff.basal_area_treatment``, ``ff.diameter_treatment``, or
@@ -1325,7 +1386,9 @@ def create_tree_inventory_from_pim_chm_fusion(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_opt(modifications),
+        modifications=_with_feature_masks(
+            modifications, feature_masks, _domain_id(domain)
+        ),
         treatments=_opt(treatments),
     )
     response = create_pim_chm_fusion_inventory.sync_detailed(

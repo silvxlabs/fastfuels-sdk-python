@@ -1791,6 +1791,49 @@ class TestMask:
         )
         grid.delete()
 
+    def test_feature_masks_at_creation(self, test_domain, completed_road_feature):
+        # Live: feature_masks becomes a recorded NB1 rule after the caller's
+        # own modifications
+        own = mask(completed_road_feature, "fbfm", 92)
+        grid = create_fuel_model_grid_from_landfire_fbfm40(
+            test_domain,
+            output_resolution_m=30,
+            modifications=[own],
+            feature_masks=[completed_road_feature],
+            name="throwaway_feature_masked_fbfm40",
+        )
+        recorded = [m.to_dict() for m in grid.modifications]
+        assert [r["actions"][0]["value"] for r in recorded] == [92, 91]
+        assert recorded[1]["conditions"][0]["feature_id"] == completed_road_feature.id
+        grid.delete()
+
+    def test_feature_masks_on_lookup(
+        self, completed_fbfm40_grid, completed_road_feature
+    ):
+        # Live: every requested lookup band is zeroed under the feature
+        grid = create_fuel_grid_from_fbfm40_lookup(
+            completed_fbfm40_grid,
+            bands=["fuel_load.1hr", "savr.1hr"],
+            feature_masks=completed_road_feature,
+            name="throwaway_feature_masked_lookup",
+        )
+        (rule,) = [m.to_dict() for m in grid.modifications]
+        assert [(a["band"], a["value"]) for a in rule["actions"]] == [
+            ("fuel_load.1hr", 0),
+            ("savr.1hr", 0),
+        ]
+        grid.delete()
+
+    def test_feature_masks_without_fuel_band_raises(self, test_domain):
+        # Pure guard: a moisture-only uniform grid has nothing to mask
+        with pytest.raises(ValueError, match="none of them holds fuel"):
+            create_uniform_grid(
+                test_domain,
+                resolution_m=30,
+                bands={"fuel_moisture.1hr": 8},
+                feature_masks=["feature-id"],
+            )
+
 
 class TestCreateFuelModelGridFromLandfireFccs:
     def test_create(self, test_domain):
