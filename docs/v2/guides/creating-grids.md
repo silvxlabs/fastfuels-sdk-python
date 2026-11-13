@@ -68,7 +68,7 @@ From the USGS 3D Elevation Program (3DEP), which carries `elevation` (m),
 ```python
 grid = ff.grids.create_topography_grid_from_3dep(
     domain,
-    source_resolution_m=10,   # 3DEP native resolution: 1, 10, or 30
+    source_resolution_m=10,   # 3DEP product: 1, 2, 10, or 30 (meters)
     output_resolution_m=30,
     bands=["elevation", "slope", "aspect"],
 )
@@ -84,6 +84,17 @@ True
 >>> coverage.tile_count
 1
 ```
+
+`source_resolution_m=1` reads the Seamless 1-Meter DEM, falling back to the
+1 m lidar project tiles where it has none; `source_resolution_m=2` reads those
+lidar project tiles at 2 m. Coverage at 1 m and 2 m is regional, so check it
+first.
+
+!!! warning "Coverage can be unknown"
+    At 1 m and 2 m, `coverage.available` is `None` when the USGS National Map
+    search did not respond; `coverage.unavailable_reason` says why. Test
+    `coverage.available is False` for "no coverage", not
+    `not coverage.available`, and retry on `None`.
 
 Where 3DEP lacks coverage, source topography from LANDFIRE (30 m, CONUS)
 instead:

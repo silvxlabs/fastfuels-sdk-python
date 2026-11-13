@@ -56,7 +56,7 @@ class CreateLandfireCanopyRequest:
                 alignment target. Default `target="domain"` anchors output cells to the domain origin so cross-source
                 composition works by construction. `target="native"` preserves the source pixel anchor. `target="grid"` aligns
                 to an existing grid by id.
-            version (LandfireCanopyVersion | Unset): Available LANDFIRE canopy data versions.
+            version (LandfireCanopyVersion | Unset):
             bands (list[LandfireCanopyFuelBand] | Unset):
     """
 

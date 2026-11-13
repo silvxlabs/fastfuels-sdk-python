@@ -135,15 +135,17 @@ def sync_detailed(
     - `source: \"feature\"` — reference a persisted Feature resource by
       `feature_id` (road, water, building, layerset). The Feature must belong to the
       same domain as this grid and be in `completed` status; cross-domain,
-      missing, or unfinished references are rejected with 422.
+      missing, or unfinished references are rejected with 422. A Feature with
+      no geometry (e.g. OSM water over a domain with none) matches no cells
+      with `within` or `intersects` and every cell with `outside`.
 
     Both spatial variants accept:
     - `operator`: `within`, `outside`, or `intersects`
     - `buffer_m`: (optional, meters) expands the geometry outward in the
       domain's projected CRS before testing.
     - `target`: `centroid` (default) tests the cell center; `cell` tests the
-      cell's full footprint — use it with linestring features (e.g. roads)
-      so every crossed cell matches.
+      cell's full footprint — use it with `intersects` so every cell a
+      geometry touches matches (e.g. narrow road polygons on a coarse grid).
 
     ## Actions
 
@@ -271,15 +273,17 @@ def sync(
     - `source: \"feature\"` — reference a persisted Feature resource by
       `feature_id` (road, water, building, layerset). The Feature must belong to the
       same domain as this grid and be in `completed` status; cross-domain,
-      missing, or unfinished references are rejected with 422.
+      missing, or unfinished references are rejected with 422. A Feature with
+      no geometry (e.g. OSM water over a domain with none) matches no cells
+      with `within` or `intersects` and every cell with `outside`.
 
     Both spatial variants accept:
     - `operator`: `within`, `outside`, or `intersects`
     - `buffer_m`: (optional, meters) expands the geometry outward in the
       domain's projected CRS before testing.
     - `target`: `centroid` (default) tests the cell center; `cell` tests the
-      cell's full footprint — use it with linestring features (e.g. roads)
-      so every crossed cell matches.
+      cell's full footprint — use it with `intersects` so every cell a
+      geometry touches matches (e.g. narrow road polygons on a coarse grid).
 
     ## Actions
 
@@ -402,15 +406,17 @@ async def asyncio_detailed(
     - `source: \"feature\"` — reference a persisted Feature resource by
       `feature_id` (road, water, building, layerset). The Feature must belong to the
       same domain as this grid and be in `completed` status; cross-domain,
-      missing, or unfinished references are rejected with 422.
+      missing, or unfinished references are rejected with 422. A Feature with
+      no geometry (e.g. OSM water over a domain with none) matches no cells
+      with `within` or `intersects` and every cell with `outside`.
 
     Both spatial variants accept:
     - `operator`: `within`, `outside`, or `intersects`
     - `buffer_m`: (optional, meters) expands the geometry outward in the
       domain's projected CRS before testing.
     - `target`: `centroid` (default) tests the cell center; `cell` tests the
-      cell's full footprint — use it with linestring features (e.g. roads)
-      so every crossed cell matches.
+      cell's full footprint — use it with `intersects` so every cell a
+      geometry touches matches (e.g. narrow road polygons on a coarse grid).
 
     ## Actions
 
@@ -536,15 +542,17 @@ async def asyncio(
     - `source: \"feature\"` — reference a persisted Feature resource by
       `feature_id` (road, water, building, layerset). The Feature must belong to the
       same domain as this grid and be in `completed` status; cross-domain,
-      missing, or unfinished references are rejected with 422.
+      missing, or unfinished references are rejected with 422. A Feature with
+      no geometry (e.g. OSM water over a domain with none) matches no cells
+      with `within` or `intersects` and every cell with `outside`.
 
     Both spatial variants accept:
     - `operator`: `within`, `outside`, or `intersects`
     - `buffer_m`: (optional, meters) expands the geometry outward in the
       domain's projected CRS before testing.
     - `target`: `centroid` (default) tests the cell center; `cell` tests the
-      cell's full footprint — use it with linestring features (e.g. roads)
-      so every crossed cell matches.
+      cell's full footprint — use it with `intersects` so every cell a
+      geometry touches matches (e.g. narrow road polygons on a coarse grid).
 
     ## Actions
 

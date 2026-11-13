@@ -128,13 +128,15 @@ def sync_detailed(
       `feature_id` (road, water, building, layerset). The Feature must belong to the
       same domain as this inventory and be in `completed` status;
       cross-domain, missing, or unfinished references are rejected with 422.
+      A Feature with no geometry (e.g. OSM water over a domain with none)
+      matches no trees with `within` or `intersects` and every tree with
+      `outside`.
 
     Both spatial variants accept:
     - `operator`: `within`, `outside`, or `intersects`
     - `buffer_m`: (optional, meters) expands the geometry outward in the
-      domain's projected CRS before testing. Effectively required for
-      linestring features (e.g. roads) because a tree point almost never
-      intersects a bare linestring.
+      domain's projected CRS before testing, e.g. to select a corridor
+      around road polygons.
 
     Spatial conditions have **no `target` field** — trees are points, so
     the test is always point-in-(optionally-buffered)-geometry.
@@ -261,13 +263,15 @@ def sync(
       `feature_id` (road, water, building, layerset). The Feature must belong to the
       same domain as this inventory and be in `completed` status;
       cross-domain, missing, or unfinished references are rejected with 422.
+      A Feature with no geometry (e.g. OSM water over a domain with none)
+      matches no trees with `within` or `intersects` and every tree with
+      `outside`.
 
     Both spatial variants accept:
     - `operator`: `within`, `outside`, or `intersects`
     - `buffer_m`: (optional, meters) expands the geometry outward in the
-      domain's projected CRS before testing. Effectively required for
-      linestring features (e.g. roads) because a tree point almost never
-      intersects a bare linestring.
+      domain's projected CRS before testing, e.g. to select a corridor
+      around road polygons.
 
     Spatial conditions have **no `target` field** — trees are points, so
     the test is always point-in-(optionally-buffered)-geometry.
@@ -389,13 +393,15 @@ async def asyncio_detailed(
       `feature_id` (road, water, building, layerset). The Feature must belong to the
       same domain as this inventory and be in `completed` status;
       cross-domain, missing, or unfinished references are rejected with 422.
+      A Feature with no geometry (e.g. OSM water over a domain with none)
+      matches no trees with `within` or `intersects` and every tree with
+      `outside`.
 
     Both spatial variants accept:
     - `operator`: `within`, `outside`, or `intersects`
     - `buffer_m`: (optional, meters) expands the geometry outward in the
-      domain's projected CRS before testing. Effectively required for
-      linestring features (e.g. roads) because a tree point almost never
-      intersects a bare linestring.
+      domain's projected CRS before testing, e.g. to select a corridor
+      around road polygons.
 
     Spatial conditions have **no `target` field** — trees are points, so
     the test is always point-in-(optionally-buffered)-geometry.
@@ -520,13 +526,15 @@ async def asyncio(
       `feature_id` (road, water, building, layerset). The Feature must belong to the
       same domain as this inventory and be in `completed` status;
       cross-domain, missing, or unfinished references are rejected with 422.
+      A Feature with no geometry (e.g. OSM water over a domain with none)
+      matches no trees with `within` or `intersects` and every tree with
+      `outside`.
 
     Both spatial variants accept:
     - `operator`: `within`, `outside`, or `intersects`
     - `buffer_m`: (optional, meters) expands the geometry outward in the
-      domain's projected CRS before testing. Effectively required for
-      linestring features (e.g. roads) because a tree point almost never
-      intersects a bare linestring.
+      domain's projected CRS before testing, e.g. to select a corridor
+      around road polygons.
 
     Spatial conditions have **no `target` field** — trees are points, so
     the test is always point-in-(optionally-buffered)-geometry.

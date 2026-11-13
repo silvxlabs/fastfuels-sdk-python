@@ -554,6 +554,10 @@ class Grid(GridModel):
         Chunk layout; populated when processing completes.
     tags : List[str], optional
         User-defined tags for organization.
+    attributions : List[Attribution], optional
+        Licenses and citations for the third-party data the grid was built
+        from, added when it finishes processing. Reproduce each ``citation``
+        wherever the data is used or shared. Empty if none are recorded.
     created_on : datetime
         When the grid was created.
     modified_on : datetime
@@ -1241,8 +1245,15 @@ def create_topography_grid_from_3dep(
     domain : Domain or str
         The domain (or its id) to create the grid in.
     source_resolution_m : int, optional
-        The 3DEP product family to draw from: 1, 10, or 30 meters
-        (default 10). Use :func:`check_3dep_coverage` first for 1 m data.
+        The 3DEP product to draw from, by resolution in meters (default 10):
+
+        - 1: Seamless 1-Meter DEM (S1M), falling back to 1 m lidar project
+          tiles where S1M has none
+        - 2: 1 m lidar project tiles, read from their 2 m overview
+        - 10: 1/3 arc-second seamless DEM
+        - 30: 1 arc-second seamless DEM
+
+        Use :func:`check_3dep_coverage` first for 1 m and 2 m data.
     output_resolution_m : float, optional
         Output cell size in meters, anchored to the domain origin. By default
         the source resolution is kept.
@@ -3474,12 +3485,28 @@ def check_3dep_coverage(
     domain : Domain or str
         The domain (or its id) to check.
     resolution_m : int, optional
-        Resolution to check: 1, 10, or 30 meters. Defaults to the API's default.
+        3DEP product to check, by resolution in meters: 1, 2, 10, or 30 (see
+        :func:`create_topography_grid_from_3dep`). Defaults to the API's
+        default.
 
     Returns
     -------
     TopographyThreeDepCoverageResponse
-        Tile availability, count, URLs, and (for 1 m) acquisition dates.
+        Tile availability, count, URLs, and (for 1 m and 2 m) acquisition
+        dates. ``available`` is ``True`` or ``False``, or ``None`` when the
+        USGS National Map search did not respond and coverage is unknown;
+        ``unavailable_reason`` then says why. Retry shortly on ``None``.
+
+    Examples
+    --------
+    >>> import fastfuels_sdk.v2 as ff
+    >>> coverage = ff.grids.check_3dep_coverage(domain, resolution_m=2)
+    >>> if coverage.available is None:
+    ...     print(coverage.unavailable_reason)
+    ... elif coverage.available:
+    ...     grid = ff.grids.create_topography_grid_from_3dep(
+    ...         domain, source_resolution_m=2
+    ...     )
     """
     response = check_3dep_coverage_endpoint.sync_detailed(
         _domain_id(domain),

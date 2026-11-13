@@ -27,7 +27,7 @@ class CreateThreeDepTopographyRequest:
     Returns a grid with one or more continuous bands: elevation (m),
     slope (degrees), and/or aspect (degrees).
 
-    `source_resolution` selects the 3DEP product family (1m, 10m, or 30m).
+    `source_resolution` selects the 3DEP product (1m, 2m, 10m, or 30m).
     To change the *output* cell size, set ``alignment.resolution`` instead.
 
         Attributes:
@@ -52,7 +52,13 @@ class CreateThreeDepTopographyRequest:
                 alignment target. Default `target="domain"` anchors output cells to the domain origin so cross-source
                 composition works by construction. `target="native"` preserves the source pixel anchor. `target="grid"` aligns
                 to an existing grid by id.
-            source_resolution (ThreeDepResolution | Unset): Available resolutions for 3DEP data (meters).
+            source_resolution (ThreeDepResolution | Unset): 3DEP source products, by resolution in meters.
+
+                - 1: Seamless 1-Meter DEM (S1M); where S1M has no tiles, the 1 m lidar
+                  project DEM tiles
+                - 2: the 1 m lidar project DEM tiles, read at their 2 m overview
+                - 10: 1/3 arc-second seamless DEM
+                - 30: 1 arc-second seamless DEM
             bands (list[TopographyBand] | Unset):
     """
 

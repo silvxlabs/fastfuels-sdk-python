@@ -85,10 +85,15 @@ def sync_detailed(
     Creates a grid with topographic data from USGS 3DEP at selectable resolution.
 
     Available resolutions:
-    - **1m**: Seamless 1-meter (S1M). Coverage varies by region; areas without
-      S1M data will return a COVERAGE_ERROR.
+    - **1m**: Seamless 1-meter (S1M). Where S1M has no tiles, the 1 m lidar
+      project tiles. Areas with neither return a COVERAGE_ERROR.
+    - **2m**: 1 m lidar project tiles, read at their 2 m overview. Areas
+      without lidar project tiles return a COVERAGE_ERROR.
     - **10m**: 1/3 arc-second seamless (default)
     - **30m**: 1 arc-second seamless
+
+    Where lidar project tiles overlap (repeat flights, UTM zone edges), the
+    most recently published tile is used.
 
     Available bands:
     - **elevation**: meters above sea level (default)
@@ -99,8 +104,8 @@ def sync_detailed(
 
     ## Request Body
 
-    - **source_resolution**: (optional) Source product family in meters:
-      1, 10, or 30. Default: 10. To change the *output* cell size, set
+    - **source_resolution**: (optional) Source product in meters:
+      1, 2, 10, or 30. Default: 10. To change the *output* cell size, set
       ``alignment.resolution``.
     - **bands**: (optional) Which bands to include. Default: elevation only.
     - **alignment**: (optional) Output alignment target. See alignment docs.
@@ -121,7 +126,7 @@ def sync_detailed(
             Returns a grid with one or more continuous bands: elevation (m),
             slope (degrees), and/or aspect (degrees).
 
-            `source_resolution` selects the 3DEP product family (1m, 10m, or 30m).
+            `source_resolution` selects the 3DEP product (1m, 2m, 10m, or 30m).
             To change the *output* cell size, set ``alignment.resolution`` instead.
 
     Raises:
@@ -157,10 +162,15 @@ def sync(
     Creates a grid with topographic data from USGS 3DEP at selectable resolution.
 
     Available resolutions:
-    - **1m**: Seamless 1-meter (S1M). Coverage varies by region; areas without
-      S1M data will return a COVERAGE_ERROR.
+    - **1m**: Seamless 1-meter (S1M). Where S1M has no tiles, the 1 m lidar
+      project tiles. Areas with neither return a COVERAGE_ERROR.
+    - **2m**: 1 m lidar project tiles, read at their 2 m overview. Areas
+      without lidar project tiles return a COVERAGE_ERROR.
     - **10m**: 1/3 arc-second seamless (default)
     - **30m**: 1 arc-second seamless
+
+    Where lidar project tiles overlap (repeat flights, UTM zone edges), the
+    most recently published tile is used.
 
     Available bands:
     - **elevation**: meters above sea level (default)
@@ -171,8 +181,8 @@ def sync(
 
     ## Request Body
 
-    - **source_resolution**: (optional) Source product family in meters:
-      1, 10, or 30. Default: 10. To change the *output* cell size, set
+    - **source_resolution**: (optional) Source product in meters:
+      1, 2, 10, or 30. Default: 10. To change the *output* cell size, set
       ``alignment.resolution``.
     - **bands**: (optional) Which bands to include. Default: elevation only.
     - **alignment**: (optional) Output alignment target. See alignment docs.
@@ -193,7 +203,7 @@ def sync(
             Returns a grid with one or more continuous bands: elevation (m),
             slope (degrees), and/or aspect (degrees).
 
-            `source_resolution` selects the 3DEP product family (1m, 10m, or 30m).
+            `source_resolution` selects the 3DEP product (1m, 2m, 10m, or 30m).
             To change the *output* cell size, set ``alignment.resolution`` instead.
 
     Raises:
@@ -224,10 +234,15 @@ async def asyncio_detailed(
     Creates a grid with topographic data from USGS 3DEP at selectable resolution.
 
     Available resolutions:
-    - **1m**: Seamless 1-meter (S1M). Coverage varies by region; areas without
-      S1M data will return a COVERAGE_ERROR.
+    - **1m**: Seamless 1-meter (S1M). Where S1M has no tiles, the 1 m lidar
+      project tiles. Areas with neither return a COVERAGE_ERROR.
+    - **2m**: 1 m lidar project tiles, read at their 2 m overview. Areas
+      without lidar project tiles return a COVERAGE_ERROR.
     - **10m**: 1/3 arc-second seamless (default)
     - **30m**: 1 arc-second seamless
+
+    Where lidar project tiles overlap (repeat flights, UTM zone edges), the
+    most recently published tile is used.
 
     Available bands:
     - **elevation**: meters above sea level (default)
@@ -238,8 +253,8 @@ async def asyncio_detailed(
 
     ## Request Body
 
-    - **source_resolution**: (optional) Source product family in meters:
-      1, 10, or 30. Default: 10. To change the *output* cell size, set
+    - **source_resolution**: (optional) Source product in meters:
+      1, 2, 10, or 30. Default: 10. To change the *output* cell size, set
       ``alignment.resolution``.
     - **bands**: (optional) Which bands to include. Default: elevation only.
     - **alignment**: (optional) Output alignment target. See alignment docs.
@@ -260,7 +275,7 @@ async def asyncio_detailed(
             Returns a grid with one or more continuous bands: elevation (m),
             slope (degrees), and/or aspect (degrees).
 
-            `source_resolution` selects the 3DEP product family (1m, 10m, or 30m).
+            `source_resolution` selects the 3DEP product (1m, 2m, 10m, or 30m).
             To change the *output* cell size, set ``alignment.resolution`` instead.
 
     Raises:
@@ -294,10 +309,15 @@ async def asyncio(
     Creates a grid with topographic data from USGS 3DEP at selectable resolution.
 
     Available resolutions:
-    - **1m**: Seamless 1-meter (S1M). Coverage varies by region; areas without
-      S1M data will return a COVERAGE_ERROR.
+    - **1m**: Seamless 1-meter (S1M). Where S1M has no tiles, the 1 m lidar
+      project tiles. Areas with neither return a COVERAGE_ERROR.
+    - **2m**: 1 m lidar project tiles, read at their 2 m overview. Areas
+      without lidar project tiles return a COVERAGE_ERROR.
     - **10m**: 1/3 arc-second seamless (default)
     - **30m**: 1 arc-second seamless
+
+    Where lidar project tiles overlap (repeat flights, UTM zone edges), the
+    most recently published tile is used.
 
     Available bands:
     - **elevation**: meters above sea level (default)
@@ -308,8 +328,8 @@ async def asyncio(
 
     ## Request Body
 
-    - **source_resolution**: (optional) Source product family in meters:
-      1, 10, or 30. Default: 10. To change the *output* cell size, set
+    - **source_resolution**: (optional) Source product in meters:
+      1, 2, 10, or 30. Default: 10. To change the *output* cell size, set
       ``alignment.resolution``.
     - **bands**: (optional) Which bands to include. Default: elevation only.
     - **alignment**: (optional) Output alignment target. See alignment docs.
@@ -330,7 +350,7 @@ async def asyncio(
             Returns a grid with one or more continuous bands: elevation (m),
             slope (degrees), and/or aspect (degrees).
 
-            `source_resolution` selects the 3DEP product family (1m, 10m, or 30m).
+            `source_resolution` selects the 3DEP product (1m, 2m, 10m, or 30m).
             To change the *output* cell size, set ``alignment.resolution`` instead.
 
     Raises:

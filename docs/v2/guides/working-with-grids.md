@@ -77,6 +77,23 @@ output:
 Two grids built on the same domain at the same resolution share this
 georeference, which is what lets them overlay cell-for-cell.
 
+## Cite a grid's data sources
+
+A grid built from third-party data (3DEP, LANDFIRE, Meta CHM, TreeMap)
+records the data's license and required citation on its `attributions` once
+the job completes:
+
+```python
+>>> topography.attributions[0].dataset
+'USGS 3DEP 1/3 arc-second DEM'
+>>> topography.attributions[0].citation
+'U.S. Geological Survey, 3D Elevation Program 1/3 Arc-Second Digital Elevation Model, accessed November 13, 2026 at https://www.usgs.gov/3d-elevation-program.'
+```
+
+Reproduce each `citation` wherever you use or share the data. A grid derived
+from other grids (resampled, composed, or built by a lookup) carries none, so
+cite the source grids it was built from.
+
 ## Summarize a band without downloading it
 
 Once a grid completes, the server attaches summary statistics to each band, so
