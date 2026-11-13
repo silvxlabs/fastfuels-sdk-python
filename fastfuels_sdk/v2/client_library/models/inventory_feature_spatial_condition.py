@@ -28,8 +28,9 @@ class InventoryFeatureSpatialCondition:
     the domain CRS, optionally buffers it, and then evaluates the spatial
     operator against each tree's point coordinate.
 
-    A non-zero ``buffer_m`` is typically required for linestring features
-    (e.g. roads), since tree points almost never intersect a bare linestring.
+    A Feature with no geometry (e.g. OSM water over a domain with none)
+    matches no trees with ``within`` or ``intersects`` and every tree with
+    ``outside``.
 
         Attributes:
             source (Literal['feature']): Discriminator selecting this variant. Must be the literal string `"feature"`. Use
@@ -40,10 +41,12 @@ class InventoryFeatureSpatialCondition:
                 - outside: Select items whose target is outside the geometry (inverse of within)
                 - intersects: Select items whose target overlaps with the geometry
             feature_id (str): ID of a Feature resource (road, water, building, or layerset) hosted in the same domain as the
-                inventory. Cross-domain references are rejected; the feature must be in `completed` status.
+                inventory. Cross-domain references are rejected; the feature must be in `completed` status. A Feature with no
+                geometry matches no trees with `within` or `intersects` and every tree with `outside`.
             buffer_m (float | None | Unset): Optional buffer distance in meters applied to the feature geometry (in the
-                domain's projected CRS) before testing. Effectively required for linestring features such as roads since a tree
-                point almost never intersects a bare linestring.
+                domain's projected CRS) before testing. Use it to widen the selection beyond the feature, e.g. a corridor around
+                road polygons. Road features are already polygons (OSM roads are buffered to road-class widths), so no buffer is
+                needed to select trees on the road surface itself.
     """
 
     source: Literal["feature"]

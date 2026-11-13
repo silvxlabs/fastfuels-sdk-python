@@ -84,20 +84,32 @@ def sync_detailed(
     Immediate pre-flight check that reports which 3DEP tiles are available
     for the domain at the requested resolution. Use this before creating a
     3DEP grid to avoid waiting for async processing only to discover a
-    coverage gap — especially useful for 1m (S1M) data where coverage is
+    coverage gap — especially useful for 1m and 2m data, where coverage is
     regional.
 
     ## Query Parameters
 
-    - **resolution**: Resolution in meters: 1, 10, or 30. Default: 1.
+    - **resolution**: Resolution in meters: 1, 2, 10, or 30. Default: 1.
 
     ## Response
 
-    Returns tile availability, count, URLs, and (for 1m) acquisition dates.
+    Returns tile availability, count, URLs, and (for 1m and 2m) acquisition
+    dates. For lidar project tiles these are publication dates.
+
+    1m and 2m coverage from the lidar project tiles is looked up through the
+    USGS National Map search. If that search does not respond, the response
+    is still 200, with `available` set to null and `unavailable_reason`
+    explaining why. Try again shortly.
 
     Args:
         domain_id (str):
-        resolution (ThreeDepResolution | Unset): Available resolutions for 3DEP data (meters).
+        resolution (ThreeDepResolution | Unset): 3DEP source products, by resolution in meters.
+
+            - 1: Seamless 1-Meter DEM (S1M); where S1M has no tiles, the 1 m lidar
+              project DEM tiles
+            - 2: the 1 m lidar project DEM tiles, read at their 2 m overview
+            - 10: 1/3 arc-second seamless DEM
+            - 30: 1 arc-second seamless DEM
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -132,20 +144,32 @@ def sync(
     Immediate pre-flight check that reports which 3DEP tiles are available
     for the domain at the requested resolution. Use this before creating a
     3DEP grid to avoid waiting for async processing only to discover a
-    coverage gap — especially useful for 1m (S1M) data where coverage is
+    coverage gap — especially useful for 1m and 2m data, where coverage is
     regional.
 
     ## Query Parameters
 
-    - **resolution**: Resolution in meters: 1, 10, or 30. Default: 1.
+    - **resolution**: Resolution in meters: 1, 2, 10, or 30. Default: 1.
 
     ## Response
 
-    Returns tile availability, count, URLs, and (for 1m) acquisition dates.
+    Returns tile availability, count, URLs, and (for 1m and 2m) acquisition
+    dates. For lidar project tiles these are publication dates.
+
+    1m and 2m coverage from the lidar project tiles is looked up through the
+    USGS National Map search. If that search does not respond, the response
+    is still 200, with `available` set to null and `unavailable_reason`
+    explaining why. Try again shortly.
 
     Args:
         domain_id (str):
-        resolution (ThreeDepResolution | Unset): Available resolutions for 3DEP data (meters).
+        resolution (ThreeDepResolution | Unset): 3DEP source products, by resolution in meters.
+
+            - 1: Seamless 1-Meter DEM (S1M); where S1M has no tiles, the 1 m lidar
+              project DEM tiles
+            - 2: the 1 m lidar project DEM tiles, read at their 2 m overview
+            - 10: 1/3 arc-second seamless DEM
+            - 30: 1 arc-second seamless DEM
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -175,20 +199,32 @@ async def asyncio_detailed(
     Immediate pre-flight check that reports which 3DEP tiles are available
     for the domain at the requested resolution. Use this before creating a
     3DEP grid to avoid waiting for async processing only to discover a
-    coverage gap — especially useful for 1m (S1M) data where coverage is
+    coverage gap — especially useful for 1m and 2m data, where coverage is
     regional.
 
     ## Query Parameters
 
-    - **resolution**: Resolution in meters: 1, 10, or 30. Default: 1.
+    - **resolution**: Resolution in meters: 1, 2, 10, or 30. Default: 1.
 
     ## Response
 
-    Returns tile availability, count, URLs, and (for 1m) acquisition dates.
+    Returns tile availability, count, URLs, and (for 1m and 2m) acquisition
+    dates. For lidar project tiles these are publication dates.
+
+    1m and 2m coverage from the lidar project tiles is looked up through the
+    USGS National Map search. If that search does not respond, the response
+    is still 200, with `available` set to null and `unavailable_reason`
+    explaining why. Try again shortly.
 
     Args:
         domain_id (str):
-        resolution (ThreeDepResolution | Unset): Available resolutions for 3DEP data (meters).
+        resolution (ThreeDepResolution | Unset): 3DEP source products, by resolution in meters.
+
+            - 1: Seamless 1-Meter DEM (S1M); where S1M has no tiles, the 1 m lidar
+              project DEM tiles
+            - 2: the 1 m lidar project DEM tiles, read at their 2 m overview
+            - 10: 1/3 arc-second seamless DEM
+            - 30: 1 arc-second seamless DEM
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -221,20 +257,32 @@ async def asyncio(
     Immediate pre-flight check that reports which 3DEP tiles are available
     for the domain at the requested resolution. Use this before creating a
     3DEP grid to avoid waiting for async processing only to discover a
-    coverage gap — especially useful for 1m (S1M) data where coverage is
+    coverage gap — especially useful for 1m and 2m data, where coverage is
     regional.
 
     ## Query Parameters
 
-    - **resolution**: Resolution in meters: 1, 10, or 30. Default: 1.
+    - **resolution**: Resolution in meters: 1, 2, 10, or 30. Default: 1.
 
     ## Response
 
-    Returns tile availability, count, URLs, and (for 1m) acquisition dates.
+    Returns tile availability, count, URLs, and (for 1m and 2m) acquisition
+    dates. For lidar project tiles these are publication dates.
+
+    1m and 2m coverage from the lidar project tiles is looked up through the
+    USGS National Map search. If that search does not respond, the response
+    is still 200, with `available` set to null and `unavailable_reason`
+    explaining why. Try again shortly.
 
     Args:
         domain_id (str):
-        resolution (ThreeDepResolution | Unset): Available resolutions for 3DEP data (meters).
+        resolution (ThreeDepResolution | Unset): 3DEP source products, by resolution in meters.
+
+            - 1: Seamless 1-Meter DEM (S1M); where S1M has no tiles, the 1 m lidar
+              project DEM tiles
+            - 2: the 1 m lidar project DEM tiles, read at their 2 m overview
+            - 10: 1/3 arc-second seamless DEM
+            - 30: 1 arc-second seamless DEM
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

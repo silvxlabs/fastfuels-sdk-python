@@ -37,11 +37,13 @@ class GridFeatureSpatialCondition:
                 - outside: Select items whose target is outside the geometry (inverse of within)
                 - intersects: Select items whose target overlaps with the geometry
             feature_id (str): ID of a Feature resource (road, water, building, or layerset) hosted in the same domain as the
-                grid. Cross-domain references are rejected; the feature must be in `completed` status.
+                grid. Cross-domain references are rejected; the feature must be in `completed` status. A Feature with no
+                geometry (e.g. OSM water over a domain with none) matches no cells with `within` or `intersects` and every cell
+                with `outside`.
             buffer_m (float | None | Unset): Optional buffer distance in meters applied to the feature geometry (in the
-                domain's projected CRS) before testing. With `target="centroid"` (the default), a buffer is typically needed for
-                linestring features such as roads since a bare linestring rarely passes through a cell centroid; `target="cell"`
-                catches every cell the line crosses without a buffer.
+                domain's projected CRS) before testing. Use it to widen the selection beyond the feature, e.g. a corridor around
+                road polygons. Road features are already polygons (OSM roads are buffered to road-class widths), so no buffer is
+                needed to cover the road surface itself.
             target (GridSpatialTarget | Unset): Specifies which part of a grid cell is tested against the geometry.
 
                 - centroid: Test only the cell's centroid point against the geometry

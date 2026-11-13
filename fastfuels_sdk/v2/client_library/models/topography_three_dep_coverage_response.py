@@ -17,23 +17,34 @@ class TopographyThreeDepCoverageResponse:
     """Response model for 3DEP tile coverage pre-flight check.
 
     Attributes:
-        resolution (ThreeDepResolution): Available resolutions for 3DEP data (meters).
-        available (bool):
+        resolution (ThreeDepResolution): 3DEP source products, by resolution in meters.
+
+            - 1: Seamless 1-Meter DEM (S1M); where S1M has no tiles, the 1 m lidar
+              project DEM tiles
+            - 2: the 1 m lidar project DEM tiles, read at their 2 m overview
+            - 10: 1/3 arc-second seamless DEM
+            - 30: 1 arc-second seamless DEM
+        available (bool | None): Whether tiles cover the domain. null means coverage could not be determined because the
+            USGS National Map search did not respond; try again shortly.
         tile_count (int):
         tiles (list[str]):
         acquisition_dates (list[str] | None | Unset):
+        unavailable_reason (None | str | Unset): Why coverage could not be determined. Set only when `available` is
+            null.
     """
 
     resolution: ThreeDepResolution
-    available: bool
+    available: bool | None
     tile_count: int
     tiles: list[str]
     acquisition_dates: list[str] | None | Unset = UNSET
+    unavailable_reason: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         resolution = self.resolution.value
 
+        available: bool | None
         available = self.available
 
         tile_count = self.tile_count
@@ -49,6 +60,12 @@ class TopographyThreeDepCoverageResponse:
         else:
             acquisition_dates = self.acquisition_dates
 
+        unavailable_reason: None | str | Unset
+        if isinstance(self.unavailable_reason, Unset):
+            unavailable_reason = UNSET
+        else:
+            unavailable_reason = self.unavailable_reason
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -61,6 +78,8 @@ class TopographyThreeDepCoverageResponse:
         )
         if acquisition_dates is not UNSET:
             field_dict["acquisition_dates"] = acquisition_dates
+        if unavailable_reason is not UNSET:
+            field_dict["unavailable_reason"] = unavailable_reason
 
         return field_dict
 
@@ -69,7 +88,12 @@ class TopographyThreeDepCoverageResponse:
         d = dict(src_dict)
         resolution = ThreeDepResolution(d.pop("resolution"))
 
-        available = d.pop("available")
+        def _parse_available(data: object) -> bool | None:
+            if data is None:
+                return data
+            return cast(bool | None, data)
+
+        available = _parse_available(d.pop("available"))
 
         tile_count = d.pop("tile_count")
 
@@ -92,12 +116,24 @@ class TopographyThreeDepCoverageResponse:
 
         acquisition_dates = _parse_acquisition_dates(d.pop("acquisition_dates", UNSET))
 
+        def _parse_unavailable_reason(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        unavailable_reason = _parse_unavailable_reason(
+            d.pop("unavailable_reason", UNSET)
+        )
+
         topography_three_dep_coverage_response = cls(
             resolution=resolution,
             available=available,
             tile_count=tile_count,
             tiles=tiles,
             acquisition_dates=acquisition_dates,
+            unavailable_reason=unavailable_reason,
         )
 
         topography_three_dep_coverage_response.additional_properties = d

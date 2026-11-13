@@ -11,6 +11,7 @@ from ..models.job_status import JobStatus
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
+    from ..models.attribution import Attribution
     from ..models.band import Band
     from ..models.chunks import Chunks
     from ..models.georeference import Georeference
@@ -58,6 +59,9 @@ class Grid:
             chunks (Chunks | None | Unset): Chunk layout. Null until the grid finishes processing. Use chunks.count to know
                 how many chunks are available to fetch.
             tags (list[str] | Unset):
+            attributions (list[Attribution] | Unset): Licenses and citations for the third-party data this grid was built
+                from, added when it finishes processing. Reproduce each `citation` wherever you use or share the data. Empty if
+                none are recorded.
     """
 
     id: str
@@ -76,6 +80,7 @@ class Grid:
     error: JobError | None | Unset = UNSET
     chunks: Chunks | None | Unset = UNSET
     tags: list[str] | Unset = UNSET
+    attributions: list[Attribution] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -169,6 +174,13 @@ class Grid:
         if not isinstance(self.tags, Unset):
             tags = self.tags
 
+        attributions: list[dict[str, Any]] | Unset = UNSET
+        if not isinstance(self.attributions, Unset):
+            attributions = []
+            for attributions_item_data in self.attributions:
+                attributions_item = attributions_item_data.to_dict()
+                attributions.append(attributions_item)
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -202,11 +214,14 @@ class Grid:
             field_dict["chunks"] = chunks
         if tags is not UNSET:
             field_dict["tags"] = tags
+        if attributions is not UNSET:
+            field_dict["attributions"] = attributions
 
         return field_dict
 
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
+        from ..models.attribution import Attribution
         from ..models.band import Band
         from ..models.chunks import Chunks
         from ..models.georeference import Georeference
@@ -368,6 +383,15 @@ class Grid:
 
         tags = cast(list[str], d.pop("tags", UNSET))
 
+        _attributions = d.pop("attributions", UNSET)
+        attributions: list[Attribution] | Unset = UNSET
+        if _attributions is not UNSET:
+            attributions = []
+            for attributions_item_data in _attributions:
+                attributions_item = Attribution.from_dict(attributions_item_data)
+
+                attributions.append(attributions_item)
+
         grid = cls(
             id=id,
             domain_id=domain_id,
@@ -385,6 +409,7 @@ class Grid:
             error=error,
             chunks=chunks,
             tags=tags,
+            attributions=attributions,
         )
 
         grid.additional_properties = d
