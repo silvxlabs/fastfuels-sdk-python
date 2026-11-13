@@ -90,7 +90,9 @@ from fastfuels_sdk.v2.client_library.models import (
     ResampleDomainTarget,
     ResampleNativeTarget,
     ResamplingMethod,
+    ThreeDepResolution,
     TopographyBand,
+    TopographyThreeDepCoverageResponse,
     UploadBandDefinition,
 )
 from fastfuels_sdk.v2.client_library.types import UNSET, Response
@@ -100,7 +102,7 @@ from fastfuels_sdk.v2.exceptions import (
     expect,
 )
 from fastfuels_sdk.v2.modifications import mask
-from tests.v2.utils import real_dispatch_client
+from tests.v2.utils import SWEEP_TAG, real_dispatch_client
 
 # External imports
 import numpy as np
@@ -135,6 +137,50 @@ def completed_leaflux_irradiance_grid(
         irradiance.wait()
     yield irradiance
     irradiance.delete()
+
+
+@pytest.fixture(scope="module")
+def lidar_project_domain():
+    """A 500 m domain near Ronan, MT, that 3DEP's Seamless 1-Meter DEM does
+    not cover but the 1 m lidar project tiles (MT_NRCS_MT_2018_D18) do.
+    """
+    geojson = {
+        "type": "FeatureCollection",
+        "crs": {"type": "name", "properties": {"name": "EPSG:32611"}},
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [710600, 5270100],
+                            [711100, 5270100],
+                            [711100, 5270600],
+                            [710600, 5270600],
+                            [710600, 5270100],
+                        ]
+                    ],
+                },
+            }
+        ],
+    }
+    domain = Domain.from_geojson(
+        geojson, name="test_lidar_project_domain", tags=[SWEEP_TAG]
+    )
+    yield domain
+    domain.delete(force=True)
+
+
+def _assert_lidar_project_grid(grid, source_resolution_m):
+    """Assert a completed 3DEP grid was read from the lidar project tiles."""
+    assert grid.status == JobStatus.COMPLETED
+    assert grid.source["source_resolution"] == source_resolution_m
+    tile_metadata = grid.source["tile_metadata"]
+    assert tile_metadata["tile_source"] == "projects"
+    assert all("/1m/Projects/" in tile for tile in tile_metadata["tiles"])
+    assert any("3DEP" in attribution.dataset for attribution in grid.attributions)
 
 
 class TestBuildAlignment:
@@ -318,6 +364,53 @@ class TestCreateTopographyGridFrom3dep:
         # The georeference and chunk layout are populated once complete
         assert completed_topography_grid.georeference is not None
         assert len(completed_topography_grid.bands) > 0
+        # Source grids record the license and citation of the data read
+        assert any(
+            "3DEP" in attribution.dataset
+            for attribution in completed_topography_grid.attributions
+        )
+
+    def test_source_resolution_in_request(self, monkeypatch):
+        captured = {}
+
+        def fake_create(domain_id, *, client, body):
+            captured.update(domain_id=domain_id, body=body)
+            return Response(
+                status_code=HTTPStatus.CREATED,
+                content=b"",
+                headers={},
+                parsed=Grid(
+                    id="grid-id",
+                    domain_id=domain_id,
+                    status=JobStatus.PENDING,
+                    source=GridSource(),
+                    bands=[],
+                ),
+            )
+
+        monkeypatch.setattr(grids, "ensure_client", lambda: object())
+        monkeypatch.setattr(grids.create_3dep_topography, "sync_detailed", fake_create)
+
+        create_topography_grid_from_3dep("domain-id", source_resolution_m=2)
+
+        assert captured["body"].source_resolution == ThreeDepResolution.VALUE_2
+        assert captured["body"].to_dict()["source_resolution"] == 2
+
+    def test_2m_from_lidar_projects(self, lidar_project_domain, real_dispatch):
+        grid = create_topography_grid_from_3dep(
+            lidar_project_domain, source_resolution_m=2, name="throwaway_topo_2m"
+        )
+        grid.wait()
+        _assert_lidar_project_grid(grid, 2)
+        grid.delete()
+
+    def test_1m_falls_back_to_lidar_projects(self, lidar_project_domain, real_dispatch):
+        grid = create_topography_grid_from_3dep(
+            lidar_project_domain, source_resolution_m=1, name="throwaway_topo_1m"
+        )
+        grid.wait()
+        _assert_lidar_project_grid(grid, 1)
+        grid.delete()
 
 
 class TestCreateTopographyGridFromLandfire:
@@ -2716,6 +2809,95 @@ class TestCheck3depCoverage:
         # The test domain sits in CONUS, which 3DEP 10 m covers
         assert coverage.available is True
         assert coverage.tile_count >= 1
+
+    def test_coverage_2m(self, lidar_project_domain):
+        coverage = check_3dep_coverage(lidar_project_domain, resolution_m=2)
+        if coverage.available is None:
+            pytest.skip(f"3DEP coverage unknown: {coverage.unavailable_reason}")
+        assert coverage.resolution == ThreeDepResolution.VALUE_2
+        assert coverage.available is True
+        assert coverage.tile_count >= 1
+        assert all("/1m/Projects/" in tile for tile in coverage.tiles)
+
+    def test_resolution_in_request(self, monkeypatch):
+        captured = {}
+
+        def fake_check(domain_id, *, client, resolution):
+            captured.update(domain_id=domain_id, resolution=resolution)
+            return Response(
+                status_code=HTTPStatus.OK,
+                content=b"",
+                headers={},
+                parsed=TopographyThreeDepCoverageResponse(
+                    resolution=resolution,
+                    available=True,
+                    tile_count=1,
+                    tiles=["tile.tif"],
+                ),
+            )
+
+        monkeypatch.setattr(grids, "ensure_client", lambda: object())
+        monkeypatch.setattr(
+            grids.check_3dep_coverage_endpoint, "sync_detailed", fake_check
+        )
+
+        check_3dep_coverage("domain-id", resolution_m=2)
+
+        assert captured["resolution"] == ThreeDepResolution.VALUE_2
+
+    def test_unknown_coverage_parses(self):
+        coverage = TopographyThreeDepCoverageResponse.from_dict(
+            {
+                "resolution": 2,
+                "available": None,
+                "tile_count": 0,
+                "tiles": [],
+                "acquisition_dates": None,
+                "unavailable_reason": "The USGS National Map search did not respond.",
+            }
+        )
+        assert coverage.available is None
+        assert coverage.unavailable_reason.startswith("The USGS National Map")
+
+
+class TestGridAttributions:
+    """Unit tests for parsing Grid.attributions (no API)."""
+
+    @staticmethod
+    def _payload(**extra):
+        payload = Grid(
+            id="grid-id",
+            domain_id="domain-id",
+            status=JobStatus.COMPLETED,
+            source=GridSource(),
+            bands=[],
+        ).to_dict()
+        payload.update(extra)
+        return payload
+
+    def test_parses(self):
+        grid = Grid.from_dict(
+            self._payload(
+                attributions=[
+                    {
+                        "dataset": "USGS 3DEP 1/3 arc-second DEM",
+                        "license_name": "LicenseRef-US-Government-Public-Domain",
+                        "license_url": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+                        "citation": "U.S. Geological Survey, 3D Elevation Program",
+                        "access_url": "https://www.usgs.gov/3d-elevation-program",
+                        "accessed_on": "2026-11-13",
+                    }
+                ]
+            )
+        )
+        assert isinstance(grid, Grid)
+        (attribution,) = grid.attributions
+        assert attribution.dataset == "USGS 3DEP 1/3 arc-second DEM"
+        assert attribution.citation.startswith("U.S. Geological Survey")
+
+    def test_empty(self):
+        grid = Grid.from_dict(self._payload(attributions=[]))
+        assert grid.attributions == []
 
 
 class TestListGrids:
