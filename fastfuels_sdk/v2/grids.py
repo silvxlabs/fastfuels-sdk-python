@@ -2541,8 +2541,8 @@ def create_uniform_grid(
         resolution).
     bands : dict
         Mapping of band key to constant value, e.g.
-        ``{"fuel_load": 0.5, "fuel_moisture": 15.0}``. Keys must be valid
-        ``UniformBand`` values.
+        ``{"fuel_load.1hr": 0.5, "fuel_moisture.1hr": 15.0}``. Keys must be
+        valid ``UniformBand`` values.
     name, description : str, optional
         Metadata for the grid.
     tags : List[str], optional
@@ -2564,7 +2564,8 @@ def create_uniform_grid(
     Raises
     ------
     ValueError
-        If ``feature_masks`` is given and ``bands`` has no fuel load or fuel
+        If a ``bands`` key is not a valid ``UniformBand`` value, or if
+        ``feature_masks`` is given and ``bands`` has no fuel load or fuel
         depth band.
     """
     band_inputs = [

@@ -1,23 +1,12 @@
-# How to Work with Point Clouds in FastFuels SDK
+# How to Work with Point Clouds
 
-A point cloud is a 3D LiDAR dataset within a domain, fetched from USGS 3DEP or
-uploaded from your own airborne (ALS) or terrestrial (TLS) scan. For what
-point clouds *are* and how they fit the platform, see the
-[FastFuels documentation](https://docs.fastfuels.silvxlabs.com); this guide
-covers creating and managing them from Python.
-
-The v2 surface is functional: you **create** a point cloud from a domain and
-data source, and everything you do with one you already hold is a **method**
-on it.
-
-```python
-import fastfuels_sdk.v2 as ff
-
-pc = ff.point_clouds.create_point_cloud_from_file(
-    domain, "scan.laz", point_cloud_type="als"
-)
-pc.wait()
-```
+This guide shows how to create point clouds — fetched from USGS 3DEP or
+uploaded from your own airborne (ALS) or terrestrial (TLS) scan — and how to
+read and manage a point cloud you hold. For what point clouds *are* and how
+they fit the platform, see
+[About point clouds](https://docs.fastfuels.silvxlabs.com/v2/api/explanation/point_clouds/)
+in the FastFuels documentation. Coming from the v1 SDK? Start with the
+[migration guide](migration.md#point-clouds).
 
 ## Prerequisites
 
@@ -33,6 +22,8 @@ Check coverage and the per-fetch point budget before starting the background
 job:
 
 ```python
+import fastfuels_sdk.v2 as ff
+
 coverage = ff.point_clouds.check_3dep_coverage(domain)
 
 if not coverage.available:

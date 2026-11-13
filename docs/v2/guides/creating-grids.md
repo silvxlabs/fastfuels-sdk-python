@@ -1,17 +1,15 @@
-# How to Create Grids in FastFuels SDK
+# How to Create Grids
 
-A grid is a raster data product within a domain — topography, surface fuel
-models, canopy fuels, and more — generated from a data source. This guide
-shows how to create grids and assemble them into an aligned dataset for fire
-modeling. For waiting on, inspecting, exporting, and managing grids you
-already hold, see [Working with grids](working-with-grids.md); for what grids
-*are*, see the
-[FastFuels documentation](https://docs.fastfuels.silvxlabs.com). Coming from
-the v1 SDK? Start with the [migration guide](migration.md#grids).
-
-Creation is functional: call a `create_<kind>_grid_from_<source>` function on
-a domain. Each returns a [`Grid`](working-with-grids.md) whose generation runs
-as a background job, so it starts `"pending"`.
+This guide shows how to create grids — topography, surface fuel models,
+canopy fuels, and more — and assemble them into an aligned dataset for fire
+modeling. Each `create_<kind>_grid_from_<source>` function returns a
+[`Grid`](working-with-grids.md) whose generation runs as a background job, so
+it starts `"pending"`. For waiting on, inspecting, exporting, and managing
+grids you already hold, see [Working with grids](working-with-grids.md). For
+what grids *are*, see
+[About grids](https://docs.fastfuels.silvxlabs.com/v2/api/explanation/grids/)
+in the FastFuels documentation. Coming from the v1 SDK? Start with the
+[migration guide](migration.md#grids).
 
 ## Prerequisites
 
@@ -449,8 +447,9 @@ post-hoc modifications — apply any tree modifications on the inventory
 before voxelizing (see
 [Modify and treat tree inventories](modify-treat-inventories.md)).
 
-For the concepts behind plot imputation and voxelization, see the
-[FastFuels documentation](https://docs.fastfuels.silvxlabs.com).
+For the concepts behind plot imputation and voxelization, see
+[About voxelization](https://docs.fastfuels.silvxlabs.com/v2/api/explanation/voxelization/)
+in the FastFuels documentation.
 
 ### Derive surface fuels with DUET
 
@@ -510,8 +509,10 @@ completed 3D grid carrying a `leaf_area_density` band — a voxel grid from
 [voxelization](#3d-tree-fuel-grids-voxelization) — to
 `create_irradiance_grid_from_leaflux` with a UTC `date_time`. Light is
 attenuated through the leaf area density with a Beer-Lambert
-`extinction_coefficient` (default 0.5). For what solar irradiance means, see
-the [FastFuels documentation](https://docs.fastfuels.silvxlabs.com).
+`extinction_coefficient` (default 0.5). For how irradiance grids fit among
+the other derived grids, see
+[About grids](https://docs.fastfuels.silvxlabs.com/v2/api/explanation/grids/)
+in the FastFuels documentation.
 
 The `irradiance.canopy.relative` band needs no terrain:
 
@@ -556,8 +557,9 @@ To estimate 1-hour dead fuel moisture with the Fosberg model, pass a
 topography grid and a surface-irradiance grid to
 `create_dead_fuel_moisture_grid_from_fosberg` along with the weather inputs.
 The result carries a single `fuel_moisture.1hr` band (percent). For the
-Fosberg 1-hr dead fuel moisture model itself, see the
-[FastFuels documentation](https://docs.fastfuels.silvxlabs.com).
+Fosberg 1-hr dead fuel moisture model itself, see
+[The Fosberg 1-hour model](https://docs.fastfuels.silvxlabs.com/v2/api/explanation/surface_fuels/#the-fosberg-1-hour-model)
+in the FastFuels documentation.
 
 The topography, leaf-area-density, and surface-irradiance grids all feed the
 same Fosberg cells, so they must land on **one shared lattice** — build the
@@ -613,15 +615,21 @@ moisture.wait()
 ## Uniform grids
 
 To fill the whole domain with constant band values at a chosen resolution —
-useful for testing or for holding a fuel parameter constant:
+useful for testing or for holding a fuel parameter constant — pass a mapping
+of band key to value:
 
 ```python
 grid = ff.grids.create_uniform_grid(
     domain,
     resolution_m=2.0,
-    bands={"fuel_load": 0.5, "fuel_moisture": 15.0},
+    bands={"fuel_load.1hr": 0.5, "fuel_depth": 0.3, "fuel_moisture.1hr": 15.0},
 )
 ```
+
+Valid keys are `fuel_load.1hr`, `fuel_load.10hr`, `fuel_load.100hr`,
+`fuel_load.live_herb`, `fuel_load.live_woody`, `fuel_depth`, the matching
+`fuel_moisture.*` keys (percent), and `curing`. An unrecognized key raises
+`ValueError`.
 
 ## Grids from your own raster files
 
@@ -654,9 +662,10 @@ hands back a pending grid.
 ## Align grids to each other
 
 The worked example above gave every grid the same `output_resolution_m` to
-land them on the domain lattice. Most creators (everything except FCCS and
-uploads) accept four arguments that control the output lattice; they are
-mutually exclusive — passing more than one raises `ValueError`:
+land them on the domain lattice. The creators that read a source raster —
+3DEP, LANDFIRE (including FCCS and disturbance), Meta, NAIP-CHM, and TreeMap
+PIM — accept three lattice arguments. They are mutually exclusive; passing
+more than one raises `ValueError`:
 
 - **`output_resolution_m`** — resample to this cell size on the **domain**
   lattice. The common case, and what makes grids of equal resolution stack.
@@ -664,9 +673,15 @@ mutually exclusive — passing more than one raises `ValueError`:
 - **`align_to=<grid>`** — match another grid's lattice exactly (pass a
   `Grid` or its id), so the two stack even at the source's native
   resolution.
-- **`resampling`** — the method used when changing resolution: `nearest`,
-  `bilinear`, `cubic`, `average`, `mode`, `min`, `max`, `median`, and more.
-  An unrecognized value raises `ValueError`.
+
+Combine any of them with **`resampling`**, the method used when changing
+resolution: `nearest`, `bilinear`, `cubic`, `average`, `mode`, `min`, `max`,
+`median`, and more. An unrecognized value raises `ValueError`.
+
+The point-cloud canopy height and inventory canopy fuel creators accept
+`output_resolution_m` or `align_to` only. Grids derived from other grids
+(lookups, compose, DUET, Fosberg, LeafLux) inherit their source's lattice,
+and uniform grids take `resolution_m`.
 
 ```python
 # Stack a canopy grid onto an existing topography grid's lattice exactly
@@ -704,11 +719,11 @@ non-burnable ground in each of the grid's bands:
 | Fuel moisture, curing | Unchanged |
 
 `feature_masks` is accepted by the fuel model, FCCS, LANDFIRE canopy fuel,
-canopy height, uniform, and FBFM/FCCS lookup creators. A feature with no
-geometry — e.g. OpenStreetMap water in a domain without any — masks
-nothing.
-A lookup grid built from a masked fuel model grid is already zero under the
-features, so it needs no mask of its own.
+canopy height, uniform, and FBFM/FCCS lookup creators. Passing it for a grid
+with none of the bands above (for example, a moisture-only uniform grid)
+raises `ValueError`. A feature with no geometry — e.g. OpenStreetMap water in
+a domain without any — masks nothing. A lookup grid built from a masked fuel
+model grid is already zero under the features, so it needs no mask of its own.
 
 !!! tip "Narrow features at coarse resolutions"
     A cell is masked only when its center falls inside a feature. At coarse
@@ -758,14 +773,19 @@ and `target` options.
 
 ## Error handling
 
-Creators raise typed exceptions from `fastfuels_sdk.v2.exceptions` on invalid
-input:
+Creators raise `ValueError` for arguments the SDK can reject before calling
+the API — conflicting lattice arguments, an unknown resampling method or band
+key. Requests the API rejects raise typed exceptions from
+`fastfuels_sdk.v2.exceptions`, such as a Seasonal Fuels request outside the
+current coverage:
 
 ```python
 from fastfuels_sdk.v2.exceptions import UnprocessableEntityException
 
 try:
-    grid = ff.grids.create_uniform_grid(domain, resolution_m=2.0, bands={"bad": 1})
+    grid = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
+        domain, version="2025", season="SP", output_resolution_m=30
+    )
 except UnprocessableEntityException as exc:
     print(exc.detail)
 ```

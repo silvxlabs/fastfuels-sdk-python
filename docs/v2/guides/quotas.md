@@ -1,17 +1,20 @@
 # How to Check Usage and Handle Quota Rejections
 
+This guide shows how to inspect the limits and usage of the account behind
+your API key and how to handle quota rejections from SDK resource creators.
+For how quotas and resource retention work, see
+[About quotas](https://docs.fastfuels.silvxlabs.com/v2/api/explanation/quotas/)
+in the FastFuels documentation.
+
 ## Prerequisites
 
 - The FastFuels SDK installed: `pip install fastfuels-sdk`
 - A FastFuels API key in the `FASTFUELS_API_KEY` environment variable
 
-Use this guide to inspect the current owner's limits and usage and to handle
-quota rejections from SDK resource creators.
-
 ## Check your limits
 
-Call `get_quotas` to retrieve the limits resolved for the owner authenticated
-by the current API key:
+To retrieve the limits that apply to the account behind the current API key,
+call `get_quotas`:
 
 ```python
 import fastfuels_sdk.v2 as ff
@@ -25,7 +28,7 @@ print(quotas.max_grid_storage_bytes)
 
 ## Check your current usage
 
-Call `get_usage` to compare current usage with the corresponding limits:
+To compare current usage with the corresponding limits, call `get_usage`:
 
 ```python
 usage = ff.get_usage()
@@ -40,8 +43,8 @@ Count-only resources are available through `usage.domains`,
 fields are also available for exports, inventories, features, and point
 clouds.
 
-Inspect `usage.lifecycle` for the resource-retention policy currently applied
-to the owner:
+To see the resource-retention policy applied to the account, inspect
+`usage.lifecycle`:
 
 ```python
 print(usage.lifecycle.resource_ttl_days)
@@ -51,8 +54,8 @@ print(usage.lifecycle.next_expiry_on)
 
 ## Handle a quota rejection
 
-Catch `QuotaExceededException` around any operation that creates or re-derives
-a resource:
+To handle a rejection, catch `QuotaExceededException` around any operation
+that creates or re-derives a resource:
 
 ```python
 import fastfuels_sdk.v2 as ff

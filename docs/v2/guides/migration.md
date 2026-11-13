@@ -31,14 +31,15 @@ key for the version you are calling.
 | `domain.export()` | grid exports | No domain-level export in v2; data exports hang off grids |
 | — | `Domain.preview`, `Domain.get_lattice`, `reproject_geojson` | New domain capabilities |
 | `Grids`, `SurfaceGrid`, `TreeGrid`, `TopographyGrid`, `FeatureGrid` + builders | unified `Grid` resource | One job-based resource per grid, distinguished by data source |
-| `Features`, `RoadFeature`, `WaterFeature` | unified `Feature` resource | One job-based resource for OSM roads, OSM water, and custom layersets |
+| `Features`, `RoadFeature`, `WaterFeature` | unified `Feature` resource | One job-based resource for roads, water, buildings, tree crowns, and custom layersets |
 | `feature.get_data()`, `feature.get_all_data()` | `feature.get_data_metadata()`, `feature.get_data_partition()`, `feature.get_data()`, `feature.to_geodataframe()` | Page-based data retrieval becomes partition-based |
 | `Inventories`, `TreeInventory` | unified `Inventory` resource | One job-based resource, created from a PIM grid, a canopy height model, or an upload |
+| `PointClouds`, `AlsPointCloud` | unified `PointCloud` resource | One job-based resource for 3DEP and uploaded ALS or TLS scans |
+| `create_export`, `export_roi` | `grid.export`, `inventory.export`, `ff.exports.create_*_export` | Exports hang off the resource; QUIC-Fire and landscape bundles are assembled server-side |
 
 ## Domains
 
-Available now — see the [Domains guide](domains.md) and the
-[Reference](../reference.md).
+See the [Domains guide](domains.md) and the [Reference](../reference.md).
 
 ### What changed from v1
 
@@ -92,7 +93,7 @@ Available now — see the [Domains guide](domains.md) and the
 
 ## Grids
 
-Available now — see [Creating grids](creating-grids.md),
+See [Creating grids](creating-grids.md),
 [Working with grids](working-with-grids.md), and the
 [Reference](../reference.md).
 
@@ -150,28 +151,32 @@ Available now — see [Creating grids](creating-grids.md),
 
 ## Features
 
-Available now — see the [Features guide](features.md) and the
-[Reference](../reference.md).
+See the [Features guide](features.md) and the [Reference](../reference.md).
 
 ### What changed from v1
 
 - **Road and water unify into one resource.** v1's `Features` container
   with `.road`/`.water` sub-resources becomes a single job-based
-  `Feature` distinguished by its type ("road", "water", or "layerset").
-  The `Features.from_domain_id(...)` container is replaced by the
-  module-level `list_features(domain_id)`.
+  `Feature` distinguished by its type (`"road"`, `"water"`, `"building"`,
+  `"crown"`, or `"layerset"`). The `Features.from_domain_id(...)` container
+  is replaced by the module-level `list_features(domain)`.
 - **Creation is a function per source.** The v1
   `features.create_road_feature_from_osm()` becomes the module-level
   `ff.features.create_road_feature_from_osm(domain)`, and likewise
   `create_water_feature_from_osm` for water. The new `extent_buffer_m`
   argument buffers the OSM query extent by up to 100 meters.
-- **User-supplied geometry becomes layersets.** v1's road-from-GeoJSON
-  path is gone. Instead, v2 accepts custom *layersets* — fuelbed
-  polygons carrying rasterizer properties — via
-  `ff.features.create_layerset_feature_from_geojson` and
-  `create_layerset_feature_from_geodataframe`. Layersets require a
-  projected CRS and upload synchronously, and a completed layerset can be
-  burned onto a grid with `feature.rasterize(...)`.
+- **Uploads are functions per type.** v1's
+  `features.create_road_feature_from_geodataframe(gdf)` becomes
+  `ff.features.create_road_feature_from_geodataframe(domain, gdf)`, with
+  `_from_geojson` variants and the same pair for water and buildings.
+  Uploads complete synchronously.
+- **New feature types.** Building footprints come from Overture Maps
+  (`create_building_feature_from_overture`), tree crowns from a canopy
+  height model (`create_crown_feature_from_chm`), and custom *layersets* —
+  fuelbed polygons a completed layerset burns onto a grid with
+  `feature.rasterize(...)` — from `create_layerset_feature_from_geojson`
+  and `create_layerset_feature_from_geodataframe`. Same-type features
+  combine with `concatenate_road_features` and its siblings.
 - **Data access is partitioned.** v1's `get_data(page, size)` /
   `get_all_data()` become `get_data_metadata()` (partition layout),
   `get_data_partition(index)` (one partition), and `get_data()` (all
@@ -210,8 +215,7 @@ Available now — see the [Features guide](features.md) and the
 
 ## Inventories
 
-Available now — see the [Inventories guide](inventories.md) and the
-[Reference](../reference.md).
+See the [Inventories guide](inventories.md) and the [Reference](../reference.md).
 
 ### What changed from v1
 
@@ -235,17 +239,23 @@ Available now — see the [Inventories guide](inventories.md) and the
   The `method=` argument exposes the resolution, minimum canopy height, and
   cover threshold v1 fixed internally.
 - **Upload columns changed.** v1 uploads required `TREE_ID`, `SPCD`,
-  `STATUSCD`, `DIA`, `HT` columns. v2 uses the roles `x`, `y`, `height`,
-  `dbh`, `crown_ratio`, `crown_base_height`, `fia_species_code`,
-  `fia_status_code`, and a `columns={role: your_name}` mapping replaces
-  renaming your file.
-- **Modifications and treatments are typed models.** v1's dict syntax
-  (`{"attribute": "HT", ...}`) becomes the generated
-  `InventoryModification` / treatment models, passed to `modifications=` /
-  `treatments=` at creation or to `inventory.apply_modifications(...)`
-  in place. v1's `feature_masks=["road", "water"]` becomes
-  `feature_masks=[roads, water]` with completed `Feature` objects (or their
-  ids); see
+  `STATUSCD`, `DIA`, `HT` columns. v2 uses the roles `tree_id`, `x`, `y`,
+  `height`, `dbh`, `crown_ratio`, `crown_base_height`, `crown_radius`,
+  `fia_species_code`, `fia_status_code`, and `fia_crown_class_code`, and a
+  `columns={role: your_name}` mapping replaces renaming your file. Missing
+  morphology can be imputed afterwards with
+  `create_tree_inventory_with_gdam_allometry`.
+- **Modifications and treatments use builder functions.** v1's dict syntax
+  (`{"attribute": "HT", ...}`) becomes calls to `ff.remove_trees`,
+  `ff.modify_trees`, and `ff.tree_attribute`, and to
+  `ff.basal_area_treatment`, `ff.diameter_treatment`, and
+  `ff.crown_spacing_treatment`. Pass the results to `modifications=` /
+  `treatments=` at creation or to `inventory.apply_modifications(...)` /
+  `inventory.apply_treatments(...)` in place; see
+  [Modify and treat tree inventories](modify-treat-inventories.md).
+- **`feature_masks` takes features, not type names.** v1's
+  `feature_masks=["road", "water"]` becomes `feature_masks=[roads, water]`
+  with completed `Feature` objects (or their ids); see
   [Remove trees inside features](modify-treat-inventories.md#remove-trees-inside-features).
 - **Data access is direct.** v1 exposed tree records only through file
   exports (`create_export` → `to_file`). v2 streams them from the API:
@@ -253,16 +263,99 @@ Available now — see the [Inventories guide](inventories.md) and the
   `to_dataframe()` for the common case of loading every tree into pandas.
   File exports remain available via `inventory.export(...)`.
 - **Scenario branching is first-class.** `inventory.duplicate()` clones a
-  completed inventory, and `checksum` marks the data version, so derived
-  resources can detect a stale source.
+  completed inventory under a new ID, and `checksum` marks the version of
+  its data.
 - **Voxelization is a method.** The v1 tree grid built from an inventory
   becomes `inventory.voxelize(horizontal_resolution_m=...,
   vertical_resolution_m=...)`, returning a 3D `Grid`.
 
+### Before and after
+
+=== "v1"
+
+    ```python
+    from fastfuels_sdk import Inventories
+
+    inventories = Inventories.from_domain_id(domain.id)
+    trees = inventories.create_tree_inventory_from_treemap(seed=42)
+    trees.wait_until_completed()
+
+    export = trees.create_export("csv")
+    export.wait_until_completed().to_file("trees.csv")  # read the file back
+    ```
+
+=== "v2"
+
+    ```python
+    import fastfuels_sdk.v2 as ff
+
+    pim = ff.grids.create_pim_grid_from_treemap(domain, output_resolution_m=30)
+    pim.wait()
+
+    trees = ff.inventories.create_tree_inventory_from_pim_grid(domain, pim, seed=42)
+    trees.wait()
+
+    data = trees.to_dataframe()
+    ```
+
+## Point clouds
+
+See the [Point clouds guide](point-clouds.md) and the
+[Reference](../reference.md).
+
+### What changed from v1
+
+- **Creation is a function per source.** v1's
+  `PointClouds.from_domain_id(...).create_als_point_cloud(sources=[...])`
+  becomes `ff.point_clouds.create_point_cloud_from_3dep(domain)` or
+  `ff.point_clouds.create_point_cloud_from_file(domain, path,
+  point_cloud_type="als")`. The file creator uploads to the signed URL for
+  you, and terrestrial (`"tls"`) scans are accepted too.
+- **Coverage is checked up front.** `ff.point_clouds.check_3dep_coverage`
+  reports availability, acquisitions, and the point budget before a 3DEP
+  fetch.
+- **Points are readable.** `to_numpy()` and `to_dataframe()` load a
+  completed point cloud's points, filtered by level of detail,
+  classification, and column.
+- **Tree detection goes through a canopy height grid.** v1's
+  `create_tree_inventory_from_point_cloud()` becomes two steps: rasterize
+  the point cloud with `ff.grids.create_canopy_height_grid_from_point_cloud`,
+  then detect trees with `ff.inventories.create_tree_inventory_from_chm_grid`.
+
+### Before and after
+
+=== "v1"
+
+    ```python
+    from fastfuels_sdk import Inventories, PointClouds
+
+    point_clouds = PointClouds.from_domain_id(domain.id)
+    point_cloud = point_clouds.create_als_point_cloud(sources=["3DEP"])
+    point_cloud.wait_until_completed()
+
+    inventories = Inventories.from_domain_id(domain.id)
+    trees = inventories.create_tree_inventory_from_point_cloud()
+    trees.wait_until_completed()
+    ```
+
+=== "v2"
+
+    ```python
+    import fastfuels_sdk.v2 as ff
+
+    point_cloud = ff.point_clouds.create_point_cloud_from_3dep(domain)
+    point_cloud.wait()
+
+    chm = ff.grids.create_canopy_height_grid_from_point_cloud(point_cloud)
+    chm.wait()
+
+    trees = ff.inventories.create_tree_inventory_from_chm_grid(domain, chm)
+    trees.wait()
+    ```
+
 ## Exports
 
-Available now — see the [Exports guide](exports.md) and the
-[Reference](../reference.md).
+See the [Exports guide](exports.md) and the [Reference](../reference.md).
 
 ### What changed from v1
 
@@ -298,33 +391,4 @@ Available now — see the [Exports guide](exports.md) and the
 
     ```python
     inventory.export(format="csv").wait().to_file("trees.csv")
-    ```
-
-### Before and after
-
-=== "v1"
-
-    ```python
-    from fastfuels_sdk import Inventories
-
-    inventories = Inventories.from_domain_id(domain.id)
-    trees = inventories.create_tree_inventory_from_treemap(seed=42)
-    trees.wait_until_completed()
-
-    export = trees.create_export("csv")
-    export.wait_until_completed().to_file("trees.csv")  # read the file back
-    ```
-
-=== "v2"
-
-    ```python
-    import fastfuels_sdk.v2 as ff
-
-    pim = ff.grids.create_pim_grid_from_treemap(domain, output_resolution_m=30)
-    pim.wait()
-
-    trees = ff.inventories.create_tree_inventory_from_pim_grid(domain, pim, seed=42)
-    trees.wait()
-
-    data = trees.to_dataframe()
     ```

@@ -11,13 +11,16 @@ Both can be applied two ways: at **creation**, via a creator's
 `modifications=` / `treatments=` argument, or to an inventory you already
 **hold**, via `apply_modifications` / `apply_treatments`. This guide covers
 both. For creating and reading inventories in the first place, see
-[Inventories](inventories.md).
+[Tree inventories](inventories.md); for what modifications and treatments do
+to a stand, see
+[Editing the stand](https://docs.fastfuels.silvxlabs.com/v2/api/explanation/inventories/#editing-the-stand-modifications-and-treatments)
+in the FastFuels documentation.
 
 ## Prerequisites
 
 - The FastFuels SDK installed: `pip install fastfuels-sdk`
 - A FastFuels API key in the `FASTFUELS_API_KEY` environment variable
-- An [inventory](inventories.md) (held or being created)
+- An [inventory](inventories.md), or the grids to create one
 
 ## Modifications
 
@@ -42,9 +45,11 @@ ff.modify_trees(
 )
 ```
 
-`tree_attribute` takes an attribute (`"dbh"`, `"height"`,
-`"crown_base_height"`, `"fia_species_code"`) and a comparison (`"<"`, `"<="`, `">"`, `">="`, `"=="`,
-`"!="`); pass several conditions to AND them. `modify_trees`'s modifier is
+`tree_attribute` takes an attribute (`"dbh"` in cm, `"height"` and
+`"crown_base_height"` in m, `"fia_species_code"`, or `"tree_id"`), a
+comparison (`"<"`, `"<="`, `">"`, `">="`, `"=="`, `"!="`), and a value; pass
+`unit=` to give the value in another unit. Pass several conditions to AND
+them. `modify_trees`'s modifier is
 `"replace"`, `"add"`, `"subtract"`, `"multiply"`, or `"divide"`.
 
 ## Treatments
@@ -70,10 +75,9 @@ treatment = ff.crown_spacing_treatment(3.0)
 `method` is `"from_below"` (smallest first), `"from_above"` (largest first),
 or — for basal area only — `"proportional"` (across all size classes).
 
-The inventory must have every column a treatment reads. Basal-area and
-diameter treatments read `dbh`. For what each treatment does to a stand, see
-[Inventories](https://docs.fastfuels.silvxlabs.com/v2/api/explanation/inventories/#editing-the-stand-modifications-and-treatments)
-in the FastFuels documentation.
+Basal area is in m²/ha and diameter in cm dbh by default; pass `unit=` to
+use another unit. The inventory must have every column a treatment reads.
+Basal-area and diameter treatments read `dbh`.
 
 ## Thin to a crown spacing
 
@@ -130,9 +134,11 @@ on a CHM inventory raises `UnprocessableEntityException`.
 
 ## Apply at creation
 
-Every `create_tree_inventory_from_*` function accepts `modifications=` and
+`create_tree_inventory_from_pim_grid`, `create_tree_inventory_from_pim_chm_fusion`,
+and `create_tree_inventory_from_chm_grid` accept `modifications=` and
 `treatments=`; modifications run first, then treatments, while the inventory is
-derived:
+derived. To reshape an uploaded or GDAM-imputed inventory, use the
+[`apply_*` methods](#apply-to-an-inventory-you-hold) once it completes.
 
 ```python
 thinned = ff.inventories.create_tree_inventory_from_pim_grid(
@@ -169,8 +175,8 @@ first and reshape the copy.
 ## Remove trees inside features
 
 To drop the trees that fall inside roads, water, or building footprints, pass
-the completed [features](features.md) in a tree inventory creator's
-`feature_masks` argument:
+the completed [features](features.md) in the PIM, PIM–CHM fusion, or CHM
+creator's `feature_masks` argument:
 
 ```python
 roads = ff.features.create_road_feature_from_osm(domain)
@@ -227,13 +233,12 @@ copy.apply_treatments([ff.basal_area_treatment("from_below", 25.0)])
 copy.wait()
 ```
 
-The `checksum` is a version marker for an inventory's content: it changes each
-time the data is rebuilt and is unaffected by metadata-only edits, so an
-identical checksum means identical trees.
+See [Duplicate an inventory](inventories.md#duplicate-an-inventory) for how
+`checksum` tracks an inventory's content.
 
 ## Next steps
 
-- Create and read inventories — see [Inventories](inventories.md)
+- Create and read inventories — see [Tree inventories](inventories.md)
 - Voxelize a reshaped inventory into a 3D fuel grid — see
-  [Inventories](inventories.md#voxelize-into-a-3d-fuel-grid)
+  [Voxelize into a 3D fuel grid](inventories.md#voxelize-into-a-3d-fuel-grid)
 - Full signatures — see the [Reference](../reference.md)
