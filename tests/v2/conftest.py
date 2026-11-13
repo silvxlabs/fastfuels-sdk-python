@@ -57,6 +57,7 @@ from fastfuels_sdk.v2.point_clouds import (
 from tests.v2.utils import (
     create_building_domain,
     create_default_domain,
+    create_duet_domain,
     create_default_layerset_geojson,
     install_skip_dispatch_client,
     real_dispatch_client,
@@ -373,16 +374,54 @@ def completed_voxel_grid(completed_tree_inventory):
 
 
 @pytest.fixture(scope="session")
-def dispatched_duet_surface_grid(completed_voxel_grid):
-    """A DUET surface fuel grid over ``completed_voxel_grid``, dispatched
-    but not waited on (the job takes minutes; see ``start_long_jobs``).
-    READ-ONLY.
+def duet_domain():
+    """A small session-wide domain for DUET, which rejects source grids
+    larger than 1 km² (the default test domain is larger). READ-ONLY.
+    """
+    domain = create_duet_domain()
+    yield domain
+    domain.delete(force=True)
+
+
+@pytest.fixture(scope="session")
+def completed_duet_voxel_grid(duet_domain):
+    """A completed 2 m x 1 m voxelization of a PIM-expanded inventory over
+    ``duet_domain``, carrying the bands DUET reads. READ-ONLY.
+    """
+    with real_dispatch_client():
+        pim = create_pim_grid_from_treemap(
+            duet_domain,
+            output_resolution_m=30,
+            resampling="nearest",
+            name="test_duet_pim",
+            tags=["test"],
+        )
+        pim.wait()
+        inventory = create_tree_inventory_from_pim_grid(
+            duet_domain, pim, seed=42, name="test_duet_inventory", tags=["test"]
+        )
+        inventory.wait()
+        voxels = inventory.voxelize(
+            horizontal_resolution_m=2,
+            vertical_resolution_m=1,
+            bands=["bulk_density.foliage.live", "spcd", "fuel_moisture.live"],
+            name="test_duet_voxels",
+            tags=["test"],
+        )
+        voxels.wait()
+    return voxels
+
+
+@pytest.fixture(scope="session")
+def dispatched_duet_surface_grid(completed_duet_voxel_grid):
+    """A DUET surface fuel grid over ``completed_duet_voxel_grid``,
+    dispatched but not waited on (see ``start_long_jobs``). READ-ONLY.
     """
     with real_dispatch_client():
         surface = create_surface_fuel_grid_from_duet(
-            completed_voxel_grid,
-            # DUET runtime grows with the simulated years (~40 s at 1,
-            # ~4-8 min at 25); one year is enough to exercise the path
+            completed_duet_voxel_grid,
+            # DUET runtime grows faster than the square of the simulated
+            # years; one year is enough to exercise the path
             years_since_burn=1,
             bands=[
                 "fuel_load.grass",
