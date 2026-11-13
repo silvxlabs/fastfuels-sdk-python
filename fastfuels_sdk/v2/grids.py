@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Union
 from fastfuels_sdk.v2._jobs import wait as _wait
 from fastfuels_sdk.v2._uploads import put_upload
 from fastfuels_sdk.v2.api import ensure_client
+from fastfuels_sdk.v2.modifications import _grid_feature_masks
 from fastfuels_sdk.v2.exceptions import expect, raise_for_response
 from fastfuels_sdk.v2.client_library.api.grids import (
     apply_grid_modifications as apply_grid_modifications_endpoint,
@@ -225,6 +226,19 @@ def _enum_list(values, enum_cls):
 def _opt(value):
     """Map ``None`` to the generated UNSET sentinel, else pass through."""
     return value if value is not None else UNSET
+
+
+def _with_feature_masks(modifications, feature_masks, bands, domain_id: str):
+    """Append the non-burnable rules ``feature_masks`` expands to.
+
+    ``bands`` are the band keys the new grid will carry; the rules go after
+    the caller's own ``modifications`` so masked cells stay non-burnable.
+    """
+    if feature_masks is None:
+        return _opt(modifications)
+    return list(modifications or []) + _grid_feature_masks(
+        feature_masks, bands, domain_id
+    )
 
 
 def _build_alignment(
@@ -905,6 +919,47 @@ class Grid(GridModel):
         )
         return self._copy_fields_from(expect(response))
 
+    def apply_feature_masks(self, feature_masks) -> "Grid":
+        """Mask features out of this grid as non-burnable, in place.
+
+        Each feature becomes a modification rule applied as in
+        :meth:`apply_modifications`: cells whose centers fall within the
+        feature get the value of non-burnable ground in every band that has
+        one. Fuel model codes (``fbfm``, ``fbfm13``) become 98 (NB8, open
+        water) for water features and 91 (NB1, urban/developed) for all
+        others; FCCS fuelbeds (``fccs``) become 0 (bare ground); fuel load,
+        fuel depth, SAVR, and canopy bands (``cbd``, ``cbh``, ``cc``, ``chm``)
+        become 0. Other bands, such as moisture and topography, are unchanged.
+        The grid returns to "pending" status, so call :meth:`wait` before
+        using its data.
+
+        Parameters
+        ----------
+        feature_masks : Feature, str, or list
+            Completed features (or their ids) in the grid's domain. A feature
+            with no geometry masks nothing.
+
+        Returns
+        -------
+        Grid
+            ``self``, updated (so calls chain).
+
+        Raises
+        ------
+        ValueError
+            If the grid is not completed, or none of its bands has a
+            non-burnable value.
+
+        Examples
+        --------
+        >>> grid.apply_feature_masks([roads, water]).wait()
+        """
+        self._require_completed("apply feature masks to")
+        rules = _grid_feature_masks(
+            feature_masks, [band.key for band in self.bands], self.domain_id
+        )
+        return self.apply_modifications(rules)
+
     def export(
         self,
         format: str = "geotiff",
@@ -1307,6 +1362,7 @@ def create_canopy_fuel_grid_from_landfire(
     description: str = "",
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
+    feature_masks=None,
 ) -> Grid:
     """Create a canopy fuel grid from LANDFIRE data.
 
@@ -1339,6 +1395,11 @@ def create_canopy_fuel_grid_from_landfire(
         Tags for the grid.
     modifications : list, optional
         Modification rules applied after the grid is built.
+    feature_masks : Feature, str, or list, optional
+        Completed features (or their ids) in the grid's domain to mask out as
+        non-burnable: cells whose centers fall within any of them have every
+        canopy band set to 0. A feature with no geometry masks nothing. Applied
+        after ``modifications``.
 
     Returns
     -------
@@ -1353,7 +1414,12 @@ def create_canopy_fuel_grid_from_landfire(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_opt(modifications),
+        modifications=_with_feature_masks(
+            modifications,
+            feature_masks,
+            bands if bands is not None else list(LandfireCanopyFuelBand),
+            _domain_id(domain),
+        ),
     )
     response = create_landfire_canopy.sync_detailed(
         _domain_id(domain), client=ensure_client(), body=request_body
@@ -1672,6 +1738,7 @@ def create_canopy_height_grid_from_meta(
     description: str = "",
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
+    feature_masks=None,
 ) -> Grid:
     """Create a canopy height grid from the Meta Canopy Height Model.
 
@@ -1698,6 +1765,11 @@ def create_canopy_height_grid_from_meta(
         Tags for the grid.
     modifications : list, optional
         Modification rules applied after the grid is built.
+    feature_masks : Feature, str, or list, optional
+        Completed features (or their ids) in the grid's domain to mask out as
+        non-burnable: cells whose centers fall within any of them have ``chm``
+        set to 0. A feature with no geometry masks nothing. Applied after
+        ``modifications``.
 
     Returns
     -------
@@ -1711,7 +1783,9 @@ def create_canopy_height_grid_from_meta(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_opt(modifications),
+        modifications=_with_feature_masks(
+            modifications, feature_masks, ["chm"], _domain_id(domain)
+        ),
     )
     response = create_meta_chm.sync_detailed(
         _domain_id(domain), client=ensure_client(), body=request_body
@@ -1730,6 +1804,7 @@ def create_canopy_height_grid_from_naip_chm(
     description: str = "",
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
+    feature_masks=None,
 ) -> Grid:
     """Create a canopy height grid from the NAIP-CHM model.
 
@@ -1765,6 +1840,11 @@ def create_canopy_height_grid_from_naip_chm(
         Tags for the grid.
     modifications : list, optional
         Modification rules applied after the grid is built.
+    feature_masks : Feature, str, or list, optional
+        Completed features (or their ids) in the grid's domain to mask out as
+        non-burnable: cells whose centers fall within any of them have ``chm``
+        set to 0. A feature with no geometry masks nothing. Applied after
+        ``modifications``.
 
     Returns
     -------
@@ -1786,7 +1866,9 @@ def create_canopy_height_grid_from_naip_chm(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_opt(modifications),
+        modifications=_with_feature_masks(
+            modifications, feature_masks, ["chm"], _domain_id(domain)
+        ),
     )
     response = create_naip_chm.sync_detailed(
         _domain_id(domain), client=ensure_client(), body=request_body
@@ -1806,6 +1888,7 @@ def create_canopy_height_grid_from_point_cloud(
     description: str = "",
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
+    feature_masks=None,
 ) -> Grid:
     """Create a canopy height grid from a completed airborne point cloud.
 
@@ -1839,6 +1922,11 @@ def create_canopy_height_grid_from_point_cloud(
         Tags for the grid.
     modifications : list, optional
         Modification rules applied after the grid is built.
+    feature_masks : Feature, str, or list, optional
+        Completed features (or their ids) in the grid's domain to mask out as
+        non-burnable: cells whose centers fall within any of them have ``chm``
+        set to 0. A feature with no geometry masks nothing. Applied after
+        ``modifications``.
 
     Returns
     -------
@@ -1872,7 +1960,9 @@ def create_canopy_height_grid_from_point_cloud(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_opt(modifications),
+        modifications=_with_feature_masks(
+            modifications, feature_masks, ["chm"], point_cloud.domain_id
+        ),
     )
     response = create_point_cloud_chm.sync_detailed(
         point_cloud.domain_id,
@@ -1897,6 +1987,7 @@ def create_fuel_model_grid_from_landfire_fbfm13(
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
     disturbance=None,
+    feature_masks=None,
 ) -> Grid:
     """Create a fuel model grid from LANDFIRE Anderson 13 fuel models.
 
@@ -1933,6 +2024,12 @@ def create_fuel_model_grid_from_landfire_fbfm13(
         Tags for the grid.
     modifications : list, optional
         Modification rules applied after the grid is built.
+    feature_masks : Feature, str, or list, optional
+        Completed features (or their ids) in the grid's domain to mask out as
+        non-burnable: cells whose centers fall within any of them get
+        ``fbfm13`` 98 (NB8, open water) for water features and 91 (NB1,
+        urban/developed) for all others. A feature with no geometry masks
+        nothing. Applied after ``modifications``.
     disturbance : str, dict, or LandfireDisturbanceRequest, optional
         Update the baseline release for recent disturbance where the newest
         LANDFIRE release doesn't fully cover the domain. Pass ``"landfire"``,
@@ -1964,7 +2061,9 @@ def create_fuel_model_grid_from_landfire_fbfm13(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_opt(modifications),
+        modifications=_with_feature_masks(
+            modifications, feature_masks, ["fbfm13"], _domain_id(domain)
+        ),
     )
     response = create_landfire_fbfm13.sync_detailed(
         _domain_id(domain), client=ensure_client(), body=request_body
@@ -1988,6 +2087,7 @@ def create_fuel_model_grid_from_landfire_fbfm40(
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
     disturbance=None,
+    feature_masks=None,
 ) -> Grid:
     """Create a fuel model grid from LANDFIRE 40 Scott & Burgan fuel models.
 
@@ -2032,6 +2132,12 @@ def create_fuel_model_grid_from_landfire_fbfm40(
         Tags for the grid.
     modifications : list, optional
         Modification rules applied after the grid is built.
+    feature_masks : Feature, str, or list, optional
+        Completed features (or their ids) in the grid's domain to mask out as
+        non-burnable: cells whose centers fall within any of them get ``fbfm``
+        98 (NB8, open water) for water features and 91 (NB1, urban/developed)
+        for all others. A feature with no geometry masks nothing. Applied after
+        ``modifications``.
     disturbance : str, dict, or LandfireDisturbanceRequest, optional
         Update the baseline release for recent disturbance where the newest
         LANDFIRE release doesn't fully cover the domain. Pass ``"landfire"``,
@@ -2064,7 +2170,9 @@ def create_fuel_model_grid_from_landfire_fbfm40(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_opt(modifications),
+        modifications=_with_feature_masks(
+            modifications, feature_masks, ["fbfm"], _domain_id(domain)
+        ),
     )
     response = create_landfire_fbfm40.sync_detailed(
         _domain_id(domain), client=ensure_client(), body=request_body
@@ -2087,6 +2195,7 @@ def create_fuel_model_grid_from_landfire_fccs(
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
     disturbance=None,
+    feature_masks=None,
 ) -> Grid:
     """Create a fuel model grid from LANDFIRE FCCS fuelbeds.
 
@@ -2122,6 +2231,11 @@ def create_fuel_model_grid_from_landfire_fccs(
         Tags for the grid.
     modifications : list, optional
         Modification rules applied after the grid is built.
+    feature_masks : Feature, str, or list, optional
+        Completed features (or their ids) in the grid's domain to mask out as
+        non-burnable: cells whose centers fall within any of them get ``fccs``
+        0 (bare ground). A feature with no geometry masks nothing. Applied
+        after ``modifications``.
     disturbance : str, dict, or LandfireDisturbanceRequest, optional
         Update the baseline release for recent disturbance where the newest
         LANDFIRE release doesn't fully cover the domain. Pass ``"landfire"``,
@@ -2153,7 +2267,9 @@ def create_fuel_model_grid_from_landfire_fccs(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_opt(modifications),
+        modifications=_with_feature_masks(
+            modifications, feature_masks, ["fccs"], _domain_id(domain)
+        ),
     )
     response = create_landfire_fccs.sync_detailed(
         _domain_id(domain), client=ensure_client(), body=request_body
@@ -2409,6 +2525,7 @@ def create_uniform_grid(
     description: str = "",
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
+    feature_masks=None,
 ) -> Grid:
     """Create a uniform (constant-value) grid.
 
@@ -2432,11 +2549,23 @@ def create_uniform_grid(
         Tags for the grid.
     modifications : list, optional
         Modification rules applied after the grid is built.
+    feature_masks : Feature, str, or list, optional
+        Completed features (or their ids) in the grid's domain to mask out as
+        non-burnable: cells whose centers fall within any of them have their
+        fuel load and fuel depth bands set to 0; moisture and curing bands are
+        unchanged. A feature with no geometry masks nothing. Applied after
+        ``modifications``.
 
     Returns
     -------
     Grid
         The created Grid object (job status "pending" or "running").
+
+    Raises
+    ------
+    ValueError
+        If ``feature_masks`` is given and ``bands`` has no fuel load or fuel
+        depth band.
     """
     band_inputs = [
         UniformBandInput(key=UniformBand(key), value=value)
@@ -2448,7 +2577,9 @@ def create_uniform_grid(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_opt(modifications),
+        modifications=_with_feature_masks(
+            modifications, feature_masks, list(bands), _domain_id(domain)
+        ),
     )
     response = create_uniform_grid_endpoint.sync_detailed(
         _domain_id(domain), client=ensure_client(), body=request_body
@@ -2658,6 +2789,7 @@ def create_fuel_grid_from_fccs_lookup(
     description: str = "",
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
+    feature_masks=None,
 ) -> Grid:
     """Create a fuel-parameter grid by looking up FCCS codes in a grid.
 
@@ -2678,6 +2810,11 @@ def create_fuel_grid_from_fccs_lookup(
         Tags for the new grid.
     modifications : list, optional
         Modification rules applied after the grid is built.
+    feature_masks : Feature, str, or list, optional
+        Completed features (or their ids) in the grid's domain to mask out as
+        non-burnable: cells whose centers fall within any of them have every
+        band set to 0. A feature with no geometry masks nothing. Applied after
+        ``modifications``.
 
     Returns
     -------
@@ -2705,7 +2842,9 @@ def create_fuel_grid_from_fccs_lookup(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_opt(modifications),
+        modifications=_with_feature_masks(
+            modifications, feature_masks, bands, source_grid.domain_id
+        ),
     )
     response = create_fccs_lookup.sync_detailed(
         source_grid.domain_id,
@@ -2723,6 +2862,7 @@ def create_fuel_grid_from_fbfm13_lookup(
     description: str = "",
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
+    feature_masks=None,
 ) -> Grid:
     """Create a fuel-parameter grid by looking up FBFM13 codes in a grid.
 
@@ -2743,6 +2883,11 @@ def create_fuel_grid_from_fbfm13_lookup(
         Tags for the new grid.
     modifications : list, optional
         Modification rules applied after the grid is built.
+    feature_masks : Feature, str, or list, optional
+        Completed features (or their ids) in the grid's domain to mask out as
+        non-burnable: cells whose centers fall within any of them have every
+        band set to 0. A feature with no geometry masks nothing. Applied after
+        ``modifications``.
 
     Returns
     -------
@@ -2770,7 +2915,9 @@ def create_fuel_grid_from_fbfm13_lookup(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_opt(modifications),
+        modifications=_with_feature_masks(
+            modifications, feature_masks, bands, source_grid.domain_id
+        ),
     )
     response = create_fbfm13_lookup.sync_detailed(
         source_grid.domain_id,
@@ -2789,6 +2936,7 @@ def create_fuel_grid_from_fbfm40_lookup(
     description: str = "",
     tags: Optional[List[str]] = None,
     modifications: Optional[list] = None,
+    feature_masks=None,
 ) -> Grid:
     """Create a fuel-parameter grid by looking up FBFM40 codes in a grid.
 
@@ -2824,6 +2972,11 @@ def create_fuel_grid_from_fbfm40_lookup(
         Tags for the new grid.
     modifications : list, optional
         Modification rules applied after the grid is built.
+    feature_masks : Feature, str, or list, optional
+        Completed features (or their ids) in the grid's domain to mask out as
+        non-burnable: cells whose centers fall within any of them have every
+        band set to 0. A feature with no geometry masks nothing. Applied after
+        ``modifications``.
 
     Returns
     -------
@@ -2853,7 +3006,9 @@ def create_fuel_grid_from_fbfm40_lookup(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_opt(modifications),
+        modifications=_with_feature_masks(
+            modifications, feature_masks, bands, source_grid.domain_id
+        ),
     )
     response = create_fbfm40_lookup.sync_detailed(
         source_grid.domain_id, client=ensure_client(), body=request_body

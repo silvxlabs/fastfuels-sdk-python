@@ -101,7 +101,7 @@ and the data's license and required citation on its `attributions`:
 
 To burn footprints into a fuel grid or remove the trees inside them, see
 [Mask out features](creating-grids.md#mask-out-features) and
-[Remove trees inside buildings](modify-treat-inventories.md#remove-trees-inside-buildings).
+[Remove trees inside features](modify-treat-inventories.md#remove-trees-inside-features).
 
 ## Outline Tree Crowns on a Canopy Height Model
 

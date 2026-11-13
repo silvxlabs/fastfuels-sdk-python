@@ -677,49 +677,84 @@ canopy = ff.grids.create_canopy_fuel_grid_from_landfire(
 
 ## Mask out features
 
-To overwrite grid cells that fall within a feature — the v2 replacement for
-v1's `feature_masks` — build a mask with `ff.mask` and pass it in a creator's
-`modifications` list. For example, to set the cells under roads to a
-non-burnable fuel model code (FBFM 91):
+To make the area under roads, water, or buildings non-burnable, pass the
+completed [features](features.md) in a creator's `feature_masks` argument:
 
 ```python
 roads = ff.features.create_road_feature_from_osm(domain)
-roads.wait()
+water = ff.features.create_water_feature_from_osm(domain)
+ff.wait_all([roads, water])
 
-grid = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
-    domain,
-    output_resolution_m=30,
-    modifications=[ff.mask(roads, "fbfm", 91, buffer_m=5)],
-)
-```
-
-The feature must be `completed` and in the same domain as the grid. Roads
-and other linestrings usually need a `buffer_m` (or `target="cell"`) so the
-thin geometry covers whole cells.
-
-Polygon features such as building footprints need no buffer. For example, to
-make the surface fuel under buildings non-burnable at a resolution fine
-enough to resolve individual footprints:
-
-```python
-buildings = ff.features.create_building_feature_from_overture(domain)
-buildings.wait()
-
-grid = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
+fbfm = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
     domain,
     output_resolution_m=2,
-    modifications=[ff.mask(buildings, "fbfm", 91)],
+    feature_masks=[roads, water],
 )
 ```
 
-Mask several features at once by passing one `ff.mask` per feature in the
-`modifications` list. See `ff.mask` in the
+Every cell whose center falls within a feature gets the value of
+non-burnable ground in each of the grid's bands:
+
+| Band | Masked value |
+| --- | --- |
+| `fbfm`, `fbfm13` | 98 (NB8, open water) under water features; 91 (NB1, urban/developed) under all others |
+| `fccs` | 0 (bare ground) |
+| `fuel_load.*`, `fuel_depth`, `duff_depth`, `savr.*` | 0 |
+| `cbd`, `cbh`, `cc`, `chm` | 0 |
+| Fuel moisture, curing | Unchanged |
+
+`feature_masks` is accepted by the fuel model, FCCS, LANDFIRE canopy fuel,
+canopy height, uniform, and FBFM/FCCS lookup creators. A feature with no
+geometry — e.g. OpenStreetMap water in a domain without any — masks
+nothing.
+A lookup grid built from a masked fuel model grid is already zero under the
+features, so it needs no mask of its own.
+
+!!! tip "Narrow features at coarse resolutions"
+    A cell is masked only when its center falls inside a feature. At coarse
+    resolutions (e.g. 30 m), a road narrower than a cell covers few cell
+    centers, so few cells change. To mask every cell a feature touches, build
+    the rule with `ff.mask`, testing whole cells (`target="cell"`) for any
+    overlap (`operator="intersects"`):
+
+    ```python
+    fbfm = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
+        domain,
+        output_resolution_m=30,
+        modifications=[
+            ff.mask(roads, "fbfm", 91, operator="intersects", target="cell")
+        ],
+    )
+    ```
+
+!!! tip "Mask the trees too"
+    Tree inventories are built separately from the surface fuels. Pass the
+    same features in the inventory creator's `feature_masks` to remove the
+    trees inside them — see
+    [Remove trees inside features](modify-treat-inventories.md#remove-trees-inside-features).
+
+To mask a grid you already hold, see
+[Mask features out of a grid](working-with-grids.md#mask-features-out-of-a-grid).
+
+### Write custom mask values
+
+To write a different value, mask other bands, or widen a feature with a
+buffer, build the rule with `ff.mask` and pass it in `modifications`. For
+example, to set the cells within 10 m of roads to a short-grass fuel model
+(GR1, code 101):
+
+```python
+fbfm = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
+    domain,
+    output_resolution_m=2,
+    modifications=[ff.mask(roads, "fbfm", 101, buffer_m=10)],
+)
+```
+
+Pass one `ff.mask` per feature to mask several. Rules in `modifications` are
+applied before any `feature_masks`. See `ff.mask` in the
 [Reference](../reference.md) for masking multiple bands and the `operator`
 and `target` options.
-
-The same masks apply to a grid you already hold via
-[`grid.apply_modifications`](working-with-grids.md#apply-modifications-to-a-grid),
-which re-derives the grid in place.
 
 ## Error handling
 

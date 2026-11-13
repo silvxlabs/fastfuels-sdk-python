@@ -5,10 +5,9 @@ Modification primitives for grids and tree inventories.
 
 A modification is a rule applied to a resource: it pairs *conditions* (spatial
 or value tests, all ANDed) with *actions* applied to whatever the conditions
-select. ``mask`` builds a grid modification (the v2 replacement for v1's
-``feature_masks``); ``tree_attribute`` / ``tree_within`` / ``remove_trees`` /
-``modify_trees`` build inventory modifications so callers don't hand-assemble
-the generated models.
+select. ``mask`` builds a grid modification; ``tree_attribute`` /
+``tree_within`` / ``remove_trees`` / ``modify_trees`` build inventory
+modifications so callers don't hand-assemble the generated models.
 """
 
 from typing import List, Optional, Union
@@ -104,13 +103,14 @@ def mask(
         Which cells to select relative to the feature geometry.
     buffer_m : float, optional
         Buffer applied to the feature geometry, in meters in the domain's
-        projected CRS, before testing. Linestring features such as roads
-        usually need a buffer — or ``target="cell"`` — to catch the cells they
-        cross. Defaults to no buffer.
+        projected CRS, before testing (e.g. to widen a road corridor).
+        Defaults to no buffer.
     target : {"centroid", "cell"}, optional
         Which part of each grid cell is tested against the geometry. Defaults
-        to the API default (``"centroid"``). Use ``"cell"`` to select every
-        cell a geometry touches.
+        to the API default (``"centroid"``). Use ``"cell"`` with
+        ``operator="intersects"`` to select every cell a geometry touches;
+        with ``operator="within"``, ``"cell"`` selects only cells lying
+        entirely inside the geometry.
 
     Returns
     -------
@@ -119,8 +119,7 @@ def mask(
 
     Examples
     --------
-    Mask roads to a non-burnable fuel model code, buffering the linestrings so
-    they cover whole cells:
+    Mask roads, widened by 5 m, to a non-burnable fuel model code:
 
     >>> import fastfuels_sdk.v2 as ff
     >>> roads = ff.features.create_road_feature_from_osm(domain)
@@ -292,3 +291,98 @@ def _tree_attribute(attribute) -> InventoryAttribute:
     if isinstance(attribute, InventoryAttribute):
         return attribute
     return InventoryAttribute(attribute)
+
+
+# ---------------------------------------------------------------------------
+# Feature masks
+# ---------------------------------------------------------------------------
+#
+# ``feature_masks=`` on the grid and tree-inventory creators (and the
+# ``apply_feature_masks`` methods) expands a list of features into the
+# modification rules above, so callers don't need to know each grid's band
+# keys or what value a non-burnable cell carries.
+#
+# Grid bands are set to what the API itself produces for non-burnable ground:
+# fuel-model codes become the LANDFIRE non-burnable code (NB8 open water for
+# water features, NB1 urban/developed for everything else), FCCS fuelbeds
+# become bare ground (0), and fuel quantities and canopy structure become 0 —
+# the values the FBFM/FCCS lookups return for non-burnable codes. Bands with
+# no "no fuel" value (moisture, curing, topography) are left alone.
+#
+# The API ANDs conditions within a rule, so a union of features needs one rule
+# per feature.
+
+_NB1_URBAN = 91
+_NB8_WATER = 98
+_FUEL_MODEL_BANDS = frozenset({"fbfm", "fbfm13"})
+_ZERO_BANDS = frozenset({"fccs", "fuel_depth", "duff_depth", "cbd", "cbh", "cc", "chm"})
+_ZERO_BAND_PREFIXES = ("fuel_load.", "savr.")
+
+
+def _masked_value(band: str, feature_type: Optional[str]):
+    """The value ``band`` takes under a feature mask, or None to leave it."""
+    if band in _FUEL_MODEL_BANDS:
+        return _NB8_WATER if feature_type == "water" else _NB1_URBAN
+    if band in _ZERO_BANDS or band.startswith(_ZERO_BAND_PREFIXES):
+        return 0
+    return None
+
+
+def _feature_list(feature_masks) -> list:
+    """Accept one feature (or id) or a list/tuple of them."""
+    if isinstance(feature_masks, (list, tuple)):
+        return list(feature_masks)
+    return [feature_masks]
+
+
+def _feature_type(feature, domain_id: str) -> str:
+    """A feature's type string, fetching the feature when given a bare id."""
+    if isinstance(feature, str):
+        # Imported here: features is a sibling resource module, and only bare
+        # ids on fuel-model grids need the round trip.
+        from fastfuels_sdk.v2.features import get_feature
+
+        feature = get_feature(domain_id, feature)
+    return getattr(feature.type_, "value", feature.type_)
+
+
+def _grid_feature_masks(feature_masks, bands, domain_id: str) -> List[GridModification]:
+    """Expand ``feature_masks`` into one non-burnable rule per feature.
+
+    ``bands`` are the keys (or enum members) of the bands the grid carries.
+    Raises ``ValueError`` when none of them has a non-burnable value.
+    """
+    features = _feature_list(feature_masks)
+    if not features:
+        return []
+    keys = [getattr(band, "value", band) for band in bands]
+    maskable = [key for key in keys if _masked_value(key, None) is not None]
+    if not maskable:
+        raise ValueError(
+            f"feature_masks can't be applied to bands {keys}: none of them holds "
+            "fuel. Build rules with ff.mask(feature, band, value) instead."
+        )
+    needs_type = bool(_FUEL_MODEL_BANDS.intersection(maskable))
+    rules = []
+    for feature in features:
+        feature_type = _feature_type(feature, domain_id) if needs_type else None
+        condition = GridFeatureSpatialCondition(
+            source="feature",
+            operator=SpatialOperator.WITHIN,
+            feature_id=_feature_id(feature),
+        )
+        actions = [
+            GridModificationAction(
+                band=key,
+                modifier=Modifier.REPLACE,
+                value=_masked_value(key, feature_type),
+            )
+            for key in maskable
+        ]
+        rules.append(GridModification(conditions=[condition], actions=actions))
+    return rules
+
+
+def _inventory_feature_masks(feature_masks) -> List[InventoryModification]:
+    """Expand ``feature_masks`` into one remove-trees rule per feature."""
+    return [remove_trees(tree_within(f)) for f in _feature_list(feature_masks)]

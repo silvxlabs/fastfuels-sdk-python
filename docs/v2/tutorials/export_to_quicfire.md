@@ -137,12 +137,12 @@ reached it. Small regions extract fast.)
 
 !!! note "No separate feature grid in v2"
     In the v1 SDK you created a standalone *feature grid* to mask trees and
-    fuels. In v2 there's no such resource: you mask a feature directly into
-    each grid by passing `ff.mask(feature, …)` in that creator's
-    `modifications=` list, as we do for the surface fuels in
-    [Step 6](#step-6-build-the-surface-fuel-grids). See
-    [Mask out features](../guides/creating-grids.md#mask-out-features) for the
-    full masking model.
+    fuels. In v2 there's no such resource: you pass the features themselves
+    in each creator's `feature_masks=` argument, as we do for the surface
+    fuels in [Step 6](#step-6-build-the-surface-fuel-grids) and the trees in
+    [Step 7](#step-7-build-the-canopy-fuel-grid). See
+    [Mask out features](../guides/creating-grids.md#mask-out-features) for
+    what masked cells become.
 
 ## Step 5: Build the topography grid
 
@@ -165,15 +165,16 @@ grids in the next step.
 
 QUIC-Fire's surface needs fuel load, fuel depth, and fuel moisture. Load and
 depth come from LANDFIRE's 40 Scott & Burgan fire behavior fuel models
-(FBFM40). First we build the FBFM40 grid, masking the road network to a
-non-burnable code (FBFM 91) as we go — this is the v2 replacement for v1's
-`feature_masks`:
+(FBFM40). First we build the FBFM40 grid, masking roads and water out as
+non-burnable as we go. Cells under roads get FBFM 91 (NB1, urban/developed)
+and cells under water get FBFM 98 (NB8, open water). Our region has no open
+water, so the empty water feature masks nothing:
 
 ```python
 fbfm = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(
     domain,
     output_resolution_m=2,
-    modifications=[ff.mask(roads, "fbfm", 91, buffer_m=5)],
+    feature_masks=[roads, water],
 )
 ```
 
@@ -218,11 +219,12 @@ moisture = ff.grids.create_uniform_grid(
 Canopy fuel takes three moves: match each cell to a TreeMap forest plot (the
 PIM grid we already started), expand those plots into individual trees, then
 voxelize the trees into a 3D bulk-density grid. We expand the trees from the
-completed PIM grid, using a fixed `seed` so the result is reproducible:
+completed PIM grid, using a fixed `seed` so the result is reproducible, and
+pass the same `feature_masks` to drop the trees that land on roads or water:
 
 ```python
 inventory = ff.inventories.create_tree_inventory_from_pim_grid(
-    domain, pim, seed=42
+    domain, pim, seed=42, feature_masks=[roads, water]
 )
 
 ff.wait_all([surface, moisture, inventory], verbose=True)
@@ -230,7 +232,7 @@ ff.wait_all([surface, moisture, inventory], verbose=True)
 
 ```python
 >>> len(inventory.to_dataframe())
-2068
+2030
 ```
 
 Now we voxelize the inventory onto the same 2 m horizontal lattice, with 1 m

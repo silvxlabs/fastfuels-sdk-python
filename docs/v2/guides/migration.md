@@ -111,10 +111,12 @@ Available now — see [Creating grids](creating-grids.md),
   `output_resolution_m`, `align="native"`, `align_to=<grid>`, and
   `resampling` (see
   [Align grids to each other](creating-grids.md#align-grids-to-each-other)).
-- **`feature_masks` becomes `modifications`.** v1's
-  `feature_masks=["road", "water"]` becomes
-  `modifications=[ff.mask(feature, band, value)]`, which overwrites the
-  cells a feature covers.
+- **`feature_masks` takes features, not type names.** v1's
+  `feature_masks=["road", "water"]` becomes `feature_masks=[roads, water]`,
+  where `roads` and `water` are completed `Feature` objects (or their ids).
+  Masked fuel model cells get non-burnable codes (91, or 98 under water)
+  and fuel quantities get 0; unlike v1, fuel moisture is left unchanged. See
+  [Mask out features](creating-grids.md#mask-out-features).
 - **Universal transforms are methods; type-specific ones are functions.**
   Transforms that apply to any grid you hold are methods —
   `grid.resample(...)`, `grid.export(...)`. Deriving a fuel-parameter grid
@@ -241,9 +243,10 @@ Available now — see the [Inventories guide](inventories.md) and the
   (`{"attribute": "HT", ...}`) becomes the generated
   `InventoryModification` / treatment models, passed to `modifications=` /
   `treatments=` at creation or to `inventory.apply_modifications(...)`
-  in place. v1's `feature_masks=["road", "water"]` becomes a modification
-  whose condition is a feature spatial condition
-  (`InventoryFeatureSpatialCondition`) and whose action is `RemoveAction`.
+  in place. v1's `feature_masks=["road", "water"]` becomes
+  `feature_masks=[roads, water]` with completed `Feature` objects (or their
+  ids); see
+  [Remove trees inside features](modify-treat-inventories.md#remove-trees-inside-features).
 - **Data access is direct.** v1 exposed tree records only through file
   exports (`create_export` → `to_file`). v2 streams them from the API:
   `get_data_metadata()` / `get_data_partition(index)` — plus
