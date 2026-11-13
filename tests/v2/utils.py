@@ -65,6 +65,22 @@ def create_building_domain() -> Domain:
     )
 
 
+def create_duet_domain() -> Domain:
+    """Creates a v2 Domain of about 400 m x 400 m inside the default domain,
+    for DUET, which rejects source grids larger than 1 km².
+    """
+    with open(TEST_DATA_DIR / "blue_mtn_duet.geojson") as f:
+        geojson = json.load(f)
+
+    return Domain.from_geojson(
+        geojson,
+        name="test_duet_domain",
+        description="Small domain for testing v2 DUET surface fuels",
+        tags=[SWEEP_TAG],
+        pad_to_resolution=2.0,
+    )
+
+
 def sweep_leftover_domains(max_age: timedelta = timedelta(hours=2)) -> None:
     """Delete test domains leaked by crashed or interrupted runs.
 

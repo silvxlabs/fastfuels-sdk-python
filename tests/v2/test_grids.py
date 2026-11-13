@@ -670,7 +670,7 @@ class TestCreateSurfaceFuelGridFromDuet:
         "kwargs,error",
         [
             ({"years_since_burn": 0}, ValueError),
-            ({"years_since_burn": 101}, ValueError),
+            ({"years_since_burn": 26}, ValueError),
             ({"years_since_burn": 1.5}, TypeError),
             ({"years_since_burn": 20, "wind_direction": 360}, ValueError),
             ({"years_since_burn": 20, "wind_variability": 181}, ValueError),
@@ -687,6 +687,14 @@ class TestCreateSurfaceFuelGridFromDuet:
     def test_validates_request_parameters(self, kwargs, error):
         with pytest.raises(error):
             create_surface_fuel_grid_from_duet(self._source_grid(), **kwargs)
+
+    def test_source_grid_over_one_square_kilometre_is_rejected(
+        self, completed_voxel_grid
+    ):
+        # The default test domain is larger than DUET's 1 km² limit; the API
+        # rejects the request before queueing any work
+        with pytest.raises(UnprocessableEntityException, match="km²"):
+            create_surface_fuel_grid_from_duet(completed_voxel_grid, years_since_burn=1)
 
     def test_create_live(self, real_dispatch, dispatched_duet_surface_grid):
         # The fixture dispatches DUET at session start (it takes minutes);

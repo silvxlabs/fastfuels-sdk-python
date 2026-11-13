@@ -3034,9 +3034,9 @@ def create_surface_fuel_grid_from_duet(
     ----------
     source_grid : Grid
         A completed 3D tree grid carrying ``bulk_density.foliage.live``,
-        ``spcd``, and ``fuel_moisture.live`` bands.
+        ``spcd``, and ``fuel_moisture.live`` bands, covering at most 1 km².
     years_since_burn : int
-        Years of litter accumulation to simulate, from 1 through 100.
+        Years of litter accumulation to simulate, from 1 through 25.
     wind_direction : int, optional
         Prevailing wind direction in whole degrees clockwise from north
         (0-359, default 270).
@@ -3066,6 +3066,8 @@ def create_surface_fuel_grid_from_duet(
     ValueError
         If a parameter is out of range, the source is not completed, or the
         source lacks a required tree band.
+    UnprocessableEntityException
+        If the source grid covers more than 1 km².
     """
     source_grid._require_completed("create a DUET surface fuel grid from")
     required_bands = {
@@ -3082,7 +3084,7 @@ def create_surface_fuel_grid_from_duet(
         )
 
     years_since_burn = _duet_integer(
-        "years_since_burn", years_since_burn, minimum=1, maximum=100
+        "years_since_burn", years_since_burn, minimum=1, maximum=25
     )
     wind_direction = _duet_integer(
         "wind_direction", wind_direction, minimum=0, maximum=359
