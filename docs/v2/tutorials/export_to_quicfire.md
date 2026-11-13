@@ -135,14 +135,9 @@ Feature 07e6407aedd44d7e8a09fbc5e48c3f3e: completed (20s)
 (Only one feature prints here — the other finished before `wait_all`
 reached it. Small regions extract fast.)
 
-!!! note "No separate feature grid in v2"
-    In the v1 SDK you created a standalone *feature grid* to mask trees and
-    fuels. In v2 there's no such resource: you pass the features themselves
-    in each creator's `feature_masks=` argument, as we do for the surface
-    fuels in [Step 6](#step-6-build-the-surface-fuel-grids) and the trees in
-    [Step 7](#step-7-build-the-canopy-fuel-grid). See
-    [Mask out features](../guides/creating-grids.md#mask-out-features) for
-    what masked cells become.
+We'll pass these features to the surface fuel grid in
+[Step 6](#step-6-build-the-surface-fuel-grids) and to the tree inventory in
+[Step 7](#step-7-build-the-canopy-fuel-grid).
 
 ## Step 5: Build the topography grid
 
@@ -320,14 +315,16 @@ alongside `metadata.json` (the grid geometry and band provenance) and
 In one pass we created a domain, pulled road and water features, built
 topography from 3DEP and surface fuels from LANDFIRE FBFM40, expanded a
 TreeMap tree inventory into a 3D canopy fuel grid, and bundled it all into a
-QUIC-Fire archive — masking roads out of the fuels along the way.
+QUIC-Fire archive — masking roads and water out of the surface fuels and the
+trees along the way.
 
 ## Next steps
 
 - Swap in your own region by changing the polygon in
   [Step 2](#step-2-define-a-region-of-interest).
-- Mask water (and other features) into the fuels the same way we masked
-  roads — see [Mask out features](../guides/creating-grids.md#mask-out-features).
+- Mask building footprints as well — see
+  [Create a building feature from Overture Maps](../guides/features.md#create-a-building-feature-from-overture-maps)
+  and [Mask out features](../guides/creating-grids.md#mask-out-features).
 - Tune the tree inventory before voxelizing — thinning, treatments, and
   modifications — see
   [Modify and treat tree inventories](../guides/modify-treat-inventories.md).

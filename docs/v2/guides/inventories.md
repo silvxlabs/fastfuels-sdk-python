@@ -1,25 +1,11 @@
-# How to Work with Tree Inventories in FastFuels SDK
+# How to Work with Tree Inventories
 
-An inventory is a table of individual trees within a domain — one row per
-tree, with its coordinates, species, diameter, height, and crown ratio.
-Inventories sit between grids: they are generated *from* a grid (a PIM grid
-or a canopy height model) or from your own data, and they are voxelized
-*into* the 3D canopy fuel grid that 3D fire models consume. This guide
-covers working with inventories from Python; for what inventories *are*,
-see the [FastFuels documentation](https://docs.fastfuels.silvxlabs.com).
-Coming from the v1 SDK? Start with the
+This guide shows how to create tree inventories — from TreeMap, a canopy
+height model, or your own records — and how to read, summarize, voxelize,
+export, and manage an inventory you hold. For what inventories *are*, see
+[About inventories](https://docs.fastfuels.silvxlabs.com/v2/api/explanation/inventories/)
+in the FastFuels documentation. Coming from the v1 SDK? Start with the
 [migration guide](migration.md#inventories).
-
-The v2 surface is functional: you **create** an inventory by calling a
-`create_tree_inventory_from_...` function on a domain, and everything you
-do with an inventory you already hold is a **method** on it.
-
-```python
-import fastfuels_sdk.v2 as ff
-
-inventory = ff.inventories.create_tree_inventory_from_pim_grid(domain, pim)
-trees = inventory.wait().to_dataframe()
-```
 
 ## Prerequisites
 
@@ -87,9 +73,21 @@ inventory.wait()
 
 Stem isolation defaults to local maximum filtering with a 2 m minimum
 height. To tune the algorithm, pass a `StemIsolationLmf` or
-`StemIsolationVwf` (variable window filtering) model as `algorithm=`.
+`StemIsolationVwf` (variable window filtering) model, imported from
+`fastfuels_sdk.v2.client_library.models`, as `algorithm=`:
+
+```python
+from fastfuels_sdk.v2.client_library.models import StemIsolationVwf
+
+inventory = ff.inventories.create_tree_inventory_from_chm_grid(
+    domain, chm, algorithm=StemIsolationVwf()
+)
+```
+
 `StemIsolationVwf()` without arguments uses `crown_ratio=0.05` and
-`crown_offset=3.0`. A CHM-derived inventory carries only what the canopy
+`crown_offset=3.0`.
+
+A CHM-derived inventory carries only what the canopy
 surface reveals — `tree_id`, `x`, `y`, and `height` columns — so it cannot
 be voxelized directly; [impute the missing morphology with
 GDAM](#impute-missing-morphology-with-gdam) first.
@@ -308,15 +306,17 @@ key raises `ValueError`.
 ## Inspect stand-level forestry metrics
 
 Once a tree inventory completes, read its server-computed forestry metrics
-without downloading the tree records:
+without downloading the tree records. Stand metrics are reported in US
+customary units — basal area in ft²/acre, density in trees/acre, and
+quadratic mean diameter in inches:
 
 ```python
 metrics = inventory.forestry_metrics
 
 tree_count = metrics.tree_count
-basal_area_per_acre = metrics.basal_area_per_area
+basal_area_ft2_per_acre = metrics.basal_area_per_area
 trees_per_acre = metrics.tree_density
-quadratic_mean_diameter_inches = metrics.quadratic_mean_diameter
+quadratic_mean_diameter_in = metrics.quadratic_mean_diameter
 
 dominant_groups = [
     (group.spgrpcd, group.name, group.basal_area_share)
@@ -331,10 +331,11 @@ metrics are unavailable, including before processing completes.
 
 ## Reshape the trees
 
-Every creator accepts `modifications=` (rules that filter trees by conditions
-and act on them) and `treatments=` (silvicultural thinning to a target), and
-you can reshape an inventory you already hold with `apply_modifications` /
-`apply_treatments`. See
+The PIM, PIM–CHM fusion, and CHM creators accept `modifications=` (rules that
+filter trees by conditions and act on them), `treatments=` (silvicultural
+thinning to a target), and `feature_masks=`; you can reshape any inventory
+you already hold with `apply_modifications`, `apply_treatments`, and
+`apply_feature_masks`. See
 [Modify and treat tree inventories](modify-treat-inventories.md) for the full
 workflow.
 
@@ -344,8 +345,11 @@ workflow.
 data rather than re-deriving it, so the copy starts identical to the source:
 
 ```python
->>> copy = inventory.duplicate(name="Scenario A")
->>> copy.wait()
+copy = inventory.duplicate(name="Scenario A")
+copy.wait()
+```
+
+```python
 >>> copy.checksum == inventory.checksum
 True
 ```
@@ -435,7 +439,8 @@ voxels = full.voxelize(crown_geometry_source=crowns, max_bulk_density=2.0)
 A crown feature id that doesn't exist raises `NotFoundException`; a feature
 that isn't a completed crown feature, or one whose CHM grid has been deleted,
 raises `UnprocessableEntityException`. For how measured crowns are drawn, see
-the [FastFuels documentation](https://docs.fastfuels.silvxlabs.com).
+[About voxelization](https://docs.fastfuels.silvxlabs.com/v2/api/explanation/voxelization/)
+in the FastFuels documentation.
 
 ## Export an inventory
 
@@ -507,7 +512,8 @@ To permanently delete an inventory and its tree records:
 inventory.delete()
 ```
 
-Deleting a domain also deletes all of its inventories.
+Deleting a domain with `domain.delete(force=True)` also deletes all of its
+inventories.
 
 ## Error handling
 
@@ -534,8 +540,8 @@ except UnprocessableEntityException as exc:
     # expected 'completed'.
 ```
 
-Deriving from an inventory that is not completed raises a `ValueError`
-before any API call:
+Voxelizing or reshaping an inventory that is not completed raises a
+`ValueError` before any API call:
 
 ```python
 >>> pending_inventory.voxelize(horizontal_resolution_m=2.0, vertical_resolution_m=1.0)

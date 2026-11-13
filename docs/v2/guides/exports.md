@@ -1,16 +1,13 @@
-# How to Export Data from FastFuels SDK
+# How to Export Data
 
-An export packages a resource's data into a downloadable file: a
-[grid](working-with-grids.md) as GeoTIFF/NetCDF/zarr, an
-[inventory](inventories.md) as Parquet/CSV/GeoJSON/GeoPackage, or several
-grids assembled into a fire-behavior landscape or QUIC-Fire-loadable archive.
-Exports run as background jobs and expose a signed download URL on completion.
-
-The pattern is the same everywhere: exporting a resource you **hold** is a
-method on it (`grid.export(...)`, `inventory.export(...)`); the QUIC-Fire
-bundle and landscape are **assembled from many** grids, so they are
-module-level functions (`ff.exports.create_quicfire_export(...)` and
-`ff.exports.create_landscape_export(...)`).
+This guide shows how to package FastFuels data into downloadable files: a
+[grid](working-with-grids.md) as GeoTIFF, NetCDF, or Zarr; an
+[inventory](inventories.md) as Parquet, CSV, GeoJSON, or GeoPackage; or
+several grids assembled into a fire-behavior landscape or a QUIC-Fire
+archive. Export a single resource with its `export` method; assemble a
+landscape or QUIC-Fire archive from several grids with the functions in
+`ff.exports`. Every export runs as a background job and exposes a signed
+download URL when it completes.
 
 ## Prerequisites
 
@@ -33,8 +30,8 @@ export.wait().to_file("elevation.tif")
 
 `grid.export` returns a pending [`Export`](#work-with-an-export-you-hold);
 `wait()` blocks until the file is packaged, and `to_file` streams it to
-disk. GeoTIFF applies to 2D grids; export 3D voxel grids as `"netcdf"` or
-`"zarr"`. Pass `bands=` to export a subset of the grid's bands.
+disk and returns its path. GeoTIFF applies to 2D grids; export 3D voxel
+grids as `"netcdf"` or `"zarr"`. Pass `bands=` to export a subset of the grid's bands.
 
 If `to_file` is given an existing directory, the file lands inside it
 under the export's default filename:
@@ -116,14 +113,16 @@ export.wait().to_file("outputs/")
 ```
 
 Here `voxels` is a [3D tree fuel grid](inventories.md#voxelize-into-a-3d-fuel-grid)
-carrying bulk density and moisture bands, and `surface` is any 2D grid
-carrying the surface roles (the example above pairs naturally with a
-[uniform grid](creating-grids.md#uniform-grids) or an
-[FBFM40 lookup grid](creating-grids.md#surface-fuel-model-grids), whose
-`fuel_load.fine_dead` band is the surface fuel load). For an
-end-to-end walkthrough that builds all of these grids from real data sources
-and bundles them, follow the
-[Export QUIC-Fire inputs tutorial](../tutorials/export_to_quicfire.md).
+carrying bulk density and moisture bands, and `surface` is a 2D grid carrying
+fuel load, depth, and moisture bands — for example a
+[uniform grid](creating-grids.md#uniform-grids) with `fuel_load.1hr`,
+`fuel_depth`, and `fuel_moisture.1hr`. Each role names its own grid, so the
+roles can come from different grids: the
+[Export QUIC-Fire inputs tutorial](../tutorials/export_to_quicfire.md) takes
+surface load and depth from an
+[FBFM40 lookup grid](creating-grids.md#look-up-fuel-parameters-from-fbfm40-codes)
+(`fuel_load.fine_dead`, `fuel_depth`) and surface moisture from a uniform
+grid.
 
 Two optional roles extend the bundle: `topography=(grid, "elevation")`
 adds `topo.dat`, and the SAVR pair (`canopy_savr=` + `surface_savr=`,
@@ -200,5 +199,5 @@ except NotFoundException:
 
 - Build the grids that feed an export — see
   [Creating grids](creating-grids.md) and
-  [Inventories](inventories.md)
+  [Tree inventories](inventories.md)
 - Full signatures — see the [Reference](../reference.md)

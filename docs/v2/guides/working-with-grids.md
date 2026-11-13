@@ -1,29 +1,18 @@
-# How to Work with Grids in FastFuels SDK
+# How to Work with Grids
 
 This guide covers what you do with a grid you already hold: wait on its job,
-inspect its bands and georeference, resample it, export it, and list or
-delete grids. To create grids in the first place, see
-[Creating grids](creating-grids.md). For what grids *are*, see the
-[FastFuels documentation](https://docs.fastfuels.silvxlabs.com).
-
-You get a grid handle either from a creator (see
-[Creating grids](creating-grids.md)) or by fetching one by id:
-
-```python
-import fastfuels_sdk.v2 as ff
-
-grid = ff.get_grid(domain, "0eeed67e33df450f943a528fb1447dab")
-```
-
-Operations on a grid you hold are **methods** on it (`grid.wait()`,
-`grid.resample(...)`, `grid.delete()`); listing and fetching are top-level
-functions (`ff.list_grids`, `ff.get_grid`).
+inspect its bands and georeference, resample, mask, read, and export it, and
+list or delete grids. To create grids in the first place, see
+[Creating grids](creating-grids.md). For what grids *are*, see
+[About grids](https://docs.fastfuels.silvxlabs.com/v2/api/explanation/grids/)
+in the FastFuels documentation.
 
 ## Prerequisites
 
 - The FastFuels SDK installed: `pip install fastfuels-sdk`
 - A FastFuels API key in the `FASTFUELS_API_KEY` environment variable
-- A grid — created per [Creating grids](creating-grids.md), or fetched by id
+- A grid — created per [Creating grids](creating-grids.md), or
+  [fetched by id](#retrieve-a-grid-by-id)
 
 ## Wait for a grid to finish
 
@@ -110,6 +99,8 @@ The `type_` field (`"continuous"` or `"categorical"`) tells you which.
 To fetch an existing grid using its domain and grid IDs:
 
 ```python
+import fastfuels_sdk.v2 as ff
+
 grid = ff.get_grid(domain, "0eeed67e33df450f943a528fb1447dab")
 ```
 
@@ -125,7 +116,10 @@ grid.refresh()
 To change a grid's name, description, or tags:
 
 ```python
->>> grid.update(name="Topography (30 m)", tags=["terrain"])
+grid.update(name="Topography (30 m)", tags=["terrain"])
+```
+
+```python
 >>> grid.name, grid.tags
 ('Topography (30 m)', ['terrain'])
 ```
@@ -154,7 +148,8 @@ native = grid.resample(align="native", output_resolution_m=60)
 matched = grid.resample(align_to=topography, resampling="bilinear")
 ```
 
-The source grid must be `completed`.
+The source grid must be `completed`; otherwise `resample` raises `ValueError`
+before calling the API.
 
 ## Duplicate a grid
 
@@ -287,27 +282,29 @@ To permanently delete a grid and its generated data:
 grid.delete()
 ```
 
-Deleting a domain also deletes all of its grids.
+Deleting a domain with `domain.delete(force=True)` also deletes all of its
+grids.
 
 ## Error handling
 
-Functions and methods raise typed exceptions from
+Requests the API rejects raise typed exceptions from
 `fastfuels_sdk.v2.exceptions`:
 
 ```python
 import fastfuels_sdk.v2 as ff
-from fastfuels_sdk.v2.exceptions import (
-    NotFoundException,
-    UnprocessableEntityException,
-)
+from fastfuels_sdk.v2.exceptions import NotFoundException
 
 try:
     grid = ff.get_grid(domain, "does-not-exist")
 except NotFoundException:
     print("No such grid (or you don't have access to it)")
+```
 
-try:
-    grid.resample(output_resolution_m=30)  # source not completed yet
-except UnprocessableEntityException as exc:
-    print(exc.detail)
+Methods that need a completed grid — `resample`, `apply_feature_masks`,
+`apply_modifications`, `to_numpy`, and `to_xarray` — raise `ValueError`
+before calling the API when the grid is still pending or running:
+
+```python
+>>> pending_grid.resample(output_resolution_m=30)
+ValueError: Cannot resample a grid with status 'pending'. Call .wait() until it completes first.
 ```

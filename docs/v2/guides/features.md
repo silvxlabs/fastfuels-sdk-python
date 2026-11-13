@@ -1,23 +1,13 @@
-# How to Work with Features in FastFuels SDK
+# How to Work with Features
 
-Features are geographic data within a domain: roads and water bodies
-extracted from OpenStreetMap, building footprints from Overture Maps, tree
-crowns outlined on a canopy height model, road, water, or building polygons
-you upload yourself, or custom layersets of fuelbed polygons. This guide covers working with features from
-Python; for what features *are* and how the platform treats them, see the
-[FastFuels documentation](https://docs.fastfuels.silvxlabs.com). Coming
-from the v1 SDK? Start with the [migration guide](migration.md#features).
-
-The v2 surface is functional: you **create** a feature by calling a
-`create_..._feature_from_...` function on a domain, and everything you do
-with a feature you already hold is a **method** on it.
-
-```python
-import fastfuels_sdk.v2 as ff
-
-feature = ff.features.create_road_feature_from_osm(domain)
-feature.wait()
-```
+This guide shows how to create features — roads and water bodies from
+OpenStreetMap, building footprints from Overture Maps, tree crowns outlined
+on a canopy height model, polygons you upload yourself, and custom fuelbed
+layersets — and how to read, combine, and manage features you hold. For what
+features *are* and how the platform treats them, see
+[About features](https://docs.fastfuels.silvxlabs.com/v2/api/explanation/features/)
+in the FastFuels documentation. Coming from the v1 SDK? Start with the
+[migration guide](migration.md#features).
 
 ## Prerequisites
 
@@ -25,7 +15,7 @@ feature.wait()
 - A FastFuels API key in the `FASTFUELS_API_KEY` environment variable
 - An existing [domain](domains.md) to create features in
 
-## Create a Road Feature from OpenStreetMap
+## Create a road feature from OpenStreetMap
 
 To extract the road network within a domain's extent:
 
@@ -51,7 +41,7 @@ feature = ff.features.create_road_feature_from_osm(domain, extent_buffer_m=50)
 
 The first argument accepts either a `Domain` or a bare domain id string.
 
-## Create a Water Feature from OpenStreetMap
+## Create a water feature from OpenStreetMap
 
 To extract water bodies, use the same calling convention:
 
@@ -59,7 +49,7 @@ To extract water bodies, use the same calling convention:
 feature = ff.features.create_water_feature_from_osm(domain, name="My Water")
 ```
 
-## Create a Building Feature from Overture Maps
+## Create a building feature from Overture Maps
 
 To extract building footprints within a domain's extent:
 
@@ -103,7 +93,7 @@ To burn footprints into a fuel grid or remove the trees inside them, see
 [Mask out features](creating-grids.md#mask-out-features) and
 [Remove trees inside features](modify-treat-inventories.md#remove-trees-inside-features).
 
-## Outline Tree Crowns on a Canopy Height Model
+## Outline tree crowns on a canopy height model
 
 To outline each detected tree's crown, pass a completed canopy height model
 (CHM) grid at 2 m resolution or finer and an inventory detected from that
@@ -139,7 +129,7 @@ To tune segmentation, pass `crown_segmentation=` as a mapping of the
 default is used for any field left out. To voxelize these crowns, see
 [Voxelize measured crowns](inventories.md#voxelize-measured-crowns).
 
-## Upload Road, Water, or Building Polygons
+## Upload road, water, or building polygons
 
 To create a road, water, or building feature from your own polygons, upload
 a GeoJSON FeatureCollection of Polygon or MultiPolygon geometries. The
@@ -192,7 +182,7 @@ Water and building polygons use the same calling convention:
 | Water | `create_water_feature_from_geojson` | `create_water_feature_from_geodataframe` |
 | Building | `create_building_feature_from_geojson` | `create_building_feature_from_geodataframe` |
 
-## Combine Features of the Same Type
+## Combine features of the same type
 
 To combine several completed features of one type into a single new feature
 — for example, OSM roads plus roads you uploaded — pass them to
@@ -224,7 +214,7 @@ Pass between 2 and 100 features, each once. Features of another type, in
 another domain, or not yet completed are rejected with an
 `UnprocessableEntityException`.
 
-## Wait for a Feature to Complete
+## Wait for a feature to complete
 
 To block until a feature job finishes:
 
@@ -259,7 +249,7 @@ print(feature.georeference.crs)     # 'EPSG:32611'
 print(feature.georeference.bounds)  # [720192.0, 5189446.0, 721918.0, 5190852.0]
 ```
 
-## Upload a Custom Layerset
+## Upload a custom layerset
 
 A layerset is a FeatureCollection of fuelbed polygons you supply
 yourself. Unlike OSM features, the upload is synchronous — the returned
@@ -299,7 +289,7 @@ gdf = gpd.read_file("fuelbeds.shp").to_crs(epsg=5070)
 feature = ff.features.create_layerset_feature_from_geodataframe(domain, gdf)
 ```
 
-## Rasterize a Layerset into a Grid
+## Rasterize a layerset into a grid
 
 A completed layerset feature carries vector fuelbed polygons; to burn them
 onto a raster grid, call `rasterize`. It returns a pending
@@ -316,7 +306,7 @@ grid.wait()
 [Align grids to each other](creating-grids.md#align-grids-to-each-other)
 for the alignment model.
 
-## Retrieve an Existing Feature
+## Retrieve an existing feature
 
 To fetch a feature using its domain and feature IDs:
 
@@ -324,7 +314,7 @@ To fetch a feature using its domain and feature IDs:
 feature = ff.get_feature(domain, "36573c0205d147a08011693b7894c0fb")
 ```
 
-## Refresh Feature Data
+## Refresh feature data
 
 To reload a feature's latest state from the API (for example, to check job
 progress yourself) in place:
@@ -337,7 +327,7 @@ print(feature.status)
 `refresh` updates the feature in place and returns it. To fetch a separate
 copy by ID instead, use `ff.get_feature(domain, feature.id)`.
 
-## Access Feature Data
+## Access feature data
 
 The generated geodata is served in partitions. For most workflows,
 retrieve everything at once as a GeoDataFrame:
@@ -371,7 +361,7 @@ for index in range(metadata.partition_count):
 Data is only available once the feature is `"completed"` — earlier calls
 raise `UnprocessableEntityException`.
 
-## Update Feature Properties
+## Update feature properties
 
 To modify a feature's name, description, or tags:
 
@@ -382,7 +372,7 @@ feature.update(name="New Name", tags=["roads", "osm"])
 `update` changes the feature in place and returns it. Only the fields you
 pass are sent; passing none makes no API call.
 
-## List Features
+## List features
 
 To list features in a domain:
 
@@ -416,7 +406,7 @@ newest_first = ff.list_features(
 )
 ```
 
-## Delete a Feature
+## Delete a feature
 
 To permanently delete a feature and its generated data:
 
@@ -424,9 +414,10 @@ To permanently delete a feature and its generated data:
 feature.delete()
 ```
 
-Deleting a domain also deletes all of its features.
+Deleting a domain with `domain.delete(force=True)` also deletes all of its
+features.
 
-## Error Handling
+## Error handling
 
 Wrapper functions and methods raise typed exceptions from
 `fastfuels_sdk.v2.exceptions`:

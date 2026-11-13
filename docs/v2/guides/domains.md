@@ -1,10 +1,11 @@
-# How to Work with Domains in FastFuels SDK
+# How to Work with Domains
 
-A domain is the spatial container every other FastFuels resource lives in.
-This guide covers working with domains from Python; for what domains *are*
-and how the platform treats them, see the
-[FastFuels documentation](https://docs.fastfuels.silvxlabs.com). Coming
-from the v1 SDK? Start with the [migration guide](migration.md#domains).
+This guide shows how to create, inspect, update, list, and delete domains —
+the spatial container every other FastFuels resource lives in. For what
+domains *are* and how the platform treats them, see
+[About domains](https://docs.fastfuels.silvxlabs.com/v2/api/explanation/domains/)
+in the FastFuels documentation. Coming from the v1 SDK? Start with the
+[migration guide](migration.md#domains).
 
 ## Prerequisites
 
@@ -26,7 +27,7 @@ from fastfuels_sdk.v2 import set_api_key
 set_api_key("your-api-key")
 ```
 
-## Create a Domain from GeoJSON
+## Create a domain from GeoJSON
 
 To create a domain from a GeoJSON file:
 
@@ -48,7 +49,7 @@ domain = Domain.from_geojson(
 The v2 API accepts a GeoJSON FeatureCollection; the SDK automatically
 wraps a single Feature for you.
 
-## Create a Domain from a GeoDataFrame or a File
+## Create a domain from a GeoDataFrame or a file
 
 If your spatial data is in a format supported by GeoPandas (Shapefile,
 KML, GeoPackage, etc.):
@@ -69,11 +70,11 @@ domain = Domain.from_geodataframe(
 domain = Domain.from_file("forest_area.shp", name="Forest Domain")
 ```
 
-## Preview a Domain Before Creating It
+## Preview a domain before creating it
 
-`Domain.preview` runs the same validation and projection pipeline as
-creation but persists nothing — useful for showing a user the projected,
-padded bounding box before committing:
+To see the projected, padded bounding box a domain would get without creating
+it, call `Domain.preview`. It runs the same validation and projection as
+creation but persists nothing:
 
 ```python
 previewed = Domain.preview(geojson, pad_to_resolution=2.0)
@@ -82,7 +83,7 @@ print(previewed.id)    # always "preview" — not a real identifier
 print(previewed.bbox)  # the projected, padded bounding box
 ```
 
-## Retrieve an Existing Domain
+## Retrieve an existing domain
 
 To fetch a domain using its ID:
 
@@ -90,7 +91,7 @@ To fetch a domain using its ID:
 domain = Domain.from_id("abc123")
 ```
 
-## Update Domain Properties
+## Update domain properties
 
 To modify a domain's name, description, or tags:
 
@@ -105,7 +106,7 @@ domain.update(
 `update` changes the domain in place and returns it, so calls chain. Only
 the fields you pass are sent; passing none makes no API call.
 
-## Refresh Domain Data
+## Refresh domain data
 
 To reload a domain's latest state from the API in place:
 
@@ -116,7 +117,7 @@ domain.refresh()
 `refresh` updates the domain in place and returns it. To fetch a separate
 copy by ID instead, use `Domain.from_id(domain.id)`.
 
-## Get the Pixel Lattice for a Domain
+## Get the pixel lattice for a domain
 
 To align a raster with the grids FastFuels will produce for a domain,
 fetch its pixel lattice (affine transform + shape) at a resolution:
@@ -144,17 +145,17 @@ projected = reproject_geojson(geojson, target_epsg=5070)
 print(projected["crs"]["properties"]["name"])  # "EPSG:5070"
 ```
 
-## List Available Domains
+## List domains
 
 To list domains with pagination:
 
 ```python
 from fastfuels_sdk.v2.domains import list_domains
 
-# Get first page with default size (100)
+# First page (page 0) with the default size of 100
 domains = list_domains()
 
-# Custom page and size
+# Another page, size, and sort order
 domains = list_domains(
     page=2,
     size=50,
@@ -166,15 +167,23 @@ for domain in domains:
     print(f"{domain.id}: {domain.name}")
 ```
 
-## Delete a Domain
+## Delete a domain
 
-To permanently delete a domain and all resources associated with it:
+To permanently delete an empty domain:
 
 ```python
 domain.delete()
 ```
 
-## Error Handling
+If the domain still holds resources, `delete` raises an `ApiException` with
+`status_code` 412. To delete the domain together with every resource in it,
+pass `force=True`:
+
+```python
+domain.delete(force=True)
+```
+
+## Error handling
 
 Wrapper methods raise typed exceptions from
 `fastfuels_sdk.v2.exceptions`:

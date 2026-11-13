@@ -1,8 +1,9 @@
 # How to Compose Grids
 
-Use grid composition to copy and calculate bands from completed grids on the
-same two-dimensional lattice. For creating the source grids, see
-[Creating grids](creating-grids.md); for alignment options, see
+This guide shows how to build a new grid by copying and calculating bands
+from completed grids on the same two-dimensional lattice. For creating the
+source grids, see [Creating grids](creating-grids.md); for putting them on one
+lattice, see
 [Align grids to each other](creating-grids.md#align-grids-to-each-other).
 
 ## Prerequisites

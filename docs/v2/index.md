@@ -1,4 +1,4 @@
-# Welcome to the FastFuels Python SDK Documentation!
+# FastFuels Python SDK
 
 !!! note "v2 SDK"
     You are reading the documentation for the **v2 SDK**, which targets
@@ -6,33 +6,44 @@
     versions with the selector in the header. Import v2 explicitly from
     `fastfuels_sdk.v2`.
 
-## What is FastFuels?
+The FastFuels Python SDK is the Python interface to the FastFuels API. Use it
+to create domains, grids, tree inventories, features, and point clouds; to
+read their data into NumPy, pandas, GeoPandas, and xarray; and to export
+files for fire behavior models such as QUIC-Fire and FlamMap.
 
-FastFuels is a cloud-based platform for generating forest inventory data. It
-uses a combination of satellite imagery and machine learning to generate
-tabular tree data and voxelized 3D fuel models. These data products can be used
-to support wildfire risk assessment, fire behavior modeling, and other
-applications.
-
-The [FastFuels documentation](https://docs.fastfuels.silvxlabs.com) covers
-the platform itself: the web application, the HTTP API, and explanations of
-the core concepts (domains, grids, inventories, features). This site covers
-how to work with FastFuels from Python.
-
-## What is the FastFuels Python SDK?
-
-The FastFuels Python SDK is a Python package that provides a convenient
-interface for interacting with the FastFuels API. It can be used to create and
-manage FastFuels resources. It can also be used to download and process
-generated data products.
+This site covers working with FastFuels from Python. The
+[FastFuels documentation](https://docs.fastfuels.silvxlabs.com) covers the
+platform itself — the web application, the HTTP API, and explanations of the
+core concepts. Start with
+[Introduction](https://docs.fastfuels.silvxlabs.com/v2/api/explanation/introduction/)
+for an overview.
 
 ## Installation
 
-The FastFuels Python SDK can be installed using `pip`:
+Install the SDK with `pip`:
 
 ```bash
 pip install fastfuels-sdk
 ```
+
+## Authentication
+
+The SDK reads your API key from the `FASTFUELS_API_KEY` environment variable:
+
+```bash
+export FASTFUELS_API_KEY="your-api-key"
+```
+
+To set the key in code instead, call `set_api_key` before any other call:
+
+```python
+import fastfuels_sdk.v2 as ff
+
+ff.set_api_key("your-api-key")
+```
+
+The SDK authenticates with an existing API key. Create, rotate, and revoke
+keys in the FastFuels console.
 
 ## Using the v2 SDK
 
@@ -46,6 +57,18 @@ from fastfuels_sdk.v2 import Domain   # v2
 
 Coming from v1? Start with [Migrating from v1](guides/migration.md).
 
-The SDK authenticates with an existing API key. Creating applications and
-creating, rotating, or revoking keys are account-management operations handled
-outside the high-level Python SDK through the FastFuels console.
+## How these docs are organized
+
+- **[Tutorial](tutorials/export_to_quicfire.md)** — build a complete set of
+  QUIC-Fire inputs from scratch, end to end.
+- **How-to guides** — task-focused instructions for each resource:
+  [domains](guides/domains.md), [features](guides/features.md),
+  [creating](guides/creating-grids.md),
+  [composing](guides/composing-grids.md), and
+  [working with](guides/working-with-grids.md) grids,
+  [tree inventories](guides/inventories.md),
+  [modifications and treatments](guides/modify-treat-inventories.md),
+  [point clouds](guides/point-clouds.md), [exports](guides/exports.md), and
+  [quotas](guides/quotas.md).
+- **[Reference](reference.md)** — every public function, class, and
+  exception, generated from the source.
