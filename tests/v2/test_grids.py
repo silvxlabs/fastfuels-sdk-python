@@ -781,12 +781,12 @@ class TestCreateSurfaceFuelGridFromDuet:
         with pytest.raises(error):
             create_surface_fuel_grid_from_duet(self._source_grid(), **kwargs)
 
-    def test_source_grid_over_one_square_kilometre_is_rejected(
-        self, completed_voxel_grid
-    ):
-        # The default test domain is larger than DUET's 1 km² limit; the API
+    def test_source_grid_over_the_cell_limit_is_rejected(self, completed_voxel_grid):
+        # The default test domain has more horizontal cells than DUET allows; the API
         # rejects the request before queueing any work
-        with pytest.raises(UnprocessableEntityException, match="km²"):
+        with pytest.raises(
+            UnprocessableEntityException, match="DUET grids are limited to"
+        ):
             create_surface_fuel_grid_from_duet(completed_voxel_grid, years_since_burn=1)
 
     def test_create_live(self, real_dispatch, dispatched_duet_surface_grid):

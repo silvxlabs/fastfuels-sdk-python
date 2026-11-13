@@ -67,7 +67,8 @@ def create_building_domain() -> Domain:
 
 def create_duet_domain() -> Domain:
     """Creates a v2 Domain of about 400 m x 400 m inside the default domain,
-    for DUET, which rejects source grids larger than 1 km².
+    for DUET, which rejects source grids with more than 600,000 horizontal
+    cells.
     """
     with open(TEST_DATA_DIR / "blue_mtn_duet.geojson") as f:
         geojson = json.load(f)

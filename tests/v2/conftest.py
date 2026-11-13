@@ -376,7 +376,8 @@ def completed_voxel_grid(completed_tree_inventory):
 @pytest.fixture(scope="session")
 def duet_domain():
     """A small session-wide domain for DUET, which rejects source grids
-    larger than 1 km² (the default test domain is larger). READ-ONLY.
+    with more than 600,000 horizontal cells (the default test domain has
+    more). READ-ONLY.
     """
     domain = create_duet_domain()
     yield domain
