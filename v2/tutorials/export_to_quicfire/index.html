@@ -1333,16 +1333,9 @@ jobs, so we create them together and join with <code>ff.wait_all</code>:</p>
 </span></code></pre></div>
 <p>(Only one feature prints here — the other finished before <code>wait_all</code>
 reached it. Small regions extract fast.)</p>
-<div class="admonition note">
-<p class="admonition-title">No separate feature grid in v2</p>
-<p>In the v1 SDK you created a standalone <em>feature grid</em> to mask trees and
-fuels. In v2 there's no such resource: you mask a feature directly into
-each grid by passing <code>ff.mask(feature, …)</code> in that creator's
-<code>modifications=</code> list, as we do for the surface fuels in
-<a href="#step-6-build-the-surface-fuel-grids">Step 6</a>. See
-<a href="../../guides/creating-grids/#mask-out-features">Mask out features</a> for the
-full masking model.</p>
-</div>
+<p>We'll pass these features to the surface fuel grid in
+<a href="#step-6-build-the-surface-fuel-grids">Step 6</a> and to the tree inventory in
+<a href="#step-7-build-the-canopy-fuel-grid">Step 7</a>.</p>
 <h2 id="step-5-build-the-topography-grid">Step 5: Build the topography grid<a class="headerlink" href="#step-5-build-the-topography-grid" title="Permanent link">&para;</a></h2>
 <p>Elevation comes from the USGS 3D Elevation Program (3DEP). We resample its
 10 m source onto our 2 m domain lattice:</p>
@@ -1358,13 +1351,14 @@ grids in the next step.</p>
 <h2 id="step-6-build-the-surface-fuel-grids">Step 6: Build the surface fuel grids<a class="headerlink" href="#step-6-build-the-surface-fuel-grids" title="Permanent link">&para;</a></h2>
 <p>QUIC-Fire's surface needs fuel load, fuel depth, and fuel moisture. Load and
 depth come from LANDFIRE's 40 Scott &amp; Burgan fire behavior fuel models
-(FBFM40). First we build the FBFM40 grid, masking the road network to a
-non-burnable code (FBFM 91) as we go — this is the v2 replacement for v1's
-<code>feature_masks</code>:</p>
+(FBFM40). First we build the FBFM40 grid, masking roads and water out as
+non-burnable as we go. Cells under roads get FBFM 91 (NB1, urban/developed)
+and cells under water get FBFM 98 (NB8, open water). Our region has no open
+water, so the empty water feature masks nothing:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">fbfm</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_fuel_model_grid_from_landfire_fbfm40</span><span class="p">(</span>
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">domain</span><span class="p">,</span>
 </span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">modifications</span><span class="o">=</span><span class="p">[</span><span class="n">ff</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">roads</span><span class="p">,</span> <span class="s2">&quot;fbfm&quot;</span><span class="p">,</span> <span class="mi">91</span><span class="p">,</span> <span class="n">buffer_m</span><span class="o">=</span><span class="mi">5</span><span class="p">)],</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">feature_masks</span><span class="o">=</span><span class="p">[</span><span class="n">roads</span><span class="p">,</span> <span class="n">water</span><span class="p">],</span>
 </span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="p">)</span>
 </span></code></pre></div>
 <p>The FBFM40 grid holds categorical fuel-model <em>codes</em>. We also start the
@@ -1396,15 +1390,16 @@ so we set a uniform 15% surface moisture on a matching 2 m grid:</p>
 <p>Canopy fuel takes three moves: match each cell to a TreeMap forest plot (the
 PIM grid we already started), expand those plots into individual trees, then
 voxelize the trees into a 3D bulk-density grid. We expand the trees from the
-completed PIM grid, using a fixed <code>seed</code> so the result is reproducible:</p>
+completed PIM grid, using a fixed <code>seed</code> so the result is reproducible, and
+pass the same <code>feature_masks</code> to drop the trees that land on roads or water:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">inventory</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_pim_grid</span><span class="p">(</span>
-</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>    <span class="n">domain</span><span class="p">,</span> <span class="n">pim</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>    <span class="n">domain</span><span class="p">,</span> <span class="n">pim</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="p">[</span><span class="n">roads</span><span class="p">,</span> <span class="n">water</span><span class="p">]</span>
 </span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="p">)</span>
 </span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
 </span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="n">ff</span><span class="o">.</span><span class="n">wait_all</span><span class="p">([</span><span class="n">surface</span><span class="p">,</span> <span class="n">moisture</span><span class="p">,</span> <span class="n">inventory</span><span class="p">],</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span></code></pre></div>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">inventory</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">())</span>
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="mi">2068</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="mi">2030</span>
 </span></code></pre></div>
 <p>Now we voxelize the inventory onto the same 2 m horizontal lattice, with 1 m
 vertical layers, asking for both the live foliage bulk density and the live
@@ -1469,13 +1464,15 @@ are all there:</p>
 <p>In one pass we created a domain, pulled road and water features, built
 topography from 3DEP and surface fuels from LANDFIRE FBFM40, expanded a
 TreeMap tree inventory into a 3D canopy fuel grid, and bundled it all into a
-QUIC-Fire archive — masking roads out of the fuels along the way.</p>
+QUIC-Fire archive — masking roads and water out of the surface fuels and the
+trees along the way.</p>
 <h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Swap in your own region by changing the polygon in
   <a href="#step-2-define-a-region-of-interest">Step 2</a>.</li>
-<li>Mask water (and other features) into the fuels the same way we masked
-  roads — see <a href="../../guides/creating-grids/#mask-out-features">Mask out features</a>.</li>
+<li>Mask building footprints as well — see
+  <a href="../../guides/features/#create-a-building-feature-from-overture-maps">Create a building feature from Overture Maps</a>
+  and <a href="../../guides/creating-grids/#mask-out-features">Mask out features</a>.</li>
 <li>Tune the tree inventory before voxelizing — thinning, treatments, and
   modifications — see
   <a href="../../guides/modify-treat-inventories/">Modify and treat tree inventories</a>.</li>

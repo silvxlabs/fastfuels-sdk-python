@@ -510,6 +510,56 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#before-and-after_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Before and after
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#point-clouds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Point clouds
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Point clouds">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-changed-from-v1_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed from v1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#before-and-after_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Before and after
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -528,7 +578,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#what-changed-from-v1_4" class="md-nav__link">
+  <a href="#what-changed-from-v1_5" class="md-nav__link">
     <span class="md-ellipsis">
       
         What changed from v1
@@ -539,18 +589,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#before-and-after_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Before and after
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#before-and-after_4" class="md-nav__link">
+  <a href="#before-and-after_5" class="md-nav__link">
     <span class="md-ellipsis">
       
         Before and after
@@ -1248,6 +1287,56 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#before-and-after_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Before and after
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#point-clouds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Point clouds
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Point clouds">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-changed-from-v1_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What changed from v1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#before-and-after_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Before and after
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1266,7 +1355,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#what-changed-from-v1_4" class="md-nav__link">
+  <a href="#what-changed-from-v1_5" class="md-nav__link">
     <span class="md-ellipsis">
       
         What changed from v1
@@ -1277,18 +1366,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#before-and-after_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Before and after
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#before-and-after_4" class="md-nav__link">
+  <a href="#before-and-after_5" class="md-nav__link">
     <span class="md-ellipsis">
       
         Before and after
@@ -1377,7 +1455,7 @@ not supported. Migrate one workflow at a time, pointing
 <tr>
 <td><code>Features</code>, <code>RoadFeature</code>, <code>WaterFeature</code></td>
 <td>unified <code>Feature</code> resource</td>
-<td>One job-based resource for OSM roads, OSM water, and custom layersets</td>
+<td>One job-based resource for roads, water, buildings, tree crowns, and custom layersets</td>
 </tr>
 <tr>
 <td><code>feature.get_data()</code>, <code>feature.get_all_data()</code></td>
@@ -1389,11 +1467,20 @@ not supported. Migrate one workflow at a time, pointing
 <td>unified <code>Inventory</code> resource</td>
 <td>One job-based resource, created from a PIM grid, a canopy height model, or an upload</td>
 </tr>
+<tr>
+<td><code>PointClouds</code>, <code>AlsPointCloud</code></td>
+<td>unified <code>PointCloud</code> resource</td>
+<td>One job-based resource for 3DEP and uploaded ALS or TLS scans</td>
+</tr>
+<tr>
+<td><code>create_export</code>, <code>export_roi</code></td>
+<td><code>grid.export</code>, <code>inventory.export</code>, <code>ff.exports.create_*_export</code></td>
+<td>Exports hang off the resource; QUIC-Fire and landscape bundles are assembled server-side</td>
+</tr>
 </tbody>
 </table>
 <h2 id="domains">Domains<a class="headerlink" href="#domains" title="Permanent link">&para;</a></h2>
-<p>Available now — see the <a href="../domains/">Domains guide</a> and the
-<a href="../../reference/">Reference</a>.</p>
+<p>See the <a href="../domains/">Domains guide</a> and the <a href="../../reference/">Reference</a>.</p>
 <h3 id="what-changed-from-v1">What changed from v1<a class="headerlink" href="#what-changed-from-v1" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Resolution moved to grids.</strong> Domains no longer take
@@ -1444,7 +1531,7 @@ not supported. Migrate one workflow at a time, pointing
 </div>
 </div>
 <h2 id="grids">Grids<a class="headerlink" href="#grids" title="Permanent link">&para;</a></h2>
-<p>Available now — see <a href="../creating-grids/">Creating grids</a>,
+<p>See <a href="../creating-grids/">Creating grids</a>,
 <a href="../working-with-grids/">Working with grids</a>, and the
 <a href="../../reference/">Reference</a>.</p>
 <h3 id="what-changed-from-v1_1">What changed from v1<a class="headerlink" href="#what-changed-from-v1_1" title="Permanent link">&para;</a></h3>
@@ -1462,10 +1549,12 @@ not supported. Migrate one workflow at a time, pointing
   <code>output_resolution_m</code>, <code>align="native"</code>, <code>align_to=&lt;grid&gt;</code>, and
   <code>resampling</code> (see
   <a href="../creating-grids/#align-grids-to-each-other">Align grids to each other</a>).</li>
-<li><strong><code>feature_masks</code> becomes <code>modifications</code>.</strong> v1's
-  <code>feature_masks=["road", "water"]</code> becomes
-  <code>modifications=[ff.mask(feature, band, value)]</code>, which overwrites the
-  cells a feature covers.</li>
+<li><strong><code>feature_masks</code> takes features, not type names.</strong> v1's
+  <code>feature_masks=["road", "water"]</code> becomes <code>feature_masks=[roads, water]</code>,
+  where <code>roads</code> and <code>water</code> are completed <code>Feature</code> objects (or their ids).
+  Masked fuel model cells get non-burnable codes (91, or 98 under water)
+  and fuel quantities get 0; unlike v1, fuel moisture is left unchanged. See
+  <a href="../creating-grids/#mask-out-features">Mask out features</a>.</li>
 <li><strong>Universal transforms are methods; type-specific ones are functions.</strong>
   Transforms that apply to any grid you hold are methods —
   <code>grid.resample(...)</code>, <code>grid.export(...)</code>. Deriving a fuel-parameter grid
@@ -1497,27 +1586,31 @@ not supported. Migrate one workflow at a time, pointing
 </div>
 </div>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
-<p>Available now — see the <a href="../features/">Features guide</a> and the
-<a href="../../reference/">Reference</a>.</p>
+<p>See the <a href="../features/">Features guide</a> and the <a href="../../reference/">Reference</a>.</p>
 <h3 id="what-changed-from-v1_2">What changed from v1<a class="headerlink" href="#what-changed-from-v1_2" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Road and water unify into one resource.</strong> v1's <code>Features</code> container
   with <code>.road</code>/<code>.water</code> sub-resources becomes a single job-based
-  <code>Feature</code> distinguished by its type ("road", "water", or "layerset").
-  The <code>Features.from_domain_id(...)</code> container is replaced by the
-  module-level <code>list_features(domain_id)</code>.</li>
+  <code>Feature</code> distinguished by its type (<code>"road"</code>, <code>"water"</code>, <code>"building"</code>,
+  <code>"crown"</code>, or <code>"layerset"</code>). The <code>Features.from_domain_id(...)</code> container
+  is replaced by the module-level <code>list_features(domain)</code>.</li>
 <li><strong>Creation is a function per source.</strong> The v1
   <code>features.create_road_feature_from_osm()</code> becomes the module-level
   <code>ff.features.create_road_feature_from_osm(domain)</code>, and likewise
   <code>create_water_feature_from_osm</code> for water. The new <code>extent_buffer_m</code>
   argument buffers the OSM query extent by up to 100 meters.</li>
-<li><strong>User-supplied geometry becomes layersets.</strong> v1's road-from-GeoJSON
-  path is gone. Instead, v2 accepts custom <em>layersets</em> — fuelbed
-  polygons carrying rasterizer properties — via
-  <code>ff.features.create_layerset_feature_from_geojson</code> and
-  <code>create_layerset_feature_from_geodataframe</code>. Layersets require a
-  projected CRS and upload synchronously, and a completed layerset can be
-  burned onto a grid with <code>feature.rasterize(...)</code>.</li>
+<li><strong>Uploads are functions per type.</strong> v1's
+  <code>features.create_road_feature_from_geodataframe(gdf)</code> becomes
+  <code>ff.features.create_road_feature_from_geodataframe(domain, gdf)</code>, with
+  <code>_from_geojson</code> variants and the same pair for water and buildings.
+  Uploads complete synchronously.</li>
+<li><strong>New feature types.</strong> Building footprints come from Overture Maps
+  (<code>create_building_feature_from_overture</code>), tree crowns from a canopy
+  height model (<code>create_crown_feature_from_chm</code>), and custom <em>layersets</em> —
+  fuelbed polygons a completed layerset burns onto a grid with
+  <code>feature.rasterize(...)</code> — from <code>create_layerset_feature_from_geojson</code>
+  and <code>create_layerset_feature_from_geodataframe</code>. Same-type features
+  combine with <code>concatenate_road_features</code> and its siblings.</li>
 <li><strong>Data access is partitioned.</strong> v1's <code>get_data(page, size)</code> /
   <code>get_all_data()</code> become <code>get_data_metadata()</code> (partition layout),
   <code>get_data_partition(index)</code> (one partition), and <code>get_data()</code> (all
@@ -1554,8 +1647,7 @@ not supported. Migrate one workflow at a time, pointing
 </div>
 </div>
 <h2 id="inventories">Inventories<a class="headerlink" href="#inventories" title="Permanent link">&para;</a></h2>
-<p>Available now — see the <a href="../inventories/">Inventories guide</a> and the
-<a href="../../reference/">Reference</a>.</p>
+<p>See the <a href="../inventories/">Inventories guide</a> and the <a href="../../reference/">Reference</a>.</p>
 <h3 id="what-changed-from-v1_3">What changed from v1<a class="headerlink" href="#what-changed-from-v1_3" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>TreeMap generation is a two-resource workflow.</strong> v1's
@@ -1578,33 +1670,119 @@ not supported. Migrate one workflow at a time, pointing
   The <code>method=</code> argument exposes the resolution, minimum canopy height, and
   cover threshold v1 fixed internally.</li>
 <li><strong>Upload columns changed.</strong> v1 uploads required <code>TREE_ID</code>, <code>SPCD</code>,
-  <code>STATUSCD</code>, <code>DIA</code>, <code>HT</code> columns. v2 uses the roles <code>x</code>, <code>y</code>, <code>height</code>,
-  <code>dbh</code>, <code>crown_ratio</code>, <code>crown_base_height</code>, <code>fia_species_code</code>,
-  <code>fia_status_code</code>, and a <code>columns={role: your_name}</code> mapping replaces
-  renaming your file.</li>
-<li><strong>Modifications and treatments are typed models.</strong> v1's dict syntax
-  (<code>{"attribute": "HT", ...}</code>) becomes the generated
-  <code>InventoryModification</code> / treatment models, passed to <code>modifications=</code> /
-  <code>treatments=</code> at creation or to <code>inventory.apply_modifications(...)</code>
-  in place. v1's <code>feature_masks=["road", "water"]</code> becomes a modification
-  whose condition is a feature spatial condition
-  (<code>InventoryFeatureSpatialCondition</code>) and whose action is <code>RemoveAction</code>.</li>
+  <code>STATUSCD</code>, <code>DIA</code>, <code>HT</code> columns. v2 uses the roles <code>tree_id</code>, <code>x</code>, <code>y</code>,
+  <code>height</code>, <code>dbh</code>, <code>crown_ratio</code>, <code>crown_base_height</code>, <code>crown_radius</code>,
+  <code>fia_species_code</code>, <code>fia_status_code</code>, and <code>fia_crown_class_code</code>, and a
+  <code>columns={role: your_name}</code> mapping replaces renaming your file. Missing
+  morphology can be imputed afterwards with
+  <code>create_tree_inventory_with_gdam_allometry</code>.</li>
+<li><strong>Modifications and treatments use builder functions.</strong> v1's dict syntax
+  (<code>{"attribute": "HT", ...}</code>) becomes calls to <code>ff.remove_trees</code>,
+  <code>ff.modify_trees</code>, and <code>ff.tree_attribute</code>, and to
+  <code>ff.basal_area_treatment</code>, <code>ff.diameter_treatment</code>, and
+  <code>ff.crown_spacing_treatment</code>. Pass the results to <code>modifications=</code> /
+  <code>treatments=</code> at creation or to <code>inventory.apply_modifications(...)</code> /
+  <code>inventory.apply_treatments(...)</code> in place; see
+  <a href="../modify-treat-inventories/">Modify and treat tree inventories</a>.</li>
+<li><strong><code>feature_masks</code> takes features, not type names.</strong> v1's
+  <code>feature_masks=["road", "water"]</code> becomes <code>feature_masks=[roads, water]</code>
+  with completed <code>Feature</code> objects (or their ids); see
+  <a href="../modify-treat-inventories/#remove-trees-inside-features">Remove trees inside features</a>.</li>
 <li><strong>Data access is direct.</strong> v1 exposed tree records only through file
   exports (<code>create_export</code> → <code>to_file</code>). v2 streams them from the API:
   <code>get_data_metadata()</code> / <code>get_data_partition(index)</code> — plus
   <code>to_dataframe()</code> for the common case of loading every tree into pandas.
   File exports remain available via <code>inventory.export(...)</code>.</li>
 <li><strong>Scenario branching is first-class.</strong> <code>inventory.duplicate()</code> clones a
-  completed inventory, and <code>checksum</code> marks the data version, so derived
-  resources can detect a stale source.</li>
+  completed inventory under a new ID, and <code>checksum</code> marks the version of
+  its data.</li>
 <li><strong>Voxelization is a method.</strong> The v1 tree grid built from an inventory
   becomes <code>inventory.voxelize(horizontal_resolution_m=...,
   vertical_resolution_m=...)</code>, returning a 3D <code>Grid</code>.</li>
 </ul>
-<h2 id="exports">Exports<a class="headerlink" href="#exports" title="Permanent link">&para;</a></h2>
-<p>Available now — see the <a href="../exports/">Exports guide</a> and the
+<h3 id="before-and-after_3">Before and after<a class="headerlink" href="#before-and-after_3" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">v1</label><label for="__tabbed_4_2">v2</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">Inventories</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">inventories</span> <span class="o">=</span> <span class="n">Inventories</span><span class="o">.</span><span class="n">from_domain_id</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">trees</span> <span class="o">=</span> <span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_treemap</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">trees</span><span class="o">.</span><span class="n">wait_until_completed</span><span class="p">()</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">export</span> <span class="o">=</span> <span class="n">trees</span><span class="o">.</span><span class="n">create_export</span><span class="p">(</span><span class="s2">&quot;csv&quot;</span><span class="p">)</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="n">export</span><span class="o">.</span><span class="n">wait_until_completed</span><span class="p">()</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="s2">&quot;trees.csv&quot;</span><span class="p">)</span>  <span class="c1"># read the file back</span>
+</span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">pim</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_pim_grid_from_treemap</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">pim</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">trees</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_pim_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">pim</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="n">trees</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="n">data</span> <span class="o">=</span> <span class="n">trees</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="point-clouds">Point clouds<a class="headerlink" href="#point-clouds" title="Permanent link">&para;</a></h2>
+<p>See the <a href="../point-clouds/">Point clouds guide</a> and the
 <a href="../../reference/">Reference</a>.</p>
 <h3 id="what-changed-from-v1_4">What changed from v1<a class="headerlink" href="#what-changed-from-v1_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Creation is a function per source.</strong> v1's
+  <code>PointClouds.from_domain_id(...).create_als_point_cloud(sources=[...])</code>
+  becomes <code>ff.point_clouds.create_point_cloud_from_3dep(domain)</code> or
+  <code>ff.point_clouds.create_point_cloud_from_file(domain, path,
+  point_cloud_type="als")</code>. The file creator uploads to the signed URL for
+  you, and terrestrial (<code>"tls"</code>) scans are accepted too.</li>
+<li><strong>Coverage is checked up front.</strong> <code>ff.point_clouds.check_3dep_coverage</code>
+  reports availability, acquisitions, and the point budget before a 3DEP
+  fetch.</li>
+<li><strong>Points are readable.</strong> <code>to_numpy()</code> and <code>to_dataframe()</code> load a
+  completed point cloud's points, filtered by level of detail,
+  classification, and column.</li>
+<li><strong>Tree detection goes through a canopy height grid.</strong> v1's
+  <code>create_tree_inventory_from_point_cloud()</code> becomes two steps: rasterize
+  the point cloud with <code>ff.grids.create_canopy_height_grid_from_point_cloud</code>,
+  then detect trees with <code>ff.inventories.create_tree_inventory_from_chm_grid</code>.</li>
+</ul>
+<h3 id="before-and-after_4">Before and after<a class="headerlink" href="#before-and-after_4" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">v1</label><label for="__tabbed_5_2">v2</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">Inventories</span><span class="p">,</span> <span class="n">PointClouds</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">point_clouds</span> <span class="o">=</span> <span class="n">PointClouds</span><span class="o">.</span><span class="n">from_domain_id</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">point_cloud</span> <span class="o">=</span> <span class="n">point_clouds</span><span class="o">.</span><span class="n">create_als_point_cloud</span><span class="p">(</span><span class="n">sources</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;3DEP&quot;</span><span class="p">])</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">point_cloud</span><span class="o">.</span><span class="n">wait_until_completed</span><span class="p">()</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">inventories</span> <span class="o">=</span> <span class="n">Inventories</span><span class="o">.</span><span class="n">from_domain_id</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="n">trees</span> <span class="o">=</span> <span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_point_cloud</span><span class="p">()</span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="n">trees</span><span class="o">.</span><span class="n">wait_until_completed</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">point_cloud</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">point_clouds</span><span class="o">.</span><span class="n">create_point_cloud_from_3dep</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">point_cloud</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="n">chm</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_canopy_height_grid_from_point_cloud</span><span class="p">(</span><span class="n">point_cloud</span><span class="p">)</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="n">chm</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="n">trees</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_chm_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">chm</span><span class="p">)</span>
+</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="n">trees</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span></code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="exports">Exports<a class="headerlink" href="#exports" title="Permanent link">&para;</a></h2>
+<p>See the <a href="../exports/">Exports guide</a> and the <a href="../../reference/">Reference</a>.</p>
+<h3 id="what-changed-from-v1_5">What changed from v1<a class="headerlink" href="#what-changed-from-v1_5" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Exports hang off grids and inventories.</strong> v1's <code>domain.export()</code> and
   per-resource <code>create_export</code>/<code>get_export</code> pairs become
@@ -1624,45 +1802,17 @@ not supported. Migrate one workflow at a time, pointing
   <code>ff.list_exports(...)</code> address exports by ID alone, with domain,
   source, and tag filters.</li>
 </ul>
-<h3 id="before-and-after_3">Before and after<a class="headerlink" href="#before-and-after_3" title="Permanent link">&para;</a></h3>
-<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">v1</label><label for="__tabbed_4_2">v2</label></div>
+<h3 id="before-and-after_5">Before and after<a class="headerlink" href="#before-and-after_5" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">v1</label><label for="__tabbed_6_2">v2</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">export</span> <span class="o">=</span> <span class="n">tree_inventory</span><span class="o">.</span><span class="n">create_export</span><span class="p">(</span><span class="s2">&quot;csv&quot;</span><span class="p">)</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">export</span> <span class="o">=</span> <span class="n">export</span><span class="o">.</span><span class="n">wait_until_completed</span><span class="p">()</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">export</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="s2">&quot;trees.csv&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">export</span> <span class="o">=</span> <span class="n">tree_inventory</span><span class="o">.</span><span class="n">create_export</span><span class="p">(</span><span class="s2">&quot;csv&quot;</span><span class="p">)</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">export</span> <span class="o">=</span> <span class="n">export</span><span class="o">.</span><span class="n">wait_until_completed</span><span class="p">()</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">export</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="s2">&quot;trees.csv&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">inventory</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;csv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="s2">&quot;trees.csv&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-</div>
-</div>
-</div>
-<h3 id="before-and-after_4">Before and after<a class="headerlink" href="#before-and-after_4" title="Permanent link">&para;</a></h3>
-<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">v1</label><label for="__tabbed_5_2">v2</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">Inventories</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">inventories</span> <span class="o">=</span> <span class="n">Inventories</span><span class="o">.</span><span class="n">from_domain_id</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">trees</span> <span class="o">=</span> <span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_treemap</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">trees</span><span class="o">.</span><span class="n">wait_until_completed</span><span class="p">()</span>
-</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
-</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">export</span> <span class="o">=</span> <span class="n">trees</span><span class="o">.</span><span class="n">create_export</span><span class="p">(</span><span class="s2">&quot;csv&quot;</span><span class="p">)</span>
-</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="n">export</span><span class="o">.</span><span class="n">wait_until_completed</span><span class="p">()</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="s2">&quot;trees.csv&quot;</span><span class="p">)</span>  <span class="c1"># read the file back</span>
-</span></code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">pim</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_pim_grid_from_treemap</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">pim</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
-</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="n">trees</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_pim_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">pim</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
-</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="n">trees</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
-</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="n">data</span> <span class="o">=</span> <span class="n">trees</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">inventory</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;csv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="s2">&quot;trees.csv&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 </div>
 </div>

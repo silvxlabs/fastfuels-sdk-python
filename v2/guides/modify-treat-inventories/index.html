@@ -824,10 +824,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#remove-trees-inside-buildings" class="md-nav__link">
+  <a href="#remove-trees-inside-features" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Remove trees inside buildings
+        Remove trees inside features
       
     </span>
   </a>
@@ -1093,10 +1093,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#remove-trees-inside-buildings" class="md-nav__link">
+  <a href="#remove-trees-inside-features" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Remove trees inside buildings
+        Remove trees inside features
       
     </span>
   </a>
@@ -1157,12 +1157,15 @@
 <code>modifications=</code> / <code>treatments=</code> argument, or to an inventory you already
 <strong>hold</strong>, via <code>apply_modifications</code> / <code>apply_treatments</code>. This guide covers
 both. For creating and reading inventories in the first place, see
-<a href="../inventories/">Inventories</a>.</p>
+<a href="../inventories/">Tree inventories</a>; for what modifications and treatments do
+to a stand, see
+<a href="https://docs.fastfuels.silvxlabs.com/v2/api/explanation/inventories/#editing-the-stand-modifications-and-treatments">Editing the stand</a>
+in the FastFuels documentation.</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <ul>
 <li>The FastFuels SDK installed: <code>pip install fastfuels-sdk</code></li>
 <li>A FastFuels API key in the <code>FASTFUELS_API_KEY</code> environment variable</li>
-<li>An <a href="../inventories/">inventory</a> (held or being created)</li>
+<li>An <a href="../inventories/">inventory</a>, or the grids to create one</li>
 </ul>
 <h2 id="modifications">Modifications<a class="headerlink" href="#modifications" title="Permanent link">&para;</a></h2>
 <p>A modification is a rule with two parts: <code>conditions</code> (all ANDed — a tree must
@@ -1183,9 +1186,11 @@ attribute on them):</p>
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">ff</span><span class="o">.</span><span class="n">tree_within</span><span class="p">(</span><span class="n">stand</span><span class="p">),</span>
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span>
 </span></code></pre></div>
-<p><code>tree_attribute</code> takes an attribute (<code>"dbh"</code>, <code>"height"</code>,
-<code>"crown_base_height"</code>, <code>"fia_species_code"</code>) and a comparison (<code>"&lt;"</code>, <code>"&lt;="</code>, <code>"&gt;"</code>, <code>"&gt;="</code>, <code>"=="</code>,
-<code>"!="</code>); pass several conditions to AND them. <code>modify_trees</code>'s modifier is
+<p><code>tree_attribute</code> takes an attribute (<code>"dbh"</code> in cm, <code>"height"</code> and
+<code>"crown_base_height"</code> in m, <code>"fia_species_code"</code>, or <code>"tree_id"</code>), a
+comparison (<code>"&lt;"</code>, <code>"&lt;="</code>, <code>"&gt;"</code>, <code>"&gt;="</code>, <code>"=="</code>, <code>"!="</code>), and a value; pass
+<code>unit=</code> to give the value in another unit. Pass several conditions to AND
+them. <code>modify_trees</code>'s modifier is
 <code>"replace"</code>, <code>"add"</code>, <code>"subtract"</code>, <code>"multiply"</code>, or <code>"divide"</code>.</p>
 <h2 id="treatments">Treatments<a class="headerlink" href="#treatments" title="Permanent link">&para;</a></h2>
 <p>A treatment thins to a target. Build one with <code>ff.basal_area_treatment</code>
@@ -1205,10 +1210,9 @@ hand-building the model:</p>
 </span></code></pre></div>
 <p><code>method</code> is <code>"from_below"</code> (smallest first), <code>"from_above"</code> (largest first),
 or — for basal area only — <code>"proportional"</code> (across all size classes).</p>
-<p>The inventory must have every column a treatment reads. Basal-area and
-diameter treatments read <code>dbh</code>. For what each treatment does to a stand, see
-<a href="https://docs.fastfuels.silvxlabs.com/v2/api/explanation/inventories/#editing-the-stand-modifications-and-treatments">Inventories</a>
-in the FastFuels documentation.</p>
+<p>Basal area is in m²/ha and diameter in cm dbh by default; pass <code>unit=</code> to
+use another unit. The inventory must have every column a treatment reads.
+Basal-area and diameter treatments read <code>dbh</code>.</p>
 <h2 id="thin-to-a-crown-spacing">Thin to a crown spacing<a class="headerlink" href="#thin-to-a-crown-spacing" title="Permanent link">&para;</a></h2>
 <p>To thin a stand until every retained crown is at least a given distance from
 its neighbors, crown edge to crown edge, pass the gap in meters to
@@ -1250,9 +1254,11 @@ trees by height and reads the <code>crown_radius</code> column that
 to <a href="#apply-to-an-inventory-you-hold"><code>apply_treatments</code></a>. Any other treatment
 on a CHM inventory raises <code>UnprocessableEntityException</code>.</p>
 <h2 id="apply-at-creation">Apply at creation<a class="headerlink" href="#apply-at-creation" title="Permanent link">&para;</a></h2>
-<p>Every <code>create_tree_inventory_from_*</code> function accepts <code>modifications=</code> and
+<p><code>create_tree_inventory_from_pim_grid</code>, <code>create_tree_inventory_from_pim_chm_fusion</code>,
+and <code>create_tree_inventory_from_chm_grid</code> accept <code>modifications=</code> and
 <code>treatments=</code>; modifications run first, then treatments, while the inventory is
-derived:</p>
+derived. To reshape an uploaded or GDAM-imputed inventory, use the
+<a href="#apply-to-an-inventory-you-hold"><code>apply_*</code> methods</a> once it completes.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">thinned</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_pim_grid</span><span class="p">(</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">domain</span><span class="p">,</span>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">pim</span><span class="p">,</span>
@@ -1278,47 +1284,59 @@ cumulative <code>modifications</code> / <code>treatments</code> list when proces
 <p>Both must be called on a <code>completed</code> inventory. Re-deriving overwrites the
 inventory's data, so to keep the original, <a href="#branch-a-scenario">duplicate</a> it
 first and reshape the copy.</p>
-<h2 id="remove-trees-inside-buildings">Remove trees inside buildings<a class="headerlink" href="#remove-trees-inside-buildings" title="Permanent link">&para;</a></h2>
-<p>To drop the trees that fall inside building footprints, create a
-<a href="../features/#create-a-building-feature-from-overture-maps">building feature</a>
-in the inventory's domain and select the trees with <code>ff.tree_within</code>. A small
-<code>buffer_m</code> also catches stems at the footprint edges:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">buildings</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_building_feature_from_overture</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">chm</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_canopy_height_grid_from_meta</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">ff</span><span class="o">.</span><span class="n">wait_all</span><span class="p">([</span><span class="n">buildings</span><span class="p">,</span> <span class="n">chm</span><span class="p">])</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">trees</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_chm_grid</span><span class="p">(</span>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">domain</span><span class="p">,</span>
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">chm</span><span class="p">,</span>
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="n">modifications</span><span class="o">=</span><span class="p">[</span><span class="n">ff</span><span class="o">.</span><span class="n">remove_trees</span><span class="p">(</span><span class="n">ff</span><span class="o">.</span><span class="n">tree_within</span><span class="p">(</span><span class="n">buildings</span><span class="p">,</span> <span class="n">buffer_m</span><span class="o">=</span><span class="mi">2</span><span class="p">))],</span>
-</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="p">)</span>
-</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="n">trees</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<h2 id="remove-trees-inside-features">Remove trees inside features<a class="headerlink" href="#remove-trees-inside-features" title="Permanent link">&para;</a></h2>
+<p>To drop the trees that fall inside roads, water, or building footprints, pass
+the completed <a href="../features/">features</a> in the PIM, PIM–CHM fusion, or CHM
+creator's <code>feature_masks</code> argument:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">roads</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_road_feature_from_osm</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">water</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_water_feature_from_osm</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">pim</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_pim_grid_from_treemap</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">ff</span><span class="o">.</span><span class="n">wait_all</span><span class="p">([</span><span class="n">roads</span><span class="p">,</span> <span class="n">water</span><span class="p">,</span> <span class="n">pim</span><span class="p">])</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">trees</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_pim_grid</span><span class="p">(</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">domain</span><span class="p">,</span> <span class="n">pim</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="p">[</span><span class="n">roads</span><span class="p">,</span> <span class="n">water</span><span class="p">]</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="p">)</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="n">trees</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </span></code></pre></div>
-<p>To remove them from an inventory you already hold, pass the same rule to
-<code>apply_modifications</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">inventory</span><span class="o">.</span><span class="n">apply_modifications</span><span class="p">(</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="p">[</span><span class="n">ff</span><span class="o">.</span><span class="n">remove_trees</span><span class="p">(</span><span class="n">ff</span><span class="o">.</span><span class="n">tree_within</span><span class="p">(</span><span class="n">buildings</span><span class="p">,</span> <span class="n">buffer_m</span><span class="o">=</span><span class="mi">2</span><span class="p">))]</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="p">)</span>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">inventory</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<p>The masks are applied after any <code>modifications</code> and before any <code>treatments</code>.
+A feature with no geometry — e.g. OpenStreetMap water in a domain without
+any — removes nothing.</p>
+<p>To remove them from an inventory you already hold, call
+<code>apply_feature_masks</code>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">inventory</span><span class="o">.</span><span class="n">apply_feature_masks</span><span class="p">([</span><span class="n">roads</span><span class="p">,</span> <span class="n">water</span><span class="p">])</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">inventory</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span></code></pre></div>
+<p>To widen a feature — e.g. a small buffer around building footprints to catch
+stems at their edges — build the rule with <code>ff.tree_within</code> and
+<code>ff.remove_trees</code> instead:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">buildings</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_building_feature_from_overture</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">chm</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_canopy_height_grid_from_meta</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">ff</span><span class="o">.</span><span class="n">wait_all</span><span class="p">([</span><span class="n">buildings</span><span class="p">,</span> <span class="n">chm</span><span class="p">])</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">trees</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">inventories</span><span class="o">.</span><span class="n">create_tree_inventory_from_chm_grid</span><span class="p">(</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="n">domain</span><span class="p">,</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    <span class="n">chm</span><span class="p">,</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    <span class="n">modifications</span><span class="o">=</span><span class="p">[</span><span class="n">ff</span><span class="o">.</span><span class="n">remove_trees</span><span class="p">(</span><span class="n">ff</span><span class="o">.</span><span class="n">tree_within</span><span class="p">(</span><span class="n">buildings</span><span class="p">,</span> <span class="n">buffer_m</span><span class="o">=</span><span class="mi">2</span><span class="p">))],</span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="p">)</span>
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="n">trees</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </span></code></pre></div>
 <h2 id="branch-a-scenario">Branch a scenario<a class="headerlink" href="#branch-a-scenario" title="Permanent link">&para;</a></h2>
 <p>To compare scenarios — a thinned stand against the original — keep the
 original untouched and work on copies. <code>duplicate</code> makes an independent copy
 under a new ID, byte-copying the finished data rather than re-deriving it, so
 the copy starts identical (same <code>checksum</code>):</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">copy</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">duplicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Thinning scenario&quot;</span><span class="p">)</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">copy</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">copy</span><span class="o">.</span><span class="n">apply_treatments</span><span class="p">([</span><span class="n">ff</span><span class="o">.</span><span class="n">basal_area_treatment</span><span class="p">(</span><span class="s2">&quot;from_below&quot;</span><span class="p">,</span> <span class="mf">25.0</span><span class="p">)])</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">copy</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">copy</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">duplicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Thinning scenario&quot;</span><span class="p">)</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">copy</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">copy</span><span class="o">.</span><span class="n">apply_treatments</span><span class="p">([</span><span class="n">ff</span><span class="o">.</span><span class="n">basal_area_treatment</span><span class="p">(</span><span class="s2">&quot;from_below&quot;</span><span class="p">,</span> <span class="mf">25.0</span><span class="p">)])</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">copy</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </span></code></pre></div>
-<p>The <code>checksum</code> is a version marker for an inventory's content: it changes each
-time the data is rebuilt and is unaffected by metadata-only edits, so an
-identical checksum means identical trees.</p>
+<p>See <a href="../inventories/#duplicate-an-inventory">Duplicate an inventory</a> for how
+<code>checksum</code> tracks an inventory's content.</p>
 <h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Create and read inventories — see <a href="../inventories/">Inventories</a></li>
+<li>Create and read inventories — see <a href="../inventories/">Tree inventories</a></li>
 <li>Voxelize a reshaped inventory into a 3D fuel grid — see
-  <a href="../inventories/#voxelize-into-a-3d-fuel-grid">Inventories</a></li>
+  <a href="../inventories/#voxelize-into-a-3d-fuel-grid">Voxelize into a 3D fuel grid</a></li>
 <li>Full signatures — see the <a href="../../reference/">Reference</a></li>
 </ul>
 

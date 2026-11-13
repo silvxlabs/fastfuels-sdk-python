@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#welcome-to-the-fastfuels-python-sdk-documentation" class="md-skip">
+        <a href="#fastfuels-python-sdk" class="md-skip">
           Skip to content
         </a>
       
@@ -331,28 +331,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-is-fastfuels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What is FastFuels?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-the-fastfuels-python-sdk" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What is the FastFuels Python SDK?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -364,10 +342,32 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#using-the-v2-sdk" class="md-nav__link">
     <span class="md-ellipsis">
       
         Using the v2 SDK
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-these-docs-are-organized" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How these docs are organized
       
     </span>
   </a>
@@ -934,28 +934,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-is-fastfuels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What is FastFuels?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-the-fastfuels-python-sdk" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What is the FastFuels Python SDK?
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -967,10 +945,32 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#using-the-v2-sdk" class="md-nav__link">
     <span class="md-ellipsis">
       
         Using the v2 SDK
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-these-docs-are-organized" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How these docs are organized
       
     </span>
   </a>
@@ -997,7 +997,7 @@
   
 
 
-<h1 id="welcome-to-the-fastfuels-python-sdk-documentation">Welcome to the FastFuels Python SDK Documentation!<a class="headerlink" href="#welcome-to-the-fastfuels-python-sdk-documentation" title="Permanent link">&para;</a></h1>
+<h1 id="fastfuels-python-sdk">FastFuels Python SDK<a class="headerlink" href="#fastfuels-python-sdk" title="Permanent link">&para;</a></h1>
 <div class="admonition note">
 <p class="admonition-title">v2 SDK</p>
 <p>You are reading the documentation for the <strong>v2 SDK</strong>, which targets
@@ -1005,35 +1005,54 @@ the FastFuels v2 API. The v1 SDK remains the default — switch
 versions with the selector in the header. Import v2 explicitly from
 <code>fastfuels_sdk.v2</code>.</p>
 </div>
-<h2 id="what-is-fastfuels">What is FastFuels?<a class="headerlink" href="#what-is-fastfuels" title="Permanent link">&para;</a></h2>
-<p>FastFuels is a cloud-based platform for generating forest inventory data. It
-uses a combination of satellite imagery and machine learning to generate
-tabular tree data and voxelized 3D fuel models. These data products can be used
-to support wildfire risk assessment, fire behavior modeling, and other
-applications.</p>
-<p>The <a href="https://docs.fastfuels.silvxlabs.com">FastFuels documentation</a> covers
-the platform itself: the web application, the HTTP API, and explanations of
-the core concepts (domains, grids, inventories, features). This site covers
-how to work with FastFuels from Python.</p>
-<h2 id="what-is-the-fastfuels-python-sdk">What is the FastFuels Python SDK?<a class="headerlink" href="#what-is-the-fastfuels-python-sdk" title="Permanent link">&para;</a></h2>
-<p>The FastFuels Python SDK is a Python package that provides a convenient
-interface for interacting with the FastFuels API. It can be used to create and
-manage FastFuels resources. It can also be used to download and process
-generated data products.</p>
+<p>The FastFuels Python SDK is the Python interface to the FastFuels API. Use it
+to create domains, grids, tree inventories, features, and point clouds; to
+read their data into NumPy, pandas, GeoPandas, and xarray; and to export
+files for fire behavior models such as QUIC-Fire and FlamMap.</p>
+<p>This site covers working with FastFuels from Python. The
+<a href="https://docs.fastfuels.silvxlabs.com">FastFuels documentation</a> covers the
+platform itself — the web application, the HTTP API, and explanations of the
+core concepts. Start with
+<a href="https://docs.fastfuels.silvxlabs.com/v2/api/explanation/introduction/">Introduction</a>
+for an overview.</p>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<p>The FastFuels Python SDK can be installed using <code>pip</code>:</p>
+<p>Install the SDK with <code>pip</code>:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>fastfuels-sdk
 </span></code></pre></div>
+<h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
+<p>The SDK reads your API key from the <code>FASTFUELS_API_KEY</code> environment variable:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">FASTFUELS_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-api-key&quot;</span>
+</span></code></pre></div>
+<p>To set the key in code instead, call <code>set_api_key</code> before any other call:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">ff</span><span class="o">.</span><span class="n">set_api_key</span><span class="p">(</span><span class="s2">&quot;your-api-key&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<p>The SDK authenticates with an existing API key. Create, rotate, and revoke
+keys in the FastFuels console.</p>
 <h2 id="using-the-v2-sdk">Using the v2 SDK<a class="headerlink" href="#using-the-v2-sdk" title="Permanent link">&para;</a></h2>
 <p>The v1 and v2 APIs are separate live services, and the SDK ships both as
 versioned subpackages, so you can use them side by side during migration:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v1</span><span class="w"> </span><span class="kn">import</span> <span class="n">Domain</span>   <span class="c1"># v1 (current default)</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="kn">import</span> <span class="n">Domain</span>   <span class="c1"># v2</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v1</span><span class="w"> </span><span class="kn">import</span> <span class="n">Domain</span>   <span class="c1"># v1 (current default)</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="kn">import</span> <span class="n">Domain</span>   <span class="c1"># v2</span>
 </span></code></pre></div>
 <p>Coming from v1? Start with <a href="guides/migration/">Migrating from v1</a>.</p>
-<p>The SDK authenticates with an existing API key. Creating applications and
-creating, rotating, or revoking keys are account-management operations handled
-outside the high-level Python SDK through the FastFuels console.</p>
+<h2 id="how-these-docs-are-organized">How these docs are organized<a class="headerlink" href="#how-these-docs-are-organized" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="tutorials/export_to_quicfire/">Tutorial</a></strong> — build a complete set of
+  QUIC-Fire inputs from scratch, end to end.</li>
+<li><strong>How-to guides</strong> — task-focused instructions for each resource:
+  <a href="guides/domains/">domains</a>, <a href="guides/features/">features</a>,
+  <a href="guides/creating-grids/">creating</a>,
+  <a href="guides/composing-grids/">composing</a>, and
+  <a href="guides/working-with-grids/">working with</a> grids,
+  <a href="guides/inventories/">tree inventories</a>,
+  <a href="guides/modify-treat-inventories/">modifications and treatments</a>,
+  <a href="guides/point-clouds/">point clouds</a>, <a href="guides/exports/">exports</a>, and
+  <a href="guides/quotas/">quotas</a>.</li>
+<li><strong><a href="reference/">Reference</a></strong> — every public function, class, and
+  exception, generated from the source.</li>
+</ul>
 
 
 

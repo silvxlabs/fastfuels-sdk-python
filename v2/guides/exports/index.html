@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#how-to-export-data-from-fastfuels-sdk" class="md-skip">
+        <a href="#how-to-export-data" class="md-skip">
           Skip to content
         </a>
       
@@ -1111,17 +1111,15 @@
   
 
 
-<h1 id="how-to-export-data-from-fastfuels-sdk">How to Export Data from FastFuels SDK<a class="headerlink" href="#how-to-export-data-from-fastfuels-sdk" title="Permanent link">&para;</a></h1>
-<p>An export packages a resource's data into a downloadable file: a
-<a href="../working-with-grids/">grid</a> as GeoTIFF/NetCDF/zarr, an
-<a href="../inventories/">inventory</a> as Parquet/CSV/GeoJSON/GeoPackage, or several
-grids assembled into a fire-behavior landscape or QUIC-Fire-loadable archive.
-Exports run as background jobs and expose a signed download URL on completion.</p>
-<p>The pattern is the same everywhere: exporting a resource you <strong>hold</strong> is a
-method on it (<code>grid.export(...)</code>, <code>inventory.export(...)</code>); the QUIC-Fire
-bundle and landscape are <strong>assembled from many</strong> grids, so they are
-module-level functions (<code>ff.exports.create_quicfire_export(...)</code> and
-<code>ff.exports.create_landscape_export(...)</code>).</p>
+<h1 id="how-to-export-data">How to Export Data<a class="headerlink" href="#how-to-export-data" title="Permanent link">&para;</a></h1>
+<p>This guide shows how to package FastFuels data into downloadable files: a
+<a href="../working-with-grids/">grid</a> as GeoTIFF, NetCDF, or Zarr; an
+<a href="../inventories/">inventory</a> as Parquet, CSV, GeoJSON, or GeoPackage; or
+several grids assembled into a fire-behavior landscape or a QUIC-Fire
+archive. Export a single resource with its <code>export</code> method; assemble a
+landscape or QUIC-Fire archive from several grids with the functions in
+<code>ff.exports</code>. Every export runs as a background job and exposes a signed
+download URL when it completes.</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <ul>
 <li>The FastFuels SDK installed: <code>pip install fastfuels-sdk</code></li>
@@ -1139,8 +1137,8 @@ module-level functions (<code>ff.exports.create_quicfire_export(...)</code> and
 </span></code></pre></div>
 <p><code>grid.export</code> returns a pending <a href="#work-with-an-export-you-hold"><code>Export</code></a>;
 <code>wait()</code> blocks until the file is packaged, and <code>to_file</code> streams it to
-disk. GeoTIFF applies to 2D grids; export 3D voxel grids as <code>"netcdf"</code> or
-<code>"zarr"</code>. Pass <code>bands=</code> to export a subset of the grid's bands.</p>
+disk and returns its path. GeoTIFF applies to 2D grids; export 3D voxel
+grids as <code>"netcdf"</code> or <code>"zarr"</code>. Pass <code>bands=</code> to export a subset of the grid's bands.</p>
 <p>If <code>to_file</code> is given an existing directory, the file lands inside it
 under the export's default filename:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">export</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="s2">&quot;outputs/&quot;</span><span class="p">)</span>
@@ -1201,14 +1199,16 @@ produce <code>treesrhof.dat</code>, <code>treesmoist.dat</code>, and <code>trees
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="p">[</span><span class="s1">&#39;domain.geojson&#39;</span><span class="p">,</span> <span class="s1">&#39;metadata.json&#39;</span><span class="p">,</span> <span class="s1">&#39;treesfueldepth.dat&#39;</span><span class="p">,</span> <span class="s1">&#39;treesmoist.dat&#39;</span><span class="p">,</span> <span class="s1">&#39;treesrhof.dat&#39;</span><span class="p">]</span>
 </span></code></pre></div>
 <p>Here <code>voxels</code> is a <a href="../inventories/#voxelize-into-a-3d-fuel-grid">3D tree fuel grid</a>
-carrying bulk density and moisture bands, and <code>surface</code> is any 2D grid
-carrying the surface roles (the example above pairs naturally with a
-<a href="../creating-grids/#uniform-grids">uniform grid</a> or an
-<a href="../creating-grids/#surface-fuel-model-grids">FBFM40 lookup grid</a>, whose
-<code>fuel_load.fine_dead</code> band is the surface fuel load). For an
-end-to-end walkthrough that builds all of these grids from real data sources
-and bundles them, follow the
-<a href="../../tutorials/export_to_quicfire/">Export QUIC-Fire inputs tutorial</a>.</p>
+carrying bulk density and moisture bands, and <code>surface</code> is a 2D grid carrying
+fuel load, depth, and moisture bands — for example a
+<a href="../creating-grids/#uniform-grids">uniform grid</a> with <code>fuel_load.1hr</code>,
+<code>fuel_depth</code>, and <code>fuel_moisture.1hr</code>. Each role names its own grid, so the
+roles can come from different grids: the
+<a href="../../tutorials/export_to_quicfire/">Export QUIC-Fire inputs tutorial</a> takes
+surface load and depth from an
+<a href="../creating-grids/#look-up-fuel-parameters-from-fbfm40-codes">FBFM40 lookup grid</a>
+(<code>fuel_load.fine_dead</code>, <code>fuel_depth</code>) and surface moisture from a uniform
+grid.</p>
 <p>Two optional roles extend the bundle: <code>topography=(grid, "elevation")</code>
 adds <code>topo.dat</code>, and the SAVR pair (<code>canopy_savr=</code> + <code>surface_savr=</code>,
 both or neither) adds <code>treesss.dat</code>.</p>
@@ -1263,7 +1263,7 @@ file.</p>
 <ul>
 <li>Build the grids that feed an export — see
   <a href="../creating-grids/">Creating grids</a> and
-  <a href="../inventories/">Inventories</a></li>
+  <a href="../inventories/">Tree inventories</a></li>
 <li>Full signatures — see the <a href="../../reference/">Reference</a></li>
 </ul>
 

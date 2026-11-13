@@ -1002,16 +1002,19 @@
 
 
 <h1 id="how-to-check-usage-and-handle-quota-rejections">How to Check Usage and Handle Quota Rejections<a class="headerlink" href="#how-to-check-usage-and-handle-quota-rejections" title="Permanent link">&para;</a></h1>
+<p>This guide shows how to inspect the limits and usage of the account behind
+your API key and how to handle quota rejections from SDK resource creators.
+For how quotas and resource retention work, see
+<a href="https://docs.fastfuels.silvxlabs.com/v2/api/explanation/quotas/">About quotas</a>
+in the FastFuels documentation.</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <ul>
 <li>The FastFuels SDK installed: <code>pip install fastfuels-sdk</code></li>
 <li>A FastFuels API key in the <code>FASTFUELS_API_KEY</code> environment variable</li>
 </ul>
-<p>Use this guide to inspect the current owner's limits and usage and to handle
-quota rejections from SDK resource creators.</p>
 <h2 id="check-your-limits">Check your limits<a class="headerlink" href="#check-your-limits" title="Permanent link">&para;</a></h2>
-<p>Call <code>get_quotas</code> to retrieve the limits resolved for the owner authenticated
-by the current API key:</p>
+<p>To retrieve the limits that apply to the account behind the current API key,
+call <code>get_quotas</code>:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">quotas</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">get_quotas</span><span class="p">()</span>
@@ -1021,7 +1024,7 @@ by the current API key:</p>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">quotas</span><span class="o">.</span><span class="n">max_grid_storage_bytes</span><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="check-your-current-usage">Check your current usage<a class="headerlink" href="#check-your-current-usage" title="Permanent link">&para;</a></h2>
-<p>Call <code>get_usage</code> to compare current usage with the corresponding limits:</p>
+<p>To compare current usage with the corresponding limits, call <code>get_usage</code>:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">usage</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">get_usage</span><span class="p">()</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">usage</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">active</span><span class="o">.</span><span class="n">usage</span><span class="p">,</span> <span class="n">usage</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">active</span><span class="o">.</span><span class="n">limit</span><span class="p">)</span>
@@ -1032,15 +1035,15 @@ by the current API key:</p>
 <code>usage.applications</code>, and <code>usage.api_keys</code>. The active, total, and storage
 fields are also available for exports, inventories, features, and point
 clouds.</p>
-<p>Inspect <code>usage.lifecycle</code> for the resource-retention policy currently applied
-to the owner:</p>
+<p>To see the resource-retention policy applied to the account, inspect
+<code>usage.lifecycle</code>:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">usage</span><span class="o">.</span><span class="n">lifecycle</span><span class="o">.</span><span class="n">resource_ttl_days</span><span class="p">)</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">usage</span><span class="o">.</span><span class="n">lifecycle</span><span class="o">.</span><span class="n">failed_resource_ttl_days</span><span class="p">)</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">usage</span><span class="o">.</span><span class="n">lifecycle</span><span class="o">.</span><span class="n">next_expiry_on</span><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="handle-a-quota-rejection">Handle a quota rejection<a class="headerlink" href="#handle-a-quota-rejection" title="Permanent link">&para;</a></h2>
-<p>Catch <code>QuotaExceededException</code> around any operation that creates or re-derives
-a resource:</p>
+<p>To handle a rejection, catch <code>QuotaExceededException</code> around any operation
+that creates or re-derives a resource:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuotaExceededException</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>

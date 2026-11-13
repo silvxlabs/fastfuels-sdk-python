@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#fastfuels_sdk.v2.domains" class="md-skip">
+        <a href="#reference" class="md-skip">
           Skip to content
         </a>
       
@@ -802,6 +802,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
@@ -843,6 +845,8 @@
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
+  
+    
   
   
     <label class="md-nav__title" for="__toc">
@@ -1494,6 +1498,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#fastfuels_sdk.v2.grids.Grid.apply_feature_masks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        apply_feature_masks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#fastfuels_sdk.v2.grids.Grid.export" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2005,6 +2020,17 @@
     <span class="md-ellipsis">
       
         apply_modifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fastfuels_sdk.v2.inventories.Inventory.apply_feature_masks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        apply_feature_masks
       
     </span>
   </a>
@@ -3036,6 +3062,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -3686,6 +3714,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#fastfuels_sdk.v2.grids.Grid.apply_feature_masks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        apply_feature_masks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#fastfuels_sdk.v2.grids.Grid.export" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4197,6 +4236,17 @@
     <span class="md-ellipsis">
       
         apply_modifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fastfuels_sdk.v2.inventories.Inventory.apply_feature_masks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        apply_feature_masks
       
     </span>
   </a>
@@ -5223,7 +5273,13 @@
   
 
 
-  <h1>Reference</h1>
+<h1 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h1>
+<p>Every public function, class, and exception in <code>fastfuels_sdk.v2</code>, grouped by
+module. Import the package as <code>import fastfuels_sdk.v2 as ff</code>. Resource
+classes (<code>ff.Grid</code>, <code>ff.Inventory</code>, …), their <code>get_*</code> and <code>list_*</code> helpers,
+and the modification and treatment builders are also exported at the top
+level; creators stay in their modules (<code>ff.grids.create_*</code>).</p>
+
 
 <div class="doc doc-object doc-module">
 
@@ -13211,6 +13267,120 @@ that rewrite band values for the matching cells.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="fastfuels_sdk.v2.grids.Grid.apply_feature_masks" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">apply_feature_masks</span>
+
+
+<a href="#fastfuels_sdk.v2.grids.Grid.apply_feature_masks" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">apply_feature_masks</span><span class="p">(</span><span class="n">feature_masks</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Mask features out of this grid as non-burnable, in place.</p>
+<p>Each feature becomes a modification rule applied as in
+:meth:<code>apply_modifications</code>: cells whose centers fall within the
+feature get the value of non-burnable ground in every band that has
+one. Fuel model codes (<code>fbfm</code>, <code>fbfm13</code>) become 98 (NB8, open
+water) for water features and 91 (NB1, urban/developed) for all
+others; FCCS fuelbeds (<code>fccs</code>) become 0 (bare ground); fuel load,
+fuel depth, SAVR, and canopy bands (<code>cbd</code>, <code>cbh</code>, <code>cc</code>, <code>chm</code>)
+become 0. Other bands, such as moisture and topography, are unchanged.
+The grid returns to "pending" status, so call :meth:<code>wait</code> before
+using its data.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the grid's domain. A feature
+with no geometry masks nothing.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Grid&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v2.grids.Grid&lt;/code&gt;)" href="#fastfuels_sdk.v2.grids.Grid">Grid</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>self</code>, updated (so calls chain).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the grid is not completed, or none of its bands has a
+non-burnable value.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">grid</span><span class="o">.</span><span class="n">apply_feature_masks</span><span class="p">([</span><span class="n">roads</span><span class="p">,</span> <span class="n">water</span><span class="p">])</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span></code></pre></div>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="fastfuels_sdk.v2.grids.Grid.export" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">export</span>
 
@@ -14231,7 +14401,7 @@ keys). Defaults to all.</p>
 
 
 <a href="#fastfuels_sdk.v2.grids.create_canopy_fuel_grid_from_landfire" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_canopy_fuel_grid_from_landfire</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">bands</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_canopy_fuel_grid_from_landfire</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">bands</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14440,6 +14610,25 @@ their string keys). Defaults to all.</p>
             <td>
               <div class="doc-md-description">
                 <p>Modification rules applied after the grid is built.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the grid's domain to mask out as
+non-burnable: cells whose centers fall within any of them have every
+canopy band set to 0. A feature with no geometry masks nothing. Applied
+after <code>modifications</code>.</p>
               </div>
             </td>
             <td>
@@ -15005,7 +15194,7 @@ unknown.</p>
 
 
 <a href="#fastfuels_sdk.v2.grids.create_canopy_height_grid_from_meta" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_canopy_height_grid_from_meta</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_canopy_height_grid_from_meta</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -15201,6 +15390,25 @@ current version.</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the grid's domain to mask out as
+non-burnable: cells whose centers fall within any of them have <code>chm</code>
+set to 0. A feature with no geometry masks nothing. Applied after
+<code>modifications</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -15240,7 +15448,7 @@ current version.</p>
 
 
 <a href="#fastfuels_sdk.v2.grids.create_canopy_height_grid_from_naip_chm" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_canopy_height_grid_from_naip_chm</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_canopy_height_grid_from_naip_chm</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -15429,6 +15637,25 @@ is 0.6 m; coarser outputs are resampled.</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the grid's domain to mask out as
+non-burnable: cells whose centers fall within any of them have <code>chm</code>
+set to 0. A feature with no geometry masks nothing. Applied after
+<code>modifications</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -15477,7 +15704,7 @@ https://doi.org/10.64898/2025.12.12.694075</p>
 
 
 <a href="#fastfuels_sdk.v2.grids.create_canopy_height_grid_from_point_cloud" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_canopy_height_grid_from_point_cloud</span><span class="p">(</span><span class="n">point_cloud</span><span class="p">:</span> <span class="n">PointCloud</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aggregation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">percentile</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">spike_filter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_canopy_height_grid_from_point_cloud</span><span class="p">(</span><span class="n">point_cloud</span><span class="p">:</span> <span class="n">PointCloud</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">aggregation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">percentile</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">spike_filter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -15680,6 +15907,25 @@ sets custom thresholds.</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the grid's domain to mask out as
+non-burnable: cells whose centers fall within any of them have <code>chm</code>
+set to 0. A feature with no geometry masks nothing. Applied after
+<code>modifications</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -15744,7 +15990,7 @@ aggregation and percentile arguments are inconsistent.</p>
 
 
 <a href="#fastfuels_sdk.v2.grids.create_fuel_model_grid_from_landfire_fbfm13" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_model_grid_from_landfire_fbfm13</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_non_burnable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">boundary_scatter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">disturbance</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_model_grid_from_landfire_fbfm13</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_non_burnable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">boundary_scatter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">disturbance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -15980,6 +16226,26 @@ nearest-neighbor resampling. <code>None</code> (default) disables scatter.
           </tr>
           <tr class="doc-section-item">
             <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the grid's domain to mask out as
+non-burnable: cells whose centers fall within any of them get
+<code>fbfm13</code> 98 (NB8, open water) for water features and 91 (NB1,
+urban/developed) for all others. A feature with no geometry masks
+nothing. Applied after <code>modifications</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>disturbance</code>
             </td>
             <td>
@@ -16072,7 +16338,7 @@ the newest release already fully covers the domain.</p>
 
 
 <a href="#fastfuels_sdk.v2.grids.create_fuel_model_grid_from_landfire_fbfm40" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_model_grid_from_landfire_fbfm40</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">season</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_non_burnable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">boundary_scatter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">disturbance</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_model_grid_from_landfire_fbfm40</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">season</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_non_burnable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">boundary_scatter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">disturbance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -16330,6 +16596,26 @@ nearest-neighbor resampling. <code>None</code> (default) disables scatter.
           </tr>
           <tr class="doc-section-item">
             <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the grid's domain to mask out as
+non-burnable: cells whose centers fall within any of them get <code>fbfm</code>
+98 (NB8, open water) for water features and 91 (NB1, urban/developed)
+for all others. A feature with no geometry masks nothing. Applied after
+<code>modifications</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>disturbance</code>
             </td>
             <td>
@@ -16422,7 +16708,7 @@ the newest release already fully covers the domain.</p>
 
 
 <a href="#fastfuels_sdk.v2.grids.create_fuel_model_grid_from_landfire_fccs" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_model_grid_from_landfire_fccs</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_bare_ground</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">boundary_scatter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">disturbance</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_model_grid_from_landfire_fccs</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remove_bare_ground</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">boundary_scatter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">align_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">align</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">resampling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">extent_buffer_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">disturbance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -16649,6 +16935,25 @@ nearest-neighbor resampling. <code>None</code> (default) disables scatter.
             <td>
               <div class="doc-md-description">
                 <p>Modification rules applied after the grid is built.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the grid's domain to mask out as
+non-burnable: cells whose centers fall within any of them get <code>fccs</code>
+0 (bare ground). A feature with no geometry masks nothing. Applied
+after <code>modifications</code>.</p>
               </div>
             </td>
             <td>
@@ -17581,7 +17886,7 @@ to block until the uploaded file is processed.</p>
 
 
 <a href="#fastfuels_sdk.v2.grids.create_uniform_grid" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_uniform_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">resolution_m</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">bands</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_uniform_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">resolution_m</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">bands</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -17645,8 +17950,8 @@ resolution).</p>
             <td>
               <div class="doc-md-description">
                 <p>Mapping of band key to constant value, e.g.
-<code>{"fuel_load": 0.5, "fuel_moisture": 15.0}</code>. Keys must be valid
-<code>UniformBand</code> values.</p>
+<code>{"fuel_load.1hr": 0.5, "fuel_moisture.1hr": 15.0}</code>. Keys must be
+valid <code>UniformBand</code> values.</p>
               </div>
             </td>
             <td>
@@ -17717,6 +18022,26 @@ resolution).</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the grid's domain to mask out as
+non-burnable: cells whose centers fall within any of them have their
+fuel load and fuel depth bands set to 0; moisture and curing bands are
+unchanged. A feature with no geometry masks nothing. Applied after
+<code>modifications</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -17737,6 +18062,31 @@ resolution).</p>
             <td>
               <div class="doc-md-description">
                 <p>The created Grid object (job status "pending" or "running").</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If a <code>bands</code> key is not a valid <code>UniformBand</code> value, or if
+<code>feature_masks</code> is given and <code>bands</code> has no fuel load or fuel
+depth band.</p>
               </div>
             </td>
           </tr>
@@ -17966,7 +18316,7 @@ outputs are empty or duplicated.</p>
 
 
 <a href="#fastfuels_sdk.v2.grids.create_fuel_grid_from_fccs_lookup" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_grid_from_fccs_lookup</span><span class="p">(</span><span class="n">source_grid</span><span class="p">:</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">bands</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">source_band</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;fccs&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_grid_from_fccs_lookup</span><span class="p">(</span><span class="n">source_grid</span><span class="p">:</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">bands</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">source_band</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;fccs&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18100,6 +18450,25 @@ string keys such as <code>"fuel_load.duff"</code>, <code>"duff_depth"</code>, an
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the grid's domain to mask out as
+non-burnable: cells whose centers fall within any of them have every
+band set to 0. A feature with no geometry masks nothing. Applied after
+<code>modifications</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -18162,7 +18531,7 @@ string keys such as <code>"fuel_load.duff"</code>, <code>"duff_depth"</code>, an
 
 
 <a href="#fastfuels_sdk.v2.grids.create_fuel_grid_from_fbfm13_lookup" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_grid_from_fbfm13_lookup</span><span class="p">(</span><span class="n">source_grid</span><span class="p">:</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">bands</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">source_band</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;fbfm13&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_grid_from_fbfm13_lookup</span><span class="p">(</span><span class="n">source_grid</span><span class="p">:</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">bands</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">source_band</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;fbfm13&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18296,6 +18665,25 @@ string keys such as <code>"fuel_load.1hr"</code> and <code>"fuel_depth"</code>).
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the grid's domain to mask out as
+non-burnable: cells whose centers fall within any of them have every
+band set to 0. A feature with no geometry masks nothing. Applied after
+<code>modifications</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -18358,7 +18746,7 @@ string keys such as <code>"fuel_load.1hr"</code> and <code>"fuel_depth"</code>).
 
 
 <a href="#fastfuels_sdk.v2.grids.create_fuel_grid_from_fbfm40_lookup" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_grid_from_fbfm40_lookup</span><span class="p">(</span><span class="n">source_grid</span><span class="p">:</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">bands</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">source_band</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;fbfm&#39;</span><span class="p">,</span> <span class="n">herbaceous_curing</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.67</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_fuel_grid_from_fbfm40_lookup</span><span class="p">(</span><span class="n">source_grid</span><span class="p">:</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">bands</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">source_band</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;fbfm&#39;</span><span class="p">,</span> <span class="n">herbaceous_curing</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.67</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Grid</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18514,6 +18902,25 @@ from a live herbaceous moisture content <code>M</code> (%), pass
             <td>
               <div class="doc-md-description">
                 <p>Modification rules applied after the grid is built.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the grid's domain to mask out as
+non-burnable: cells whose centers fall within any of them have every
+band set to 0. A feature with no geometry masks nothing. Applied after
+<code>modifications</code>.</p>
               </div>
             </td>
             <td>
@@ -21213,6 +21620,112 @@ replace — to the matching rows.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="fastfuels_sdk.v2.inventories.Inventory.apply_feature_masks" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">apply_feature_masks</span>
+
+
+<a href="#fastfuels_sdk.v2.inventories.Inventory.apply_feature_masks" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">apply_feature_masks</span><span class="p">(</span><span class="n">feature_masks</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Remove the trees located within features, in place.</p>
+<p>Each feature becomes a remove-trees rule applied as in
+:meth:<code>apply_modifications</code>. The inventory returns to "pending"
+status, so call :meth:<code>wait</code> before using its data.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the inventory's domain. A
+feature with no geometry masks nothing.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="&lt;span class=&quot;doc doc-object-name doc-class-name&quot;&gt;Inventory&lt;/span&gt; (&lt;code&gt;fastfuels_sdk.v2.inventories.Inventory&lt;/code&gt;)" href="#fastfuels_sdk.v2.inventories.Inventory">Inventory</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>self</code>, updated (so calls chain).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the inventory is not completed.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">inventory</span><span class="o">.</span><span class="n">apply_feature_masks</span><span class="p">([</span><span class="n">roads</span><span class="p">,</span> <span class="n">water</span><span class="p">])</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</span></code></pre></div>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="fastfuels_sdk.v2.inventories.Inventory.apply_treatments" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">apply_treatments</span>
 
@@ -22449,7 +22962,7 @@ contains no trees.</p>
 
 
 <a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_from_pim_grid" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_from_pim_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">pim_grid</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">point_process</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">treatments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_from_pim_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">pim_grid</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">point_process</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">treatments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -22605,6 +23118,25 @@ expansion.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the inventory's domain; trees
+located within any of them are removed. A feature with no geometry
+masks nothing. Applied after <code>modifications</code> and before
+<code>treatments</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>treatments</code>
             </td>
             <td>
@@ -22670,7 +23202,7 @@ expansion.</p>
 
 
 <a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_from_chm_grid" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_from_chm_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">chm_grid</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">treatments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">crown_segmentation</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_from_chm_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">chm_grid</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">treatments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">crown_segmentation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -22810,6 +23342,25 @@ and <code>crown_offset=3.0</code>: the search window diameter in meters is
               <div class="doc-md-description">
                 <p>Modification rules (<code>InventoryModification</code>) applied after stem
 isolation.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the inventory's domain; trees
+located within any of them are removed. A feature with no geometry
+masks nothing. Applied after <code>modifications</code> and before
+<code>treatments</code>.</p>
               </div>
             </td>
             <td>
@@ -22960,7 +23511,7 @@ than 2 m, or a treatment reads a column the inventory does not have.</p>
 
 
 <a href="#fastfuels_sdk.v2.inventories.create_tree_inventory_from_pim_chm_fusion" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_from_pim_chm_fusion</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">pim_grid</span><span class="p">,</span> <span class="n">chm_grid</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">point_process</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">treatments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create_tree_inventory_from_pim_chm_fusion</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">pim_grid</span><span class="p">,</span> <span class="n">chm_grid</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">point_process</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">modifications</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">treatments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feature_masks</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Inventory</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -23155,6 +23706,25 @@ the PIM cell.</p>
               <div class="doc-md-description">
                 <p>Modification rules (<code>InventoryModification</code>) applied after
 expansion.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>feature_masks</code>
+            </td>
+            <td>
+                  <code>Feature, str, or list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Completed features (or their ids) in the inventory's domain; trees
+located within any of them are removed. A feature with no geometry
+masks nothing. Applied after <code>modifications</code> and before
+<code>treatments</code>.</p>
               </div>
             </td>
             <td>
@@ -28113,10 +28683,9 @@ access.</p>
 <p>Modification primitives for grids and tree inventories.</p>
 <p>A modification is a rule applied to a resource: it pairs <em>conditions</em> (spatial
 or value tests, all ANDed) with <em>actions</em> applied to whatever the conditions
-select. <code>mask</code> builds a grid modification (the v2 replacement for v1's
-<code>feature_masks</code>); <code>tree_attribute</code> / <code>tree_within</code> / <code>remove_trees</code> /
-<code>modify_trees</code> build inventory modifications so callers don't hand-assemble
-the generated models.</p>
+select. <code>mask</code> builds a grid modification; <code>tree_attribute</code> /
+<code>tree_within</code> / <code>remove_trees</code> / <code>modify_trees</code> build inventory
+modifications so callers don't hand-assemble the generated models.</p>
 
 
 
@@ -28246,9 +28815,8 @@ belong to the same domain as the grid being modified.</p>
             <td>
               <div class="doc-md-description">
                 <p>Buffer applied to the feature geometry, in meters in the domain's
-projected CRS, before testing. Linestring features such as roads
-usually need a buffer — or <code>target="cell"</code> — to catch the cells they
-cross. Defaults to no buffer.</p>
+projected CRS, before testing (e.g. to widen a road corridor).
+Defaults to no buffer.</p>
               </div>
             </td>
             <td>
@@ -28265,8 +28833,10 @@ cross. Defaults to no buffer.</p>
             <td>
               <div class="doc-md-description">
                 <p>Which part of each grid cell is tested against the geometry. Defaults
-to the API default (<code>"centroid"</code>). Use <code>"cell"</code> to select every
-cell a geometry touches.</p>
+to the API default (<code>"centroid"</code>). Use <code>"cell"</code> with
+<code>operator="intersects"</code> to select every cell a geometry touches;
+with <code>operator="within"</code>, <code>"cell"</code> selects only cells lying
+entirely inside the geometry.</p>
               </div>
             </td>
             <td>
@@ -28301,8 +28871,7 @@ cell a geometry touches.</p>
 
 
 <p><span class="doc-section-title">Examples:</span></p>
-    <p>Mask roads to a non-burnable fuel model code, buffering the linestrings so
-they cover whole cells:</p>
+    <p>Mask roads, widened by 5 m, to a non-burnable fuel model code:</p>
     <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">roads</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">create_road_feature_from_osm</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">roads</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
