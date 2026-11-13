@@ -126,13 +126,8 @@ class TestModifyTrees:
             modify_trees("height", "remove", 0, tree_attribute("dbh", ">", 0))
 
 
-def _feature(feature_id, feature_type, total_features=1):
-    metadata = SimpleNamespace(total_features=total_features)
-    return SimpleNamespace(
-        id=feature_id,
-        type_=FeatureType(feature_type),
-        get_data_metadata=lambda: metadata,
-    )
+def _feature(feature_id, feature_type):
+    return SimpleNamespace(id=feature_id, type_=FeatureType(feature_type))
 
 
 class TestGridFeatureMasks:
@@ -199,37 +194,25 @@ class TestGridFeatureMasks:
         assert fetched == [("domain-id", "feat-1")]
         assert rule.to_dict()["actions"][0]["value"] == 98
 
-    def test_empty_feature_skipped(self):
-        # An empty feature masks nothing (the API would fail the job on it)
-        rules = _grid_feature_masks(
-            [_feature("w", "water", total_features=0), _feature("r", "road")],
-            ["fbfm"],
-            "d",
-        )
-        assert [r.to_dict()["conditions"][0]["feature_id"] for r in rules] == ["r"]
+    def test_bare_id_without_fuel_model_band_skips_fetch(self, monkeypatch):
+        def fail(*args, **kwargs):
+            raise AssertionError("get_feature should not be called")
 
-    def test_all_features_empty_is_no_rules(self):
-        empty = _feature("w", "water", total_features=0)
-        assert _grid_feature_masks([empty], ["fbfm"], "d") == []
+        monkeypatch.setattr(features, "get_feature", fail)
+        (rule,) = _grid_feature_masks("feat-1", ["fuel_load.1hr"], "d")
+        assert rule.to_dict()["conditions"][0]["feature_id"] == "feat-1"
 
 
 class TestInventoryFeatureMasks:
-    def test_one_remove_rule_per_feature(self, monkeypatch):
-        monkeypatch.setattr(
-            features, "get_feature", lambda domain_id, fid: _feature(fid, "water")
-        )
-        rules = _inventory_feature_masks([_feature("r", "road"), "w"], "d")
+    def test_one_remove_rule_per_feature(self):
+        rules = _inventory_feature_masks([_feature("r", "road"), "w"])
         assert [r.conditions[0].feature_id for r in rules] == ["r", "w"]
         assert all(isinstance(r.actions[0], RemoveAction) for r in rules)
         assert all(r.conditions[0].operator == SpatialOperator.WITHIN for r in rules)
 
     def test_single_feature(self):
-        (rule,) = _inventory_feature_masks(_feature("r", "road"), "d")
+        (rule,) = _inventory_feature_masks(_feature("r", "road"))
         assert rule.conditions[0].feature_id == "r"
-
-    def test_empty_feature_skipped(self):
-        empty = _feature("w", "water", total_features=0)
-        assert _inventory_feature_masks([empty], "d") == []
 
 
 class TestApplyFeatureMasks:
@@ -264,7 +247,6 @@ class TestApplyFeatureMasks:
     def test_inventory_removes_trees(self):
         captured = []
         inventory = SimpleNamespace(
-            domain_id="d",
             apply_modifications=captured.extend,
             _require_completed=lambda action: None,
         )

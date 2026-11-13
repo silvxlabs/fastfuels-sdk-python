@@ -185,8 +185,8 @@ trees.wait()
 ```
 
 The masks are applied after any `modifications` and before any `treatments`.
-Features with no geometry — e.g. OpenStreetMap water in a domain without
-any — are skipped.
+A feature with no geometry — e.g. OpenStreetMap water in a domain without
+any — removes nothing.
 
 To remove them from an inventory you already hold, call
 `apply_feature_masks`:

@@ -704,8 +704,9 @@ non-burnable ground in each of the grid's bands:
 | Fuel moisture, curing | Unchanged |
 
 `feature_masks` is accepted by the fuel model, FCCS, LANDFIRE canopy fuel,
-canopy height, uniform, and FBFM/FCCS lookup creators. Features with no
-geometry — e.g. OpenStreetMap water in a domain without any — are skipped.
+canopy height, uniform, and FBFM/FCCS lookup creators. A feature with no
+geometry — e.g. OpenStreetMap water in a domain without any — masks
+nothing.
 A lookup grid built from a masked fuel model grid is already zero under the
 features, so it needs no mask of its own.
 

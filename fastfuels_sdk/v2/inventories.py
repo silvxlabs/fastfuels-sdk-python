@@ -124,13 +124,11 @@ def _opt(value):
     return value if value is not None else UNSET
 
 
-def _with_feature_masks(modifications, feature_masks, domain_id: str):
+def _with_feature_masks(modifications, feature_masks):
     """Append the remove-trees rules ``feature_masks`` expands to."""
     if feature_masks is None:
         return _opt(modifications)
-    return list(modifications or []) + _inventory_feature_masks(
-        feature_masks, domain_id
-    )
+    return list(modifications or []) + _inventory_feature_masks(feature_masks)
 
 
 def _build_fusion_method(method):
@@ -586,8 +584,8 @@ class Inventory(InventoryModel):
         Parameters
         ----------
         feature_masks : Feature, str, or list
-            Completed features (or their ids) in the inventory's domain.
-            Features with no geometry are skipped.
+            Completed features (or their ids) in the inventory's domain. A
+            feature with no geometry masks nothing.
 
         Returns
         -------
@@ -604,9 +602,7 @@ class Inventory(InventoryModel):
         >>> inventory.apply_feature_masks([roads, water]).wait()
         """
         self._require_completed("apply feature masks to")
-        return self.apply_modifications(
-            _inventory_feature_masks(feature_masks, self.domain_id)
-        )
+        return self.apply_modifications(_inventory_feature_masks(feature_masks))
 
     def apply_treatments(self, treatments: list) -> "Inventory":
         """Apply silvicultural treatments to this inventory in place.
@@ -1115,8 +1111,9 @@ def create_tree_inventory_from_pim_grid(
         expansion.
     feature_masks : Feature, str, or list, optional
         Completed features (or their ids) in the inventory's domain; trees
-        located within any of them are removed. Features with no geometry are
-        skipped. Applied after ``modifications`` and before ``treatments``.
+        located within any of them are removed. A feature with no geometry
+        masks nothing. Applied after ``modifications`` and before
+        ``treatments``.
     treatments : list, optional
         Silvicultural treatments applied after modifications. Build them with
         ``ff.basal_area_treatment``, ``ff.diameter_treatment``, or
@@ -1145,9 +1142,7 @@ def create_tree_inventory_from_pim_grid(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_with_feature_masks(
-            modifications, feature_masks, _domain_id(domain)
-        ),
+        modifications=_with_feature_masks(modifications, feature_masks),
         treatments=_opt(treatments),
     )
     response = create_pim_inventory.sync_detailed(
@@ -1202,8 +1197,9 @@ def create_tree_inventory_from_chm_grid(
         isolation.
     feature_masks : Feature, str, or list, optional
         Completed features (or their ids) in the inventory's domain; trees
-        located within any of them are removed. Features with no geometry are
-        skipped. Applied after ``modifications`` and before ``treatments``.
+        located within any of them are removed. A feature with no geometry
+        masks nothing. Applied after ``modifications`` and before
+        ``treatments``.
     treatments : list, optional
         Silvicultural treatments applied after modifications. Stem isolation
         produces no diameter or species, so the only treatment that applies
@@ -1269,9 +1265,7 @@ def create_tree_inventory_from_chm_grid(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_with_feature_masks(
-            modifications, feature_masks, _domain_id(domain)
-        ),
+        modifications=_with_feature_masks(modifications, feature_masks),
         treatments=_opt(treatments),
     )
     response = create_chm_inventory.sync_detailed(
@@ -1341,8 +1335,9 @@ def create_tree_inventory_from_pim_chm_fusion(
         expansion.
     feature_masks : Feature, str, or list, optional
         Completed features (or their ids) in the inventory's domain; trees
-        located within any of them are removed. Features with no geometry are
-        skipped. Applied after ``modifications`` and before ``treatments``.
+        located within any of them are removed. A feature with no geometry
+        masks nothing. Applied after ``modifications`` and before
+        ``treatments``.
     treatments : list, optional
         Silvicultural treatments applied after modifications. Build them with
         ``ff.basal_area_treatment``, ``ff.diameter_treatment``, or
@@ -1386,9 +1381,7 @@ def create_tree_inventory_from_pim_chm_fusion(
         name=name,
         description=description,
         tags=_opt(tags),
-        modifications=_with_feature_masks(
-            modifications, feature_masks, _domain_id(domain)
-        ),
+        modifications=_with_feature_masks(modifications, feature_masks),
         treatments=_opt(treatments),
     )
     response = create_pim_chm_fusion_inventory.sync_detailed(

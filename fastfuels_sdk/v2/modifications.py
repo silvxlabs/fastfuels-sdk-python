@@ -335,22 +335,15 @@ def _feature_list(feature_masks) -> list:
     return [feature_masks]
 
 
-def _nonempty_features(feature_masks, domain_id: str) -> list:
-    """Feature records for ``feature_masks``, dropping features with no geometry.
+def _feature_type(feature, domain_id: str) -> str:
+    """A feature's type string, fetching the feature when given a bare id."""
+    if isinstance(feature, str):
+        # Imported here: features is a sibling resource module, and only bare
+        # ids on fuel-model grids need the round trip.
+        from fastfuels_sdk.v2.features import get_feature
 
-    An empty feature (e.g. OSM water in a domain with none) masks nothing, but
-    the API fails the whole job on it (FEATURE_EMPTY), so it is skipped here.
-    """
-    # Imported here: features is a sibling resource module.
-    from fastfuels_sdk.v2.features import get_feature
-
-    features = []
-    for feature in _feature_list(feature_masks):
-        if isinstance(feature, str):
-            feature = get_feature(domain_id, feature)
-        if feature.get_data_metadata().total_features > 0:
-            features.append(feature)
-    return features
+        feature = get_feature(domain_id, feature)
+    return getattr(feature.type_, "value", feature.type_)
 
 
 def _grid_feature_masks(feature_masks, bands, domain_id: str) -> List[GridModification]:
@@ -359,7 +352,8 @@ def _grid_feature_masks(feature_masks, bands, domain_id: str) -> List[GridModifi
     ``bands`` are the keys (or enum members) of the bands the grid carries.
     Raises ``ValueError`` when none of them has a non-burnable value.
     """
-    if not _feature_list(feature_masks):
+    features = _feature_list(feature_masks)
+    if not features:
         return []
     keys = [getattr(band, "value", band) for band in bands]
     maskable = [key for key in keys if _masked_value(key, None) is not None]
@@ -368,13 +362,14 @@ def _grid_feature_masks(feature_masks, bands, domain_id: str) -> List[GridModifi
             f"feature_masks can't be applied to bands {keys}: none of them holds "
             "fuel. Build rules with ff.mask(feature, band, value) instead."
         )
+    needs_type = bool(_FUEL_MODEL_BANDS.intersection(maskable))
     rules = []
-    for feature in _nonempty_features(feature_masks, domain_id):
-        feature_type = getattr(feature.type_, "value", feature.type_)
+    for feature in features:
+        feature_type = _feature_type(feature, domain_id) if needs_type else None
         condition = GridFeatureSpatialCondition(
             source="feature",
             operator=SpatialOperator.WITHIN,
-            feature_id=feature.id,
+            feature_id=_feature_id(feature),
         )
         actions = [
             GridModificationAction(
@@ -388,11 +383,6 @@ def _grid_feature_masks(feature_masks, bands, domain_id: str) -> List[GridModifi
     return rules
 
 
-def _inventory_feature_masks(
-    feature_masks, domain_id: str
-) -> List[InventoryModification]:
+def _inventory_feature_masks(feature_masks) -> List[InventoryModification]:
     """Expand ``feature_masks`` into one remove-trees rule per feature."""
-    return [
-        remove_trees(tree_within(feature))
-        for feature in _nonempty_features(feature_masks, domain_id)
-    ]
+    return [remove_trees(tree_within(f)) for f in _feature_list(feature_masks)]

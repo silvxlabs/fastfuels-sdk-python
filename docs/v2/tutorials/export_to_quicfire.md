@@ -168,7 +168,7 @@ depth come from LANDFIRE's 40 Scott & Burgan fire behavior fuel models
 (FBFM40). First we build the FBFM40 grid, masking roads and water out as
 non-burnable as we go. Cells under roads get FBFM 91 (NB1, urban/developed)
 and cells under water get FBFM 98 (NB8, open water). Our region has no open
-water, so the empty water feature is simply skipped:
+water, so the empty water feature masks nothing:
 
 ```python
 fbfm = ff.grids.create_fuel_model_grid_from_landfire_fbfm40(

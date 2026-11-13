@@ -936,8 +936,8 @@ class Grid(GridModel):
         Parameters
         ----------
         feature_masks : Feature, str, or list
-            Completed features (or their ids) in the grid's domain. Features
-            with no geometry are skipped.
+            Completed features (or their ids) in the grid's domain. A feature
+            with no geometry masks nothing.
 
         Returns
         -------
@@ -1398,7 +1398,7 @@ def create_canopy_fuel_grid_from_landfire(
     feature_masks : Feature, str, or list, optional
         Completed features (or their ids) in the grid's domain to mask out as
         non-burnable: cells whose centers fall within any of them have every
-        canopy band set to 0. Features with no geometry are skipped. Applied
+        canopy band set to 0. A feature with no geometry masks nothing. Applied
         after ``modifications``.
 
     Returns
@@ -1768,7 +1768,7 @@ def create_canopy_height_grid_from_meta(
     feature_masks : Feature, str, or list, optional
         Completed features (or their ids) in the grid's domain to mask out as
         non-burnable: cells whose centers fall within any of them have ``chm``
-        set to 0. Features with no geometry are skipped. Applied after
+        set to 0. A feature with no geometry masks nothing. Applied after
         ``modifications``.
 
     Returns
@@ -1843,7 +1843,7 @@ def create_canopy_height_grid_from_naip_chm(
     feature_masks : Feature, str, or list, optional
         Completed features (or their ids) in the grid's domain to mask out as
         non-burnable: cells whose centers fall within any of them have ``chm``
-        set to 0. Features with no geometry are skipped. Applied after
+        set to 0. A feature with no geometry masks nothing. Applied after
         ``modifications``.
 
     Returns
@@ -1925,7 +1925,7 @@ def create_canopy_height_grid_from_point_cloud(
     feature_masks : Feature, str, or list, optional
         Completed features (or their ids) in the grid's domain to mask out as
         non-burnable: cells whose centers fall within any of them have ``chm``
-        set to 0. Features with no geometry are skipped. Applied after
+        set to 0. A feature with no geometry masks nothing. Applied after
         ``modifications``.
 
     Returns
@@ -2028,8 +2028,8 @@ def create_fuel_model_grid_from_landfire_fbfm13(
         Completed features (or their ids) in the grid's domain to mask out as
         non-burnable: cells whose centers fall within any of them get
         ``fbfm13`` 98 (NB8, open water) for water features and 91 (NB1,
-        urban/developed) for all others. Features with no geometry are skipped.
-        Applied after ``modifications``.
+        urban/developed) for all others. A feature with no geometry masks
+        nothing. Applied after ``modifications``.
     disturbance : str, dict, or LandfireDisturbanceRequest, optional
         Update the baseline release for recent disturbance where the newest
         LANDFIRE release doesn't fully cover the domain. Pass ``"landfire"``,
@@ -2136,7 +2136,7 @@ def create_fuel_model_grid_from_landfire_fbfm40(
         Completed features (or their ids) in the grid's domain to mask out as
         non-burnable: cells whose centers fall within any of them get ``fbfm``
         98 (NB8, open water) for water features and 91 (NB1, urban/developed)
-        for all others. Features with no geometry are skipped. Applied after
+        for all others. A feature with no geometry masks nothing. Applied after
         ``modifications``.
     disturbance : str, dict, or LandfireDisturbanceRequest, optional
         Update the baseline release for recent disturbance where the newest
@@ -2234,8 +2234,8 @@ def create_fuel_model_grid_from_landfire_fccs(
     feature_masks : Feature, str, or list, optional
         Completed features (or their ids) in the grid's domain to mask out as
         non-burnable: cells whose centers fall within any of them get ``fccs``
-        0 (bare ground). Features with no geometry are skipped. Applied after
-        ``modifications``.
+        0 (bare ground). A feature with no geometry masks nothing. Applied
+        after ``modifications``.
     disturbance : str, dict, or LandfireDisturbanceRequest, optional
         Update the baseline release for recent disturbance where the newest
         LANDFIRE release doesn't fully cover the domain. Pass ``"landfire"``,
@@ -2553,7 +2553,7 @@ def create_uniform_grid(
         Completed features (or their ids) in the grid's domain to mask out as
         non-burnable: cells whose centers fall within any of them have their
         fuel load and fuel depth bands set to 0; moisture and curing bands are
-        unchanged. Features with no geometry are skipped. Applied after
+        unchanged. A feature with no geometry masks nothing. Applied after
         ``modifications``.
 
     Returns
@@ -2813,7 +2813,7 @@ def create_fuel_grid_from_fccs_lookup(
     feature_masks : Feature, str, or list, optional
         Completed features (or their ids) in the grid's domain to mask out as
         non-burnable: cells whose centers fall within any of them have every
-        band set to 0. Features with no geometry are skipped. Applied after
+        band set to 0. A feature with no geometry masks nothing. Applied after
         ``modifications``.
 
     Returns
@@ -2886,7 +2886,7 @@ def create_fuel_grid_from_fbfm13_lookup(
     feature_masks : Feature, str, or list, optional
         Completed features (or their ids) in the grid's domain to mask out as
         non-burnable: cells whose centers fall within any of them have every
-        band set to 0. Features with no geometry are skipped. Applied after
+        band set to 0. A feature with no geometry masks nothing. Applied after
         ``modifications``.
 
     Returns
@@ -2975,7 +2975,7 @@ def create_fuel_grid_from_fbfm40_lookup(
     feature_masks : Feature, str, or list, optional
         Completed features (or their ids) in the grid's domain to mask out as
         non-burnable: cells whose centers fall within any of them have every
-        band set to 0. Features with no geometry are skipped. Applied after
+        band set to 0. A feature with no geometry masks nothing. Applied after
         ``modifications``.
 
     Returns
