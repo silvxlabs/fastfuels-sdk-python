@@ -3045,7 +3045,8 @@ def create_surface_fuel_grid_from_duet(
     ----------
     source_grid : Grid
         A completed 3D tree grid carrying ``bulk_density.foliage.live``,
-        ``spcd``, and ``fuel_moisture.live`` bands, covering at most 1 km².
+        ``spcd``, and ``fuel_moisture.live`` bands, with at most 600,000
+        horizontal cells (2.4 km² at 2 m, 0.6 km² at 1 m).
     years_since_burn : int
         Years of litter accumulation to simulate, from 1 through 25.
     wind_direction : int, optional
@@ -3078,7 +3079,7 @@ def create_surface_fuel_grid_from_duet(
         If a parameter is out of range, the source is not completed, or the
         source lacks a required tree band.
     UnprocessableEntityException
-        If the source grid covers more than 1 km².
+        If the source grid has more than 600,000 horizontal cells.
     """
     source_grid._require_completed("create a DUET surface fuel grid from")
     required_bands = {
