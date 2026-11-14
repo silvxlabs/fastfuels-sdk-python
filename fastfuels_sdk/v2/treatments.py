@@ -171,9 +171,9 @@ def crown_spacing_treatment(
     Raises
     ------
     ValueError
-        If ``rank_by`` or ``max_crown_radius_equations`` is not a recognized
-        value, or both ``max_crown_radius_equations`` and
-        ``max_crown_radius_column`` are given.
+        If both ``max_crown_radius_equations`` and ``max_crown_radius_column``
+        are given. Unrecognized ``rank_by`` or equations values are sent as
+        given, and the API rejects them when the treatment is applied.
 
     Examples
     --------

@@ -218,9 +218,11 @@ class TestBuildAlignment:
         with pytest.raises(ValueError):
             _build_alignment(align_to="abc", align="native")
 
-    def test_bad_resampling_raises(self):
-        with pytest.raises(ValueError):
-            _build_alignment(resampling="not_a_method")
+    def test_unknown_resampling_passes_through(self):
+        """The API validates it, so a method added later can still be sent."""
+        alignment = _build_alignment(resampling="not_a_method")
+        assert alignment.method.name == "UNKNOWN"
+        assert alignment.to_dict()["method"] == "not_a_method"
 
     def test_bad_align_value_raises(self):
         with pytest.raises(ValueError):
@@ -274,7 +276,6 @@ class TestBuildResampleAlignment:
             ({"align": "native"}, 'align="native" requires output_resolution_m'),
             ({"align": "native", "align_to": "gid"}, "at most one"),
             ({"align": "domain", "output_resolution_m": 60}, "must be"),
-            ({"output_resolution_m": 60, "resampling": "bogus"}, "bogus"),
         ],
     )
     def test_invalid_arguments_raise(self, kwargs, match):
@@ -314,9 +315,11 @@ class TestHelpers:
             TopographyBand.ASPECT
         ]
 
-    def test_enum_list_invalid_value_raises(self):
-        with pytest.raises(ValueError):
-            _enum_list(["not_a_band"], TopographyBand)
+    def test_enum_list_unknown_value_passes_through(self):
+        """The API validates it, so a band added later can still be requested."""
+        (band,) = _enum_list(["not_a_band"], TopographyBand)
+        assert band.name == "UNKNOWN"
+        assert band == "not_a_band"
 
 
 class TestFccsSignature:
@@ -1431,12 +1434,9 @@ class TestCreateFuelModelGridFromLandfireFbfm40:
 
         assert captured["body"].version.value == version
 
-    def test_rejects_unknown_version(self):
-        with pytest.raises(ValueError):
-            create_fuel_model_grid_from_landfire_fbfm40(
-                SimpleNamespace(id="domain-id"),
-                version="1999",
-            )
+    def test_api_rejects_unknown_version(self, test_domain):
+        with pytest.raises(UnprocessableEntityException):
+            create_fuel_model_grid_from_landfire_fbfm40(test_domain, version="1999")
 
     def test_season_passed_through(self, monkeypatch):
         # A seasonal request forwards both the seasonal version and the
@@ -1472,12 +1472,10 @@ class TestCreateFuelModelGridFromLandfireFbfm40:
         assert captured["body"].version.value == "2025"
         assert captured["body"].season.value == "SP"
 
-    def test_rejects_unknown_season(self):
-        with pytest.raises(ValueError):
+    def test_api_rejects_unknown_season(self, test_domain):
+        with pytest.raises(UnprocessableEntityException):
             create_fuel_model_grid_from_landfire_fbfm40(
-                SimpleNamespace(id="domain-id"),
-                version="2025",
-                season="WINTER",
+                test_domain, version="2025", season="WINTER"
             )
 
     @pytest.mark.parametrize(
@@ -2085,12 +2083,9 @@ class TestCreateDisturbanceGridFromLandfire:
 
         assert captured["body"].version is UNSET
 
-    def test_rejects_unknown_version(self):
-        with pytest.raises(ValueError):
-            create_annual_disturbance_grid_from_landfire(
-                SimpleNamespace(id="domain-id"),
-                version="1999",
-            )
+    def test_api_rejects_unknown_version(self, test_domain):
+        with pytest.raises(UnprocessableEntityException):
+            create_annual_disturbance_grid_from_landfire(test_domain, version="1999")
 
 
 class TestCreatePimGridFromTreemap:
@@ -2178,7 +2173,7 @@ class TestCreateUniformGrid:
         grid.delete()
 
     def test_invalid_band_key(self, test_domain):
-        with pytest.raises(ValueError):
+        with pytest.raises(UnprocessableEntityException):
             create_uniform_grid(test_domain, resolution_m=30, bands={"not_a_band": 1.0})
 
 
@@ -2345,10 +2340,16 @@ class TestResample:
         assert captured["body"].method_overrides is overrides
         assert captured["body"].to_dict()["method_overrides"] == {"fbfm": "mode"}
 
+    def test_unknown_method_override_passes_through(self, captured):
+        """The API validates it, so a method added later can still be sent."""
+        _completed_grid().resample(
+            output_resolution_m=60, method_overrides={"fbfm": "bogus"}
+        )
+        assert captured["body"].to_dict()["method_overrides"] == {"fbfm": "bogus"}
+
     @pytest.mark.parametrize(
         "method_overrides,match",
         [
-            ({"fbfm": "bogus"}, "'bogus' for band 'fbfm'"),
             ({"fbfm": "nearest", "elevation": None}, "for band 'elevation'"),
             (["fbfm", "nearest"], "mapping"),
         ],
@@ -2931,7 +2932,7 @@ class TestListGrids:
         assert completed_topography_grid.id in [grid.id for grid in grids_with_tag]
 
     def test_invalid_sort_field(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(UnprocessableEntityException):
             list_grids(sort_by="not_a_field")
 
 

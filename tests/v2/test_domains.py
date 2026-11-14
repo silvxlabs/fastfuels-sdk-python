@@ -230,7 +230,7 @@ class TestListDomains:
         assert len(domains) > 0
 
     def test_invalid_sort_field(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(UnprocessableEntityException):
             list_domains(sort_by="not_a_field")
 
 

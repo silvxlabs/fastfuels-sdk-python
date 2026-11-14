@@ -58,9 +58,11 @@ class TestPointCloudType:
     def test_enum_passes_through(self):
         assert _point_cloud_type(PointCloudType.ALS) is PointCloudType.ALS
 
-    def test_invalid_raises(self):
-        with pytest.raises(ValueError):
-            _point_cloud_type("mls")
+    def test_unknown_value_passes_through(self):
+        """The API validates it, so a type added later can still be sent."""
+        point_cloud_type = _point_cloud_type("mls")
+        assert point_cloud_type.name == "UNKNOWN"
+        assert point_cloud_type == "mls"
 
 
 class TestCsv:

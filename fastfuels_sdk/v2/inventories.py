@@ -988,10 +988,9 @@ class Inventory(InventoryModel):
         NotFoundException
             If the inventory no longer exists.
         UnprocessableEntityException
-            If ``partition_index`` is past the last partition, or the
-            inventory is not in "completed" status.
-        ValueError
-            If ``json_orientation`` is not ``"split"`` or ``"records"``.
+            If ``partition_index`` is past the last partition, the inventory
+            is not in "completed" status, or ``json_orientation`` is not
+            ``"split"`` or ``"records"``.
 
         Examples
         --------

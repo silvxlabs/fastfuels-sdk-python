@@ -849,8 +849,9 @@ class Grid(GridModel):
         ValueError
             If the grid is not completed; if neither ``output_resolution_m``
             nor ``align_to`` is given; if ``align`` is given with ``align_to``
-            or is not ``"native"``; or if ``resampling`` or a
-            ``method_overrides`` value is not a recognized method.
+            or is not ``"native"``; or if a ``method_overrides`` value is
+            not a string. Unrecognized method names are sent as given, and
+            the API rejects them.
 
         Examples
         --------
@@ -2575,9 +2576,10 @@ def create_uniform_grid(
     Raises
     ------
     ValueError
-        If a ``bands`` key is not a valid ``UniformBand`` value, or if
-        ``feature_masks`` is given and ``bands`` has no fuel load or fuel
+        If ``feature_masks`` is given and ``bands`` has no fuel load or fuel
         depth band.
+    UnprocessableEntityException
+        If a ``bands`` key is not a valid ``UniformBand`` value.
     """
     band_inputs = [
         UniformBandInput(key=UniformBand(key), value=value)

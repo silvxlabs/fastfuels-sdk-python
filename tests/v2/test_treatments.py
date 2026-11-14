@@ -51,9 +51,11 @@ class TestBasalAreaTreatment:
         assert t.unit == "m**2/ha"
         assert t.conditions == [sentinel]
 
-    def test_invalid_method_raises(self):
-        with pytest.raises(ValueError):
-            basal_area_treatment("sideways", 25.0)
+    def test_unknown_method_passes_through(self):
+        """The API validates it, so a method added later can still be sent."""
+        t = basal_area_treatment("sideways", 25.0)
+        assert t.method.name == "UNKNOWN"
+        assert t.to_dict()["method"] == "sideways"
 
 
 class TestDiameterTreatment:
@@ -64,10 +66,10 @@ class TestDiameterTreatment:
         assert t.value == 10.0
         assert t.metric == "diameter"
 
-    def test_proportional_not_valid_for_diameter(self):
-        # Diameter treatments support only from_below / from_above.
-        with pytest.raises(ValueError):
-            diameter_treatment("proportional", 10.0)
+    def test_proportional_is_not_a_known_diameter_method(self):
+        # Diameter treatments support only from_below / from_above; the API
+        # rejects proportional.
+        assert diameter_treatment("proportional", 10.0).method.name == "UNKNOWN"
 
 
 class TestCrownSpacingTreatment:
@@ -139,13 +141,14 @@ class TestCrownSpacingTreatment:
             "equations": equations,
         }
 
-    def test_invalid_rank_by_raises(self):
-        with pytest.raises(ValueError):
-            crown_spacing_treatment(3.0, rank_by="crown_radius")
+    def test_unknown_rank_by_passes_through(self):
+        """The API validates it, so a ranking added later can still be sent."""
+        t = crown_spacing_treatment(3.0, rank_by="crown_radius")
+        assert t.to_dict()["rank_by"] == "crown_radius"
 
-    def test_invalid_equations_raises(self):
-        with pytest.raises(ValueError):
-            crown_spacing_treatment(3.0, max_crown_radius_equations="unknown")
+    def test_unknown_equations_pass_through(self):
+        t = crown_spacing_treatment(3.0, max_crown_radius_equations="new_equations")
+        assert t.to_dict()["max_crown_radius_source"]["equations"] == "new_equations"
 
     def test_equations_and_column_are_exclusive(self):
         with pytest.raises(ValueError, match="at most one"):

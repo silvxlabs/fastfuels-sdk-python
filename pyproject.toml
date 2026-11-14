@@ -72,6 +72,7 @@ exclude = [
     # are excluded (mirroring v1's client_library excludes below).
     "fastfuels_sdk/v2/*.sh",
     "fastfuels_sdk/v2/*.md",
+    "fastfuels_sdk/v2/client_templates/",
     "fastfuels_sdk/v1/client_library/*.sh",
     "fastfuels_sdk/v1/client_library/README.md",
     "fastfuels_sdk/v1/client_library/api_spec.json",
