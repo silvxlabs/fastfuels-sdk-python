@@ -687,7 +687,8 @@ more than one raises `ValueError`:
 
 Combine any of them with **`resampling`**, the method used when changing
 resolution: `nearest`, `bilinear`, `cubic`, `average`, `mode`, `min`, `max`,
-`median`, and more. An unrecognized value raises `ValueError`.
+`median`, and more. The API validates it: an unrecognized value raises
+`UnprocessableEntityException`.
 
 The point-cloud canopy height and inventory canopy fuel creators accept
 `output_resolution_m` or `align_to` only. Grids derived from other grids
