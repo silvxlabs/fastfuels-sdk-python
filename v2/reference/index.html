@@ -13129,8 +13129,9 @@ copied; call :meth:<code>wait</code> before using it).</p>
               <div class="doc-md-description">
                 <p>If the grid is not completed; if neither <code>output_resolution_m</code>
 nor <code>align_to</code> is given; if <code>align</code> is given with <code>align_to</code>
-or is not <code>"native"</code>; or if <code>resampling</code> or a
-<code>method_overrides</code> value is not a recognized method.</p>
+or is not <code>"native"</code>; or if a <code>method_overrides</code> value is
+not a string. Unrecognized method names are sent as given, and
+the API rejects them.</p>
               </div>
             </td>
           </tr>
@@ -18104,9 +18105,18 @@ unchanged. A feature with no geometry masks nothing. Applied after
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If a <code>bands</code> key is not a valid <code>UniformBand</code> value, or if
-<code>feature_masks</code> is given and <code>bands</code> has no fuel load or fuel
+                <p>If <code>feature_masks</code> is given and <code>bands</code> has no fuel load or fuel
 depth band.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="UnprocessableEntityException">UnprocessableEntityException</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If a <code>bands</code> key is not a valid <code>UniformBand</code> value.</p>
               </div>
             </td>
           </tr>
@@ -22803,18 +22813,9 @@ mappings for <code>"records"</code>).</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If <code>partition_index</code> is past the last partition, or the
-inventory is not in "completed" status.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="ValueError">ValueError</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If <code>json_orientation</code> is not <code>"split"</code> or <code>"records"</code>.</p>
+                <p>If <code>partition_index</code> is past the last partition, the inventory
+is not in "completed" status, or <code>json_orientation</code> is not
+<code>"split"</code> or <code>"records"</code>.</p>
               </div>
             </td>
           </tr>
@@ -29899,9 +29900,9 @@ clear the crowns of nearby trees outside it.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If <code>rank_by</code> or <code>max_crown_radius_equations</code> is not a recognized
-value, or both <code>max_crown_radius_equations</code> and
-<code>max_crown_radius_column</code> are given.</p>
+                <p>If both <code>max_crown_radius_equations</code> and <code>max_crown_radius_column</code>
+are given. Unrecognized <code>rank_by</code> or equations values are sent as
+given, and the API rejects them when the treatment is applied.</p>
               </div>
             </td>
           </tr>
