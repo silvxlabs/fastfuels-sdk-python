@@ -1504,7 +1504,7 @@ covers inspecting, resampling, exporting, and managing the results.</p>
 <code>slope</code> (deg), and <code>aspect</code> (deg):</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">grid</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_topography_grid_from_3dep</span><span class="p">(</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">domain</span><span class="p">,</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">source_resolution_m</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>   <span class="c1"># 3DEP native resolution: 1, 10, or 30</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">source_resolution_m</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>   <span class="c1"># 3DEP product: 1, 2, 10, or 30 (meters)</span>
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
 </span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">bands</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;elevation&quot;</span><span class="p">,</span> <span class="s2">&quot;slope&quot;</span><span class="p">,</span> <span class="s2">&quot;aspect&quot;</span><span class="p">],</span>
 </span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">)</span>
@@ -1517,6 +1517,17 @@ creating the grid:</p>
 </span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">coverage</span><span class="o">.</span><span class="n">tile_count</span>
 </span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="mi">1</span>
 </span></code></pre></div>
+<p><code>source_resolution_m=1</code> reads the Seamless 1-Meter DEM, falling back to the
+1 m lidar project tiles where it has none; <code>source_resolution_m=2</code> reads those
+lidar project tiles at 2 m. Coverage at 1 m and 2 m is regional, so check it
+first.</p>
+<div class="admonition warning">
+<p class="admonition-title">Coverage can be unknown</p>
+<p>At 1 m and 2 m, <code>coverage.available</code> is <code>None</code> when the USGS National Map
+search did not respond; <code>coverage.unavailable_reason</code> says why. Test
+<code>coverage.available is False</code> for "no coverage", not
+<code>not coverage.available</code>, and retry on <code>None</code>.</p>
+</div>
 <p>Where 3DEP lacks coverage, source topography from LANDFIRE (30 m, CONUS)
 instead:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">grid</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_topography_grid_from_landfire</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>

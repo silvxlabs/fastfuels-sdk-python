@@ -712,6 +712,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#cite-a-grids-data-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cite a grid's data sources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#summarize-a-band-without-downloading-it" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1094,6 +1105,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#cite-a-grids-data-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cite a grid's data sources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#summarize-a-band-without-downloading-it" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1301,12 +1323,24 @@ output:</p>
 </span></code></pre></div>
 <p>Two grids built on the same domain at the same resolution share this
 georeference, which is what lets them overlay cell-for-cell.</p>
+<h2 id="cite-a-grids-data-sources">Cite a grid's data sources<a class="headerlink" href="#cite-a-grids-data-sources" title="Permanent link">&para;</a></h2>
+<p>A grid built from third-party data (3DEP, LANDFIRE, Meta CHM, TreeMap)
+records the data's license and required citation on its <code>attributions</code> once
+the job completes:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">topography</span><span class="o">.</span><span class="n">attributions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dataset</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="s1">&#39;USGS 3DEP 1/3 arc-second DEM&#39;</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">topography</span><span class="o">.</span><span class="n">attributions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">citation</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="s1">&#39;U.S. Geological Survey, 3D Elevation Program 1/3 Arc-Second Digital Elevation Model, accessed November 13, 2026 at https://www.usgs.gov/3d-elevation-program.&#39;</span>
+</span></code></pre></div>
+<p>Reproduce each <code>citation</code> wherever you use or share the data. A grid derived
+from other grids (resampled, composed, or built by a lookup) carries none, so
+cite the source grids it was built from.</p>
 <h2 id="summarize-a-band-without-downloading-it">Summarize a band without downloading it<a class="headerlink" href="#summarize-a-band-without-downloading-it" title="Permanent link">&para;</a></h2>
 <p>Once a grid completes, the server attaches summary statistics to each band, so
 you can get a quick overview without fetching the cells (which is what
 <a href="#read-grid-data-into-python"><code>to_numpy</code></a> does). Pass a band key to
 <code>band_summary</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">summary</span> <span class="o">=</span> <span class="n">topography</span><span class="o">.</span><span class="n">band_summary</span><span class="p">(</span><span class="s2">&quot;elevation&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">summary</span> <span class="o">=</span> <span class="n">topography</span><span class="o">.</span><span class="n">band_summary</span><span class="p">(</span><span class="s2">&quot;elevation&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <p>A continuous band reports <code>count</code>, <code>nodata_count</code>, <code>min_</code>, <code>max_</code>, <code>mean</code>, and
 <code>std</code>; a categorical band reports <code>count</code>, <code>nodata_count</code>, and <code>unique_count</code>.
@@ -1315,26 +1349,26 @@ The <code>type_</code> field (<code>"continuous"</code> or <code>"categorical"</
 <a href="#wait-for-a-grid-to-finish"><code>wait</code></a> first.</p>
 <h2 id="retrieve-a-grid-by-id">Retrieve a grid by id<a class="headerlink" href="#retrieve-a-grid-by-id" title="Permanent link">&para;</a></h2>
 <p>To fetch an existing grid using its domain and grid IDs:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">grid</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">get_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;0eeed67e33df450f943a528fb1447dab&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">grid</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">get_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;0eeed67e33df450f943a528fb1447dab&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="refresh-and-update">Refresh and update<a class="headerlink" href="#refresh-and-update" title="Permanent link">&para;</a></h2>
 <p>To reload a grid's latest state in place (for example, to check job progress
 yourself):</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">grid</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">grid</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
 </span></code></pre></div>
 <p>To change a grid's name, description, or tags:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">grid</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Topography (30 m)&quot;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;terrain&quot;</span><span class="p">])</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">grid</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Topography (30 m)&quot;</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;terrain&quot;</span><span class="p">])</span>
 </span></code></pre></div>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">grid</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">tags</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="p">(</span><span class="s1">&#39;Topography (30 m)&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;terrain&#39;</span><span class="p">])</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">grid</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">tags</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="p">(</span><span class="s1">&#39;Topography (30 m)&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;terrain&#39;</span><span class="p">])</span>
 </span></code></pre></div>
 <p><code>refresh</code> and <code>update</code> both change the grid in place and return it. <code>update</code>
 sends only the fields you pass; passing none makes no API call.</p>
 <h2 id="resample-a-grid">Resample a grid<a class="headerlink" href="#resample-a-grid" title="Permanent link">&para;</a></h2>
 <p>To resample a completed grid onto a new lattice, producing a new grid:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">coarser</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">resampling</span><span class="o">=</span><span class="s2">&quot;average&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">coarser</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">resampling</span><span class="o">=</span><span class="s2">&quot;average&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <p><code>resample</code> takes the same alignment arguments as the creators (see
 <a href="../creating-grids/#align-grids-to-each-other">Align grids to each other</a>),
@@ -1343,8 +1377,8 @@ or both. <code>align="native"</code> keeps the source grid's pixel anchor and al
 <code>output_resolution_m</code>; with <code>align_to</code>, <code>output_resolution_m</code> keeps the
 target grid's CRS and origin at the new cell size. Omitting both raises
 <code>ValueError</code>.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">native</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="s2">&quot;native&quot;</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">matched</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">align_to</span><span class="o">=</span><span class="n">topography</span><span class="p">,</span> <span class="n">resampling</span><span class="o">=</span><span class="s2">&quot;bilinear&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">native</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="s2">&quot;native&quot;</span><span class="p">,</span> <span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">matched</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">align_to</span><span class="o">=</span><span class="n">topography</span><span class="p">,</span> <span class="n">resampling</span><span class="o">=</span><span class="s2">&quot;bilinear&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <p>The source grid must be <code>completed</code>; otherwise <code>resample</code> raises <code>ValueError</code>
 before calling the API.</p>
@@ -1352,8 +1386,8 @@ before calling the API.</p>
 <p>To branch from a completed grid, <code>duplicate</code> makes an independent copy under a
 new ID. The finished data is byte-copied rather than re-derived, so the copy
 carries the source's <code>checksum</code> verbatim — only its <code>id</code> and timestamps differ:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">copy</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">duplicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Scenario A&quot;</span><span class="p">)</span>
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">copy</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">copy</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">duplicate</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Scenario A&quot;</span><span class="p">)</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">copy</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </span></code></pre></div>
 <h2 id="mask-features-out-of-a-grid">Mask features out of a grid<a class="headerlink" href="#mask-features-out-of-a-grid" title="Permanent link">&para;</a></h2>
 <p>To make the area under features non-burnable in a grid you already hold,
@@ -1362,8 +1396,8 @@ same value as a creator's
 <a href="../creating-grids/#mask-out-features"><code>feature_masks</code></a>, and the grid is
 re-derived <strong>in place</strong>: it keeps its ID and returns to <code>"pending"</code> while it
 rebuilds.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">grid</span><span class="o">.</span><span class="n">apply_feature_masks</span><span class="p">([</span><span class="n">roads</span><span class="p">,</span> <span class="n">water</span><span class="p">])</span>
-</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">grid</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">grid</span><span class="o">.</span><span class="n">apply_feature_masks</span><span class="p">([</span><span class="n">roads</span><span class="p">,</span> <span class="n">water</span><span class="p">])</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">grid</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </span></code></pre></div>
 <p>The grid must be <code>completed</code> first. Re-deriving overwrites the grid's data, so
 to keep the original, <a href="#duplicate-a-grid"><code>duplicate</code></a> it first and mask the
@@ -1374,20 +1408,20 @@ call <code>apply_modifications</code> with the same <code>ff.mask(...)</code> ru
 <code>modifications=</code> argument accepts. The rules are appended to the grid's
 cumulative modifications and the data is re-derived in place, as with
 <code>apply_feature_masks</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">grid</span><span class="o">.</span><span class="n">apply_modifications</span><span class="p">([</span><span class="n">ff</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">roads</span><span class="p">,</span> <span class="s2">&quot;fbfm&quot;</span><span class="p">,</span> <span class="mi">101</span><span class="p">,</span> <span class="n">buffer_m</span><span class="o">=</span><span class="mi">10</span><span class="p">)])</span>
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">grid</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">grid</span><span class="o">.</span><span class="n">apply_modifications</span><span class="p">([</span><span class="n">ff</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">roads</span><span class="p">,</span> <span class="s2">&quot;fbfm&quot;</span><span class="p">,</span> <span class="mi">101</span><span class="p">,</span> <span class="n">buffer_m</span><span class="o">=</span><span class="mi">10</span><span class="p">)])</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">grid</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </span></code></pre></div>
 <p>See <a href="../creating-grids/#write-custom-mask-values">Write custom mask values</a>
 for building rules.</p>
 <h2 id="read-grid-data-into-python">Read grid data into Python<a class="headerlink" href="#read-grid-data-into-python" title="Permanent link">&para;</a></h2>
 <p>To pull a single band's values into a NumPy array, pass the band key to
 <code>to_numpy</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">elevation</span> <span class="o">=</span> <span class="n">topography</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="s2">&quot;elevation&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">elevation</span> <span class="o">=</span> <span class="n">topography</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="s2">&quot;elevation&quot;</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">elevation</span><span class="o">.</span><span class="n">shape</span>       <span class="c1"># matches grid.georeference.shape</span>
-</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="p">(</span><span class="mi">47</span><span class="p">,</span> <span class="mi">58</span><span class="p">)</span>
-</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">elevation</span><span class="o">.</span><span class="n">dtype</span>
-</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="n">dtype</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">elevation</span><span class="o">.</span><span class="n">shape</span>       <span class="c1"># matches grid.georeference.shape</span>
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="p">(</span><span class="mi">47</span><span class="p">,</span> <span class="mi">58</span><span class="p">)</span>
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">elevation</span><span class="o">.</span><span class="n">dtype</span>
+</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="n">dtype</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span>
 </span></code></pre></div>
 <p>The array is shaped like the grid — <code>(rows, cols)</code> for a 2D raster, or
 <code>(z, rows, cols)</code> for a 3D voxel grid. Cells with no data hold the band's
@@ -1395,18 +1429,18 @@ for building rules.</p>
 <p>To read every band at once into an <code>xarray.Dataset</code> — one variable per band,
 with <code>x</code>/<code>y</code> (and <code>z</code>) coordinates derived from the grid's affine transform
 and the CRS on <code>.attrs</code> — call <code>to_xarray</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">topography</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">()</span>
-</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="o">&lt;</span><span class="n">xarray</span><span class="o">.</span><span class="n">Dataset</span><span class="o">&gt;</span> <span class="n">Size</span><span class="p">:</span> <span class="mi">34</span><span class="n">kB</span>
-</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="n">Dimensions</span><span class="p">:</span>    <span class="p">(</span><span class="n">y</span><span class="p">:</span> <span class="mi">47</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="mi">58</span><span class="p">)</span>
-</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="n">Coordinates</span><span class="p">:</span>
-</span><span id="__span-18-5"><a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>  <span class="o">*</span> <span class="n">y</span>          <span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="n">float64</span> <span class="mi">376</span><span class="n">B</span> <span class="mf">5.191e+06</span> <span class="mf">5.191e+06</span> <span class="o">...</span> <span class="mf">5.189e+06</span> <span class="mf">5.189e+06</span>
-</span><span id="__span-18-6"><a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>  <span class="o">*</span> <span class="n">x</span>          <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="n">float64</span> <span class="mi">464</span><span class="n">B</span> <span class="mf">7.202e+05</span> <span class="mf">7.202e+05</span> <span class="o">...</span> <span class="mf">7.219e+05</span> <span class="mf">7.219e+05</span>
-</span><span id="__span-18-7"><a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="n">Data</span> <span class="n">variables</span><span class="p">:</span>
-</span><span id="__span-18-8"><a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>    <span class="n">elevation</span>  <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="n">float32</span> <span class="mi">11</span><span class="n">kB</span> <span class="mf">1.015e+03</span> <span class="mf">1.013e+03</span> <span class="o">...</span> <span class="mf">1.02e+03</span> <span class="mf">1.019e+03</span>
-</span><span id="__span-18-9"><a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>    <span class="n">slope</span>      <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="n">float32</span> <span class="mi">11</span><span class="n">kB</span> <span class="mf">7.587</span> <span class="mf">8.345</span> <span class="mf">8.092</span> <span class="mf">7.41</span> <span class="o">...</span> <span class="mf">3.42</span> <span class="mf">3.008</span> <span class="mf">3.094</span>
-</span><span id="__span-18-10"><a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>    <span class="n">aspect</span>     <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="n">float32</span> <span class="mi">11</span><span class="n">kB</span> <span class="mf">25.29</span> <span class="mf">28.79</span> <span class="mf">40.35</span> <span class="mf">51.47</span> <span class="o">...</span> <span class="mf">126.0</span> <span class="mf">135.2</span> <span class="mf">138.1</span>
-</span><span id="__span-18-11"><a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="n">Attributes</span><span class="p">:</span>
-</span><span id="__span-18-12"><a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>    <span class="n">crs</span><span class="p">:</span>      <span class="n">EPSG</span><span class="p">:</span><span class="mi">32611</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">topography</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">()</span>
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="o">&lt;</span><span class="n">xarray</span><span class="o">.</span><span class="n">Dataset</span><span class="o">&gt;</span> <span class="n">Size</span><span class="p">:</span> <span class="mi">34</span><span class="n">kB</span>
+</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="n">Dimensions</span><span class="p">:</span>    <span class="p">(</span><span class="n">y</span><span class="p">:</span> <span class="mi">47</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="mi">58</span><span class="p">)</span>
+</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="n">Coordinates</span><span class="p">:</span>
+</span><span id="__span-19-5"><a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>  <span class="o">*</span> <span class="n">y</span>          <span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="n">float64</span> <span class="mi">376</span><span class="n">B</span> <span class="mf">5.191e+06</span> <span class="mf">5.191e+06</span> <span class="o">...</span> <span class="mf">5.189e+06</span> <span class="mf">5.189e+06</span>
+</span><span id="__span-19-6"><a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>  <span class="o">*</span> <span class="n">x</span>          <span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="n">float64</span> <span class="mi">464</span><span class="n">B</span> <span class="mf">7.202e+05</span> <span class="mf">7.202e+05</span> <span class="o">...</span> <span class="mf">7.219e+05</span> <span class="mf">7.219e+05</span>
+</span><span id="__span-19-7"><a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="n">Data</span> <span class="n">variables</span><span class="p">:</span>
+</span><span id="__span-19-8"><a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>    <span class="n">elevation</span>  <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="n">float32</span> <span class="mi">11</span><span class="n">kB</span> <span class="mf">1.015e+03</span> <span class="mf">1.013e+03</span> <span class="o">...</span> <span class="mf">1.02e+03</span> <span class="mf">1.019e+03</span>
+</span><span id="__span-19-9"><a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>    <span class="n">slope</span>      <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="n">float32</span> <span class="mi">11</span><span class="n">kB</span> <span class="mf">7.587</span> <span class="mf">8.345</span> <span class="mf">8.092</span> <span class="mf">7.41</span> <span class="o">...</span> <span class="mf">3.42</span> <span class="mf">3.008</span> <span class="mf">3.094</span>
+</span><span id="__span-19-10"><a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>    <span class="n">aspect</span>     <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="n">float32</span> <span class="mi">11</span><span class="n">kB</span> <span class="mf">25.29</span> <span class="mf">28.79</span> <span class="mf">40.35</span> <span class="mf">51.47</span> <span class="o">...</span> <span class="mf">126.0</span> <span class="mf">135.2</span> <span class="mf">138.1</span>
+</span><span id="__span-19-11"><a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="n">Attributes</span><span class="p">:</span>
+</span><span id="__span-19-12"><a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>    <span class="n">crs</span><span class="p">:</span>      <span class="n">EPSG</span><span class="p">:</span><span class="mi">32611</span>
 </span></code></pre></div>
 <p>Both methods download the grid's data and require a <code>completed</code> grid. To
 write the data to a file on disk instead of loading it into memory, see
@@ -1414,8 +1448,8 @@ write the data to a file on disk instead of loading it into memory, see
 <h2 id="export-a-grid">Export a grid<a class="headerlink" href="#export-a-grid" title="Permanent link">&para;</a></h2>
 <p>To export a completed grid to a downloadable file and save it, chain the
 export job's <code>wait</code> into <code>to_file</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">export</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;geotiff&quot;</span><span class="p">)</span>  <span class="c1"># or &quot;netcdf&quot;, &quot;zarr&quot;</span>
-</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="n">export</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="s2">&quot;elevation.tif&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="n">export</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;geotiff&quot;</span><span class="p">)</span>  <span class="c1"># or &quot;netcdf&quot;, &quot;zarr&quot;</span>
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="n">export</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="s2">&quot;elevation.tif&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <p>The export runs as its own background job; the signed download URL fills
 in once it completes and stays valid for seven days. To load a grid's
@@ -1425,37 +1459,37 @@ band subsets, the multi-grid QUIC-Fire bundle, and managing exports, see the
 <a href="../exports/">Exports guide</a>.</p>
 <h2 id="list-grids">List grids<a class="headerlink" href="#list-grids" title="Permanent link">&para;</a></h2>
 <p>To list grids in a domain, or across all your domains by omitting it:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="n">grids</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_grids</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
-</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="n">all_grids</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_grids</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">grids</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_grids</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
+</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="n">all_grids</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_grids</span><span class="p">()</span>
 </span></code></pre></div>
 <p>Narrow the results by source, source product (requires <code>source</code>), or tag —
 the source and product names are the ones a grid reports in <code>grid.source</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">topo_grids</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_grids</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">&quot;3dep&quot;</span><span class="p">)</span>
-</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="n">fbfm_grids</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_grids</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">&quot;landfire&quot;</span><span class="p">,</span> <span class="n">product</span><span class="o">=</span><span class="s2">&quot;fbfm40&quot;</span><span class="p">)</span>
-</span><span id="__span-21-3"><a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="n">tagged</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_grids</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;terrain&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="n">topo_grids</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_grids</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">&quot;3dep&quot;</span><span class="p">)</span>
+</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="n">fbfm_grids</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_grids</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">&quot;landfire&quot;</span><span class="p">,</span> <span class="n">product</span><span class="o">=</span><span class="s2">&quot;fbfm40&quot;</span><span class="p">)</span>
+</span><span id="__span-22-3"><a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="n">tagged</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">list_grids</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;terrain&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="delete-a-grid">Delete a grid<a class="headerlink" href="#delete-a-grid" title="Permanent link">&para;</a></h2>
 <p>To permanently delete a grid and its generated data:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="n">grid</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="n">grid</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
 </span></code></pre></div>
 <p>Deleting a domain with <code>domain.delete(force=True)</code> also deletes all of its
 grids.</p>
 <h2 id="error-handling">Error handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
 <p>Requests the API rejects raise typed exceptions from
 <code>fastfuels_sdk.v2.exceptions</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
-</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotFoundException</span>
-</span><span id="__span-23-3"><a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
-</span><span id="__span-23-4"><a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="k">try</span><span class="p">:</span>
-</span><span id="__span-23-5"><a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="n">grid</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">get_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;does-not-exist&quot;</span><span class="p">)</span>
-</span><span id="__span-23-6"><a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="k">except</span> <span class="n">NotFoundException</span><span class="p">:</span>
-</span><span id="__span-23-7"><a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No such grid (or you don&#39;t have access to it)&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
+</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotFoundException</span>
+</span><span id="__span-24-3"><a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
+</span><span id="__span-24-4"><a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="k">try</span><span class="p">:</span>
+</span><span id="__span-24-5"><a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>    <span class="n">grid</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">get_grid</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">&quot;does-not-exist&quot;</span><span class="p">)</span>
+</span><span id="__span-24-6"><a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="k">except</span> <span class="n">NotFoundException</span><span class="p">:</span>
+</span><span id="__span-24-7"><a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No such grid (or you don&#39;t have access to it)&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <p>Methods that need a completed grid — <code>resample</code>, <code>apply_feature_masks</code>,
 <code>apply_modifications</code>, <code>to_numpy</code>, and <code>to_xarray</code> — raise <code>ValueError</code>
 before calling the API when the grid is still pending or running:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">pending_grid</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
-</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="ne">ValueError</span><span class="p">:</span> <span class="n">Cannot</span> <span class="n">resample</span> <span class="n">a</span> <span class="n">grid</span> <span class="k">with</span> <span class="n">status</span> <span class="s1">&#39;pending&#39;</span><span class="o">.</span> <span class="n">Call</span> <span class="o">.</span><span class="n">wait</span><span class="p">()</span> <span class="n">until</span> <span class="n">it</span> <span class="n">completes</span> <span class="n">first</span><span class="o">.</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">pending_grid</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">output_resolution_m</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="ne">ValueError</span><span class="p">:</span> <span class="n">Cannot</span> <span class="n">resample</span> <span class="n">a</span> <span class="n">grid</span> <span class="k">with</span> <span class="n">status</span> <span class="s1">&#39;pending&#39;</span><span class="o">.</span> <span class="n">Call</span> <span class="o">.</span><span class="n">wait</span><span class="p">()</span> <span class="n">until</span> <span class="n">it</span> <span class="n">completes</span> <span class="n">first</span><span class="o">.</span>
 </span></code></pre></div>
 
 

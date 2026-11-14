@@ -12180,6 +12180,19 @@ ready.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
+            <td><code><span title="fastfuels_sdk.v2.grids.Grid.attributions">attributions</span></code></td>
+            <td>
+                  <code>(<span title="typing.List">List</span>[<span title="Attribution">Attribution</span>], <span title="optional">optional</span>)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Licenses and citations for the third-party data the grid was built
+from, added when it finishes processing. Reproduce each <code>citation</code>
+wherever the data is used or shared. Empty if none are recorded.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
             <td><code><span title="fastfuels_sdk.v2.grids.Grid.created_on">created_on</span></code></td>
             <td>
                   <code><span title="datetime">datetime</span></code>
@@ -13940,8 +13953,15 @@ dataset's <code>crs</code> attribute.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The 3DEP product family to draw from: 1, 10, or 30 meters
-(default 10). Use :func:<code>check_3dep_coverage</code> first for 1 m data.</p>
+                <p>The 3DEP product to draw from, by resolution in meters (default 10):</p>
+<ul>
+<li>1: Seamless 1-Meter DEM (S1M), falling back to 1 m lidar project
+  tiles where S1M has none</li>
+<li>2: 1 m lidar project tiles, read from their 2 m overview</li>
+<li>10: 1/3 arc-second seamless DEM</li>
+<li>30: 1 arc-second seamless DEM</li>
+</ul>
+<p>Use :func:<code>check_3dep_coverage</code> first for 1 m and 2 m data.</p>
               </div>
             </td>
             <td>
@@ -19019,7 +19039,8 @@ to look up (i.e. it is not an FBFM40 fuel model grid).</p>
             <td>
               <div class="doc-md-description">
                 <p>A completed 3D tree grid carrying <code>bulk_density.foliage.live</code>,
-<code>spcd</code>, and <code>fuel_moisture.live</code> bands.</p>
+<code>spcd</code>, and <code>fuel_moisture.live</code> bands, with at most 600,000
+horizontal cells (2.4 km² at 2 m, 0.6 km² at 1 m).</p>
               </div>
             </td>
             <td>
@@ -19035,7 +19056,7 @@ to look up (i.e. it is not an FBFM40 fuel model grid).</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Years of litter accumulation to simulate, from 1 through 100.</p>
+                <p>Years of litter accumulation to simulate, from 1 through 25.</p>
               </div>
             </td>
             <td>
@@ -19212,6 +19233,16 @@ the grid stores raw DUET values.</p>
               <div class="doc-md-description">
                 <p>If a parameter is out of range, the source is not completed, or the
 source lacks a required tree band.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="UnprocessableEntityException">UnprocessableEntityException</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the source grid has more than 600,000 horizontal cells.</p>
               </div>
             </td>
           </tr>
@@ -20078,7 +20109,9 @@ user's domains are listed.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Resolution to check: 1, 10, or 30 meters. Defaults to the API's default.</p>
+                <p>3DEP product to check, by resolution in meters: 1, 2, 10, or 30 (see
+:func:<code>create_topography_grid_from_3dep</code>). Defaults to the API's
+default.</p>
               </div>
             </td>
             <td>
@@ -20104,12 +20137,27 @@ user's domains are listed.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Tile availability, count, URLs, and (for 1 m) acquisition dates.</p>
+                <p>Tile availability, count, URLs, and (for 1 m and 2 m) acquisition
+dates. <code>available</code> is <code>True</code> or <code>False</code>, or <code>None</code> when the
+USGS National Map search did not respond and coverage is unknown;
+<code>unavailable_reason</code> then says why. Retry shortly on <code>None</code>.</p>
               </div>
             </td>
           </tr>
       </tbody>
     </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="language-pycon highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">fastfuels_sdk.v2</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ff</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="gp">&gt;&gt;&gt; </span><span class="n">coverage</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">check_3dep_coverage</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">resolution_m</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="n">coverage</span><span class="o">.</span><span class="n">available</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">coverage</span><span class="o">.</span><span class="n">unavailable_reason</span><span class="p">)</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gp">... </span><span class="k">elif</span> <span class="n">coverage</span><span class="o">.</span><span class="n">available</span><span class="p">:</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="gp">... </span>    <span class="n">grid</span> <span class="o">=</span> <span class="n">ff</span><span class="o">.</span><span class="n">grids</span><span class="o">.</span><span class="n">create_topography_grid_from_3dep</span><span class="p">(</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gp">... </span>        <span class="n">domain</span><span class="p">,</span> <span class="n">source_resolution_m</span><span class="o">=</span><span class="mi">2</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="gp">... </span>    <span class="p">)</span>
+</span></code></pre></div>
 
 
     </div>
