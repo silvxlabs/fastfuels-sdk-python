@@ -5,6 +5,9 @@
 # Generated code is committed — rerun this when the v2 API spec changes
 # and commit the diff so API-surface changes are reviewable in PRs.
 #
+# client_templates/ overrides the generator's enum templates so a value this
+# SDK version doesn't know parses as an UNKNOWN member instead of raising.
+#
 # Requirements: uv (openapi-python-client is run via uvx, no install
 # needed). The generator version is pinned so regen diffs reflect API
 # changes only; bump the pin deliberately.
@@ -26,6 +29,7 @@ uvx "openapi-python-client@${OPC_VERSION}" generate \
   --path "$SPEC" \
   --meta none \
   --output-path client_library \
+  --custom-template-path client_templates \
   --overwrite
 
 # openapi-python-client embeds no server URL (the spec has no `servers`

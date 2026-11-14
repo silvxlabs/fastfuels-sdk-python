@@ -1301,7 +1301,7 @@ class TestExport:
         )
 
     def test_invalid_format(self, completed_tree_inventory):
-        with pytest.raises(ValueError):
+        with pytest.raises(UnprocessableEntityException):
             completed_tree_inventory.export(format="shapefile")
 
 
@@ -1361,9 +1361,33 @@ class TestInventoryData:
             "columns": "height",
         }
 
-    def test_get_data_partition_rejects_invalid_orientation(self):
-        with pytest.raises(ValueError, match="not a valid InventoryJsonOrientation"):
-            self._inventory().get_data_partition(0, json_orientation="columns")
+    def test_get_data_partition_passes_unknown_orientation_through(self, monkeypatch):
+        """The API validates it, so an orientation added later can still be sent."""
+        captured = {}
+
+        def fake_get(domain_id, inventory_id, partition_index, **kwargs):
+            captured.update(kwargs)
+            return Response(
+                status_code=HTTPStatus.OK,
+                content=b"",
+                headers={},
+                parsed=InventoryDataResponse(
+                    partition=partition_index, num_rows=0, columns=[], data=[]
+                ),
+            )
+
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.ensure_client", lambda: object()
+        )
+        monkeypatch.setattr(
+            "fastfuels_sdk.v2.inventories.get_inventory_data_json.sync_detailed",
+            fake_get,
+        )
+
+        self._inventory().get_data_partition(0, json_orientation="columns")
+
+        assert captured["json_orientation"].name == "UNKNOWN"
+        assert captured["json_orientation"] == "columns"
 
     def test_to_dataframe_uses_csv_partitions(self, monkeypatch):
         inventory = self._inventory()
@@ -1515,7 +1539,7 @@ class TestListInventories:
         assert completed_tree_inventory.id in [i.id for i in tagged]
 
     def test_invalid_sort_field(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(UnprocessableEntityException):
             list_inventories(sort_by="not_a_field")
 
 

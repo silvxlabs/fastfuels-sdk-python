@@ -868,11 +868,11 @@ class TestListFeatures:
         assert len(features) > 0
 
     def test_invalid_sort_field(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(UnprocessableEntityException):
             list_features(sort_by="not_a_field")
 
     def test_invalid_feature_type(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(UnprocessableEntityException):
             list_features(feature_type="not_a_type")
 
 

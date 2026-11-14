@@ -23,9 +23,9 @@ class CreateDuetRequest:
     DUET grids do not support modifications.
 
         Attributes:
-            years_since_burn (int): Years of litter accumulation to simulate. DUET begins the year of the last burn, when
-                standing grass and litter have been consumed, so this is the stand's time since fire. It is the highest-leverage
-                parameter in the model and also drives runtime.
+            years_since_burn (int): Years of litter accumulation to simulate, 1–25. DUET begins the year of the last burn,
+                when standing grass and litter have been consumed, so this is the stand's time since fire. It is the highest-
+                leverage parameter in the model and also drives runtime.
             source_grid_id (str): ID of a completed 3D tree grid carrying the `bulk_density.foliage.live`, `spcd`, and
                 `fuel_moisture.live` bands.
             wind_direction (int | Unset): Prevailing wind direction in whole degrees clockwise from north. Default: 270.

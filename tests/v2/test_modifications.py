@@ -58,17 +58,18 @@ class TestTreeAttribute:
         with pytest.raises(ValueError):
             tree_attribute("dbh", "~", 1)
 
-    def test_invalid_attribute_raises(self):
-        with pytest.raises(ValueError):
-            tree_attribute("girth", "<", 1)
+    def test_unknown_attribute_passes_through(self):
+        """The API validates it, so an attribute added later can still be sent."""
+        condition = tree_attribute("girth", "<", 1)
+        assert condition.attribute.name == "UNKNOWN"
+        assert condition.to_dict()["attribute"] == "girth"
 
     def test_crown_base_height_attribute(self):
         condition = tree_attribute("crown_base_height", ">", 2)
         assert condition.attribute == InventoryAttribute.CROWN_BASE_HEIGHT
 
-    def test_crown_ratio_is_not_an_attribute(self):
-        with pytest.raises(ValueError):
-            tree_attribute("crown_ratio", "<", 0.5)
+    def test_crown_ratio_is_not_a_known_attribute(self):
+        assert tree_attribute("crown_ratio", "<", 0.5).attribute.name == "UNKNOWN"
 
 
 class TestTreeWithin:
@@ -120,10 +121,12 @@ class TestModifyTrees:
         with pytest.raises(ValueError, match="condition"):
             modify_trees("height", "multiply", 0.9)
 
-    def test_remove_is_not_a_modifier(self):
-        # "remove" is RemoveAction, not a modifier value
-        with pytest.raises(ValueError):
-            modify_trees("height", "remove", 0, tree_attribute("dbh", ">", 0))
+    def test_remove_is_not_a_known_modifier(self):
+        # "remove" is RemoveAction, not a modifier value; the API rejects it.
+        modification = modify_trees(
+            "height", "remove", 0, tree_attribute("dbh", ">", 0)
+        )
+        assert modification.actions[0].modifier.name == "UNKNOWN"
 
 
 def _feature(feature_id, feature_type):

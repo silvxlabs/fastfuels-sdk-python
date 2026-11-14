@@ -97,11 +97,12 @@ def sync_detailed(
     ## Request Body
 
     - **source_grid_id**: (required) A completed 3D tree grid carrying the
-      `bulk_density.foliage.live`, `spcd`, and `fuel_moisture.live` bands.
+      `bulk_density.foliage.live`, `spcd`, and `fuel_moisture.live` bands,
+      with at most 600,000 horizontal cells (2.4 km² at 2 m, 0.6 km² at 1 m).
       Create one with `POST /grids/voxelize/inventory/tree`, requesting those
       three bands — `spcd` in particular is not voxelized by default.
     - **years_since_burn**: (required) Years of litter accumulation to simulate,
-      1–100. DUET starts from the year of the last fire, with grass and litter
+      1–25. DUET starts from the year of the last fire, with grass and litter
       consumed, so this is the stand's time since fire. It is the single most
       consequential parameter: a low value yields almost no litter because there
       has been no time for any to fall. It also drives runtime.
@@ -195,11 +196,12 @@ def sync(
     ## Request Body
 
     - **source_grid_id**: (required) A completed 3D tree grid carrying the
-      `bulk_density.foliage.live`, `spcd`, and `fuel_moisture.live` bands.
+      `bulk_density.foliage.live`, `spcd`, and `fuel_moisture.live` bands,
+      with at most 600,000 horizontal cells (2.4 km² at 2 m, 0.6 km² at 1 m).
       Create one with `POST /grids/voxelize/inventory/tree`, requesting those
       three bands — `spcd` in particular is not voxelized by default.
     - **years_since_burn**: (required) Years of litter accumulation to simulate,
-      1–100. DUET starts from the year of the last fire, with grass and litter
+      1–25. DUET starts from the year of the last fire, with grass and litter
       consumed, so this is the stand's time since fire. It is the single most
       consequential parameter: a low value yields almost no litter because there
       has been no time for any to fall. It also drives runtime.
@@ -288,11 +290,12 @@ async def asyncio_detailed(
     ## Request Body
 
     - **source_grid_id**: (required) A completed 3D tree grid carrying the
-      `bulk_density.foliage.live`, `spcd`, and `fuel_moisture.live` bands.
+      `bulk_density.foliage.live`, `spcd`, and `fuel_moisture.live` bands,
+      with at most 600,000 horizontal cells (2.4 km² at 2 m, 0.6 km² at 1 m).
       Create one with `POST /grids/voxelize/inventory/tree`, requesting those
       three bands — `spcd` in particular is not voxelized by default.
     - **years_since_burn**: (required) Years of litter accumulation to simulate,
-      1–100. DUET starts from the year of the last fire, with grass and litter
+      1–25. DUET starts from the year of the last fire, with grass and litter
       consumed, so this is the stand's time since fire. It is the single most
       consequential parameter: a low value yields almost no litter because there
       has been no time for any to fall. It also drives runtime.
@@ -384,11 +387,12 @@ async def asyncio(
     ## Request Body
 
     - **source_grid_id**: (required) A completed 3D tree grid carrying the
-      `bulk_density.foliage.live`, `spcd`, and `fuel_moisture.live` bands.
+      `bulk_density.foliage.live`, `spcd`, and `fuel_moisture.live` bands,
+      with at most 600,000 horizontal cells (2.4 km² at 2 m, 0.6 km² at 1 m).
       Create one with `POST /grids/voxelize/inventory/tree`, requesting those
       three bands — `spcd` in particular is not voxelized by default.
     - **years_since_burn**: (required) Years of litter accumulation to simulate,
-      1–100. DUET starts from the year of the last fire, with grass and litter
+      1–25. DUET starts from the year of the last fire, with grass and litter
       consumed, so this is the stand's time since fire. It is the single most
       consequential parameter: a low value yields almost no litter because there
       has been no time for any to fall. It also drives runtime.
